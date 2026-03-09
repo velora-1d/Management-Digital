@@ -40,6 +40,11 @@ model Tenant {
 
   users           User[]
   roles           Role[]
+  tahun_ajaran    TahunAjaran[]
+  siswa           Siswa[]
+  guru            Guru[]
+  kelas           Kelas[]
+  tagihan_spp     TagihanSpp[]
 
   @@map("tenants")
 }
@@ -88,4 +93,105 @@ model UserRole {
 
   @@id([user_id, role_id])
   @@map("user_roles")
+}
+
+model TahunAjaran {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  nama        String   // e.g. "2026/2027 Ganjil"
+  is_active   Boolean  @default(false)
+  start_date  DateTime
+  end_date    DateTime
+
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  kelas       Kelas[]
+
+  @@unique([tenant_id, nama])
+  @@map("tahun_ajaran")
+}
+
+model Guru {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  nip         String?
+  nama_lengkap String
+  gender      String   // "L" or "P"
+  no_wa       String?
+  status_pegawai String // "PNS", "GTY", "GTT"
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  kelas_wali  Kelas[]
+
+  @@unique([tenant_id, nip])
+  @@map("guru")
+}
+
+model Siswa {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  nis         String?
+  nisn        String?
+  nama_lengkap String
+  gender      String   // "L" or "P"
+  tempat_lahir String?
+  tanggal_lahir DateTime?
+  nama_wali   String?
+  no_wa_wali  String?
+  status      String   @default("aktif") // aktif, lulus, mutasi
+  created_at  DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  kelas_siswa KelasSiswa[]
+  tagihan_spp TagihanSpp[]
+
+  @@unique([tenant_id, nis])
+  @@map("siswa")
+}
+
+model Kelas {
+  id              String   @id @default(uuid())
+  tenant_id       String
+  tahun_ajaran_id String
+  wali_kelas_id   String?
+  nama_kelas      String   // e.g. "X-A"
+  tingkat         String   // "X", "XI", "XII"
+  kapasitas       Int      @default(30)
+
+  tenant        Tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  tahun_ajaran  TahunAjaran @relation(fields: [tahun_ajaran_id], references: [id], onDelete: Restrict)
+  wali_kelas    Guru?       @relation(fields: [wali_kelas_id], references: [id], onDelete: SetNull)
+  siswa         KelasSiswa[]
+
+  @@unique([tenant_id, tahun_ajaran_id, nama_kelas])
+  @@map("kelas")
+}
+
+model KelasSiswa {
+  kelas_id  String
+  siswa_id  String
+
+  kelas     Kelas  @relation(fields: [kelas_id], references: [id], onDelete: Cascade)
+  siswa     Siswa  @relation(fields: [siswa_id], references: [id], onDelete: Cascade)
+
+  @@id([kelas_id, siswa_id])
+  @@map("kelas_siswa")
+}
+
+model TagihanSpp {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  siswa_id    String
+  bulan       String   // e.g. "2026-08"
+  nominal     Decimal  @db.Decimal(12,2)
+  status      String   @default("belum_lunas") // belum_lunas, sebagian, lunas
+  jatuh_tempo DateTime
+  created_at  DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  siswa       Siswa    @relation(fields: [siswa_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, siswa_id, bulan])
+  @@map("tagihan_spp")
 }
