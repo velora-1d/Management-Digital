@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantType {
+  SEKOLAH
+  PESANTREN
+  HYBRID
+}
+
+enum TenantStatus {
+  TRIAL
+  AKTIF
+  SUSPEND
+  EXPIRED
+}
+
+enum UserStatus {
+  AKTIF
+  NONAKTIF
+}
+
+model Tenant {
+  id              String       @id @default(uuid())
+  subdomain       String       @unique
+  nama_institusi  String
+  jenis           TenantType
+  status          TenantStatus @default(TRIAL)
+  plan            String       @default("basic")
+  modules         Json?
+  feature_flags   Json?
+  trial_ends_at   DateTime?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  users           User[]
+  roles           Role[]
+
+  @@map("tenants")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  tenant_id     String
+  email         String
+  password_hash String
+  nama          String
+  no_wa         String?
+  status        UserStatus @default(AKTIF)
+  last_login    DateTime?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  tenant        Tenant     @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user_roles    UserRole[]
+
+  @@unique([tenant_id, email])
+  @@map("users")
+}
+
+model Role {
+  id            String     @id @default(uuid())
+  tenant_id     String
+  nama_role     String
+  deskripsi     String?
+  permissions   Json?
+  created_at    DateTime   @default(now())
+
+  tenant        Tenant     @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user_roles    UserRole[]
+
+  @@unique([tenant_id, nama_role])
+  @@map("roles")
+}
+
+model UserRole {
+  user_id       String
+  role_id       String
+  tenant_id     String
+
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+  @@map("user_roles")
+}
