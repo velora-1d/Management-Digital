@@ -1,0 +1,347 @@
+# UI / UX — PESANTREN: DASHBOARD UTAMA & PENDIDIKAN
+## EduVera — Platform Manajemen Pendidikan Terpadu
+
+---
+
+# DASHBOARD PESANTREN (Mudir / Pengasuh / Admin)
+
+## Layout Dashboard
+```
+┌──────────────────────────────────────────────────────────────┐
+│ TOPBAR: Logo EduVera | [Sekolah] [Pesantren] | 🔔 | Avatar  │
+├──────────────┬───────────────────────────────────────────────┤
+│ SIDEBAR      │  Dashboard Pesantren                         │
+│ ─────────    │  Selamat datang, KH. Ahmad | 8 Maret 2026   │
+│ 📊 Dashboard │                                               │
+│ ─────────    │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐        │
+│ Pendidikan   │  │Santri│ │Ustadz│ │Asrama│ │Izin  │        │
+│ Bendahara    │  │ 320  │ │  28  │ │   6  │ │Pending│       │
+│ Sekretaris   │  │aktif │ │      │ │      │ │  3   │        │
+└──────────────┴──└──────┘─└──────┘─└──────┘─└──────┘────────┘
+```
+
+## KPI Cards
+```
+┌────────────────────┐  ┌────────────────────┐
+│ 🧑 Total Santri    │  │ 🕌 Asrama Aktif    │
+│ 320 aktif          │  │ 6 asrama           │
+│ Mukim: 285         │  │ Kapasitas: 320/350 │
+│ Non-mukim: 35      │  │ 12 kamar hampir penuh│
+└────────────────────┘  └────────────────────┘
+
+┌────────────────────┐  ┌────────────────────┐
+│ 🌙 Absensi Malam   │  │ 📖 Tahfidz Global  │
+│ 96% Hadir          │  │ 68% On-track       │
+│ 12 Izin  3 Alpha   │  │ Target: 2 Juz/sem  │
+└────────────────────┘  └────────────────────┘
+
+┌────────────────────┐  ┌────────────────────┐
+│ ⚠️ Pelanggaran     │  │ 💰 Saldo Kas       │
+│ 5 baru hari ini    │  │ Rp 125.000.000     │
+│ 2 level BERAT!     │  │ Wakaf: Rp 45jt     │
+└────────────────────┘  └────────────────────┘
+
+┌────────────────────┐  ┌────────────────────┐
+│ 📋 Status Rapor    │  │ 💳 SPP Bulan Ini   │
+│ 180/320 published  │  │ 82% Lunas          │
+│ 56% selesai        │  │ Rp 28jt tunggakan  │
+└────────────────────┘  └────────────────────┘
+```
+
+## Charts Section
+```
+┌───────────────────────────────┐  ┌───────────────────────┐
+│ Tren Absensi Asrama 30 Hari   │  │ Santri per Marhalah   │
+│ Line Chart                    │  │ Donut Chart           │
+│ — Pagi  --- Malam             │  │ I'dadiyah: 80         │
+│ — Hadir --- Alpha             │  │ Ula: 90               │
+│                               │  │ Wustha: 85            │
+└───────────────────────────────┘  │ Ulya: 65              │
+                                   └───────────────────────┘
+
+┌───────────────────────────────┐  ┌───────────────────────┐
+│ Pelanggaran 6 Bulan           │  │ Progress Tahfidz      │
+│ Grouped Bar Chart             │  │ per Marhalah          │
+│ █ Ringan  █ Sedang  █ Berat   │  │ Bar Horizontal        │
+│                               │  │ I'dadiyah ████ 80%    │
+└───────────────────────────────┘  │ Ula ██████ 65%        │
+                                   └───────────────────────┘
+```
+
+---
+
+# DASHBOARD PENDIDIKAN PESANTREN
+
+## Halaman Data Santri
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Data Santri                          [ Import ] [ + Tambah ] │
+│ Beranda > Pendidikan > Data Santri                           │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari nama/kode...  [Marhalah ▼] [Status ▼] [Mukim ▼]   │
+│                                          [Export ▼]         │
+├────┬──────────────┬────────┬──────────┬──────────┬──────────┤
+│ #  │ Nama         │ Kode   │ Marhalah │ Mukim    │ Aksi    │
+├────┼──────────────┼────────┼──────────┼──────────┼──────────┤
+│ 1  │ Ali Hasan    │ PS-001 │ Wustha   │ ✅ Ya    │[Detail] │
+│ 2  │ Basyir Ahmad │ PS-002 │ Ula      │ ✅ Ya    │[Detail] │
+│ 3  │ Husain Umar  │ PS-003 │ I'dadiyah│ ❌ Tidak │[Detail] │
+└────┴──────────────┴────────┴──────────┴──────────┴──────────┘
+```
+
+## Halaman Detail Santri (Multi-Tab)
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ← Kembali   Detail Santri: Ali Hasan           [Edit]       │
+├──────────────────────────────────────────────────────────────┤
+│ ┌──────────┐  Nama: Ali Hasan                               │
+│ │  [Foto]  │  Kode: PS-001  |  NIK: 320...                 │
+│ │  Avatar  │  Marhalah: Wustha  |  Mukim: ✅ Ya            │
+│ └──────────┘  Asrama: Al-Fattah, Kamar 3A                  │
+│               Status: ● Aktif                               │
+├──────────────────────────────────────────────────────────────┤
+│[Profil][Wali][Kesehatan][Asrama][Kepesantrenan][Tahfidz][Rapor]│
+├──────────────────────────────────────────────────────────────┤
+│  TAB: Profil                                                │
+│  TTL: Cirebon, 5 Ramadhan 1430 H                            │
+│  Masuk: 1 Muharram 1444 H                                   │
+│  Asal: Cirebon, Jawa Barat                                  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Halaman Asrama & Kamar
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Data Asrama                                   [ + Asrama ]  │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────┐         │
+│  │ 🏠 Asrama Al-Fattah  │  │ 🏠 Asrama Al-Amin    │         │
+│  │ Putra — 6 kamar      │  │ Putra — 4 kamar      │         │
+│  │ Kapasitas: 60/70     │  │ Kapasitas: 40/40 PENUH│        │
+│  │ [Lihat Kamar]        │  │ [Lihat Kamar]        │         │
+│  └──────────────────────┘  └──────────────────────┘         │
+│                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────┐         │
+│  │ 🏠 Asrama Khadijah   │  │ 🏠 Asrama Aisyah     │         │
+│  │ Putri — 5 kamar      │  │ Putri — 5 kamar      │         │
+│  │ Kapasitas: 45/50     │  │ Kapasitas: 38/50     │         │
+│  │ [Lihat Kamar]        │  │ [Lihat Kamar]        │         │
+│  └──────────────────────┘  └──────────────────────┘         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Halaman Absensi Asrama
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Absensi Asrama                          [Simpan] [Rekap]    │
+│ Al-Fattah | Sesi: MALAM | Senin, 8 Maret 2026               │
+├──────────────────────────────────────────────────────────────┤
+│ Hadir: 52 | Izin: 5 (otomatis) | Alpha: 3  (Total: 60)     │
+├────┬──────────────┬────────┬────────┬────────┬──────────────┤
+│ #  │ Nama         │ Hadir  │ Izin   │ Alpha  │ Ket         │
+├────┼──────────────┼────────┼────────┼────────┼──────────────┤
+│ 1  │ Ali Hasan    │ ◉      │ ○      │ ○      │             │
+│ 2  │ Basyir Ahmad │ ○      │ 🔒 Izin│ ○      │ Izin pulang │
+│ 3  │ Husain Umar  │ ○      │ ○      │ ◉      │ [Ket...]   │
+└────┴──────────────┴────────┴────────┴────────┴──────────────┘
+🔒 = Status izin dikunci otomatis dari sistem perizinan
+```
+
+## Halaman Setoran Hafalan
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Setoran Hafalan                              [ + Setoran ]  │
+│ Selasa, 8 Maret 2026  |  Ustadz: Ust. Mukhlis              │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari santri binaan...                                    │
+├────┬──────────────┬──────────────┬───────────┬──────────────┤
+│ #  │ Nama         │ Setoran Hari │ Total Juz │ Target      │
+├────┼──────────────┼──────────────┼───────────┼──────────────┤
+│ 1  │ Ali Hasan    │ ✅ Sudah     │ 18.5 Juz  │ 20 Juz ✅  │
+│ 2  │ Basyir Ahmad │ ⏳ Belum     │ 12.0 Juz  │ 15 Juz ⚠️  │
+│ 3  │ Husain Umar  │ ✅ Sudah     │ 5.0 Juz   │ 10 Juz ❌  │
+└────┴──────────────┴──────────────┴───────────┴──────────────┘
+```
+
+## Form Input Setoran
+```
+┌──────────────────────────────────────┐
+│  Input Setoran Hafalan               │
+│  Santri: Basyir Ahmad                │
+│  ───────────────────────────────────  │
+│  Jenis Setoran *                     │
+│  ◉ Baru   ○ Murajaah                │
+│                                      │
+│  Dari Surah - Ayat *                 │
+│  [Al-Baqarah (2) ▼]  Ayat [1   ]   │
+│                                      │
+│  Sampai Surah - Ayat *               │
+│  [Al-Baqarah (2) ▼]  Ayat [50  ]   │
+│                                      │
+│  Nilai Awal *                        │
+│  ○ Lancar  ○ Kurang  ○ Ulang        │
+│                                      │
+│  [ Batal ]         [ Simpan ]        │
+└──────────────────────────────────────┘
+```
+
+## Halaman Penilaian Tahfidz
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Penilaian Tahfidz                          [ + Input Nilai ]│
+│ Semester Ganjil 1446 H  |  Marhalah: Wustha                 │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari...   [Status ▼]                                     │
+├──────────────┬────────────┬────────────┬────────┬───────────┤
+│ Nama Santri  │ Kelancaran │ Tajwid     │ Konsis.│ Status   │
+├──────────────┼────────────┼────────────┼────────┼───────────┤
+│ Ali Hasan    │ 90.0       │ 88.0       │ 92.0   │ ✅ Valid  │
+│ Basyir Ahmad │ -          │ -          │ -      │ ⬜ Belum  │
+│ Husain Umar  │ 75.0       │ 80.0       │ 70.0   │ 📝 Draft  │
+└──────────────┴────────────┴────────────┴────────┴───────────┘
+```
+
+## Form Penilaian Tahfidz
+```
+┌──────────────────────────────────────────┐
+│  Input Penilaian Tahfidz                 │
+│  Santri: Basyir Ahmad | Wustha           │
+│  ─────────────────────────────────────── │
+│  Nilai Kelancaran * (0-100)              │
+│  [85                                ]   │
+│                                          │
+│  Nilai Tajwid * (0-100)                  │
+│  [82                                ]   │
+│                                          │
+│  Nilai Konsistensi * (0-100)             │
+│  [88                                ]   │
+│                                          │
+│  Predikat: Jayyid Jiddan (auto)         │
+│                                          │
+│  Narasi Penilaian * (min. 10 karakter)  │
+│  ┌──────────────────────────────────┐   │
+│  │ Santri menunjukkan peningkatan   │   │
+│  │ tajwid yang baik...              │   │
+│  └──────────────────────────────────┘   │
+│                                          │
+│  [ Simpan Draft ]  [ Kirim ke Validasi ] │
+└──────────────────────────────────────────┘
+```
+
+## Halaman Kepesantrenan — Pelanggaran
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Riwayat Pelanggaran                      [ + Input ]        │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari santri...  [Level ▼] [Status ▼] [Periode ▼]       │
+├────────┬──────────────┬───────────────┬────────┬────────────┤
+│ Tgl    │ Santri       │ Pelanggaran   │ Poin   │ Level     │
+├────────┼──────────────┼───────────────┼────────┼────────────┤
+│ 8/3/26 │ Ahmad Farid  │ Tidak shalat  │ 10 poin│ 🔴 Berat  │
+│ 8/3/26 │ Husain Umar  │ Keluar tanpa izin│ 5 pts│ 🟡 Sedang│
+│ 7/3/26 │ Basyir Ahmad │ Terlambat     │ 2 poin │ 🟢 Ringan │
+└────────┴──────────────┴───────────────┴────────┴────────────┘
+```
+
+## Halaman Perizinan Santri
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Perizinan Santri                                            │
+├──────────────────────────────────────────────────────────────┤
+│ [Pending (3)] [Disetujui] [Ditolak] [Semua]                 │
+├────────┬──────────────┬───────────┬────────────┬────────────┤
+│ Tgl    │ Santri       │ Jenis     │ Tanggal    │ Aksi      │
+├────────┼──────────────┼───────────┼────────────┼────────────┤
+│ 8/3/26 │ Ali Hasan    │ Pulang    │ 9-10 Mar   │ [✅][❌]  │
+│ 8/3/26 │ Farid Hasan  │ Keluar    │ 8 Mar sore │ [✅][❌]  │
+│ 7/3/26 │ Ahmad Farid  │ Sakit     │ 7-8 Mar    │ [✅][❌]  │
+└────────┴──────────────┴───────────┴────────────┴────────────┘
+```
+
+## Halaman Kesehatan Santri
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Kesehatan Santri                                            │
+├──────────────────────────────────────────────────────────────┤
+│ [Pemeriksaan] [Rekam Medis] [Stok Obat] [Rujukan RS]        │
+├──────────────────────────────────────────────────────────────┤
+│ TAB: Pemeriksaan                [ + Catat Pemeriksaan ]     │
+│                                                              │
+│ Santri Sakit Hari Ini: 4 orang                              │
+├────────┬──────────────┬──────────────┬──────────┬───────────┤
+│ Tgl    │ Santri       │ Keluhan      │ Tindakan │ Status   │
+├────────┼──────────────┼──────────────┼──────────┼───────────┤
+│ 8/3/26 │ Ali Hasan    │ Demam        │ Istirahat│ Aktif   │
+│ 8/3/26 │ Basyir Ahmad │ Sakit kepala │ Obat     │ Aktif   │
+│ 7/3/26 │ Umar Said    │ Diare        │ Dirujuk  │ Sembuh  │
+└────────┴──────────────┴──────────────┴──────────┴───────────┘
+```
+
+## Halaman Stok Obat
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Stok Obat Klinik                      [ + Tambah Stok ]     │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari obat...                                             │
+├──────────────────────┬────────────┬────────────┬────────────┤
+│ Nama Obat            │ Stok       │ Min. Stok  │ Status    │
+├──────────────────────┼────────────┼────────────┼────────────┤
+│ Paracetamol 500mg    │ 120 strip  │ 20 strip   │ ✅ Aman  │
+│ Amoxicillin 500mg    │ 8 strip    │ 10 strip   │ ⚠️ Habis │
+│ Oralit               │ 50 sachet  │ 10 sachet  │ ✅ Aman  │
+│ Antasida             │ 15 strip   │ 15 strip   │ ⚠️ Limit │
+└──────────────────────┴────────────┴────────────┴────────────┘
+⚠️ 2 obat hampir atau sudah habis!
+```
+
+## Halaman Diniyah — Halaqah
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Halaqah                                      [ + Halaqah ]  │
+├──────────────────────────────────────────────────────────────┤
+│ 🔍 Cari...  [Marhalah ▼]  [Ustadz ▼]                       │
+├──────┬────────────────┬──────────────┬────────────┬─────────┤
+│ #    │ Nama Halaqah   │ Kitab        │ Ustadz     │ Anggota│
+├──────┼────────────────┼──────────────┼────────────┼─────────┤
+│ 1    │ Fiqih Wustha A │ Fathul Qarib │ Ust. Amin  │ 15 org │
+│ 2    │ Nahwu Ula B    │ Jurumiyah    │ Ust. Farid │ 18 org │
+│ 3    │ Tahfidz Ulya   │ Al-Quran     │ Ust. Mukh. │ 12 org │
+└──────┴────────────────┴──────────────┴────────────┴─────────┘
+```
+
+## Halaman Program Kegiatan
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Program Kegiatan                           [ + Program ]    │
+├──────────────────────────────────────────────────────────────┤
+│ [Upcoming] [Berlangsung] [Selesai] [Semua]                  │
+├──────────┬──────────────────────┬──────────────┬────────────┤
+│ Tanggal  │ Nama Program         │ Jenis        │ Status    │
+├──────────┼──────────────────────┼──────────────┼────────────┤
+│ 15 Mar   │ Dauroh Fikih Ramadhan│ Dauroh       │ 🔜 7 hari │
+│ 1 Apr    │ Haflah Akhirusanah   │ Haflah       │ 🔜 24 hr  │
+│ 1 Mar    │ Khataman Al-Quran    │ Khataman     │ ✅ Selesai │
+└──────────┴──────────────────────┴──────────────┴────────────┘
+```
+
+## Halaman E-Rapor Pesantren
+```
+┌──────────────────────────────────────────────────────────────┐
+│ E-Rapor Pesantren                                           │
+│ Semester Ganjil 1446 H                                      │
+├──────────────────────────────────────────────────────────────┤
+│  LANGKAH: [1 Setup] ──► [2 Input Nilai] ──► [3 Publish]    │
+│                ✅               ⚠️                ◯          │
+├──────────────────────────────────────────────────────────────┤
+│  Kelengkapan per Marhalah:                                   │
+│                                                              │
+│  I'dadiyah ████████████ 100% ✅ Siap Generate               │
+│  Ula        ██████████░░  85% ⚠️ 12 nilai belum valid       │
+│  Wustha     ████████████ 100% ✅ Siap Generate               │
+│  Ulya       ██████░░░░░░  52% ❌ Banyak belum lengkap       │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│          [Generate Marhalah Siap] [Generate Semua]          │
+└──────────────────────────────────────────────────────────────┘
+```
