@@ -9,6 +9,7 @@ export async function GET() {
   try {
     console.log("Fetching users from DB...");
     const users = await prisma.user.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         name: true,
