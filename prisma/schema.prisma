@@ -1,0 +1,638 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// ============================================================
+// AUTH & USER
+// ============================================================
+
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String
+  role       String    @default("admin")
+  status     String    @default("aktif")
+  unitId     String    @default("") @map("unit_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  auditLogs         AuditLog[]
+  receivedPayments  InfaqPayment[]     @relation("PaymentReceiver")
+  transactions      GeneralTransaction[] @relation("TransactionUser")
+
+  @@map("users")
+}
+
+// ============================================================
+// AKADEMIK
+// ============================================================
+
+model AcademicYear {
+  id        Int       @id @default(autoincrement())
+  year      String
+  isActive  Boolean   @default(false) @map("is_active")
+  startDate String?   @map("start_date")
+  endDate   String?   @map("end_date")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  classrooms          Classroom[]
+  infaqBills          InfaqBill[]
+  reRegistrations     ReRegistration[]
+  studentEnrollments  StudentEnrollment[]
+
+  @@map("academic_years")
+}
+
+model Classroom {
+  id             Int       @id @default(autoincrement())
+  name           String
+  academicYearId Int?      @map("academic_year_id")
+  waliKelasId    Int?      @map("wali_kelas_id")
+  infaqNominal   Float     @default(0) @map("infaq_nominal")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  academicYear  AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  waliKelas     Employee?     @relation(fields: [waliKelasId], references: [id], onDelete: SetNull)
+  students      Student[]
+  studentEnrollments StudentEnrollment[]
+
+  @@map("classrooms")
+}
+
+// ============================================================
+// SISWA
+// ============================================================
+
+model Student {
+  id           Int       @id @default(autoincrement())
+  nisn         String    @default("")
+  nis          String    @default("")
+  nik          String    @default("")
+  noKk         String    @default("") @map("no_kk")
+  name         String
+  gender       String    @default("L")
+  category     String    @default("reguler")
+  classroomId  Int?      @map("classroom_id")
+  status       String    @default("aktif")
+  entryDate    String    @default("") @map("entry_date")
+  unitId       String    @default("") @map("unit_id")
+  phone        String    @default("")
+  address      String    @default("")
+  birthPlace   String    @default("") @map("birth_place")
+  birthDate    String    @default("") @map("birth_date")
+  infaqStatus  String    @default("reguler") @map("infaq_status")
+  infaqNominal Float     @default(0) @map("infaq_nominal")
+
+  // === A. Identitas Murid (Dapodik) ===
+  familyStatus     String    @default("") @map("family_status")
+  siblingCount     Int?      @map("sibling_count")
+  childPosition    Int?      @map("child_position")
+  religion         String    @default("Islam")
+  village          String    @default("")
+  district         String    @default("")
+  residenceType    String    @default("") @map("residence_type")
+  transportation   String    @default("")
+  studentPhone     String    @default("") @map("student_phone")
+
+  // === B. Data Periodik ===
+  height           Int?
+  weight           Int?
+  distanceToSchool String    @default("") @map("distance_to_school")
+  travelTime       Int?      @map("travel_time")
+
+  // === C. Identitas Orang Tua ===
+  fatherName       String    @default("") @map("father_name")
+  fatherBirthPlace String    @default("") @map("father_birth_place")
+  fatherBirthDate  String    @default("") @map("father_birth_date")
+  fatherNik        String    @default("") @map("father_nik")
+  fatherEducation  String    @default("") @map("father_education")
+  fatherOccupation String    @default("") @map("father_occupation")
+  motherName       String    @default("") @map("mother_name")
+  motherBirthPlace String    @default("") @map("mother_birth_place")
+  motherBirthDate  String    @default("") @map("mother_birth_date")
+  motherNik        String    @default("") @map("mother_nik")
+  motherEducation  String    @default("") @map("mother_education")
+  motherOccupation String    @default("") @map("mother_occupation")
+  parentIncome     String    @default("") @map("parent_income")
+
+  // === D. Wali Murid ===
+  guardianName       String    @default("") @map("guardian_name")
+  guardianBirthPlace String    @default("") @map("guardian_birth_place")
+  guardianBirthDate  String    @default("") @map("guardian_birth_date")
+  guardianNik        String    @default("") @map("guardian_nik")
+  guardianEducation  String    @default("") @map("guardian_education")
+  guardianOccupation String    @default("") @map("guardian_occupation")
+  guardianAddress    String    @default("") @map("guardian_address")
+  guardianPhone      String    @default("") @map("guardian_phone")
+
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  classroom    Classroom? @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  infaqBills   InfaqBill[]
+  savings      StudentSaving[]
+  enrollments  StudentEnrollment[]
+  reRegistrations ReRegistration[]
+
+  @@index([classroomId])
+  @@index([deletedAt])
+  @@index([status])
+  @@index([nisn])
+  @@map("students")
+}
+
+// ============================================================
+// PPDB & DAFTAR ULANG
+// ============================================================
+
+model PpdbRegistration {
+  id                 Int       @id @default(autoincrement())
+  formNo             String    @default("") @map("form_no")
+  name               String
+  gender             String    @default("L")
+  birthPlace         String    @default("") @map("birth_place")
+  birthDate          String    @default("") @map("birth_date")
+  nik                String    @default("")
+  noKk               String    @default("") @map("no_kk")
+  nisn               String    @default("")
+  phone              String    @default("")
+  address            String    @default("")
+  previousSchool     String    @default("") @map("previous_school")
+  targetClassroom    String    @default("") @map("target_classroom")
+  status             String    @default("pending")
+  registrationSource String    @default("offline") @map("registration_source")
+  notes              String    @default("")
+  unitId             String    @default("") @map("unit_id")
+
+  // === A. Identitas Calon Murid (Dapodik) ===
+  familyStatus     String    @default("") @map("family_status")
+  siblingCount     Int?      @map("sibling_count")
+  childPosition    Int?      @map("child_position")
+  religion         String    @default("Islam")
+  village          String    @default("")
+  district         String    @default("")
+  residenceType    String    @default("") @map("residence_type")
+  transportation   String    @default("")
+  studentPhone     String    @default("") @map("student_phone")
+
+  // === B. Data Periodik ===
+  height           Int?
+  weight           Int?
+  distanceToSchool String    @default("") @map("distance_to_school")
+  travelTime       Int?      @map("travel_time")
+
+  // === C. Identitas Orang Tua ===
+  fatherName       String    @default("") @map("father_name")
+  fatherBirthPlace String    @default("") @map("father_birth_place")
+  fatherBirthDate  String    @default("") @map("father_birth_date")
+  fatherNik        String    @default("") @map("father_nik")
+  fatherEducation  String    @default("") @map("father_education")
+  fatherOccupation String    @default("") @map("father_occupation")
+  motherName       String    @default("") @map("mother_name")
+  motherBirthPlace String    @default("") @map("mother_birth_place")
+  motherBirthDate  String    @default("") @map("mother_birth_date")
+  motherNik        String    @default("") @map("mother_nik")
+  motherEducation  String    @default("") @map("mother_education")
+  motherOccupation String    @default("") @map("mother_occupation")
+  parentIncome     String    @default("") @map("parent_income")
+
+  // === D. Wali Murid ===
+  guardianName       String    @default("") @map("guardian_name")
+  guardianBirthPlace String    @default("") @map("guardian_birth_place")
+  guardianBirthDate  String    @default("") @map("guardian_birth_date")
+  guardianNik        String    @default("") @map("guardian_nik")
+  guardianEducation  String    @default("") @map("guardian_education")
+  guardianOccupation String    @default("") @map("guardian_occupation")
+  guardianAddress    String    @default("") @map("guardian_address")
+  guardianPhone      String    @default("") @map("guardian_phone")
+
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  @@index([status, deletedAt])
+  @@index([deletedAt])
+  @@map("ppdb_registrations")
+}
+
+model ReRegistration {
+  id                 Int       @id @default(autoincrement())
+  studentId          Int?      @map("student_id")
+  academicYearId     Int?      @map("academic_year_id")
+  status             String    @default("pending")
+  registrationSource String    @default("offline") @map("registration_source")
+  confirmedAt        String?   @map("confirmed_at")
+  notes              String    @default("")
+  unitId             String    @default("") @map("unit_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  student       Student?      @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  academicYear  AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@map("re_registrations")
+}
+
+model RegistrationPayment {
+  id          Int       @id @default(autoincrement())
+  payableType String    @default("") @map("payable_type")
+  payableId   Int?      @map("payable_id")
+  paymentType String    @default("") @map("payment_type")
+  nominal     Float     @default(0)
+  isPaid      Boolean   @default(false) @map("is_paid")
+  paidAt      String?   @map("paid_at")
+  notes       String    @default("")
+  unitId      String    @default("") @map("unit_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([payableType, payableId])
+  @@index([deletedAt])
+  @@map("registration_payments")
+}
+
+// ============================================================
+// KEUANGAN — INFAQ / SPP
+// ============================================================
+
+model TransactionCategory {
+  id          Int       @id @default(autoincrement())
+  name        String
+  type        String    @default("in")
+  description String    @default("")
+  unitId      String    @default("") @map("unit_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  transactions GeneralTransaction[]
+
+  @@map("transaction_categories")
+}
+
+model InfaqBill {
+  id             Int       @id @default(autoincrement())
+  studentId      Int?      @map("student_id")
+  academicYearId Int?      @map("academic_year_id")
+  month          String    @default("")
+  year           String    @default("")
+  nominal        Float     @default(0)
+  status         String    @default("belum_lunas")
+  unitId         String    @default("") @map("unit_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  student       Student?      @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  academicYear  AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  payments      InfaqPayment[]
+
+  @@unique([studentId, month, year, academicYearId], name: "unique_bill_per_student_month")
+  @@index([studentId])
+  @@index([month])
+  @@index([status, deletedAt])
+  @@map("infaq_bills")
+}
+
+model InfaqPayment {
+  id             Int       @id @default(autoincrement())
+  billId         Int?      @map("bill_id")
+  cashAccountId  Int?      @map("cash_account_id")
+  paymentMethod  String    @default("tunai") @map("payment_method")
+  amountPaid     Float     @default(0) @map("amount_paid")
+  paymentDate    String    @default("") @map("payment_date")
+  receiverId     Int?      @map("receiver_id")
+  notes          String    @default("")
+  unitId         String    @default("") @map("unit_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  bill        InfaqBill?   @relation(fields: [billId], references: [id], onDelete: Restrict)
+  cashAccount CashAccount? @relation(fields: [cashAccountId], references: [id], onDelete: SetNull)
+  receiver    User?        @relation("PaymentReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+
+  @@map("infaq_payments")
+}
+
+// ============================================================
+// KEUANGAN — TABUNGAN
+// ============================================================
+
+model StudentSaving {
+  id           Int       @id @default(autoincrement())
+  studentId    Int?      @map("student_id")
+  type         String    @default("")
+  amount       Float     @default(0)
+  balanceAfter Float     @default(0) @map("balance_after")
+  date         String    @default("")
+  description  String    @default("")
+  status       String    @default("active")
+  unitId       String    @default("") @map("unit_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  student  Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([status, deletedAt])
+  @@index([type])
+  @@map("student_savings")
+}
+
+// ============================================================
+// KEUANGAN — JURNAL UMUM & KAS
+// ============================================================
+
+model GeneralTransaction {
+  id                    Int       @id @default(autoincrement())
+  transactionCategoryId Int?      @map("transaction_category_id")
+  cashAccountId         Int?      @map("cash_account_id")
+  userId                Int?      @map("user_id")
+  type                  String    @default("in")
+  amount                Float     @default(0)
+  description           String    @default("")
+  date                  String    @default("") @map("transaction_date")
+  status                String    @default("valid")
+  referenceType         String    @default("") @map("reference_type")
+  referenceId           String    @default("") @map("reference_id")
+  wakafDonorId          Int?      @map("wakaf_donor_id")
+  wakafPurposeId        Int?      @map("wakaf_purpose_id")
+  unitId                String    @default("") @map("unit_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  category     TransactionCategory? @relation(fields: [transactionCategoryId], references: [id], onDelete: SetNull)
+  cashAccount  CashAccount?         @relation(fields: [cashAccountId], references: [id], onDelete: SetNull)
+  user         User?                @relation("TransactionUser", fields: [userId], references: [id], onDelete: SetNull)
+  wakafDonor   WakafDonor?          @relation(fields: [wakafDonorId], references: [id], onDelete: SetNull)
+  wakafPurpose WakafPurpose?        @relation(fields: [wakafPurposeId], references: [id], onDelete: SetNull)
+
+  @@index([type, deletedAt])
+  @@index([date])
+  @@index([transactionCategoryId])
+  @@index([deletedAt])
+  @@map("general_transactions")
+}
+
+model CashAccount {
+  id        Int       @id @default(autoincrement())
+  name      String
+  balance   Float     @default(0)
+  unitId    String    @default("") @map("unit_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  transactions   GeneralTransaction[]
+  infaqPayments  InfaqPayment[]
+
+  @@map("cash_accounts")
+}
+
+// ============================================================
+// KEPEGAWAIAN & PAYROLL
+// ============================================================
+
+model Employee {
+  id         Int       @id @default(autoincrement())
+  name       String
+  nip        String    @default("")
+  type       String    @default("guru")
+  position   String    @default("")
+  status     String    @default("aktif")
+  phone      String    @default("")
+  address    String    @default("")
+  joinDate   String    @default("") @map("join_date")
+  baseSalary Float     @default(0) @map("base_salary")
+  unitId     String    @default("") @map("unit_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  salaries       EmployeeSalary[]
+  payrolls       Payroll[]
+  waliKelasOf    Classroom[]
+
+  @@index([type, deletedAt])
+  @@index([status])
+  @@map("employees")
+}
+
+model SalaryComponent {
+  id            Int       @id @default(autoincrement())
+  name          String
+  type          String    @default("earning")
+  defaultAmount Float     @default(0) @map("default_amount")
+  unitId        String    @default("") @map("unit_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  employeeSalaries EmployeeSalary[]
+  payrollDetails   PayrollDetail[]
+
+  @@map("salary_components")
+}
+
+model EmployeeSalary {
+  id          Int       @id @default(autoincrement())
+  employeeId  Int?      @map("employee_id")
+  componentId Int?      @map("component_id")
+  amount      Float     @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  employee   Employee?        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  component  SalaryComponent? @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@map("employee_salaries")
+}
+
+model Payroll {
+  id             Int       @id @default(autoincrement())
+  employeeId     Int?      @map("employee_id")
+  month          String    @default("")
+  year           String    @default("")
+  baseSalary     Float     @default(0) @map("base_salary")
+  totalAllowance Float     @default(0) @map("total_allowance")
+  totalDeduction Float     @default(0) @map("total_deduction")
+  netSalary      Float     @default(0) @map("net_salary")
+  status         String    @default("draft")
+  paidAt         String?   @map("paid_at")
+  unitId         String    @default("") @map("unit_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  employee  Employee?       @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  details   PayrollDetail[]
+
+  @@index([employeeId])
+  @@index([month, year])
+  @@index([deletedAt])
+  @@map("payrolls")
+}
+
+model PayrollDetail {
+  id            Int       @id @default(autoincrement())
+  payrollId     Int?      @map("payroll_id")
+  componentId   Int?      @map("component_id")
+  componentName String    @default("") @map("component_name")
+  type          String    @default("")
+  amount        Float     @default(0)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  payroll    Payroll?          @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  component  SalaryComponent?  @relation(fields: [componentId], references: [id], onDelete: SetNull)
+
+  @@map("payroll_details")
+}
+
+// ============================================================
+// INVENTARIS
+// ============================================================
+
+model Inventory {
+  id              Int       @id @default(autoincrement())
+  name            String
+  code            String    @default("")
+  category        String    @default("")
+  location        String    @default("")
+  quantity        Int       @default(0)
+  condition       String    @default("baik")
+  acquisitionDate String    @default("") @map("acquisition_date")
+  acquisitionCost Float     @default(0) @map("acquisition_cost")
+  notes           String    @default("")
+  unitId          String    @default("") @map("unit_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  logs InventoryLog[]
+
+  @@map("inventories")
+}
+
+model InventoryLog {
+  id             Int       @id @default(autoincrement())
+  inventoryId    Int?      @map("inventory_id")
+  type           String    @default("")
+  quantityChange Int       @default(0) @map("quantity_change")
+  description    String    @default("")
+  loggedBy       String    @default("") @map("logged_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  inventory  Inventory? @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_logs")
+}
+
+// ============================================================
+// ENROLLMENT
+// ============================================================
+
+model StudentEnrollment {
+  id             Int       @id @default(autoincrement())
+  studentId      Int?      @map("student_id")
+  classroomId    Int?      @map("classroom_id")
+  academicYearId Int?      @map("academic_year_id")
+  enrollmentType String    @default("") @map("enrollment_type")
+  notes          String    @default("")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  student       Student?      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroom     Classroom?    @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  academicYear  AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@map("student_enrollments")
+}
+
+// ============================================================
+// WAKAF
+// ============================================================
+
+model WakafDonor {
+  id        Int       @id @default(autoincrement())
+  name      String
+  phone     String    @default("")
+  address   String    @default("")
+  unitId    String    @default("") @map("unit_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  transactions GeneralTransaction[]
+
+  @@map("wakaf_donors")
+}
+
+model WakafPurpose {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String    @default("")
+  targetAmount    Float     @default(0) @map("target_amount")
+  collectedAmount Float     @default(0) @map("collected_amount")
+  unitId          String    @default("") @map("unit_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  transactions GeneralTransaction[]
+
+  @@map("wakaf_purposes")
+}
+
+// ============================================================
+// SETTINGS & AUDIT
+// ============================================================
+
+model SchoolSetting {
+  id        Int      @id @default(autoincrement())
+  key       String
+  value     String   @default("")
+  unitId    String   @default("") @map("unit_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("school_settings")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  action    String   @default("")
+  modelType String   @default("") @map("model_type")
+  modelId   String   @default("") @map("model_id")
+  oldValues String   @default("") @map("old_values")
+  newValues String   @default("") @map("new_values")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}

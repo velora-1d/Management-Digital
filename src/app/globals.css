@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Outfit", sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Sidebar */
+.sidebar-menu {
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+}
+.sidebar-menu:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+.sidebar-menu.active {
+  background: rgb(30, 27, 75);
+  border-left-color: #f59e0b;
+}
+.sidebar-menu.active .menu-icon {
+  color: #f59e0b;
+}
+.sidebar-menu.active .menu-text {
+  color: #fbbf24;
+}
+
+/* KPI Cards */
+.kpi-card {
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+.kpi-card:hover {
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+  transform: translateY(-3px);
+}
+.kpi-card:hover .kpi-icon {
+  transform: scale(1.1);
+}
+.kpi-icon {
+  transition: transform 0.25s ease;
+}
+
+/* Animation delays for staggered cards */
+.anim-hero {
+  animation: fadeIn 0.5s ease-out both;
+}
+.anim-card-1 {
+  animation: fadeInUp 0.4s ease-out 0.1s both;
+}
+.anim-card-2 {
+  animation: fadeInUp 0.4s ease-out 0.18s both;
+}
+.anim-card-3 {
+  animation: fadeInUp 0.4s ease-out 0.26s both;
+}
+.anim-card-4 {
+  animation: fadeInUp 0.4s ease-out 0.34s both;
+}
+.anim-card-5 {
+  animation: fadeInUp 0.4s ease-out 0.42s both;
+}
+.anim-card-6 {
+  animation: fadeInUp 0.4s ease-out 0.5s both;
+}
+.anim-card-7 {
+  animation: fadeInUp 0.4s ease-out 0.58s both;
+}
+.anim-card-8 {
+  animation: fadeInUp 0.4s ease-out 0.66s both;
+}
+.anim-card-9 {
+  animation: fadeInUp 0.4s ease-out 0.74s both;
+}
+.anim-card-10 {
+  animation: fadeInUp 0.4s ease-out 0.82s both;
+}
+.anim-section {
+  animation: fadeInUp 0.5s ease-out 0.9s both;
+}
+.anim-chart {
+  animation: fadeInUp 0.5s ease-out 1s both;
+}
+
+/* Sidebar scrollbar */
+#sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+#sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar-mobile-hidden {
+    display: none;
+  }
+  .sidebar-mobile-show {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+}
+
+/* Skeleton Shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Progress Bar */
+@keyframes progressBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Page transition overlay */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.page-enter {
+  animation: pageEnter 0.3s ease-out both;
+}
+
+/* Page transition classes — gunakan animation agar transform
+   otomatis hilang setelah selesai (fill-mode: none).
+   Ini mencegah kerusakan position:fixed di modal children. */
+@keyframes pageFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-fade-out {
+  animation: pageFadeOut 0.15s ease-out forwards;
+}
+.page-fade-in {
+  animation: pageFadeIn 0.3s ease-out forwards;
+}

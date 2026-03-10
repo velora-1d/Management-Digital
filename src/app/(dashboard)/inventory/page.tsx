@@ -1,0 +1,362 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import Swal from "sweetalert2";
+import Pagination from "@/components/Pagination";
+
+export default function InventoryPage() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [conditionFilter, setConditionFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Row Action Dropdown state
+  const [openActionId, setOpenActionId] = useState<number | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside() {
+      setOpenActionId(null);
+    }
+    if (openActionId !== null) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [openActionId]);
+
+  const loadInventory = useCallback(async (q = search, cond = conditionFilter, p = page) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(p), limit: String(limit) });
+      if (q) params.set("q", q);
+      if (cond) params.set("condition", cond);
+      const res = await fetch(`/api/inventory?${params}`);
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data || []);
+        if (json.pagination) {
+          setTotalPages(json.pagination.totalPages);
+          setTotal(json.pagination.total);
+        }
+      } else {
+        setData(json || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, conditionFilter, page, limit]);
+
+  useEffect(() => {
+    loadInventory();
+  }, [page]);
+
+  const totalValue = data.reduce(
+    (acc, val) => acc + (val.quantity || 0) * (val.acquisitionCost || 0),
+    0
+  );
+
+  const handleAdd = () => {
+    Swal.fire({
+      title: "Tambah Aset",
+      html: `
+        <div style="text-align:left;display:grid;gap:0.75rem;">
+          <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
+          <input id="swal-inv-name" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+          
+          <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
+          <input id="swal-inv-cat" class="swal2-input" placeholder="Mebel, Elektronik..." style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+          
+          <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
+          <input id="swal-inv-qty" type="number" class="swal2-input" value="1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+          
+          <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
+          <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
+            <option value="Baik">Baik</option>
+            <option value="Rusak Ringan">Rusak Ringan</option>
+            <option value="Rusak Berat">Rusak Berat</option>
+          </select></div>
+          
+          <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
+          <input id="swal-inv-loc" class="swal2-input" placeholder="Ruang Kelas 1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+
+          <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan (Per item)</label>
+          <input id="swal-inv-cost" type="number" class="swal2-input" value="0" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Simpan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#3b82f6",
+      preConfirm: () => {
+        return {
+          name: (document.getElementById("swal-inv-name") as HTMLInputElement).value,
+          category: (document.getElementById("swal-inv-cat") as HTMLInputElement).value,
+          quantity: parseInt((document.getElementById("swal-inv-qty") as HTMLInputElement).value) || 1,
+          condition: (document.getElementById("swal-inv-cond") as HTMLSelectElement).value,
+          location: (document.getElementById("swal-inv-loc") as HTMLInputElement).value,
+          acquisitionCost: parseInt((document.getElementById("swal-inv-cost") as HTMLInputElement).value) || 0,
+        };
+      },
+    }).then(async (r) => {
+      if (r.isConfirmed) {
+        try {
+          const res = await fetch("/api/inventory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(r.value),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            Swal.fire("Berhasil", "Aset ditambahkan.", "success");
+            loadInventory();
+          } else {
+            Swal.fire("Gagal", data.error || "Gagal menyimpan aset", "error");
+          }
+        } catch (e) {
+          Swal.fire("Error", "Gagal menghubungi server", "error");
+        }
+      }
+    });
+  };
+
+  const handleEdit = async (id: number) => {
+    Swal.fire({ title: "Memuat...", didOpen: () => Swal.showLoading() });
+    try {
+      const res = await fetch(`/api/inventory/${id}`);
+      const item = await res.json();
+      Swal.close();
+
+      if (item.error) {
+        Swal.fire("Error", item.error, "error");
+        return;
+      }
+
+      Swal.fire({
+        title: "Edit Aset",
+        html: `
+          <div style="text-align:left;display:grid;gap:0.75rem;">
+            <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
+            <input id="swal-inv-name" class="swal2-input" value="${item.name || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            
+            <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
+            <input id="swal-inv-cat" class="swal2-input" value="${item.category || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            
+            <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
+            <input id="swal-inv-qty" type="number" class="swal2-input" value="${item.quantity || 1}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            
+            <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
+            <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
+              <option value="Baik" ${item.condition === "Baik" ? "selected" : ""}>Baik</option>
+              <option value="Rusak Ringan" ${item.condition === "Rusak Ringan" ? "selected" : ""}>Rusak Ringan</option>
+              <option value="Rusak Berat" ${item.condition === "Rusak Berat" ? "selected" : ""}>Rusak Berat</option>
+            </select></div>
+            
+            <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
+            <input id="swal-inv-loc" class="swal2-input" value="${item.location || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+
+            <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan</label>
+            <input id="swal-inv-cost" type="number" class="swal2-input" value="${item.acquisitionCost || 0}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Simpan",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#3b82f6",
+        preConfirm: () => {
+          return {
+            name: (document.getElementById("swal-inv-name") as HTMLInputElement).value,
+            category: (document.getElementById("swal-inv-cat") as HTMLInputElement).value,
+            quantity: parseInt((document.getElementById("swal-inv-qty") as HTMLInputElement).value) || 1,
+            condition: (document.getElementById("swal-inv-cond") as HTMLSelectElement).value,
+            location: (document.getElementById("swal-inv-loc") as HTMLInputElement).value,
+            acquisitionCost: parseInt((document.getElementById("swal-inv-cost") as HTMLInputElement).value) || 0,
+          };
+        },
+      }).then(async (r) => {
+        if (r.isConfirmed) {
+          try {
+            const resUpdate = await fetch(`/api/inventory/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(r.value),
+            });
+            const dataUpdate = await resUpdate.json();
+            if (resUpdate.ok) {
+              Swal.fire("Berhasil", "Aset diperbarui.", "success");
+              loadInventory();
+            } else {
+              Swal.fire("Gagal", dataUpdate.error || "Gagal update aset", "error");
+            }
+          } catch (e) {
+            Swal.fire("Error", "Gagal menghubungi server", "error");
+          }
+        }
+      });
+    } catch (e) {
+      Swal.fire("Error", "Gagal memuat detail aset", "error");
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    Swal.fire({
+      title: "Write-off Aset?",
+      text: "Aset ini akan dihapus permanen.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+    }).then(async (r) => {
+      if (r.isConfirmed) {
+        try {
+          const res = await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+          const json = await res.json();
+          if (res.ok && json.success) {
+            Swal.fire("Terhapus", "Data aset berhasil dihapus.", "success");
+            loadInventory();
+          } else {
+            Swal.fire("Gagal", json.error || "Error", "error");
+          }
+        } catch (error) {
+          Swal.fire("Error", "Gagal menghubungi server", "error");
+        }
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Hero Header */}
+      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#3b82f6 50%,#6366f1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
+        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
+        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
+                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              </div>
+              <div>
+                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.5rem", color: "#fff", margin: 0 }}>Inventaris Madrasah</h2>
+                <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", marginTop: "0.25rem" }}>Pencatatan & Pengelolaan Aset Barang Madrasah</p>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 text-right">
+              <span className="block text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Total Nilai Aset</span>
+              <span className="font-heading font-extrabold text-2xl text-white">Rp {totalValue.toLocaleString("id-ID")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabel Inventaris */}
+      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", borderRadius: "50%" }}></div>
+            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Aset</h4>
+          </div>
+          <button onClick={handleAdd} style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", fontSize: "0.75rem", fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#0ea5e9,#3b82f6)", border: "none", borderRadius: "0.625rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" }} className="shadow-sm hover:shadow transition-all">
+            <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Aset
+          </button>
+        </div>
+
+        {/* Filter */}
+        <div style={{ padding: "1rem 1.5rem", background: "#f8fafc", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+          <input type="text" placeholder="Cari nama, kategori, lokasi..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); clearTimeout((window as any).__invSearchTimer); (window as any).__invSearchTimer = setTimeout(() => loadInventory(e.target.value, conditionFilter, 1), 400); }} style={{ flex: 1, minWidth: 200, padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none" }} className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" />
+          <select value={conditionFilter} onChange={(e) => { setConditionFilter(e.target.value); setPage(1); loadInventory(search, e.target.value, 1); }} style={{ padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none", background: "#fff" }} className="focus:border-blue-500 transition-all min-w-[150px]">
+            <option value="">Semua Kondisi</option>
+            <option value="Baik">Baik</option>
+            <option value="Rusak Ringan">Rusak Ringan</option>
+            <option value="Rusak Berat">Rusak Berat</option>
+          </select>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0", width: 50 }}>No</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Nama Barang</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Kategori</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Jumlah</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Kondisi</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "right", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Memuat data...</td></tr>
+              ) : data.length === 0 ? (
+                <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
+              ) : (
+                data.map((item, i) => {
+                  let badge = "";
+                  if (item.condition === "Baik") {
+                    badge = '<span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>';
+                  } else if (item.condition === "Rusak Ringan") {
+                    badge = '<span class="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>';
+                  } else {
+                    badge = '<span class="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>';
+                  }
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600, verticalAlign: "middle" }}>{(page - 1) * limit + i + 1}</td>
+                      <td style={{ padding: "1.25rem 1.5rem", verticalAlign: "middle" }}>
+                        <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>{item.name}</p>
+                        {item.location && <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>📍 {item.location}</p>}
+                      </td>
+                      <td style={{ padding: "1.25rem 1.5rem", verticalAlign: "middle" }}>
+                        <span style={{ background: "#f1f5f9", color: "#475569", padding: "0.375rem 0.875rem", borderRadius: 9999, fontSize: "0.75rem", fontWeight: 600 }}>{item.category || "-"}</span>
+                      </td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontWeight: 700, fontSize: "1rem", color: "#334155", verticalAlign: "middle" }}>{item.quantity || 0}</td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }} dangerouslySetInnerHTML={{ __html: badge }}></td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "right", verticalAlign: "middle", position: "relative" }}>
+                        <button 
+                          onClick={(ev) => { 
+                            ev.stopPropagation(); 
+                            (ev.nativeEvent as any).stopImmediatePropagation();
+                            setOpenActionId(openActionId === item.id ? null : item.id); 
+                          }}
+                          style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
+                          className="hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                        >
+                          <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </button>
+
+                        {openActionId === item.id && (
+                          <div 
+                            style={{ position: "absolute", top: "100%", right: "1.5rem", zIndex: 50, background: "#fff", border: "1px solid #e2e8f0", borderRadius: "0.75rem", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", minWidth: "140px", overflow: "hidden", display: "flex", flexDirection: "column", padding: "0.375rem" }}
+                            onClick={(ev) => ev.stopPropagation()}
+                          >
+                            <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem" }}>
+                              Aksi Barang
+                            </div>
+                            <button onClick={() => { setOpenActionId(null); handleEdit(item.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
+                              Edit Barang
+                            </button>
+                            <button onClick={() => { setOpenActionId(null); handleDelete(item.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#ef4444", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-rose-50">
+                              Write-off
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
+      </div>
+    </div>
+  );
+}
