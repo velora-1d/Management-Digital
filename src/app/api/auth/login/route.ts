@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server." },
+      { success: false, message: "Terjadi kesalahan server: " + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }

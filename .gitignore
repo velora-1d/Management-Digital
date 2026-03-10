@@ -48,6 +48,7 @@ next-env.d.ts
 
 # seed scripts
 seed_local.ts
+seed_final.ts
 update-profile.ts
 
 /src/generated/prisma
