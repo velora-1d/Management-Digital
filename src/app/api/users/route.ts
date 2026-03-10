@@ -3,10 +3,12 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
+    console.log("Fetching users from DB...");
     const users = await prisma.user.findMany({
-      where: { deletedAt: null },
       select: {
         id: true,
         name: true,

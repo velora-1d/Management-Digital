@@ -59,7 +59,14 @@ export default function SettingsPage() {
       const res = await fetch("/api/users");
       if (res.ok) {
         const data = await res.json();
+        console.log("USERS FETCHED:", data);
+        if (data.length === 0) {
+          console.warn("API RETURNED EMPTY LIST");
+        }
         setUsers(data || []);
+      } else {
+        const errData = await res.json();
+        Swal.fire("Gagal", errData.message || "Gagal memuat data pengguna", "error");
       }
     } catch (e) {
       console.error(e);
