@@ -19,17 +19,17 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/api/settings/wipe": ["superadmin"],
   "/api/settings/profile": ALL_ROLES,
 
-  // === USER MANAGEMENT (superadmin only) ===
-  "/api/users": ["superadmin"],
+  // === USER MANAGEMENT (superadmin + admin) ===
+  "/api/users": ["superadmin", "admin"],
   "/api/seed": ["superadmin"],
 
-  // === KEUANGAN (superadmin + bendahara) ===
-  "/api/payroll": ["superadmin", "bendahara"],
-  "/api/infaq-bills": ["superadmin", "bendahara"],
-  "/api/tabungan": ["superadmin", "bendahara"],
-  "/api/wakaf": ["superadmin", "bendahara"],
-  "/api/journal": ["superadmin", "bendahara"],
-  "/api/transaction-categories": ["superadmin", "bendahara"],
+  // === KEUANGAN (superadmin + admin + bendahara) ===
+  "/api/payroll": ["superadmin", "admin", "bendahara"],
+  "/api/infaq-bills": ["superadmin", "admin", "bendahara"],
+  "/api/tabungan": ["superadmin", "admin", "bendahara"],
+  "/api/wakaf": ["superadmin", "admin", "bendahara"],
+  "/api/journal": ["superadmin", "admin", "bendahara"],
+  "/api/transaction-categories": ["superadmin", "admin", "bendahara"],
 
   // === DATA MASTER (superadmin + admin + operator) ===
   "/api/students": ["superadmin", "admin", "operator"],
