@@ -9,6 +9,9 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-heading" });
 export const metadata: Metadata = {
   title: "Management Digital | Sekolah Global Nusantara",
   description: "Sistem Informasi Terintegrasi Sekolah Global Nusantara",
+  icons: {
+    icon: "/images/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
