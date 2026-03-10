@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-heading" });
 
 export const metadata: Metadata = {
-  title: "Management Digital | Sekolah Global Nusantara",
-  description: "Sistem Informasi Terintegrasi Sekolah Global Nusantara",
+  title: "Management Digital | Velora",
+  description: "Sistem Informasi Terintegrasi Velora",
   icons: {
     icon: "/images/logo.png",
   },
