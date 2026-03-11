@@ -32,6 +32,8 @@ model User {
   inputtedGrades       StudentGrade[]
   inputtedNotes        ClassTeacherNote[]
 
+  employee Employee?
+
   @@map("users")
 }
 
@@ -440,6 +442,7 @@ model CashAccount {
 
 model Employee {
   id         Int       @id @default(autoincrement())
+  userId     Int?      @unique @map("user_id")
   name       String
   nip        String    @default("")
   type       String    @default("guru")
@@ -454,6 +457,7 @@ model Employee {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   salaries    EmployeeSalary[]
   payrolls    Payroll[]
   waliKelasOf Classroom[]

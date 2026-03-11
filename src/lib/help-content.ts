@@ -14,204 +14,293 @@ export type HelpContent = {
 export const HELP_CONTENTS: Record<string, HelpContent> = {
   "/dashboard": {
     title: "Dashboard",
-    description: "Menampilkan ringkasan data utama sekolah dan statistik keuangan bulan berjalan.",
+    description: "Pusat kendali dan ringkasan eksekutif seluruh operasional sekolah.",
     features: [
       {
-        title: "Kartu Statistik",
+        title: "KPI Akademik & SDM",
         steps: [
-          "Lihat total siswa aktif, jumlah guru, total tagihan yang belum lunas, dan saldo tabungan keseluruhan.",
-          "Angka akan otomatis terupdate setiap ada perubahan data."
+          "Pantau jumlah siswa aktif, guru, dan staf secara real-time.",
+          "Cek rekapitulasi kehadiran harian untuk memantau kedisiplinan."
         ]
       },
       {
-        title: "Grafik Keuangan",
+        title: "Statistik Keuangan & Koperasi",
         steps: [
-          "Menampilkan perbandingan total pemasukan dan pengeluaran dalam 30 hari terakhir.",
-          "Bergeser kursor ke atas grafik untuk melihat angka pastinya."
+          "Lihat grafik cash flow (pemasukan vs pengeluaran) 30 hari terakhir.",
+          "Pantau omzet koperasi harian dan total piutang siswa yang masih aktif."
+        ]
+      },
+      {
+        title: "Notifikasi Administrasi",
+        steps: [
+          "Lihat jumlah surat masuk/keluar bulan ini dan pengumuman yang sedang aktif."
         ]
       }
     ]
   },
   "/ppdb": {
-    title: "Penerimaan PPDB",
-    description: "Modul pendaftaran Calon Peserta Didik Baru (PPDB).",
+    title: "Penerimaan Siswa Baru (PPDB)",
+    description: "Alur pendaftaran dan seleksi calon peserta didik baru.",
     features: [
       {
-        title: "Tambah Pendaftar",
+        title: "Manajemen Pendaftar",
         steps: [
-          "Klik tombol 'Tambah Pendaftar Baru'.",
-          "Isi form yang tersedia (Nama, Asal Sekolah, Alamat, dll).",
-          "Klik 'Simpan'. Pendaftar akan masuk dengan status 'Menunggu'."
+          "Gunakan tombol 'Tambah Pendaftar' untuk memasukkan data calon siswa.",
+          "Pantau status seleksi (Menunggu, Diterima, Ditolak)."
         ]
       },
       {
-        title: "Terima/Tolak Pendaftar",
+        title: "Pembayaran & Konversi",
         steps: [
-          "Cari nama pendaftar di tabel.",
-          "Untuk menerima, klik ikon centang hijau (Terima).",
-          "Untuk menolak, klik ikon silang merah (Tolak) dan masukkan alasannya."
-        ]
-      },
-      {
-        title: "Pembayaran PPDB",
-        steps: [
-          "Di kolom Pembayaran, klik toggle untuk menandai 'Sudah Bayar'.",
-          "Masukkan nominal secara manual jika ada perubahan.",
-          "Pilih Akun Kas penerima.",
-          "Klik 'Simpan'. Pemasukan otomatis tercatat di Jurnal Umum."
-        ]
-      },
-      {
-        title: "Konversi ke Siswa Aktif",
-        steps: [
-          "Pastikan status pendaftar adalah 'Diterima'.",
-          "Klik ikon panah (Konversi ke Siswa).",
-          "Pilih Kelas tujuan.",
-          "Siswa akan otomatis ditambahkan ke Data Master Siswa."
+          "Catat biaya pendaftaran. Sistem akan melakukan penjurnalan otomatis.",
+          "Klik 'Konversi' untuk memindahkan data pendaftaran yang diterima langsung ke Data Master Siswa."
         ]
       }
     ]
   },
   "/re-registration": {
-    title: "Daftar Ulang",
-    description: "Pencatatan daftar ulang siswa lama untuk tahun ajaran baru.",
+    title: "Daftar Ulang Siswa",
+    description: "Proses validasi kelanjutan studi siswa lama untuk tahun ajaran baru.",
     features: [
       {
-        title: "Tandai Sudah Daftar Ulang",
+        title: "Update Status & Biaya",
         steps: [
-          "Filter tabel berdasarkan Kelas jika diperlukan.",
-          "Cari nama siswa.",
-          "Klik toggle di kolom 'Status' untuk mengubah menjadi 'Sudah Daftar Ulang'."
-        ]
-      },
-      {
-        title: "Pembayaran Daftar Ulang",
-        steps: [
-          "Klik toggle di kolom 'Pembayaran'.",
-          "Sesuaikan nominal jika perlu.",
-          "Pilih Akun Kas.",
-          "Klik 'Simpan'. Otomatis tercatat di jurnal."
+          "Tandai siswa yang sudah melakukan daftar ulang lewat kolom Status.",
+          "Input pembayaran biaya daftar ulang yang akan langsung masuk ke laporan keuangan."
         ]
       }
     ]
   },
   "/students": {
     title: "Data Master Siswa",
-    description: "Pengelolaan seluruh data siswa aktif di sekolah.",
+    description: "Pusat database identitas dan profil akademis siswa.",
     features: [
       {
-        title: "Tambah Siswa",
+        title: "Profil & Kategori SPP",
         steps: [
-          "Klik 'Tambah Siswa'.",
-          "Isi semua field wajib (NISN, Nama Lengkap, Tahun Ajaran, Kelas, Kategori SPP).",
-          "Kategori SPP akan menentukan besaran tagihan SPP per bulan (Reguler = bayar penuh, Potongan = disesuaikan, Gratis = Rp0).",
-          "Klik 'Simpan'."
+          "Setiap siswa wajib memiliki Kategori SPP (Reguler/Potongan/Gratis) untuk otomasi tagihan.",
+          "Lengkapi NISN and NIK untuk keperluan pelaporan Dapodik/EMIS."
         ]
       },
       {
-        title: "Edit & Soft Delete",
+        title: "Import Massal",
         steps: [
-          "Klik ikon pensil untuk mengubah data siswa yang ada.",
-          "Klik ikon tempat sampah untuk menghapus siswa. (Siswa tidak benar-benar dihapus dari database demi integritas data keuangan, hanya ditandai nonaktif)."
-        ]
-      },
-      {
-        title: "Import dari Excel",
-        steps: [
-          "Klik 'Import Data' -> Download Format Template yang disediakan.",
-          "Isi data siswa di file Excel tersebut sesuai format.",
-          "Pilih file Excel dan klik 'Upload & Proses'.",
-          "Data akan divalidasi dan diimpor massal."
+          "Gunakan fitur Import Excel untuk memasukkan data siswa dalam jumlah banyak sekaligus."
         ]
       }
     ]
   },
   "/mutations": {
-    title: "Mutasi & Kenaikan",
-    description: "Proses mutasi keluar/masuk dan kenaikan kelas siswa.",
+    title: "Mutasi & Kenaikan Kelas",
+    description: "Modul untuk mengelola perpindahan status dan kelas siswa.",
     features: [
       {
-        title: "Kenaikan Kelas",
+        title: "Proses Kenaikan",
         steps: [
-          "Pilih siswa yang akan dinaikkan kelasnya.",
-          "Pilih Kelas Tujuan di menu dropdown.",
-          "Klik konfirmasi. Siswa akan dipindahkan ke kelas baru."
+          "Ceklist nama siswa, pilih kelas tujuan, dan klik 'Proses Kenaikan' di akhir semester.",
+          "Histori kelas lama tetap tersimpan dalam sistem."
         ]
       },
       {
         title: "Mutasi Keluar",
         steps: [
-          "Pilih siswa yang keluar/pindah sekolah.",
-          "Masukkan alasan mutasi (misal: Pindah ikut orang tua, Drop out).",
-          "Siswa tersebut tidak akan muncul lagi di tagihan berikutnya."
+          "Gunakan untuk mencatat siswa yang pindah sekolah atau mengundurkan diri agar tagihan SPP berhenti otomatis."
         ]
       }
     ]
   },
   "/classrooms": {
-    title: "Data Kelas",
-    description: "Pengelolaan tingkatan kelas dan wali kelas.",
+    title: "Manajemen Kelas",
+    description: "Pengaturan ruang kelas dan penunjukan wali kelas.",
     features: [
       {
-        title: "Manajemen Kelas",
+        title: "Wali Kelas & Tingkatan",
         steps: [
-          "Klik 'Tambah Kelas' untuk membuat ruang kelas baru.",
-          "Anda dapat menetapkan Wali Kelas untuk setiap kelas.",
-          "Kelas yang digunakan untuk filter di berbagai modul berasal dari sini."
+          "Tentukan wali kelas untuk setiap ruangan agar fitur Catatan Wali Kelas di Rapor berfungsi.",
+          "Urutkan kelas berdasarkan tingkatan untuk mempermudah navigasi."
+        ]
+      }
+    ]
+  },
+  "/academic-years": {
+    title: "Tahun Ajaran",
+    description: "Pengaturan periode aktif dan kalender akademis.",
+    features: [
+      {
+        title: "Aktivasi Periode",
+        steps: [
+          "Pilih tahun ajaran yang sedang berjalan sebagai status 'Aktif'.",
+          "Semua pembuatan tagihan dan rapor akan merujuk pada tahun ajaran aktif ini."
         ]
       }
     ]
   },
   "/transaction-categories": {
     title: "Kategori Keuangan",
-    description: "Pengklasifikasian jenis transaksi pemasukan dan pengeluaran.",
+    description: "Master data untuk penggelompokan transaksi di Jurnal Umum.",
     features: [
       {
-        title: "Membuat Kategori Baru",
+        title: "Klasifikasi COA",
         steps: [
-          "Klik 'Tambah Kategori'.",
-          "Isi nama kategori.",
-          "Tentukan Tipenya: 'Pemasukan' atau 'Pengeluaran'.",
-          "Kategori ini nantinya digunakan saat mencatat Jurnal Umum."
+          "Buat kategori seperti 'Wakaf', 'Biaya Listrik', 'Gaji Guru'.",
+          "Pilih tipe Pemasukan atau Pengeluaran dengan benar untuk laporan Laba/Rugi."
+        ]
+      }
+    ]
+  },
+  "/subjects": {
+    title: "Mata Pelajaran",
+    description: "Daftar kurikulum pelajaran yang diajarkan di sekolah.",
+    features: [
+      {
+        title: "Input Kurikulum",
+        steps: [
+          "Tambahkan mata pelajaran beserta KKM (Kriteria Ketuntasan Minimal).",
+          "Data ini akan muncul otomatis pada form Input Nilai."
+        ]
+      }
+    ]
+  },
+  "/teaching-assignments": {
+    title: "Penugasan Guru",
+    description: "Pemetaan guru ke mata pelajaran dan kelas tertentu.",
+    features: [
+      {
+        title: "Hak Akses Input Nilai",
+        steps: [
+          "Hanya guru yang ditugaskan di mapel dan kelas tersebut yang dapat menginput nilai siswa.",
+          "Pastikan penugasan sesuai dengan jadwal mengajar riil."
+        ]
+      }
+    ]
+  },
+  "/schedules": {
+    title: "Jadwal Pelajaran",
+    description: "Plotting waktu belajar mengajar per hari.",
+    features: [
+      {
+        title: "Visualisasi Jadwal",
+        steps: [
+          "Input jam mulai dan jam selesai untuk setiap mata pelajaran per kelas.",
+          "Gunakan untuk mencetak jadwal mingguan kelas atau jadwal pribadi guru."
+        ]
+      }
+    ]
+  },
+  "/attendance": {
+    title: "Absensi Siswa",
+    description: "Pencatatan kehadiran harian siswa di kelas.",
+    features: [
+      {
+        title: "Input Presensi",
+        steps: [
+          "Pilih kelas dan tanggal, lalu centang status (Hadir/Izin/Sakit/Alfa).",
+          "Data absensi ini akan dikalkulasi otomatis dalam Rapor Digital di akhir semester."
+        ]
+      }
+    ]
+  },
+  "/curriculum": {
+    title: "Manajemen Kurikulum",
+    description: "Pengaturan bobot nilai dan standar kompetensi.",
+    features: [
+      {
+        title: "Setting Bobot",
+        steps: [
+          "Tentukan persentase nilai Tugas, UTS, dan UAS.",
+          "Rumus nilai akhir rapor akan mengikuti settingan yang dibuat di sini."
+        ]
+      }
+    ]
+  },
+  "/grades": {
+    title: "Input Nilai Siswa",
+    description: "Pengisian nilai akademis per mata pelajaran.",
+    features: [
+      {
+        title: "Pengisian Massal",
+        steps: [
+          "Pilih kelas dan mapel, lalu input nilai pengetahuan dan keterampilan.",
+          "Simpan perubahan. Nilai yang diinput akan dikonversi menjadi predikat (A/B/C/D)."
+        ]
+      }
+    ]
+  },
+  "/report-cards": {
+    title: "Rapor Digital",
+    description: "Proses akhir evaluasi belajar dan cetak rapor.",
+    features: [
+      {
+        title: "Catatan Wali Kelas",
+        steps: [
+          "Wali kelas wajib mengisi catatan perkembangan karakter siswa.",
+          "Isi deskripsi prestasi dan saran untuk orang tua."
+        ]
+      },
+      {
+        title: "Cetak PDF",
+        steps: [
+          "Sistem menggabungkan nilai akademis, ekskul, absensi, dan catatan menjadi satu file PDF.",
+          "Pastikan Profil Sekolah (Header) sudah diisi sebelum mencetak."
+        ]
+      }
+    ]
+  },
+  "/extracurricular": {
+    title: "Kegiatan Ekstrakurikuler",
+    description: "Pengelolaan bakat dan minat siswa di luar jam pelajaran.",
+    features: [
+      {
+        title: "Keanggotaan & Nilai",
+        steps: [
+          "Daftarkan siswa ke dalam ekskul tertentu (Pramuka, Futsal, dll).",
+          "Input nilai predikat ekskul yang akan tampil di halaman belakang rapor."
+        ]
+      }
+    ]
+  },
+  "/counseling": {
+    title: "Bimbingan Konseling (BK)",
+    description: "Pencatatan insiden, pelanggaran, dan prestasi perilaku siswa.",
+    features: [
+      {
+        title: "Pencatatan Kasus",
+        steps: [
+          "Input detail kejadian, tanggal, dan tingkat kerawanan.",
+          "Pantau status penanganan (Dalam Proses/Selesai/Sanksi)."
+        ]
+      }
+    ]
+  },
+  "/calendar": {
+    title: "Kalender Akademik",
+    description: "Jadwal kegiatan besar sekolah selama satu tahun.",
+    features: [
+      {
+        title: "Manajemen Event",
+        steps: [
+          "Input agenda seperti Libur Semester, Ujian Akhir, atau Libur Nasional.",
+          "Filter kategori untuk melihat agenda spesifik (Akademik/Non-Akademik)."
         ]
       }
     ]
   },
   "/infaq-bills": {
     title: "Tagihan Infaq / SPP",
-    description: "Modul paling penting untuk keuangan siswa.",
+    description: "Modul penagihan iuran bulanan siswa.",
     features: [
       {
-        title: "1. Setting Biaya (Wajib)",
+        title: "Otomasi Tagihan",
         steps: [
-          "Klik tombol 'Setting / Lihat Biaya Kelas'.",
-          "Masukkan nominal SPP/Infaq per kelas.",
-          "Klik 'Simpan Semua'. Tagihan tidak bisa di-generate jika nominal belum diset."
+          "Generate tagihan dilakukan sekali setiap bulan/semester.",
+          "Nominal tagihan merujuk pada Kategori SPP di Data Siswa."
         ]
       },
       {
-        title: "2. Generate Tagihan",
+        title: "Pembayaran & Tunggakan",
         steps: [
-          "Klik 'Generate Tagihan'.",
-          "Pilih Tahun Ajaran dan Tipe Periode (Bulanan/Semester/Tahunan).",
-          "Kamu bisa generate untuk 1 kelas tertentu, atau biarkan kosong untuk seluruh kelas.",
-          "Klik tombol proses. Tagihan akan dibuat otomatis sesuai Kategori SPP masing-masing siswa."
-        ]
-      },
-      {
-        title: "3. Bayar Tagihan",
-        steps: [
-          "Di daftar tagihan belum lunas, klik tombol dompet (Bayar).",
-          "Pilih Akun Kas tujuan penerimaan.",
-          "Pilih Metode Pembayaran (Tunai atau menggunakan Saldo Tabungan siswa).",
-          "Klik 'Proses Pembayaran'."
-        ]
-      },
-      {
-        title: "Void / Revert",
-        steps: [
-          "Tagihan bisa di-void (batalkan) jika salah buat.",
-          "Tagihan lunas bisa di-revert (kembalikan ke belum lunas) jika ada kesalahan pencatatan bayar."
+          "Gunakan fitur Bayar untuk mencatat uang masuk ke Akun Kas.",
+          "Pantau daftar tunggakan melalui filter 'Belum Lunas'."
         ]
       }
     ],
@@ -221,166 +310,208 @@ export const HELP_CONTENTS: Record<string, HelpContent> = {
   },
   "/tabungan": {
     title: "Tabungan Siswa",
-    description: "Pengelolaan dana simpanan/tabungan siswa.",
+    description: "Layanan simpan pinjam/tabungan di lingkungan sekolah.",
     features: [
       {
-        title: "Setor Tabungan",
+        title: "Setor & Tarik",
         steps: [
-          "Pilih filter kelas, lalu cari siswa.",
-          "Klik tombol panah atas (Setor).",
-          "Masukkan jumlah setoran, tanggal, dan keterangan.",
-          "Klik 'Setor Sekarang'. Saldo siswa akan bertambah."
-        ]
-      },
-      {
-        title: "Tarik Tabungan",
-        steps: [
-          "Klik tombol panah bawah (Tarik).",
-          "Masukkan jumlah penarikan. Limit maksimal tarikan adalah sesuai saldo yang tersedia.",
-          "Klik 'Tarik Sekarang'. Saldo siswa akan berkurang."
-        ]
-      },
-      {
-        title: "Riwayat Mutasi",
-        steps: [
-          "Klik tombol ikon dokumen list (Riwayat Mutasi).",
-          "Akan muncul pop-up berisi seluruh history uang masuk dan keluar khusus untuk siswa tersebut."
+          "Setiap mutasi (uang masuk/keluar) akan tercatat dengan timestamp detail.",
+          "Gunakan Saldo Tabungan sebagai alternatif pembayaran SPP (Integrasi Modul)."
         ]
       }
-    ],
-    extraInfo: [
-      "Saldo tabungan bisa digunakan sebagai metode pembayaran di modul SPP/Infaq."
     ]
   },
   "/wakaf": {
     title: "Wakaf & Donasi",
-    description: "Pencatatan uang masuk dari pihak eksternal (donatur).",
+    description: "Penerimaan bantuan dari donatur/yayasan.",
     features: [
       {
-        title: "Tambah Catatan Donasi",
+        title: "Tracking Peruntukan",
         steps: [
-          "Klik 'Tambah Transaksi Wakaf'.",
-          "Masukkan nama donatur, nomor HP, jumlah uang, dan catatan/peruntukan.",
-          "Simpan data untuk laporan."
+          "Catat sumber dana dan peruntukannya (misal: Pembangunan Lab).",
+          "Tampilkan laporan khusus donasi untuk transparansi pengurus."
         ]
       }
     ]
   },
   "/journal": {
     title: "Jurnal Umum",
-    description: "Buku besar pencatatan setiap pergerakan keuangan sekolah.",
+    description: "Buku besar utama seluruh arus keuangan sekolah.",
     features: [
       {
-        title: "Entri Jurnal Manual",
+        title: "Integrasi Otomatis",
         steps: [
-          "Klik 'Tambah Entri'.",
-          "Pilih Tanggal, Kategori Keuangan, dan Tipe (Debet/Kredit).",
-          "Masukkan Keterangan, Pilih Akun Asal/Tujuan, dan Nominal.",
-          "Simpan. Transaksi ini akan mencerminkan arus kas."
-        ]
-      },
-      {
-        title: "Entri Otomatis dari Modul Lain",
-        steps: [
-          "Anda tidak perlu entry manual jika pembayaran berasal dari SPP, PPDB, dst.",
-          "Sistem otomatis akan menjurnal transaksi tersebut ke sini sebagai Pemasukan Sistem."
+          "Semua bayar SPP, PPDB, dan Koperasi masuk otomatis sebagai Debet.",
+          "Input pengeluaran operasional (Kredit) harus dilakukan di sini."
         ]
       }
     ]
   },
   "/reports": {
-    title: "Laporan",
-    description: "Export dan analisa data untuk pelaporan yayasan.",
+    title: "Laporan Keuangan",
+    description: "Rekapitulasi data untuk audit dan rapat yayasan.",
     features: [
       {
-        title: "Laporan Keuangan",
+        title: "Analisis Arus Kas",
         steps: [
-          "Pilih bulan dan tipe laporan yang diinginkan.",
-          "Klik Cetak PDF atau Export Excel.",
-          "Data yang ditampilkan adalah rekapitulasi dari Jurnal Umum."
+          "Cetak laporan neraca sederhana atau arus kas per periode.",
+          "Export ke Excel jika ingin melakukan pengolahan data lebih lanjut."
         ]
       }
     ]
   },
   "/teachers": {
-    title: "Data Guru",
-    description: "Kelola data SDM Tenaga Pendidik.",
+    title: "Data Master Guru",
+    description: "Manajemen SDM Tenaga Pendidik.",
     features: [
       {
-        title: "Manajemen Data Guru",
+        title: "Database SDM",
         steps: [
-          "Gunakan untuk mencatat data pendukung guru: NIP, Nama, Kontak, Alamat.",
-          "Data ini digunakan juga sebagai dasar saat pembuatan Slip Gaji di menu Payroll."
+          "Simpan data pendidikan terakhir, tanggal bergabung, dan kontak.",
+          "Input Gaji Pokok sebagai dasar perhitungan Payroll."
         ]
       }
     ]
   },
   "/staff": {
-    title: "Data Staf Karyawan",
-    description: "Kelola data Tenaga Kependidikan/Staf/Petugas.",
+    title: "Data Master Staf",
+    description: "Manajemen Tenaga Kependidikan.",
     features: [
       {
-        title: "Manajemen Data Staf",
+        title: "Jabatan & Tunjangan",
         steps: [
-          "Serupa dengan Data Guru, dipakai untuk database SDM Non-guru.",
-          "Pastikan data gaji pokok dan tunjangan disetting dengan benar jika ingin digenerate payrollnya."
+          "Tentukan posisi staf (Satpam, Kebersihan, Admin).",
+          "Input tunjangan tetap yang akan masuk ke komponen slip gaji."
         ]
       }
     ]
   },
   "/payroll": {
-    title: "Payroll & Penggajian",
-    description: "Sistem otomatisasi cetak slip gaji.",
+    title: "Penggajian (Payroll)",
+    description: "Otomasi slip gaji bulanan karyawan.",
     features: [
       {
-        title: "Generate Slip Gaji",
+        title: "Generate Slip",
         steps: [
-          "Pilih bulan dan tahun penggajian.",
-          "Pilih guru atau staf yang akan digenerate gajinya.",
-          "Sistem akan menarik gaji pokok dan tunjangan dari data master.",
-          "Anda bisa menambahkan lembur/potongan manual jika ada.",
-          "Cetak PDF slip gaji."
+          "Klik Generate bulanan. Sistem mengkombinasikan Gaji Pokok + Tunjangan - Potongan.",
+          "Simpan sebagai archive dan cetak slip gaji fisik dalam hitungan detik."
         ]
       }
     ]
   },
   "/inventory": {
-    title: "Inventaris Sekolah",
-    description: "Daftar aset dan barang milik sekolah.",
+    title: "Inventaris Aset",
+    description: "Pengelolaan aset berharga (Sarpras) sekolah.",
     features: [
       {
-        title: "Pencatatan Aset",
+        title: "Lokasi & Kondisi",
         steps: [
-          "Klik 'Tambah Barang'.",
-          "Masukkan Kode Barang, Nama, Jumlah, Lokasi Ruangan, dan Kondisi (Baik/Rusak).",
-          "Track penyusutan aset jika diperlukan di kolom deskripsi."
+          "Catat setiap barang ada di ruangan mana.",
+          "Update kondisi barang (Baik/Rusak) secara berkala untuk keperluan pengadaan."
+        ]
+      }
+    ]
+  },
+  "/coop/products": {
+    title: "Produk Koperasi",
+    description: "Pusat manajemen stok barang di koperasi/kantin.",
+    features: [
+      {
+        title: "Manajemen Stok",
+        steps: [
+          "Warna indikator stok: Biru (Banyak), Kuning (Menipis < 10), Merah (Habis).",
+          "Set Harga Beli dan Harga Jual untuk menghitung estimasi keuntungan."
+        ]
+      }
+    ]
+  },
+  "/coop/transactions": {
+    title: "Point of Sale (Kasir)",
+    description: "Antarmuka penjualan barang koperasi.",
+    features: [
+      {
+        title: "Proses Transaksi",
+        steps: [
+          "Pilih produk -> Masukkan ke Keranjang -> Klik 'Bayar'.",
+          "Metode 'Bon': Piutang akan otomatis ditambahkan ke akun siswa yang dipilih."
+        ]
+      }
+    ]
+  },
+  "/coop/credits": {
+    title: "Piutang Siswa",
+    description: "Pelacakan hutang jajan/barang siswa di kantin.",
+    features: [
+      {
+        title: "Cicilan & Pelunasan",
+        steps: [
+          "Lihat total hutang per siswa. Klik 'Bayar Cicilan' jika siswa membayar sebagian.",
+          "Status berubah otomatis ke 'Sudah Lunas' jika sisa tagihan Rp0."
+        ]
+      }
+    ]
+  },
+  "/employee-attendance": {
+    title: "Absensi Pegawai",
+    description: "Perekaman kehadiran guru dan staf.",
+    features: [
+      {
+        title: "Rekapitulasi SDM",
+        steps: [
+          "Input kehadiran setiap pagi/sore.",
+          "Gunakan fitur 'Rekap' untuk melihat total kehadiran dalam sebulan sebagai dasar insentif."
+        ]
+      }
+    ]
+  },
+  "/letters": {
+    title: "Manajemen Surat (TU)",
+    description: "Digitalisasi persuratan sekolah.",
+    features: [
+      {
+        title: "Surat Masuk/Keluar",
+        steps: [
+          "Nomor surat otomatis akan ter-generate sesuai urutan terakhir di sistem.",
+          "Simpan file pindaian (scan) surat sebagai arsip digital agar mudah dicari."
+        ]
+      }
+    ]
+  },
+  "/announcements": {
+    title: "Pengumuman Sekolah",
+    description: "Pusat informasi berita dan agenda sekolah.",
+    features: [
+      {
+        title: "Publish & Status",
+        steps: [
+          "Aktifkan pengumuman agar muncul di dashboard setiap pengguna.",
+          "Gunakan banner warna berbeda (Info/Warning/Urgent) untuk mencerminkan urgensi."
+        ]
+      }
+    ]
+  },
+  "/school-profile": {
+    title: "Profil & Identitas",
+    description: "Pengaturan dasar identitas instansi.",
+    features: [
+      {
+        title: "Footer & Kop Surat",
+        steps: [
+          "Update Nama Sekolah, Alamat, dan No. Telepon.",
+          "Data ini digunakan sebagai header otomatis di semua cetakan (Rapor, Surat, Kwitansi)."
         ]
       }
     ]
   },
   "/settings": {
     title: "Pengaturan Sistem",
-    description: "Konfigurasi dasar aplikasi.",
+    description: "Konfigurasi teknis dan keamanan data.",
     features: [
       {
-        title: "Profil Instansi",
+        title: "Manajemen Backup",
         steps: [
-          "Ubah Nama Sekolah, Alamat, NPSN, dan Nomor HP yang akan muncul di Kop Surat/Struk Cetak."
-        ]
-      },
-      {
-        title: "Tahun Ajaran Aktif",
-        steps: [
-          "Setel Tahun Ajaran yang sedang berjalan.",
-          "Ini penting karena fitur Generate SPP bergantung pada setelan tahun ajaran ini."
-        ]
-      },
-      {
-        title: "Backup & Restore",
-        steps: [
-          "Lakukan backup secara rutin melalui tombol Download Backup.",
-          "File backup berupa format SQL.",
-          "Jangan gunakan tombol 'Wipe/Reset' bila bukan kondisi darurat migrasi data awal."
+          "Lakukan 'Download Backup' secara berkala (minimal seminggu sekali).",
+          "Backup mencakup seluruh data database dalam format SQL."
         ]
       }
     ]

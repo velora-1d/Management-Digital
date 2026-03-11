@@ -20,7 +20,7 @@ export default function TeachingAssignmentsPage() {
   async function loadMetadata() {
     try {
       const [empRes, subjRes, clsRes, yrRes] = await Promise.all([
-        fetch('/api/employees?type=guru'),
+        fetch('/api/teachers?limit=1000'),
         fetch('/api/subjects'),
         fetch('/api/classrooms'),
         fetch('/api/academic-years')
@@ -31,17 +31,37 @@ export default function TeachingAssignmentsPage() {
       const clsJson = await clsRes.json();
       const yrJson = await yrRes.json();
 
-      if (empJson.success) setEmployees(empJson.data);
-      if (subjJson.success) setSubjects(subjJson.data);
-      if (clsJson.success) setClassrooms(clsJson.data);
+      if (empJson.success && Array.isArray(empJson.data)) {
+        setEmployees(empJson.data);
+      } else {
+        setEmployees([]);
+      }
+
+      if (subjJson.success && Array.isArray(subjJson.data)) {
+        setSubjects(subjJson.data);
+      } else {
+        setSubjects([]);
+      }
+
+      if (clsJson.success && Array.isArray(clsJson.data)) {
+        setClassrooms(clsJson.data);
+      } else {
+        setClassrooms([]);
+      }
       
-      if (yrJson.success) {
+      if (yrJson.success && Array.isArray(yrJson.data)) {
         setAcademicYears(yrJson.data);
         const activeYear = yrJson.data.find((y: any) => y.isActive);
         if (activeYear) setFilterYear(activeYear.id.toString());
+      } else {
+        setAcademicYears([]);
       }
     } catch (e) {
       console.error("Gagal memuat metadata", e);
+      setEmployees([]);
+      setSubjects([]);
+      setClassrooms([]);
+      setAcademicYears([]);
     }
   }
 
