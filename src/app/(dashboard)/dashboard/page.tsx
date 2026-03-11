@@ -75,6 +75,11 @@ async function getDashboardData(searchParams: any) {
     savingsAgg,
     tunggakan,
     wakafAgg,
+    coopTrxAgg,
+    coopCreditAgg,
+    counselingCount,
+    announcementsCount,
+    lettersCount,
   ] = await Promise.all([
     prisma.studentEnrollment.findMany({ where: enrollmentWhere, include: { student: { select: { gender: true } } } }),
     prisma.employee.findMany({ where: { deletedAt: null, status: "aktif" } }),
@@ -100,6 +105,24 @@ async function getDashboardData(searchParams: any) {
       where: { type: "in", status: "valid", deletedAt: null, createdAt: dateFilter, category: { name: { contains: "wakaf", mode: "insensitive" as any } } },
       _sum: { amount: true },
     }),
+    prisma.coopTransaction.aggregate({
+      where: { createdAt: dateFilter },
+      _sum: { total: true },
+      _count: { id: true },
+    }),
+    prisma.studentCredit.aggregate({
+      where: { status: { not: "lunas" } },
+      _sum: { amount: true, paidAmount: true },
+    }),
+    prisma.counselingRecord.count({
+      where: { date: { startsWith: now.toISOString().substring(0, 7) } }
+    }),
+    prisma.announcement.count({
+      where: { status: "aktif" }
+    }),
+    prisma.letter.count({
+      where: { date: { startsWith: now.toISOString().substring(0, 7) } }
+    }),
   ]);
 
   const totalSiswaPa = enrollments.filter(e => e.student?.gender === "L").length;
@@ -115,6 +138,8 @@ async function getDashboardData(searchParams: any) {
 
   const lunasCount = enrollments.length - new Set(tunggakan.map(t => t.studentId)).size;
   const complianceRate = enrollments.length > 0 ? Math.round((lunasCount / enrollments.length) * 100) : 0;
+
+  const piutangKoperasi = (coopCreditAgg._sum.amount || 0) - (coopCreditAgg._sum.paidAmount || 0);
 
   return {
     totalSiswa: enrollments.length,
@@ -137,6 +162,13 @@ async function getDashboardData(searchParams: any) {
     tunggakanPa,
     tunggakanPi,
     complianceRate,
+    // Modul Baru
+    coopTotal: coopTrxAgg._sum.total || 0,
+    coopCount: coopTrxAgg._count.id || 0,
+    piutangKoperasi,
+    counselingCount,
+    announcementsCount,
+    lettersCount,
   };
 }
 
@@ -207,6 +239,23 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
         />
         <KpiCard anim={10} label="Siswa Menunggak" value={data.tunggakanTotal} color="#f43f5e" bg="#ffe4e6" icon="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" valueColor="#f43f5e"
           footer={<><span>PA: <strong style={{ color: "#f43f5e" }}>{data.tunggakanPa}</strong></span><span>PI: <strong style={{ color: "#f43f5e" }}>{data.tunggakanPi}</strong></span></>}
+        />
+      </div>
+
+      {/* KPI Cards Baris 3 - Modul Tambahan */}
+      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-8 mb-4">Modul Operasional & Kesiswaan</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard anim={11} label="Omzet Koperasi (Bulan Ini)" value={fmtRp(data.coopTotal)} color="#10b981" bg="#d1fae5" icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" small
+          footer={<><span>Total: <strong>{data.coopCount}</strong> Trx</span><strong style={{ color: "#10b981" }}>Koperasi</strong></>}
+        />
+        <KpiCard anim={12} label="Piutang Koperasi Siswa" value={fmtRp(data.piutangKoperasi)} color="#f59e0b" bg="#fef3c7" icon="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" small
+          footer={<><span>Sisa Belum Lunas</span><strong style={{ color: "#f59e0b" }}>Bon</strong></>}
+        />
+        <KpiCard anim={13} label="Kasus Konseling (Bulan Ini)" value={data.counselingCount} color="#6366f1" bg="#e0e7ff" icon="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+          footer={<><span>Input BK Terbaru</span><strong style={{ color: "#6366f1" }}>Konseling</strong></>}
+        />
+        <KpiCard anim={14} label="Administrasi (Bulan Ini)" value={data.lettersCount} color="#94a3b8" bg="#f1f5f9" icon="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          footer={<><span>Surat: <strong>{data.lettersCount}</strong></span><span>Berita: <strong>{data.announcementsCount}</strong></span></>}
         />
       </div>
 

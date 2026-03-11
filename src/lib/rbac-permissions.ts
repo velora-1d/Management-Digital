@@ -5,9 +5,9 @@
  * karena dipakai oleh middleware.ts yang berjalan di Edge Runtime.
  */
 
-export type Role = "superadmin" | "kepsek" | "admin" | "bendahara" | "operator";
+export type Role = "superadmin" | "kepsek" | "admin" | "bendahara" | "operator" | "siswa" | "guru";
 
-export const ALL_ROLES: Role[] = ["superadmin", "kepsek", "admin", "bendahara", "operator"];
+export const ALL_ROLES: Role[] = ["superadmin", "kepsek", "admin", "bendahara", "operator", "siswa", "guru"];
 
 /**
  * Permission Map — role mana yang boleh mengakses path API tertentu.
@@ -38,6 +38,12 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/api/teachers": ["superadmin", "admin"],
   "/api/staff": ["superadmin", "admin"],
   "/api/inventory": ["superadmin", "admin", "operator"],
+
+  // === AKADEMIK (superadmin + admin + operator) ===
+  "/api/subjects": ["superadmin", "admin", "operator"],
+  "/api/teaching-assignments": ["superadmin", "admin", "operator"],
+  "/api/schedules": ["superadmin", "admin", "operator"],
+  "/api/attendance": ["superadmin", "admin", "operator"],
 
   // === PENERIMAAN SISWA (superadmin + admin + operator) ===
   "/api/ppdb": ["superadmin", "admin", "operator"],
@@ -96,6 +102,10 @@ export const SIDEBAR_PERMISSIONS: Record<string, Role[]> = {
   "/classrooms": ["superadmin", "admin", "operator"],
   "/academic-years": ["superadmin", "admin"],
   "/transaction-categories": ["superadmin", "admin", "bendahara"],
+  "/subjects": ["superadmin", "admin", "operator"],
+  "/teaching-assignments": ["superadmin", "admin", "operator"],
+  "/schedules": ["superadmin", "admin", "operator", "siswa"],
+  "/attendance": ["superadmin", "admin", "operator"],
   "/infaq-bills": ["superadmin", "admin", "bendahara"],
   "/tabungan": ["superadmin", "admin", "bendahara"],
   "/wakaf": ["superadmin", "admin", "bendahara"],
