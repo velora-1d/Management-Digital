@@ -6,8 +6,8 @@ export default function DashboardLoading() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <PageHeader
-        title="Dashboard"
-        subtitle="Memuat data..."
+        title="Memuat Halaman..."
+        subtitle="Harap tunggu sebentar..."
       />
 
       {/* Filter Bar Placeholder */}

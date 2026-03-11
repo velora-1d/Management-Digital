@@ -185,7 +185,6 @@ function fmtRp(n: number) {
 export default async function DashboardPage(props: { searchParams: Promise<any> }) {
   const searchParams = await props.searchParams;
   const user = await getAuthUser();
-  const data = await getDashboardData(searchParams);
 
   const roleTabs: Record<string, string[]> = {
     superadmin: ["overview", "finance", "academic", "hr"],
@@ -203,11 +202,48 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     activeTab = allowedTabs[0];
   }
 
+  // Gunakan key kombinasi tab dan filter agar skeleton muncul saat filter/tab berubah
+  const suspenseKey = `${activeTab}-${JSON.stringify(searchParams)}`;
+
   return (
     <div className="space-y-6">
       <FilterBar />
       <DashboardTabs initialTab={activeTab} allowedTabs={allowedTabs} />
+      
+      <Suspense key={suspenseKey} fallback={<DashboardContentLoading />}>
+        <DashboardContent searchParams={searchParams} activeTab={activeTab} user={user} />
+      </Suspense>
+    </div>
+  );
+}
 
+function DashboardContentLoading() {
+  return (
+    <div className="space-y-6">
+      {/* Hero Placeholder */}
+      <div className="h-[104px] rounded-2xl bg-indigo-50 animate-pulse border border-indigo-100"></div>
+      {/* Stats Grid Placeholder */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-start gap-4 animate-pulse">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 shrink-0"></div>
+            <div className="flex-1 space-y-3 py-1">
+              <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+              <div className="h-6 bg-slate-300 rounded w-3/4"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="h-64 bg-slate-50 rounded-xl border border-slate-100 animate-pulse"></div>
+    </div>
+  );
+}
+
+async function DashboardContent({ searchParams, activeTab, user }: { searchParams: any, activeTab: string, user: any }) {
+  const data = await getDashboardData(searchParams);
+
+  return (
+    <div className="space-y-6">
       {/* Hero Header */}
       <div className="anim-hero" style={{ background: "linear-gradient(135deg,#312e81 0%,#1e1b4b 50%,#0f172a 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
         <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.04)", borderRadius: "50%" }} />
