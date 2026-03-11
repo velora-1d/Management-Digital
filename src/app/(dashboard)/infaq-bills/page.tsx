@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/Pagination";
 import FilterBar from "@/components/FilterBar";
+import { ExportButtons, fmtRupiah, type ExportOptions } from "@/lib/export-utils";
 
 const monthNames: Record<number, string> = {1:'Januari',2:'Februari',3:'Maret',4:'April',5:'Mei',6:'Juni',7:'Juli',8:'Agustus',9:'September',10:'Oktober',11:'November',12:'Desember'};
 const monthShort: Record<number, string> = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'Mei',6:'Jun',7:'Jul',8:'Agu',9:'Sep',10:'Okt',11:'Nov',12:'Des'};
@@ -48,7 +49,7 @@ function InfaqBillsContent() {
   const [genAcademicYearId, setGenAcademicYearId] = useState("");
   const [genClassroomId, setGenClassroomId] = useState("");
   const [genLoading, setGenLoading] = useState(false);
-  const [genPeriod, setGenPeriod] = useState<"bulanan" | "semester">("bulanan");
+  const [genPeriod, setGenPeriod] = useState<"bulanan" | "semester" | "tahunan">("bulanan");
   const [genSemester, setGenSemester] = useState("1");
 
   // Reset form
@@ -103,6 +104,7 @@ function InfaqBillsContent() {
     if (genPeriod === "bulanan" && genMonths.length === 0) {
       showToast("Pilih minimal 1 bulan", "error"); return;
     }
+    // Untuk periode tahunan: tidak perlu pilih bulan/semester, langsung generate 12 bulan
     
     // Validasi: Cek apakah ada kelas yang tarifnya 0 (hanya cek kelas target jika dipilih)
     const targetClasses = genClassroomId
@@ -145,7 +147,9 @@ function InfaqBillsContent() {
         academicYearId: genAcademicYearId ? Number(genAcademicYearId) : undefined,
         classroomId: genClassroomId ? Number(genClassroomId) : undefined,
       };
-      if (genPeriod === "semester") {
+      if (genPeriod === "tahunan") {
+        reqBody.period = "tahunan";
+      } else if (genPeriod === "semester") {
         reqBody.semester = Number(genSemester);
       } else {
         reqBody.months = genMonths.map(m => monthNames[m]);
@@ -410,6 +414,27 @@ function InfaqBillsContent() {
           </div>
           <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", padding: "0.25rem 0.75rem", borderRadius: 999 }}>{pagination.total} Data</span>
         </div>
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Daftar Tagihan Infaq / SPP",
+              filename: `tagihan_infaq_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 10, align: "center" },
+                { header: "Siswa", key: "student_name", width: 40 },
+                { header: "Kelas", key: "classroom", width: 20 },
+                { header: "Periode", key: "_periode", width: 25 },
+                { header: "Nominal", key: "nominal", width: 25, align: "right", format: (v: number) => fmtRupiah(v) },
+                { header: "Status", key: "status", width: 20, align: "center", format: (v: string) => v === 'lunas' ? 'Lunas' : v === 'sebagian' ? 'Sebagian' : v === 'void' ? 'Void' : 'Belum Lunas' },
+              ],
+              data: data.map((b: any, i: number) => ({
+                ...b,
+                _no: ((pagination.page - 1) * pagination.limit) + i + 1,
+                _periode: `${b.month || '-'} ${b.academic_year || b.year || '-'}`,
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -554,13 +579,13 @@ function InfaqBillsContent() {
 
             {/* Toggle Periode: Bulanan / Semester */}
             <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem", marginBottom: "1rem" }}>
-              {(["bulanan", "semester"] as const).map(p => (
+              {(["bulanan", "semester", "tahunan"] as const).map(p => (
                 <button key={p} onClick={() => setGenPeriod(p)} style={{
                   flex: 1, padding: "0.625rem", fontSize: "0.8125rem", fontWeight: 700, borderRadius: "0.625rem", border: "2px solid",
                   borderColor: genPeriod === p ? "#f59e0b" : "#e2e8f0",
                   background: genPeriod === p ? "#fef3c7" : "#fff",
                   color: genPeriod === p ? "#b45309" : "#64748b", cursor: "pointer", textTransform: "capitalize",
-                }}>{p}</button>
+                }}>{p === "tahunan" ? "1 Tahun" : p}</button>
               ))}
             </div>
 
@@ -586,7 +611,7 @@ function InfaqBillsContent() {
                   })}
                 </div>
               </div>
-            ) : (
+            ) : genPeriod === "semester" ? (
               <div>
                 <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Pilih Semester</label>
                 <select value={genSemester} onChange={e => setGenSemester(e.target.value)} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
@@ -595,6 +620,13 @@ function InfaqBillsContent() {
                 </select>
                 <p style={{ fontSize: "0.6875rem", color: "#64748b", marginTop: "0.375rem" }}>
                   Akan auto-generate tagihan untuk 6 bulan sekaligus.
+                </p>
+              </div>
+            ) : (
+              <div style={{ padding: "1rem", borderRadius: "0.625rem", background: "#fef3c7", border: "1px solid #fde68a" }}>
+                <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#b45309", margin: 0 }}>📅 1 Tahun Ajaran Penuh</p>
+                <p style={{ fontSize: "0.75rem", color: "#92400e", marginTop: "0.375rem" }}>
+                  Akan auto-generate tagihan untuk 12 bulan sekaligus (Juli – Juni).
                 </p>
               </div>
             )}
@@ -623,7 +655,7 @@ function InfaqBillsContent() {
             <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
               <button onClick={() => setShowGenerate(false)} style={{ padding: "0.625rem 1.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Batal</button>
               <button onClick={handleGenerate} disabled={genLoading} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: genLoading ? "#94a3b8" : "linear-gradient(135deg,#f59e0b,#d97706)", border: "none", borderRadius: "0.625rem", cursor: genLoading ? "not-allowed" : "pointer" }}>
-                {genLoading ? "Memproses..." : genPeriod === "semester" ? `Generate Semester ${genSemester}` : `Generate ${genMonths.length} Bulan`}
+                {genLoading ? "Memproses..." : genPeriod === "tahunan" ? "Generate 1 Tahun" : genPeriod === "semester" ? `Generate Semester ${genSemester}` : `Generate ${genMonths.length} Bulan`}
               </button>
             </div>
           </div>

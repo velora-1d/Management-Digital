@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 export default function InventoryPage() {
   const [data, setData] = useState<any[]>([]);
@@ -275,7 +276,29 @@ export default function InventoryPage() {
             <option value="Rusak Berat">Rusak Berat</option>
           </select>
         </div>
-
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Inventaris Madrasah",
+              filename: `inventaris_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Nama Barang", key: "name", width: 30 },
+                { header: "Kategori", key: "category", width: 18 },
+                { header: "Jumlah", key: "quantity", width: 10, align: "center" },
+                { header: "Kondisi", key: "condition", width: 15, align: "center" },
+                { header: "Lokasi", key: "location", width: 20 },
+                { header: "Harga Perolehan", key: "acquisitionCost", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
+              ],
+              data: data.map((item: any, i: number) => ({
+                ...item,
+                _no: (page - 1) * limit + i + 1,
+                category: item.category || '-',
+                location: item.location || '-',
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

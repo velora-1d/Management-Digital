@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import { ExportButtons, fmtRupiah, type ExportOptions } from "@/lib/export-utils";
 
-const semesterMonths: Record<number, number[]> = {
-  1: [7, 8, 9, 10, 11, 12],
-  2: [1, 2, 3, 4, 5, 6],
+const semesterMonths: Record<string, number[]> = {
+  "1": [7, 8, 9, 10, 11, 12],
+  "2": [1, 2, 3, 4, 5, 6],
+  "full": [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6],
 };
 const monthNames: Record<number, string> = {
   1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",
@@ -247,8 +249,47 @@ export default function TrackingPerKelasPage() {
           style={{ padding: "0.5rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.8125rem" }}>
           <option value="1">Semester 1 (Jul–Des)</option>
           <option value="2">Semester 2 (Jan–Jun)</option>
+          <option value="full">1 Tahun Penuh (Jul–Jun)</option>
         </select>
       </div>
+
+      {/* Tombol Export */}
+      {data?.tracking?.length > 0 && (
+        <div style={{ marginBottom: "1rem" }}>
+          <ExportButtons options={{
+            title: `Tracking SPP/Infaq - ${classrooms.find((c: any) => c.id == classroomId)?.name || 'Kelas'}`,
+            subtitle: `Tahun ${year} | ${semester === 'full' ? '1 Tahun Penuh' : `Semester ${semester}`}`,
+            filename: `tracking_spp_${year}_sem${semester}`,
+            orientation: "landscape",
+            columns: [
+              { header: "No", key: "_no", width: 8, align: "center" },
+              { header: "Nama Siswa", key: "name", width: 35 },
+              { header: "NISN", key: "nisn", width: 20 },
+              ...months.map((m: any) => ({
+                header: m.name, key: `m_${m.month}`, width: 14, align: "center" as const,
+                format: (_: any, row: any) => {
+                  const md = row[`m_${m.month}`];
+                  if (!md || md === '-') return '-';
+                  if (md === 'lunas') return '✓';
+                  if (md === 'sebagian') return '◐';
+                  if (md === 'void') return '✗';
+                  return '○';
+                }
+              })),
+              { header: "Tunggakan", key: "totalRemaining", width: 22, align: "right", format: (v: number) => v > 0 ? fmtRupiah(v) : 'Lunas' },
+            ],
+            data: data.tracking.map((s: any, i: number) => {
+              const row: any = { _no: i + 1, name: s.name, nisn: s.nisn || '-', totalRemaining: s.totalRemaining };
+              s.months.forEach((m: any) => { row[`m_${m.month}`] = m.status === 'belum_digenerate' ? '-' : m.status; });
+              return row;
+            }),
+            summaryRows: [
+              { label: "Total Siswa", value: String(data.summary.totalStudents) },
+              { label: "Total Tunggakan", value: fmtRupiah(data.summary.totalRemaining) },
+            ],
+          }} />
+        </div>
+      )}
 
       {/* Ringkasan */}
       {data?.summary && (

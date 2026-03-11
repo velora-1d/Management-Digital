@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons, fmtRupiah as fmtRupiahExport } from "@/lib/export-utils";
 
 // Fungsi format angka ke format rupiah (titik pemisah ribuan)
 function formatRupiah(value: string): string {
@@ -260,6 +261,32 @@ export default function JournalPage() {
             <option value="out">Pengeluaran (Out)</option>
           </select>
         </div>
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Jurnal Umum",
+              filename: `jurnal_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Tanggal", key: "_date", width: 15 },
+                { header: "Keterangan", key: "description", width: 30 },
+                { header: "Kategori", key: "category_name", width: 20 },
+                { header: "Tipe", key: "_type", width: 12, align: "center" },
+                { header: "Jumlah", key: "amount", width: 20, align: "right", format: (v: number) => fmtRupiahExport(v) },
+                { header: "Status", key: "_status", width: 10, align: "center" },
+              ],
+              data: data.map((e: any, i: number) => ({
+                ...e,
+                _no: i + 1,
+                _date: e.date ? new Date(e.date).toLocaleDateString("id-ID") : '-',
+                _type: e.type === 'in' ? 'Pemasukan' : 'Pengeluaran',
+                _status: e.status === 'void' ? 'VOID' : 'Aktif',
+                description: e.description || '-',
+                category_name: e.category_name || '-',
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
             <thead>

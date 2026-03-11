@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * GET /api/infaq-bills/tracking?classroomId=X&year=Y&semester=1|2
+ * GET /api/infaq-bills/tracking?classroomId=X&year=Y&semester=1|2|full
  *
- * Tracking SPP per kelas — return semua siswa di kelas + 12 bulan tracking.
+ * Tracking SPP per kelas — return semua siswa di kelas + tracking per bulan.
  * Semester 1 = bulan 7-12 (Jul-Des), Semester 2 = bulan 1-6 (Jan-Jun)
+ * Full = bulan 7-12 + 1-6 (12 bulan, 1 tahun ajaran penuh)
  */
 export async function GET(request: Request) {
   try {
@@ -41,9 +42,15 @@ export async function GET(request: Request) {
     });
 
     // Tentukan bulan berdasarkan semester
-    const months = semester === "2"
-      ? [1, 2, 3, 4, 5, 6]
-      : [7, 8, 9, 10, 11, 12];
+    let months: number[];
+    if (semester === "full") {
+      // 1 tahun ajaran penuh: Juli–Juni (12 bulan)
+      months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
+    } else if (semester === "2") {
+      months = [1, 2, 3, 4, 5, 6];
+    } else {
+      months = [7, 8, 9, 10, 11, 12];
+    }
 
     const monthNames: Record<number, string> = {
       1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",

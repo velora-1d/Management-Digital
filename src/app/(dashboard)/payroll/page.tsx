@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, atur-gaji, komponen
@@ -383,8 +384,26 @@ export default function PayrollPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h4 className="font-bold text-slate-800 text-sm">Log Histori Penggajian</h4>
+              {payrolls.length > 0 && (
+                <ExportButtons options={{
+                  title: "Riwayat Penggajian",
+                  filename: `riwayat_gaji_${new Date().toISOString().split("T")[0]}`,
+                  columns: [
+                    { header: "No", key: "_no", width: 8, align: "center" },
+                    { header: "Kode", key: "code", width: 18 },
+                    { header: "Tanggal", key: "_date", width: 18 },
+                    { header: "Pegawai", key: "employee_name", width: 30 },
+                    { header: "Gaji Bersih", key: "net_salary", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
+                  ],
+                  data: payrolls.map((p: any, i: number) => ({
+                    ...p,
+                    _no: i + 1,
+                    _date: new Date(p.created_at).toLocaleDateString("id-ID"),
+                  })),
+                }} />
+              )}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">

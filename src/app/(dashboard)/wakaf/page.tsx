@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 export default function WakafPage() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, donatur, tujuan
@@ -294,7 +295,29 @@ export default function WakafPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-fade-in">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h4 className="font-bold text-slate-800 text-sm">Riwayat Penerimaan Wakaf</h4>
-            <button onClick={handleAddWakaf} className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 shadow-sm">+ Catat Wakaf</button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {data.length > 0 && (
+                <ExportButtons options={{
+                  title: "Riwayat Wakaf & Donasi",
+                  filename: `wakaf_${new Date().toISOString().split("T")[0]}`,
+                  columns: [
+                    { header: "No", key: "_no", width: 8, align: "center" },
+                    { header: "Tanggal", key: "_date", width: 15 },
+                    { header: "Donatur", key: "donor_name", width: 25 },
+                    { header: "Tujuan", key: "purpose_name", width: 25 },
+                    { header: "Nominal", key: "amount", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
+                    { header: "Status", key: "_status", width: 10, align: "center" },
+                  ],
+                  data: data.map((t: any, i: number) => ({
+                    ...t,
+                    _no: i + 1,
+                    _date: new Date(t.date).toLocaleDateString("id-ID"),
+                    _status: t.status === 'void' ? 'VOID' : 'VALID',
+                  })),
+                }} />
+              )}
+              <button onClick={handleAddWakaf} className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 shadow-sm">+ Catat Wakaf</button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

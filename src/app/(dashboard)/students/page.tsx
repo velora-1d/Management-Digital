@@ -5,6 +5,7 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import FilterBar from "@/components/FilterBar";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 function StudentsContent() {
   const searchParams = useSearchParams();
@@ -141,6 +142,27 @@ function StudentsContent() {
           <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", borderRadius: "50%" }}></div>
           <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Siswa</h4>
         </div>
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Data Siswa",
+              filename: `data_siswa_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Nama", key: "name", width: 35 },
+                { header: "NISN", key: "nisn", width: 18 },
+                { header: "Kelas", key: "classroom_name", width: 15, align: "center" },
+                { header: "Kategori", key: "category", width: 15, align: "center" },
+                { header: "Gender", key: "gender", width: 10, align: "center", format: (v: string) => v === 'L' ? 'Laki-laki' : 'Perempuan' },
+                { header: "Status", key: "status", width: 12, align: "center", format: (v: string) => (v || 'aktif').charAt(0).toUpperCase() + (v || 'aktif').slice(1) },
+              ],
+              data: data.map((s: any, i: number) => ({
+                ...s,
+                _no: ((pagination.page - 1) * pagination.limit) + i + 1,
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

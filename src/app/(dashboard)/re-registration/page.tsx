@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons } from "@/lib/export-utils";
 
 export default function ReRegistrationPage() {
   const [data, setData] = useState<any[]>([]);
@@ -405,9 +406,29 @@ export default function ReRegistrationPage() {
 
       {/* Table Daftar Ulang */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600"></div>
-          <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Daftar Siswa</h4>
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600"></div>
+            <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Daftar Siswa</h4>
+          </div>
+          {data.length > 0 && (
+            <ExportButtons options={{
+              title: "Daftar Ulang Siswa",
+              filename: `daftar_ulang_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Nama Siswa", key: "student_name", width: 30 },
+                { header: "Kelas", key: "classroom", width: 15, align: "center" },
+                { header: "L/P", key: "gender", width: 8, align: "center" },
+                { header: "Status", key: "_status", width: 15, align: "center" },
+              ],
+              data: data.map((item: any, i: number) => ({
+                ...item,
+                _no: i + 1,
+                _status: item.status === 'confirmed' ? 'Terkonfirmasi' : item.status === 'pending' ? 'Menunggu' : item.status === 'not_registered' ? 'Tidak Daftar' : item.status,
+              })),
+            }} />
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">

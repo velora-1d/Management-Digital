@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ExportButtons } from "@/lib/export-utils";
 import Pagination from "@/components/Pagination";
 
 export default function PpdbPage() {
@@ -482,6 +483,32 @@ export default function PpdbPage() {
           </div>
           <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#0284c7", background: "#e0f2fe", padding: "0.25rem 0.75rem", borderRadius: 999 }}>{filtered.length} Data</span>
         </div>
+        {filtered.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Data PPDB - Penerimaan Siswa Baru",
+              filename: `ppdb_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "No. Reg", key: "_formNo", width: 15 },
+                { header: "Nama Calon Siswa", key: "name", width: 30 },
+                { header: "L/P", key: "gender", width: 8, align: "center" },
+                { header: "Nama Ayah", key: "fatherName", width: 20 },
+                { header: "Nama Ibu", key: "motherName", width: 20 },
+                { header: "Status", key: "_status", width: 12, align: "center" },
+              ],
+              data: filtered.map((r: any, i: number) => ({
+                ...r,
+                _no: i + 1,
+                _formNo: r.formNo || `#${r.id}`,
+                name: r.name || '-',
+                fatherName: r.fatherName || '-',
+                motherName: r.motherName || '-',
+                _status: r.status === 'menunggu' || r.status === 'pending' ? 'Menunggu' : r.status === 'diterima' ? 'Diterima' : r.status === 'ditolak' ? 'Ditolak' : r.status === 'converted' ? 'Converted' : r.status,
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

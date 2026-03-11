@@ -8,7 +8,7 @@ import { requireAuth, AuthError } from "@/lib/rbac";
  * Generate tagihan infaq/SPP secara bulk.
  * 
  * Input:
- *   - period: "bulanan" | "semester" (default: "bulanan")
+ *   - period: "bulanan" | "semester" | "tahunan" (default: "bulanan")
  *   - months: string[]         → wajib jika period = "bulanan"
  *   - semester: 1 | 2          → wajib jika period = "semester"
  *   - year: string             → wajib
@@ -16,7 +16,7 @@ import { requireAuth, AuthError } from "@/lib/rbac";
  *   - academicYearId?: number  → opsional (fallback ke tahun aktif)
  * 
  * Logic:
- *   1. Resolve bulan berdasarkan period + semester/months
+ *   1. Resolve bulan berdasarkan period + semester/months/tahunan
  *   2. Resolve tahun ajaran (wajib, fallback ke aktif)
  *   3. Query siswa via StudentEnrollment (sumber kebenaran per tahun ajaran)
  *   4. Validasi nominal sudah diatur (>0) untuk siswa wajib bayar
@@ -32,6 +32,7 @@ import { requireAuth, AuthError } from "@/lib/rbac";
 
 const SEMESTER_1_MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const SEMESTER_2_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
+const FULL_YEAR_MONTHS = [...SEMESTER_1_MONTHS, ...SEMESTER_2_MONTHS]; // 12 bulan penuh
 
 // Status tagihan yang valid dan transisinya
 const VALID_STATUSES = ["belum_lunas", "sebagian", "lunas", "void"] as const;
@@ -49,7 +50,10 @@ export async function POST(request: Request) {
     const resolvedPeriod = period || "bulanan";
     let resolvedMonths: string[] = [];
 
-    if (resolvedPeriod === "semester") {
+    if (resolvedPeriod === "tahunan") {
+      // 1 tahun ajaran penuh: Juli–Desember + Januari–Juni (12 bulan)
+      resolvedMonths = [...FULL_YEAR_MONTHS];
+    } else if (resolvedPeriod === "semester") {
       const sem = Number(semester);
       if (sem === 1) {
         resolvedMonths = [...SEMESTER_1_MONTHS];
@@ -283,7 +287,9 @@ export async function POST(request: Request) {
       });
     });
 
-    const periodeDesc = resolvedPeriod === "semester"
+    const periodeDesc = resolvedPeriod === "tahunan"
+      ? "1 Tahun Ajaran Penuh"
+      : resolvedPeriod === "semester"
       ? `Semester ${semester}`
       : `${resolvedMonths.length} bulan`;
 

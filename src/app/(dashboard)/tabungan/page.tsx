@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Pagination from "@/components/Pagination";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 export default function TabunganPage() {
   const [data, setData] = useState<any[]>([]);
@@ -167,6 +168,27 @@ export default function TabunganPage() {
           </div>
           <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", padding: "0.25rem 0.75rem", borderRadius: 999 }}>{total} Siswa</span>
         </div>
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Tabungan Siswa",
+              filename: `tabungan_siswa_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Nama Siswa", key: "name", width: 30 },
+                { header: "NISN", key: "nisn", width: 18 },
+                { header: "Kelas", key: "classroom", width: 15, align: "center" },
+                { header: "Saldo", key: "balance", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
+              ],
+              data: data.map((s: any, i: number) => ({
+                ...s,
+                _no: (page - 1) * limit + i + 1,
+                nisn: s.nisn || '-',
+                classroom: s.classroom || '-',
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

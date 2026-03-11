@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
 export default function ClassroomsPage() {
   const [data, setData] = useState([]);
@@ -74,6 +75,29 @@ export default function ClassroomsPage() {
           <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#d97706,#f59e0b)", borderRadius: "50%" }}></div>
           <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Kelas</h4>
         </div>
+        {data.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Data Ruang Kelas",
+              filename: `data_kelas_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Tingkat", key: "level", width: 12, align: "center" },
+                { header: "Nama Kelas", key: "name", width: 20 },
+                { header: "Wali Kelas", key: "wali_kelas", width: 25 },
+                { header: "Jumlah Siswa", key: "student_count", width: 15, align: "center" },
+                { header: "Tarif Infaq", key: "infaq_nominal", width: 18, align: "right", format: (v: number) => fmtRupiah(v) },
+              ],
+              data: data.map((c: any, i: number) => ({
+                ...c,
+                _no: i + 1,
+                wali_kelas: c.wali_kelas || 'Belum ada',
+                student_count: c.student_count || 0,
+                infaq_nominal: c.infaq_nominal || 0,
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

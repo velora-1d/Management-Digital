@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
+import { ExportButtons } from "@/lib/export-utils";
 
 export default function StaffPage() {
   const [data, setData] = useState<any[]>([]);
@@ -124,6 +125,29 @@ export default function StaffPage() {
             </select>
           </div>
         </div>
+        {filteredData.length > 0 && (
+          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+            <ExportButtons options={{
+              title: "Data Staf & Karyawan",
+              filename: `data_staf_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 8, align: "center" },
+                { header: "Nama", key: "name", width: 35 },
+                { header: "NIK/ID", key: "nip", width: 22 },
+                { header: "Jabatan", key: "position", width: 25 },
+                { header: "No. Telepon", key: "phone", width: 18 },
+                { header: "Status", key: "status", width: 12, align: "center", format: (v: string) => v === 'aktif' ? 'Aktif' : 'Non-Aktif' },
+              ],
+              data: filteredData.map((s: any, i: number) => ({
+                ...s,
+                _no: i + 1,
+                nip: s.nip || '-',
+                position: s.position || '-',
+                phone: s.phone || '-',
+              })),
+            }} />
+          </div>
+        )}
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

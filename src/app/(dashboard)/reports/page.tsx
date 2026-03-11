@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { ExportButtons, type ExportOptions, fmtRupiah } from "@/lib/export-utils";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("infaq");
@@ -41,6 +42,98 @@ export default function ReportsPage() {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
   };
 
+  // ===== EXPORT OPTIONS =====
+
+  const getInfaqExportOptions = (): ExportOptions => {
+    let totalTagihan = 0, totalBayar = 0, totalTunggak = 0;
+    infaqData.forEach(d => {
+      totalTagihan += Number(d.amount || 0);
+      totalBayar += Number(d.paid || 0);
+      totalTunggak += Number(d.remaining || 0);
+    });
+
+    return {
+      title: "Laporan Tagihan Infaq / SPP",
+      subtitle: `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`,
+      filename: `laporan_infaq_${new Date().toISOString().split("T")[0]}`,
+      columns: [
+        { header: "No", key: "_no", width: 10, align: "center" },
+        { header: "Nama Siswa", key: "student_name", width: 45 },
+        { header: "Bulan", key: "month", width: 20, align: "center" },
+        { header: "Tagihan", key: "amount", width: 30, align: "right", format: (v) => fmtRupiah(v) },
+        { header: "Terbayar", key: "paid", width: 30, align: "right", format: (v) => fmtRupiah(v) },
+        { header: "Status", key: "status", width: 20, align: "center", format: (v) => v === "paid" ? "Lunas" : "Belum" },
+      ],
+      data: infaqData.map((d, i) => ({ ...d, _no: i + 1 })),
+      summaryRows: [
+        { label: "Total Tagihan", value: fmtRupiah(totalTagihan) },
+        { label: "Total Terbayar", value: fmtRupiah(totalBayar) },
+        { label: "Total Tunggakan", value: fmtRupiah(totalTunggak) },
+      ],
+    };
+  };
+
+  const getPendaftaranExportOptions = (): ExportOptions => ({
+    title: "Laporan Pendaftaran (PPDB & Daftar Ulang)",
+    subtitle: `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`,
+    filename: `laporan_pendaftaran_${new Date().toISOString().split("T")[0]}`,
+    columns: [
+      { header: "No", key: "_no", width: 10, align: "center" },
+      { header: "Nama", key: "name", width: 50 },
+      { header: "No Pendaftaran", key: "formNo", width: 35 },
+      { header: "Status", key: "status", width: 25, align: "center" },
+    ],
+    data: pendaftaranData.map((d, i) => ({ ...d, _no: i + 1, formNo: d.registration_number || d.formNo || "-" })),
+  });
+
+  const getTabunganExportOptions = (): ExportOptions => {
+    let totalSaldo = 0;
+    tabunganData.forEach(d => { totalSaldo += Number(d.balance || 0); });
+
+    return {
+      title: "Laporan Tabungan Siswa",
+      subtitle: `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`,
+      filename: `laporan_tabungan_${new Date().toISOString().split("T")[0]}`,
+      columns: [
+        { header: "No", key: "_no", width: 10, align: "center" },
+        { header: "Nama Siswa", key: "student_name", width: 50 },
+        { header: "Kelas", key: "classroom", width: 30 },
+        { header: "Saldo", key: "balance", width: 35, align: "right", format: (v) => fmtRupiah(v) },
+      ],
+      data: tabunganData.map((d, i) => ({ ...d, _no: i + 1 })),
+      summaryRows: [{ label: "Total Saldo", value: fmtRupiah(totalSaldo) }],
+    };
+  };
+
+  const getAruskasExportOptions = (): ExportOptions => {
+    const txns = aruskasData?.transactions || [];
+    const pemasukan = Number(aruskasData?.total_income || 0);
+    const pengeluaran = Number(aruskasData?.total_expense || 0);
+
+    return {
+      title: "Laporan Arus Kas",
+      subtitle: `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}`,
+      filename: `laporan_aruskas_${new Date().toISOString().split("T")[0]}`,
+      orientation: "landscape",
+      columns: [
+        { header: "No", key: "_no", width: 10, align: "center" },
+        { header: "Tanggal", key: "date", width: 25, format: (v) => v ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "-" },
+        { header: "Keterangan", key: "description", width: 60 },
+        { header: "Kategori", key: "category", width: 30 },
+        { header: "Masuk", key: "_in", width: 30, align: "right", format: (_, r) => r.type === "income" ? fmtRupiah(r.amount) : "-" },
+        { header: "Keluar", key: "_out", width: 30, align: "right", format: (_, r) => r.type === "expense" ? fmtRupiah(r.amount) : "-" },
+      ],
+      data: txns.map((t: any, i: number) => ({ ...t, _no: i + 1 })),
+      summaryRows: [
+        { label: "Total Pemasukan", value: fmtRupiah(pemasukan) },
+        { label: "Total Pengeluaran", value: fmtRupiah(pengeluaran) },
+        { label: "Saldo Bersih", value: fmtRupiah(pemasukan - pengeluaran) },
+      ],
+    };
+  };
+
+  // ===== RENDER FUNCTIONS =====
+
   const renderInfaq = () => {
     if (loading) return <p className="text-center text-slate-400 py-10">Memuat...</p>;
     if (!infaqData || infaqData.length === 0) return <p className="text-center text-slate-400 py-10">Belum ada data tagihan.</p>;
@@ -54,6 +147,10 @@ export default function ReportsPage() {
 
     return (
       <div className="animate-fade-in">
+        <div className="flex justify-between items-center mb-4">
+          <div />
+          <ExportButtons options={getInfaqExportOptions()} />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-slate-50 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 m-0">Total Tagihan</p>
@@ -115,6 +212,10 @@ export default function ReportsPage() {
 
     return (
       <div className="animate-fade-in">
+        <div className="flex justify-between items-center mb-4">
+          <div />
+          <ExportButtons options={getPendaftaranExportOptions()} />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="bg-slate-50 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 m-0">Total Pendaftar</p>
@@ -176,6 +277,10 @@ export default function ReportsPage() {
 
     return (
       <div className="animate-fade-in">
+        <div className="flex justify-between items-center mb-4">
+          <div />
+          <ExportButtons options={getTabunganExportOptions()} />
+        </div>
         <div className="bg-gradient-to-br from-sky-100 to-sky-200 rounded-xl p-5 text-center mb-6">
           <p className="text-xs text-sky-700 m-0">Total Saldo Seluruh Siswa</p>
           <p className="font-extrabold text-2xl text-sky-900 mt-1 mb-0">{fmtRp(totalSaldo)}</p>
@@ -219,6 +324,10 @@ export default function ReportsPage() {
 
     return (
       <div className="animate-fade-in">
+        <div className="flex justify-between items-center mb-4">
+          <div />
+          <ExportButtons options={getAruskasExportOptions()} />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-emerald-50 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 m-0">Total Pemasukan</p>
