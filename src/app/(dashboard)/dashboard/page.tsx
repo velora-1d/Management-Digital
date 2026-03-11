@@ -4,9 +4,8 @@ import DashboardCharts from "@/components/DashboardCharts";
 import FilterBar from "@/components/FilterBar";
 import { Suspense } from "react";
 
-// Paksa halaman ini selalu render ulang — data real-time, tanpa cache
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// ISR: revalidate setiap 60 detik agar lebih ringan dan mengurangi SSR time (bottleneck LCP).
+export const revalidate = 60;
 
 async function getDashboardData(searchParams: any) {
   const academicYearId = searchParams.academicYearId ? Number(searchParams.academicYearId) : null;
@@ -66,14 +65,20 @@ async function getDashboardData(searchParams: any) {
   }
 
   const [
-    enrollments,
-    employees,
+    totalSiswa,
+    totalSiswaPa,
+    totalSiswaPi,
+    employeesGroup,
     classroomsCount,
-    ppdb,
+    ppdbGroup,
     incomePeriode,
     expensePeriode,
     savingsAgg,
-    tunggakan,
+    tunggakanCount,
+    tunggakanTotalNominalAgg,
+    tunggakanPa,
+    tunggakanPi,
+    tunggakanSiswaUniq,
     wakafAgg,
     coopTrxAgg,
     coopCreditAgg,
@@ -81,10 +86,12 @@ async function getDashboardData(searchParams: any) {
     announcementsCount,
     lettersCount,
   ] = await Promise.all([
-    prisma.studentEnrollment.findMany({ where: enrollmentWhere, include: { student: { select: { gender: true } } } }),
-    prisma.employee.findMany({ where: { deletedAt: null, status: "aktif" } }),
+    prisma.studentEnrollment.count({ where: enrollmentWhere }),
+    prisma.studentEnrollment.count({ where: { ...enrollmentWhere, student: { gender: "L" } } }),
+    prisma.studentEnrollment.count({ where: { ...enrollmentWhere, student: { gender: "P" } } }),
+    prisma.employee.groupBy({ by: ["type"], _count: { id: true }, where: { deletedAt: null, status: "aktif" } }),
     prisma.classroom.count({ where: { deletedAt: null, ...(targetAcademicYearId ? { academicYearId: targetAcademicYearId } : {}) } }),
-    prisma.ppdbRegistration.findMany({ where: { deletedAt: null, ...(gender ? { gender } : {}) } }),
+    prisma.ppdbRegistration.groupBy({ by: ["status"], _count: { id: true }, where: { deletedAt: null, ...(gender ? { gender } : {}) } }),
     prisma.generalTransaction.aggregate({
       where: { type: "in", status: "valid", deletedAt: null, createdAt: dateFilter },
       _sum: { amount: true },
@@ -97,10 +104,11 @@ async function getDashboardData(searchParams: any) {
       where: { deletedAt: null, ...(gender ? { student: { gender } } : {}) },
       _sum: { amount: true },
     }),
-    prisma.infaqBill.findMany({
-      where: billWhere,
-      include: { student: { select: { gender: true } } },
-    }),
+    prisma.infaqBill.count({ where: billWhere }),
+    prisma.infaqBill.aggregate({ where: billWhere, _sum: { nominal: true } }),
+    prisma.infaqBill.count({ where: { ...billWhere, student: { gender: "L" } } }),
+    prisma.infaqBill.count({ where: { ...billWhere, student: { gender: "P" } } }),
+    prisma.infaqBill.groupBy({ by: ["studentId"], where: billWhere }),
     prisma.generalTransaction.aggregate({
       where: { type: "in", status: "valid", deletedAt: null, createdAt: dateFilter, category: { name: { contains: "wakaf", mode: "insensitive" as any } } },
       _sum: { amount: true },
@@ -125,28 +133,25 @@ async function getDashboardData(searchParams: any) {
     }),
   ]);
 
-  const totalSiswaPa = enrollments.filter(e => e.student?.gender === "L").length;
-  const totalSiswaPi = enrollments.filter(e => e.student?.gender === "P").length;
-  const guru = employees.filter(e => e.type === "guru");
-  const staf = employees.filter(e => e.type === "staf");
-  const ppdbPending = ppdb.filter(p => p.status === "pending" || p.status === "menunggu").length;
-  const ppdbDiterima = ppdb.filter(p => p.status === "diterima").length;
+  const totalGuru = employeesGroup.find(e => e.type === "guru")?._count.id || 0;
+  const totalStaff = employeesGroup.find(e => e.type === "staf")?._count.id || 0;
+  
+  const ppdbPending = ppdbGroup.find(p => p.status === "pending" || p.status === "menunggu")?._count.id || 0;
+  const ppdbDiterima = ppdbGroup.find(p => p.status === "diterima")?._count.id || 0;
 
-  const tunggakanTotalNominal = tunggakan.reduce((sum, t) => sum + t.nominal, 0);
-  const tunggakanPa = tunggakan.filter(t => t.student?.gender === "L").length;
-  const tunggakanPi = tunggakan.filter(t => t.student?.gender === "P").length;
+  const tunggakanTotalNominal = tunggakanTotalNominalAgg._sum.nominal || 0;
 
-  const lunasCount = enrollments.length - new Set(tunggakan.map(t => t.studentId)).size;
-  const complianceRate = enrollments.length > 0 ? Math.round((lunasCount / enrollments.length) * 100) : 0;
+  const lunasCount = totalSiswa - tunggakanSiswaUniq.length;
+  const complianceRate = totalSiswa > 0 ? Math.round((lunasCount / totalSiswa) * 100) : 0;
 
   const piutangKoperasi = (coopCreditAgg._sum.amount || 0) - (coopCreditAgg._sum.paidAmount || 0);
 
   return {
-    totalSiswa: enrollments.length,
+    totalSiswa,
     totalSiswaPa,
     totalSiswaPi,
-    totalGuru: guru.length,
-    totalStaff: staf.length,
+    totalGuru,
+    totalStaff,
     totalKelas: classroomsCount,
     ppdbPending,
     ppdbDiterima,
@@ -157,7 +162,7 @@ async function getDashboardData(searchParams: any) {
     pengeluaranBulanIni: expensePeriode._sum.amount || 0,
     saldoTabungan: savingsAgg._sum.amount || 0,
     totalWakaf: wakafAgg._sum.amount || 0,
-    tunggakanTotal: tunggakan.length,
+    tunggakanTotal: tunggakanCount,
     tunggakanTotalNominal,
     tunggakanPa,
     tunggakanPi,
