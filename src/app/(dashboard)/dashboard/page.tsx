@@ -188,7 +188,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   const roleTabs: Record<string, string[]> = {
     superadmin: ["overview", "finance", "academic", "hr"],
-    admin: ["overview", "academic", "hr"],
+    admin: ["overview", "finance", "academic", "hr"],
     bendahara: ["finance"],
     operator: ["overview", "academic"],
     guru: ["academic"],
