@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
 
 export default function SubjectsPage() {
   const [data, setData] = useState<any[]>([]);
@@ -173,49 +175,52 @@ export default function SubjectsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#2563eb 50%,#3b82f6 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Mata Pelajaran</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola daftar mata pelajaran sekolah.</p>
-              </div>
-            </div>
-            <button onClick={handleAdd} className="hover:bg-white/30" style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", transition: "all 0.2s ease" }}>
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Mapel
-            </button>
-            <button onClick={() => {
-              if (data.length === 0) { Swal.fire("Info", "Tidak ada data untuk diekspor", "info"); return; }
-              exportCSV(
-                ["No", "Kode", "Nama Mapel", "Jenis", "Tingkat Kelas"],
-                data.map((d, i) => [i+1, d.code || "-", d.name, d.type === "wajib" ? "Wajib" : d.type === "mulok" ? "Muatan Lokal" : "Muatan Khusus", d.tingkatKelas || "Semua"]),
-                "data_mata_pelajaran"
-              );
-            }} className="hover:bg-white/30" style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}>
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+    <div className="space-y-5 animate-fade-in-up">
+      <PageHeader
+        title="Mata Pelajaran"
+        subtitle="Kelola daftar mata pelajaran sekolah."
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <h3 className="font-heading font-bold text-sm text-slate-800 m-0">Daftar Mata Pelajaran</h3>
-            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full ml-1">{data.length}</span>
+            <button 
+              onClick={() => {
+                if (data.length === 0) { Swal.fire("Info", "Tidak ada data untuk diekspor", "info"); return; }
+                exportCSV(
+                  ["No", "Kode", "Nama Mapel", "Jenis", "Tingkat Kelas"],
+                  data.map((d, i) => [i+1, d.code || "-", d.name, d.type === "wajib" ? "Wajib" : d.type === "mulok" ? "Muatan Lokal" : "Muatan Khusus", d.tingkatKelas || "Semua"]),
+                  "data_mata_pelajaran"
+                );
+              }}
+              className="inline-flex items-center px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold border border-indigo-500/20 transition-all uppercase tracking-wider"
+            >
+              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export
+            </button>
+            <button 
+              onClick={handleAdd}
+              className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold border border-blue-400 shadow-lg shadow-blue-900/20 transition-all uppercase tracking-wider"
+            >
+              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Tambah Mapel
+            </button>
           </div>
-        </div>
+        }
+      />
+
+      <Card
+        title="Daftar Mata Pelajaran"
+        icon={<div className="w-2 h-2 rounded-full bg-blue-500" />}
+        actions={
+          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{data.length}</span>
+        }
+        noPadding
+      >
         
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -262,7 +267,7 @@ export default function SubjectsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

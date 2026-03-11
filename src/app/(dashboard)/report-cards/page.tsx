@@ -2,7 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
 import { generateReportCardPDF } from "@/lib/report-card-template";
+import { 
+  CheckCircle, 
+  FileText, 
+  Download, 
+  AlertTriangle, 
+  RefreshCw,
+  ClipboardList,
+  ChevronLeft,
+  ChevronRight,
+  Info
+} from "lucide-react";
 
 interface Classroom { id: number; name: string; }
 interface Curriculum { id: number; type: string; semester: string; academicYear?: { year: string }; }
@@ -15,9 +28,9 @@ interface NoteItem { studentId: number; studentName: string; note: string; }
 type ReportGenerateResult = any;
 
 const steps = [
-  { id: 1, label: "Cek Kelengkapan", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
-  { id: 2, label: "Catatan Wali Kelas", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
-  { id: 3, label: "Generate & Download", icon: "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+  { id: 1, label: "Cek Kelengkapan", icon: ClipboardList },
+  { id: 2, label: "Catatan Wali Kelas", icon: FileText },
+  { id: 3, label: "Generate & Download", icon: Download },
 ];
 
 export default function ReportCardsPage() {
@@ -69,7 +82,7 @@ export default function ReportCardsPage() {
   // Step 1: Cek kelengkapan nilai
   const handleCheckCompleteness = async () => {
     if (!selectedClassroom || !selectedCurriculum) {
-      Swal.fire("Peringatan", "Pilih kelas dan kurikulum terlebih dahulu", "warning");
+      Swal.fire("Peringatan", "Pilih kelas dan kurikulum terlebih jauh", "warning");
       return;
     }
     setLoadingCheck(true);
@@ -208,309 +221,304 @@ export default function ReportCardsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 font-heading tracking-tight">Rapor Digital (E-Rapor)</h1>
-          <p className="text-sm text-slate-500 mt-1">Generate dan kelola rapor semester peserta didik</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Rapor Digital (E-Rapor)"
+        subtitle="Generate dan kelola rapor semester peserta didik"
+        icon={<FileText className="w-5 h-5 text-indigo-600" />}
+      />
 
-      {/* Stepper */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <Card>
         <div className="flex items-center justify-between">
-          {steps.map((step, idx) => (
-            <div key={step.id} className="flex items-center flex-1">
-              <button
-                onClick={() => setCurrentStep(step.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  currentStep === step.id
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                    : currentStep > step.id
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-100 text-slate-500"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={step.icon} />
-                </svg>
-                <span className="hidden sm:inline">{step.label}</span>
-              </button>
-              {idx < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 ${currentStep > step.id ? "bg-emerald-300" : "bg-slate-200"}`} />
-              )}
-            </div>
-          ))}
+          {steps.map((step, idx) => {
+             const StepIcon = step.icon;
+             return (
+              <div key={step.id} className="flex items-center flex-1">
+                <button
+                  onClick={() => setCurrentStep(step.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    currentStep === step.id
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                      : currentStep > step.id
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  <StepIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{step.label}</span>
+                </button>
+                {idx < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 ${currentStep > step.id ? "bg-emerald-300" : "bg-slate-200"}`} />
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </Card>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <Card compact>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Kelas</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Kelas</label>
             <select
               value={selectedClassroom}
               onChange={(e) => setSelectedClassroom(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kelas —</option>
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Kurikulum</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Kurikulum</label>
             <select
               value={selectedCurriculum}
               onChange={(e) => setSelectedCurriculum(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kurikulum —</option>
               {curriculums.map(c => <option key={c.id} value={c.id}>{c.type} — {c.semester} {c.academicYear?.year || ""}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Semester</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Semester</label>
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="ganjil">Ganjil</option>
               <option value="genap">Genap</option>
             </select>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Step Content */}
-      {currentStep === 1 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-              <h2 className="font-heading font-bold text-sm text-slate-800">Cek Kelengkapan Nilai</h2>
-            </div>
-            <button
+      <Card
+        title={steps.find(s => s.id === currentStep)?.label}
+        icon={steps.find(s => s.id === currentStep)?.icon && (() => {
+          const Icon = steps.find(s => s.id === currentStep)!.icon;
+          return <Icon className="w-5 h-5 text-indigo-600" />;
+        })()}
+        actions={
+          currentStep === 1 ? (
+             <button
               onClick={handleCheckCompleteness}
               disabled={loadingCheck || !selectedClassroom || !selectedCurriculum}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {loadingCheck && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
+              {loadingCheck ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
               Periksa Kelengkapan
             </button>
-          </div>
-
-          {!selectedClassroom || !selectedCurriculum ? (
-            <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
-              <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-sm text-slate-500 mt-2">Pilih kelas dan kurikulum untuk memeriksa kelengkapan</p>
-            </div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-8 text-sm text-slate-500">Tidak ada siswa di kelas ini</div>
-          ) : (
-            <div className="space-y-2">
-              {students.map(st => {
-                const pct = getCompletionPercent(st.id);
-                const status = getStudentStatus(st.id);
-                const checks = completionData[st.id] || [];
-                return (
-                  <div key={st.id} className="border border-slate-100 rounded-xl p-3 hover:border-indigo-100 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          pct === 100 ? "bg-emerald-100 text-emerald-700" : pct > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
-                        }`}>
-                          {pct}%
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm text-slate-800">{st.name}</p>
-                          <p className="text-xs text-slate-400">NISN: {st.nisn}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                          status === "PUBLISHED" ? "bg-emerald-100 text-emerald-700" :
-                          status === "GENERATED" ? "bg-blue-100 text-blue-700" :
-                          status === "DRAFT" ? "bg-amber-100 text-amber-700" :
-                          "bg-slate-100 text-slate-500"
-                        }`}>
-                          {status === "NONE" ? "Belum Dibuat" : status}
-                        </span>
-                        {pct === 100 ? (
-                          <span className="text-emerald-500">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          </span>
-                        ) : (
-                          <span className="text-amber-500">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div className={`h-1.5 rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-400" : "bg-slate-300"}`} style={{ width: `${pct}%` }}></div>
-                    </div>
-                    {checks.length > 0 && pct < 100 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {checks.filter(c => !c.isLocked).map((c, i) => (
-                          <span key={i} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 text-[10px] rounded border border-rose-100">{c.subjectName}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {currentStep === 2 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-              <h2 className="font-heading font-bold text-sm text-slate-800">Catatan Wali Kelas</h2>
-            </div>
+          ) : currentStep === 2 ? (
             <button
               onClick={handleSaveNotes}
               disabled={savingNotes || notes.length === 0}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {savingNotes && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
+              {savingNotes ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Simpan Semua Catatan
             </button>
-          </div>
-
-          {notes.length === 0 ? (
-            <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
-              <p className="text-sm text-slate-500">Pilih kelas terlebih dahulu untuk memuat daftar siswa</p>
-            </div>
           ) : (
-            <div className="space-y-3">
-              {notes.map((item, idx) => (
-                <div key={item.studentId} className="border border-slate-100 rounded-xl p-3 hover:border-indigo-100 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600">{idx + 1}</div>
-                    <p className="font-semibold text-sm text-slate-800">{item.studentName}</p>
-                  </div>
-                  <textarea
-                    value={item.note}
-                    onChange={(e) => {
-                      const updated = [...notes];
-                      updated[idx] = { ...updated[idx], note: e.target.value };
-                      setNotes(updated);
-                    }}
-                    placeholder="Tulis catatan wali kelas untuk siswa ini..."
-                    rows={2}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {currentStep === 3 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-              <h2 className="font-heading font-bold text-sm text-slate-800">Generate & Download Rapor</h2>
-            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleGenerate}
                 disabled={generating || !selectedClassroom || !selectedCurriculum}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
               >
-                {generating && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                {generating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 Generate Data
               </button>
               {generatedData?.students?.length > 0 && (
                 <button
                   onClick={handleDownloadAll}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  <Download className="w-4 h-4" />
                   Download Semua PDF
                 </button>
               )}
             </div>
+          )
+        }
+      >
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            {!selectedClassroom || !selectedCurriculum ? (
+              <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
+                <Info className="mx-auto h-12 w-12 text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500">Pilih kelas dan kurikulum untuk memeriksa kelengkapan</p>
+              </div>
+            ) : students.length === 0 ? (
+              <div className="text-center py-8 text-sm text-slate-500">Tidak ada siswa di kelas ini</div>
+            ) : (
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                {students.map(st => {
+                  const pct = getCompletionPercent(st.id);
+                  const status = getStudentStatus(st.id);
+                  const checks = completionData[st.id] || [];
+                  return (
+                    <div key={st.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm ${
+                            pct === 100 ? "bg-emerald-100 text-emerald-700" : pct > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                          }`}>
+                            {pct}%
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-slate-800">{st.name}</p>
+                            <p className="text-[11px] text-slate-400 font-medium tracking-wide">NISN: {st.nisn} · NIS: {st.nis}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
+                            status === "PUBLISHED" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                            status === "GENERATED" ? "bg-blue-100 text-blue-700 border border-blue-200" :
+                            status === "DRAFT" ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                            "bg-slate-100 text-slate-500 border border-slate-200"
+                          }`}>
+                            {status === "NONE" ? "BELUM DIPROSES" : status}
+                          </span>
+                          {pct === 100 ? (
+                            <CheckCircle className="w-5 h-5 text-emerald-500" />
+                          ) : (
+                            <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div className={`h-2 rounded-full transition-all duration-500 ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" : "bg-slate-300"}`} style={{ width: `${pct}%` }}></div>
+                      </div>
+                      {checks.length > 0 && pct < 100 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-400 mr-1 self-center uppercase tracking-tight">Belum Selesai:</span>
+                          {checks.filter(c => !c.isLocked).map((c, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] rounded font-medium border border-rose-100 shadow-sm">{c.subjectName}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+        )}
 
-          {!generatedData ? (
-            <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
-              <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-sm text-slate-500 mt-2">Klik &quot;Generate Data&quot; untuk memproses data rapor</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-indigo-700">{generatedData.students?.length || 0}</p>
-                  <p className="text-xs text-indigo-500">Total Siswa</p>
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            {notes.length === 0 ? (
+              <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
+                <Info className="mx-auto h-12 w-12 text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500">Pilih kelas terlebih dahulu untuk memuat daftar siswa</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                {notes.map((item, idx) => (
+                  <div key={item.studentId} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">{idx + 1}</div>
+                      <div>
+                        <p className="font-bold text-sm text-slate-800">{item.studentName}</p>
+                      </div>
+                    </div>
+                    <textarea
+                      value={item.note}
+                      onChange={(e) => {
+                        const updated = [...notes];
+                        updated[idx] = { ...updated[idx], note: e.target.value };
+                        setNotes(updated);
+                      }}
+                      placeholder="Tulis catatan wali kelas untuk siswa ini (misal: Pertahankan prestasimu, tingkatkan kehadiran...)"
+                      rows={3}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white transition-all hover:border-slate-300 shadow-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            {!generatedData ? (
+              <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
+                <FileText className="mx-auto h-12 w-12 text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500 px-4">Pastikan kelengkapan nilai & catatan wali kelas sudah sesuai, lalu klik &quot;Generate Data&quot; untuk memproses rapor.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 text-center shadow-sm">
+                    <p className="text-2xl font-black text-indigo-700">{generatedData.students?.length || 0}</p>
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Total Siswa</p>
+                  </div>
+                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center shadow-sm">
+                    <p className="text-xl font-bold text-emerald-700 truncate">{generatedData.classroom?.name || "-"}</p>
+                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Kelas</p>
+                  </div>
+                  <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 text-center shadow-sm">
+                    <p className="text-xl font-bold text-amber-700 truncate">{generatedData.curriculum?.type || "-"}</p>
+                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1">Kurikulum</p>
+                  </div>
+                  <div className="bg-sky-50/50 border border-sky-100 rounded-2xl p-4 text-center shadow-sm">
+                    <p className="text-xl font-bold text-sky-700">{generatedData.curriculum?.semester === "ganjil" ? "Ganjil" : "Genap"}</p>
+                    <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest mt-1">Semester</p>
+                  </div>
                 </div>
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-700">{generatedData.classroom?.name || "-"}</p>
-                  <p className="text-xs text-emerald-500">Kelas</p>
-                </div>
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-700">{generatedData.curriculum?.type || "-"}</p>
-                  <p className="text-xs text-amber-500">Kurikulum</p>
-                </div>
-                <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-sky-700">{generatedData.curriculum?.semester === "ganjil" ? "Ganjil" : "Genap"}</p>
-                  <p className="text-xs text-sky-500">Semester</p>
+
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {generatedData.students?.map((sd: ReportGenerateResult, idx: number) => (
+                      <div key={idx} className="border border-slate-100 rounded-2xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-sm font-black text-indigo-700 group-hover:bg-indigo-100 transition-colors shadow-sm">{idx + 1}</div>
+                          <div>
+                            <p className="font-bold text-sm text-slate-800">{sd.student.name}</p>
+                            <p className="text-[11px] text-slate-400 font-medium">{sd.finalGrades?.length || 0} Mata Pelajaran · {sd.attendanceSummary?.alpha || 0} Alpha</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDownloadPDF(idx)}
+                          className="p-2.5 bg-white hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl transition-all border border-indigo-100 shadow-sm group/btn"
+                          title="Download PDF"
+                        >
+                          <Download className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-
-              {generatedData.students?.map((sd: ReportGenerateResult, idx: number) => (
-                <div key={idx} className="border border-slate-100 rounded-xl p-3 hover:border-indigo-100 transition-colors flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700">{idx + 1}</div>
-                    <div>
-                      <p className="font-semibold text-sm text-slate-800">{sd.student.name}</p>
-                      <p className="text-xs text-slate-400">{sd.finalGrades?.length || 0} mapel · Alpha: {sd.attendanceSummary?.alpha || 0}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadPDF(idx)}
-                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border border-indigo-100"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Download PDF
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <button
           onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
           disabled={currentStep === 1}
-          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          ← Sebelumnya
+          <ChevronLeft className="w-4 h-4" />
+          Sebelumnya
         </button>
+        <div className="flex gap-1.5">
+          {steps.map(s => (
+            <div key={s.id} className={`w-2.5 h-1.5 rounded-full transition-all ${currentStep === s.id ? "w-8 bg-indigo-600" : "bg-slate-200"}`} />
+          ))}
+        </div>
         <button
           onClick={() => setCurrentStep(Math.min(3, currentStep + 1))}
           disabled={currentStep === 3}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Selanjutnya →
+          Selanjutnya
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>

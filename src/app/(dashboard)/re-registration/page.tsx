@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { UserCheck } from "lucide-react";
 
 export default function ReRegistrationPage() {
   const [data, setData] = useState<any[]>([]);
@@ -267,35 +270,21 @@ export default function ReRegistrationPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Hero Header */}
-      <div className="bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 rounded-2xl overflow-hidden relative shadow-lg">
-        <div className="absolute -right-5 -top-5 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute right-20 -bottom-10 w-36 h-36 bg-white/5 rounded-full blur-xl"></div>
-        
-        <div className="p-8 relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-sm">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="font-heading font-bold text-2xl text-white m-0">Pendaftaran Ulang Siswa</h2>
-                <p className="text-sm text-white/80 mt-1">Kelola konfirmasi daftar ulang siswa untuk tahun ajaran baru.</p>
-              </div>
-            </div>
-            <div>
-              <button onClick={generateData} className="inline-flex items-center px-5 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl font-bold text-xs uppercase tracking-wider border border-white/30 transition-all shadow-sm hover:shadow-md">
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                Generate Batch
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Pendaftaran Ulang Siswa"
+        subtitle="Kelola konfirmasi daftar ulang siswa untuk tahun ajaran baru."
+        icon={<UserCheck className="w-6 h-6 text-white" />}
+        gradient="from-violet-500 via-purple-600 to-indigo-700"
+        actions={
+          <button onClick={generateData} className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all shadow-sm hover:shadow-md cursor-pointer">
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Generate Batch
+          </button>
+        }
+      />
 
       {/* Settings Panel */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all">
+      <Card className="p-0 overflow-hidden transition-all">
         <button 
           onClick={() => setSettingsOpen(!settingsOpen)}
           className="w-full flex items-center justify-between p-5 bg-gradient-to-br from-violet-50 to-slate-50 hover:from-violet-100 hover:to-slate-100 transition-colors border-b border-slate-200"
@@ -318,7 +307,7 @@ export default function ReRegistrationPage() {
         </button>
 
         {settingsOpen && (
-          <div className="p-6 animate-fade-in-up">
+          <div className="p-6 animate-fade-in-up border-t border-slate-200">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
               <div className="border border-slate-200 rounded-xl p-5 hover:border-violet-400 transition-colors">
                 <div className="flex items-center gap-2 mb-3">
@@ -382,30 +371,30 @@ export default function ReRegistrationPage() {
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Stats Line */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 text-center shadow-sm">
+        <Card className="p-5 text-center">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Total Siswa</p>
           <p className="font-heading font-extrabold text-3xl text-slate-800 mt-2 m-0">{stats.total || 0}</p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-slate-200 text-center shadow-sm">
+        </Card>
+        <Card className="p-5 text-center">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Terkonfirmasi</p>
           <p className="font-heading font-extrabold text-3xl text-emerald-500 mt-2 m-0">{stats.confirmed || 0}</p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-slate-200 text-center shadow-sm">
+        </Card>
+        <Card className="p-5 text-center">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Menunggu</p>
           <p className="font-heading font-extrabold text-3xl text-amber-500 mt-2 m-0">{stats.pending || 0}</p>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-slate-200 text-center shadow-sm">
+        </Card>
+        <Card className="p-5 text-center">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Tidak Daftar</p>
           <p className="font-heading font-extrabold text-3xl text-rose-500 mt-2 m-0">{stats.not_registered || 0}</p>
-        </div>
+        </Card>
       </div>
 
       {/* Table Daftar Ulang */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600"></div>
@@ -547,7 +536,7 @@ export default function ReRegistrationPage() {
           </table>
         </div>
         <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+      </Card>
       {/* Modal Konfirmasi Bayar */}
       {showPayModal && payTarget && (
         <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>

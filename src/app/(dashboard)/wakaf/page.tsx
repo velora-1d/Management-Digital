@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Gift } from "lucide-react";
 
 export default function WakafPage() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, donatur, tujuan
@@ -246,22 +249,12 @@ export default function WakafPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#059669 0%,#10b981 50%,#34d399 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-             <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Wakaf & Donasi</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola penerimaan wakaf dan donatur madrasah.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Wakaf & Donasi"
+        subtitle="Kelola penerimaan wakaf dan donatur madrasah."
+        icon={<Gift />}
+        gradient="from-emerald-600 via-teal-600 to-green-600"
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -292,9 +285,12 @@ export default function WakafPage() {
 
       {/* Panel Riwayat */}
       {activeTab === "riwayat" && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-fade-in">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h4 className="font-bold text-slate-800 text-sm">Riwayat Penerimaan Wakaf</h4>
+        <Card className="animate-fade-in">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Riwayat Penerimaan Wakaf</h4>
+            </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               {data.length > 0 && (
                 <ExportButtons options={{
@@ -380,15 +376,20 @@ export default function WakafPage() {
               </tbody>
             </table>
           </div>
-          <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-        </div>
+          <div className="p-5">
+            <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
+          </div>
+        </Card>
       )}
 
       {/* Panel Donatur */}
       {activeTab === "donatur" && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-fade-in">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h4 className="font-bold text-slate-800 text-sm">Daftar Donatur Wakaf</h4>
+        <Card className="animate-fade-in">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Donatur Wakaf</h4>
+            </div>
             <button onClick={handleAddDonor} className="px-3 py-1.5 bg-sky-500 text-white rounded-lg text-xs font-bold hover:bg-sky-600 shadow-sm">+ Tambah Donatur</button>
           </div>
           <div className="overflow-x-auto">
@@ -411,14 +412,17 @@ export default function WakafPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Panel Tujuan */}
       {activeTab === "tujuan" && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-fade-in">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h4 className="font-bold text-slate-800 text-sm">Program / Tujuan Wakaf</h4>
+        <Card className="animate-fade-in">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Program / Tujuan Wakaf</h4>
+            </div>
             <button onClick={handleAddPurpose} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 shadow-sm">+ Tambah Tujuan</button>
           </div>
           <div className="overflow-x-auto">
@@ -445,7 +449,7 @@ export default function WakafPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
     </div>

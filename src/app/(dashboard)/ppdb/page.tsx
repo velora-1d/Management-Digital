@@ -5,19 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExportButtons } from "@/lib/export-utils";
 import Pagination from "@/components/Pagination";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { UserPlus, Plus, Wrench } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function PpdbPage() {
   const router = useRouter();
-  const [data, setData] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -84,22 +84,28 @@ export default function PpdbPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const loadData = useCallback(async (q = search, p = page) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/ppdb?q=${encodeURIComponent(q)}&page=${p}&limit=${limit}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json.data);
-        setStats(json.stats);
-        if (json.pagination) {
-          setTotalPages(json.pagination.totalPages);
-          setTotal(json.pagination.total);
-        }
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [search, page, limit]);
+  const { data: queryResult, isLoading } = useQuery({
+    queryKey: ["ppdb", search, page, limit, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        q: search,
+        page: String(page),
+        limit: String(limit),
+        ...(statusFilter ? { status: statusFilter } : {}),
+      });
+      const res = await fetch(`/api/ppdb?${params}`);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
+
+  const data: any[] = queryResult?.data || [];
+  const stats = queryResult?.stats || null;
+  const totalPages = queryResult?.pagination?.totalPages || 1;
+  const total = queryResult?.pagination?.total || 0;
+
+  const refreshData = () => queryClient.invalidateQueries({ queryKey: ["ppdb"] });
 
   async function loadClassrooms() {
     try {
@@ -125,16 +131,13 @@ export default function PpdbPage() {
     } catch (e) { console.error(e); }
   }
 
-  useEffect(() => { loadData(); loadClassrooms(); loadCashAccounts(); loadPaymentStats(); }, []);
-  useEffect(() => { loadData(search, page); }, [page]);
+  useEffect(() => { loadClassrooms(); loadCashAccounts(); loadPaymentStats(); }, []);
 
   let debounceTimer: ReturnType<typeof setTimeout>;
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value;
     setSearch(q);
     setPage(1);
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => loadData(q, 1), 400);
   }
 
   // === Terima  ===
@@ -152,7 +155,7 @@ export default function PpdbPage() {
     try {
       const res = await fetch(`/api/ppdb/${reg.id}/approve`, { method: "POST" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal menerima pendaftar", "error"); }
   }
@@ -172,7 +175,7 @@ export default function PpdbPage() {
     try {
       const res = await fetch(`/api/ppdb/${reg.id}/reject`, { method: "POST" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal menolak pendaftar", "error"); }
   }
@@ -202,7 +205,7 @@ export default function PpdbPage() {
         showToast(json.message);
         setShowConvert(false);
         setConvertReg(null);
-        loadData();
+        refreshData();
       } else {
         showToast(json.message, "error");
       }
@@ -246,7 +249,7 @@ export default function PpdbPage() {
         body: JSON.stringify({ amount, cashAccountId: cashAccountId || undefined }),
       });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal proses pembayaran", "error"); }
   }
@@ -277,7 +280,7 @@ export default function PpdbPage() {
     try {
       const res = await fetch(`/api/ppdb/${reg.id}/reset`, { method: "POST" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal reset status", "error"); }
   }
@@ -296,73 +299,64 @@ export default function PpdbPage() {
       )}
 
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#0284c7 50%,#0369a1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }} />
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Penerimaan Siswa Baru (PPDB)</h2>
-                <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", margin: "0.125rem 0 0" }}>Kelola pendaftaran, penerimaan, dan konversi ke siswa.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/ppdb/new" style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "none" }} className="hover:bg-white/35 transition-all">
-                <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Pendaftar
-              </Link>
-              <button onClick={async () => {
-                const result = await Swal.fire({
-                  title: "Perbaiki Data?",
-                  text: "Perbaiki data pembayaran untuk pendaftar yang sudah diterima tapi belum punya record pembayaran?",
-                  icon: "question",
-                  showCancelButton: true,
-                  confirmButtonColor: "#0284c7",
-                  cancelButtonColor: "#64748b",
-                  confirmButtonText: "Ya, Perbaiki"
-                });
-                if (!result.isConfirmed) return;
-                try {
-                  const res = await fetch("/api/ppdb/fix-payments", { method: "POST" });
-                  const json = await res.json();
-                  if (json.success) { showToast(json.message); loadData(); }
-                  else showToast(json.message, "error");
-                } catch { showToast("Gagal memperbaiki data", "error"); }
-              }} style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.2)", cursor: "pointer" }} className="hover:bg-white/25 transition-all">
-                <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Perbaiki Data
-              </button>
-            </div>
+      <PageHeader
+        title="Penerimaan Siswa Baru (PPDB)"
+        subtitle="Kelola pendaftaran, penerimaan, dan konversi ke siswa."
+        icon={<UserPlus />}
+        gradient="from-sky-500 via-blue-600 to-sky-700"
+        actions={
+          <div className="flex items-center gap-3">
+            <Link href="/ppdb/new" className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all text-decoration-none">
+              <Plus className="w-4 h-4 mr-1.5" /> Tambah Pendaftar
+            </Link>
+            <button onClick={async () => {
+              const result = await Swal.fire({
+                title: "Perbaiki Data?",
+                text: "Perbaiki data pembayaran untuk pendaftar yang sudah diterima tapi belum punya record pembayaran?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#0284c7",
+                cancelButtonColor: "#64748b",
+                confirmButtonText: "Ya, Perbaiki"
+              });
+              if (!result.isConfirmed) return;
+              try {
+                const res = await fetch("/api/ppdb/fix-payments", { method: "POST" });
+                const json = await res.json();
+                if (json.success) { showToast(json.message); refreshData(); }
+                else showToast(json.message, "error");
+              } catch { showToast("Gagal memperbaiki data", "error"); }
+            }} className="inline-flex items-center px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/20 transition-all cursor-pointer">
+              <Wrench className="w-4 h-4 mr-1.5" /> Perbaiki Data
+            </button>
           </div>
+        }
+      />
 
-          {/* KPI Stats */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3" style={{ marginTop: "1.5rem" }}>
-              <div style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", padding: "1rem", borderRadius: "0.75rem" }}>
-                <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total</p>
-                <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{stats.total}</p>
-              </div>
-              <div style={{ background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.3)", padding: "1rem", borderRadius: "0.75rem" }}>
-                <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#fef3c7", textTransform: "uppercase", letterSpacing: "0.05em" }}>Menunggu</p>
-                <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{stats.pending}</p>
-              </div>
-              <div style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", padding: "1rem", borderRadius: "0.75rem" }}>
-                <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#a7f3d0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Diterima</p>
-                <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{stats.diterima}</p>
-              </div>
-              <div style={{ background: "rgba(225,29,72,0.2)", border: "1px solid rgba(225,29,72,0.3)", padding: "1rem", borderRadius: "0.75rem" }}>
-                <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "#fecdd3", textTransform: "uppercase", letterSpacing: "0.05em" }}>Ditolak</p>
-                <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{stats.ditolak}</p>
-              </div>
-            </div>
-          )}
+      {/* KPI Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4 flex flex-col justify-center">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total</p>
+            <p className="font-heading text-2xl font-extrabold text-slate-800 m-0">{stats.total}</p>
+          </Card>
+          <Card className="p-4 flex flex-col justify-center border-l-4 border-l-amber-500">
+            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Menunggu</p>
+            <p className="font-heading text-2xl font-extrabold text-amber-700 m-0">{stats.pending}</p>
+          </Card>
+          <Card className="p-4 flex flex-col justify-center border-l-4 border-l-emerald-500">
+            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Diterima</p>
+            <p className="font-heading text-2xl font-extrabold text-emerald-700 m-0">{stats.diterima}</p>
+          </Card>
+          <Card className="p-4 flex flex-col justify-center border-l-4 border-l-rose-500">
+            <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Ditolak</p>
+            <p className="font-heading text-2xl font-extrabold text-rose-700 m-0">{stats.ditolak}</p>
+          </Card>
         </div>
-      </div>
+      )}
 
       {/* Settings Panel Biaya PPDB */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+      <Card className="overflow-hidden">
         <button
           onClick={() => { setSettingsOpen(!settingsOpen); if (!settingsOpen) loadSettings(); }}
           style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.5rem", background: "transparent", border: "none", cursor: "pointer" }}
@@ -419,11 +413,11 @@ export default function PpdbPage() {
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Rekap Penerimaan Kas PPDB */}
       {paymentStats && (
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem 1.5rem" }}>
+        <Card className="p-5">
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
             <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#059669,#047857)", borderRadius: "50%" }} />
             <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Rekap Penerimaan Kas PPDB</h4>
@@ -450,11 +444,11 @@ export default function PpdbPage() {
               <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}>Masuk Kas</p>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Filter */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem 1.5rem" }}>
+      <Card className="p-5">
         <div className="flex flex-wrap items-end gap-4">
           <div style={{ flex: 2, minWidth: 200 }}>
             <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Cari Nama</label>
@@ -472,10 +466,10 @@ export default function PpdbPage() {
             </select>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tabel Pendaftar */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+      <Card className="overflow-hidden">
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#0ea5e9,#0284c7)", borderRadius: "50%" }} />
@@ -523,7 +517,7 @@ export default function PpdbPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat data pendaftar...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center" }}>
@@ -640,7 +634,7 @@ export default function PpdbPage() {
                             try {
                               const res = await fetch(`/api/ppdb/${reg.id}`, { method: "DELETE" });
                               const json = await res.json();
-                              if (json.success) { showToast(json.message); loadData(); }
+                              if (json.success) { showToast(json.message); refreshData(); }
                               else showToast(json.message, "error");
                             } catch { showToast("Gagal hapus", "error"); }
                           }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
@@ -655,8 +649,10 @@ export default function PpdbPage() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+        <div className="p-4 border-t border-slate-100">
+          <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
+        </div>
+      </Card>
 
       {/* Modal Konversi ke Siswa */}
       {showConvert && convertReg && (

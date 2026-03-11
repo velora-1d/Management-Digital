@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { School, Save } from "lucide-react";
 
 const profileKeys = [
   { key: "nama_sekolah", label: "Nama Sekolah", type: "text" },
@@ -55,24 +58,25 @@ export default function SchoolProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 font-heading tracking-tight">Profil Sekolah</h1>
-          <p className="text-sm text-slate-500 mt-1">Kelola informasi dasar sekolah</p>
-        </div>
-        <button onClick={handleSave} disabled={saving}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
-          {saving && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
-          Simpan Profil
-        </button>
-      </div>
+      <PageHeader
+        title="Profil Sekolah"
+        subtitle="Informasi dan profil resmi instansi / lembaga sekolah"
+        icon={<School />}
+        actions={
+          <button onClick={handleSave} disabled={saving}
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50">
+            {saving ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : <Save className="w-4 h-4" />}
+            Simpan Profil
+          </button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+          <Card className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
               <h2 className="font-heading font-bold text-sm text-slate-800">Data Sekolah</h2>
@@ -97,10 +101,10 @@ export default function SchoolProfilePage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Preview Kop Surat */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <Card>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
               <h2 className="font-heading font-bold text-sm text-slate-800">Preview Kop Surat</h2>
@@ -126,7 +130,7 @@ export default function SchoolProfilePage() {
               <div className="border-t border-slate-200"></div>
             </div>
             <p className="text-[11px] text-slate-400 mt-3 text-center">Preview ini akan digunakan di dokumen surat dan rapor</p>
-          </div>
+          </Card>
         </div>
       )}
     </div>

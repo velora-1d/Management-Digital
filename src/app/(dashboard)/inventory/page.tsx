@@ -3,16 +3,17 @@ import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Package } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function InventoryPage() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [conditionFilter, setConditionFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -28,33 +29,24 @@ export default function InventoryPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [openActionId]);
 
-  const loadInventory = useCallback(async (q = search, cond = conditionFilter, p = page) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(p), limit: String(limit) });
-      if (q) params.set("q", q);
-      if (cond) params.set("condition", cond);
+  const { data: queryResult, isLoading } = useQuery({
+    queryKey: ["inventory", search, conditionFilter, page, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (search) params.set("q", search);
+      if (conditionFilter) params.set("condition", conditionFilter);
       const res = await fetch(`/api/inventory?${params}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json.data || []);
-        if (json.pagination) {
-          setTotalPages(json.pagination.totalPages);
-          setTotal(json.pagination.total);
-        }
-      } else {
-        setData(json || []);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, conditionFilter, page, limit]);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
 
-  useEffect(() => {
-    loadInventory();
-  }, [page]);
+  const data: any[] = queryResult?.data || [];
+  const totalPages = queryResult?.pagination?.totalPages || 1;
+  const total = queryResult?.pagination?.total || 0;
+
+  const refreshInventory = () => queryClient.invalidateQueries({ queryKey: ["inventory"] });
 
   const totalValue = data.reduce(
     (acc, val) => acc + (val.quantity || 0) * (val.acquisitionCost || 0),
@@ -114,7 +106,7 @@ export default function InventoryPage() {
           const data = await res.json();
           if (res.ok) {
             Swal.fire("Berhasil", "Aset ditambahkan.", "success");
-            loadInventory();
+            refreshInventory();
           } else {
             Swal.fire("Gagal", data.error || "Gagal menyimpan aset", "error");
           }
@@ -189,7 +181,7 @@ export default function InventoryPage() {
             const dataUpdate = await resUpdate.json();
             if (resUpdate.ok) {
               Swal.fire("Berhasil", "Aset diperbarui.", "success");
-              loadInventory();
+              refreshInventory();
             } else {
               Swal.fire("Gagal", dataUpdate.error || "Gagal update aset", "error");
             }
@@ -219,7 +211,7 @@ export default function InventoryPage() {
           const json = await res.json();
           if (res.ok && json.success) {
             Swal.fire("Terhapus", "Data aset berhasil dihapus.", "success");
-            loadInventory();
+            refreshInventory();
           } else {
             Swal.fire("Gagal", json.error || "Error", "error");
           }
@@ -231,45 +223,37 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#3b82f6 50%,#6366f1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.5rem", color: "#fff", margin: 0 }}>Inventaris Madrasah</h2>
-                <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", marginTop: "0.25rem" }}>Pencatatan & Pengelolaan Aset Barang Madrasah</p>
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 text-right">
-              <span className="block text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Total Nilai Aset</span>
-              <span className="font-heading font-extrabold text-2xl text-white">Rp {totalValue.toLocaleString("id-ID")}</span>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Inventaris Madrasah"
+        subtitle="Pencatatan & Pengelolaan Aset Barang Madrasah"
+        icon={<Package className="w-5 h-5 text-indigo-600" />}
+      />
+      {/* KPI Total Nilai */}
+      <Card compact>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-600">Total Nilai Aset</span>
+          <span className="text-xl font-extrabold text-indigo-700">Rp {totalValue.toLocaleString("id-ID")}</span>
         </div>
-      </div>
+      </Card>
 
       {/* Tabel Inventaris */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", borderRadius: "50%" }}></div>
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Aset</h4>
-          </div>
-          <button onClick={handleAdd} style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", fontSize: "0.75rem", fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#0ea5e9,#3b82f6)", border: "none", borderRadius: "0.625rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" }} className="shadow-sm hover:shadow transition-all">
-            <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Aset
+      <Card
+        title="Daftar Aset"
+        icon={<Package className="w-5 h-5 text-indigo-600" />}
+        actions={
+          <button onClick={handleAdd} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+            Tambah Aset
           </button>
-        </div>
+        }
+        noPadding
+      >
 
         {/* Filter */}
         <div style={{ padding: "1rem 1.5rem", background: "#f8fafc", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-          <input type="text" placeholder="Cari nama, kategori, lokasi..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); clearTimeout((window as any).__invSearchTimer); (window as any).__invSearchTimer = setTimeout(() => loadInventory(e.target.value, conditionFilter, 1), 400); }} style={{ flex: 1, minWidth: 200, padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none" }} className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" />
-          <select value={conditionFilter} onChange={(e) => { setConditionFilter(e.target.value); setPage(1); loadInventory(search, e.target.value, 1); }} style={{ padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none", background: "#fff" }} className="focus:border-blue-500 transition-all min-w-[150px]">
+          <input type="text" placeholder="Cari nama, kategori, lokasi..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} style={{ flex: 1, minWidth: 200, padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none" }} className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" />
+          <select value={conditionFilter} onChange={(e) => { setConditionFilter(e.target.value); setPage(1); }} style={{ padding: "0.625rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "0.8125rem", outline: "none", background: "#fff" }} className="focus:border-blue-500 transition-all min-w-[150px]">
             <option value="">Semua Kondisi</option>
             <option value="Baik">Baik</option>
             <option value="Rusak Ringan">Rusak Ringan</option>
@@ -312,7 +296,7 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Memuat data...</td></tr>
               ) : data.length === 0 ? (
                 <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
@@ -379,7 +363,7 @@ export default function InventoryPage() {
           </table>
         </div>
         <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+      </Card>
     </div>
   );
 }

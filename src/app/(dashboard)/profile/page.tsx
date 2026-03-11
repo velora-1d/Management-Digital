@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import { User } from "lucide-react";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
@@ -97,26 +99,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-400 rounded-2xl overflow-hidden relative shadow-lg">
-        <div className="absolute -right-5 -top-5 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute right-20 -bottom-10 w-36 h-36 bg-white/5 rounded-full blur-xl"></div>
-        
-        <div className="p-8 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-sm">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </div>
-            <div>
-              <h2 className="font-heading font-bold text-2xl text-white m-0">Profil Pengguna</h2>
-              <p className="text-sm text-white/80 mt-1">Kelola informasi akun dan keamanan Anda.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Profil Pengguna"
+        subtitle="Kelola informasi akun dan keamanan Anda"
+        icon={<User className="w-5 h-5 text-indigo-600" />}
+      />
 
       {/* Grid Settings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { 
+  ClipboardCheck, 
+  Search, 
+  Calculator, 
+  FileText, 
+  AlertCircle,
+  Save,
+  Zap
+} from "lucide-react";
 
 interface Option { id: number; name?: string; year?: string; isActive?: boolean; code?: string; type?: string; }
 interface Student { id: number; name: string; nis?: string; }
@@ -183,150 +194,183 @@ export default function GradesPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800">Manajemen Nilai & Deskripsi</h1>
-          <p className="text-sm text-slate-500 mt-1">Input penilaian terstruktur dan otomatisasi pembuatan deskripsi capaian capaian</p>
-        </div>
-      </div>
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader
+        title="Manajemen Nilai & Deskripsi"
+        subtitle="Input penilaian terstruktur dan otomatisasi pembuatan deskripsi capaian kompetensi."
+        icon={<ClipboardCheck className="w-6 h-6 text-indigo-600" />}
+      />
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 grid md:grid-cols-4 gap-4">
-        <label>
-          <span className="block text-sm font-semibold text-slate-700 mb-2">Tahun Ajaran</span>
-          <select
-            className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 outline-none"
-            value={selectedYearId}
-            onChange={(e) => setSelectedYearId(e.target.value)}
-          >
-            <option value="">-- Pilih --</option>
-            {academicYears.map((y) => <option key={y.id} value={y.id}>{y.year}</option>)}
-          </select>
-        </label>
-        <label>
-          <span className="block text-sm font-semibold text-slate-700 mb-2">Semester</span>
-          <select
-            className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 outline-none"
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
-          >
-            <option value="ganjil">Ganjil</option>
-            <option value="genap">Genap</option>
-          </select>
-        </label>
-        <label>
-          <span className="block text-sm font-semibold text-slate-700 mb-2">Kelas</span>
-          <select
-            className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 outline-none"
-            value={selectedClassId}
-            onChange={(e) => setSelectedClassId(e.target.value)}
-          >
-            <option value="">-- Pilih Kelas --</option>
-            {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </label>
-        <label>
-          <span className="block text-sm font-semibold text-slate-700 mb-2">Mata Pelajaran</span>
-          <select
-            className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 outline-none"
-            value={selectedSubjectId}
-            onChange={(e) => setSelectedSubjectId(e.target.value)}
-          >
-            <option value="">-- Pilih Mapel --</option>
-            {subjects.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </label>
-      </div>
+      {/* Filter Section */}
+      <Card compact>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <label>
+            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tahun Ajaran</span>
+            <select
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              value={selectedYearId}
+              onChange={(e) => setSelectedYearId(e.target.value)}
+            >
+              <option value="">-- Pilih --</option>
+              {academicYears.map((y) => <option key={y.id} value={y.id}>{y.year}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Semester</span>
+            <select
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              value={semester}
+              onChange={(e) => setSemester(e.target.value)}
+            >
+              <option value="ganjil">Ganjil</option>
+              <option value="genap">Genap</option>
+            </select>
+          </label>
+          <label>
+            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kelas</span>
+            <select
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+            >
+              <option value="">-- Pilih Kelas --</option>
+              {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mata Pelajaran</span>
+            <select
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              value={selectedSubjectId}
+              onChange={(e) => setSelectedSubjectId(e.target.value)}
+            >
+              <option value="">-- Pilih Mapel --</option>
+              {subjects.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+        </div>
+      </Card>
 
       {!curriculum ? (
-        <div className="p-8 text-center bg-amber-50 rounded-2xl border border-amber-200 text-amber-800">
-          Kurikulum belum diatur untuk Tahun Ajaran/Semester ini. Silakan atur di menu Kurikulum dahulu.
-        </div>
+        <Card>
+          <div className="flex flex-col items-center justify-center p-8 text-center space-y-3">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="max-w-md">
+              <h3 className="text-lg font-bold text-slate-800">Kurikulum Belum Diatur</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Kurikulum belum tersedia untuk Tahun Ajaran/Semester ini. Silakan atur konfigurasi kurikulum terlebih dahulu di menu Kurikulum.
+              </p>
+            </div>
+          </div>
+        </Card>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex border-b border-slate-100">
+        <Card noPadding>
+          {/* Tabs Navigation */}
+          <div className="flex flex-wrap border-b border-slate-100 bg-slate-50/50">
             <button
               onClick={() => setActiveTab("input")}
-              className={`flex-1 py-4 text-sm font-semibold transition-colors ${activeTab === 'input' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'input' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
-              1. Input Nilai Komponen
+              <Search className="w-4 h-4" />
+              1. Input Nilai
             </button>
             <button
               onClick={() => setActiveTab("akhir")}
-              className={`flex-1 py-4 text-sm font-semibold transition-colors ${activeTab === 'akhir' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'akhir' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
-              2. Kalkulasi Nilai Akhir
+              <Calculator className="w-4 h-4" />
+              2. Kalkulasi Akhir
             </button>
             <button
               onClick={() => setActiveTab("deskripsi")}
-              className={`flex-1 py-4 text-sm font-semibold transition-colors ${activeTab === 'deskripsi' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'deskripsi' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
+              <FileText className="w-4 h-4" />
               3. Deskripsi Naratif
             </button>
           </div>
 
           <div className="p-6">
             {activeTab === "input" && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <label className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-slate-700">Pilih Komponen:</span>
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-bold text-slate-700 whitespace-nowrap">Pilih Komponen:</span>
                     <select
-                      className="rounded-lg border-slate-200 bg-slate-50 px-4 py-2 outline-none min-w-[200px]"
+                      className="rounded-lg border-slate-200 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-w-[240px]"
                       value={selectedComponentId}
                       onChange={(e) => setSelectedComponentId(e.target.value)}
                     >
-                      <option value="">-- Komponen Nilai --</option>
+                      <option value="">-- Pilih Komponen Nilai --</option>
                       {components.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.bobot}%)</option>)}
                     </select>
-                  </label>
-                  <p className="text-sm text-slate-500">Nilai KKM Saat Ini: <strong className="text-slate-800">{kkm}</strong></p>
+                  </div>
+                  <div className="px-4 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">KKM Dasar:</span>
+                    <span className="text-sm font-black text-indigo-700">{kkm}</span>
+                  </div>
                 </div>
 
                 {!selectedClassId || !selectedSubjectId || !selectedComponentId ? (
-                  <p className="text-center text-slate-500 italic">Pilih kelas, mapel, dan komponen nilai untuk mulai mengisi.</p>
+                  <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                    <Search className="w-12 h-12 mb-3 opacity-20" />
+                    <p className="italic text-sm">Pilih kelas, mapel, dan komponen penilaian.</p>
+                  </div>
                 ) : loading ? (
-                  <p className="text-center">Memuat...</p>
+                  <div className="py-12 text-center text-indigo-600 font-medium animate-pulse">Memuat data penilaian...</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-600">
-                      <thead>
-                        <tr className="bg-slate-50 border-b">
-                          <th className="px-4 py-3 font-semibold">NIS</th>
-                          <th className="px-4 py-3 font-semibold">Nama Siswa</th>
-                          <th className="px-4 py-3 font-semibold text-center w-32">Nilai Angka</th>
-                          <th className="px-4 py-3 font-semibold text-center w-24">Predikat</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {students.map(student => {
-                          const g = grades[student.id];
-                          const nilai = g?.nilaiAngka ?? 0;
-                          const isUnderKkm = nilai > 0 && nilai < kkm;
-                          
-                          return (
-                            <tr key={student.id} className="hover:bg-slate-50">
-                              <td className="px-4 py-3 font-mono">{student.nis}</td>
-                              <td className="px-4 py-3 font-medium text-slate-800">{student.name}</td>
-                              <td className="px-4 py-3 text-center">
-                                <input
-                                  type="number"
-                                  min="0" max="100"
-                                  className={`w-20 text-center border rounded-lg px-2 py-1 outline-none focus:ring-2 ${isUnderKkm ? "border-red-300 text-red-600 bg-red-50 focus:ring-red-200" : "border-slate-200 focus:border-indigo-500 focus:ring-indigo-200"}`}
-                                  value={nilai || ""}
-                                  onChange={(e) => handleGradeChange(student.id, Number(e.target.value))}
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-center font-bold">
-                                {g?.predikat || "-"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    <div className="mt-6 flex justify-end">
-                      <button onClick={saveGrades} className="px-6 py-2 bg-indigo-600 text-white rounded-xl shadow-sm hover:bg-indigo-700">Simpan Draft Nilai</button>
+                  <div className="space-y-6">
+                    <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+                      <table className="w-full text-left text-sm text-slate-600">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">NIS</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">Nama Lengkap</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-40">Nilai (0-100)</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-24">Predikat</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {students.map(student => {
+                            const g = grades[student.id];
+                            const nilai = g?.nilaiAngka ?? 0;
+                            const isUnderKkm = nilai > 0 && nilai < kkm;
+                            
+                            return (
+                              <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-4 py-3.5 font-mono text-xs text-slate-400">{student.nis}</td>
+                                <td className="px-4 py-3.5 font-semibold text-slate-800">{student.name}</td>
+                                <td className="px-4 py-3.5 text-center">
+                                  <input
+                                    type="number"
+                                    min="0" max="100"
+                                    className={`w-24 text-center text-lg font-bold border rounded-lg px-2 py-1.5 outline-none transition-all focus:ring-4 ${isUnderKkm ? "border-red-200 text-red-600 bg-red-50 focus:ring-red-100" : "border-slate-200 text-slate-700 focus:border-indigo-500 focus:ring-indigo-100"}`}
+                                    value={nilai || ""}
+                                    onChange={(e) => handleGradeChange(student.id, Number(e.target.value))}
+                                  />
+                                </td>
+                                <td className="px-4 py-3.5 text-center">
+                                  <span className={`px-2 py-1 rounded text-xs font-black ${g?.predikat ? "bg-indigo-50 text-indigo-700" : "text-slate-300"}`}>
+                                    {g?.predikat || "-"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <div className="flex justify-end pt-2">
+                      <button 
+                        onClick={saveGrades} 
+                        className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                      >
+                        <Save className="w-4 h-4" />
+                        Simpan Draft Nilai
+                      </button>
                     </div>
                   </div>
                 )}
@@ -334,41 +378,69 @@ export default function GradesPage() {
             )}
 
             {activeTab === "akhir" && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                  <p className="text-sm text-indigo-800">Kalkulasi nilai akhir akan memadukan seluruh komponen dari Mapel ini berdasarkan formula persentase (bobot).</p>
-                  <button onClick={hitungNilaiAkhir} className="shrink-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm text-sm font-semibold">
-                    ⚡ Hitung Nilai Akhir
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-indigo-600 to-violet-600 p-6 rounded-2xl shadow-lg shadow-indigo-100 text-white">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-bold">Kalkulasi Nilai Akhir</h3>
+                    <p className="text-white/80 text-sm max-w-xl">
+                      Sistem akan memproses seluruh komponen nilai (Formatif, Sumatif, dll) berdasarkan bobot yang telah dikonfigurasi pada kurikulum.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={hitungNilaiAkhir} 
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-sm whitespace-nowrap"
+                  >
+                    <Zap className="w-5 h-5 fill-current" />
+                    Proses Sekarang
                   </button>
                 </div>
 
                 {loading ? (
-                  <p className="text-center p-8 text-slate-500">Mengkalkulasi...</p>
+                  <div className="p-20 text-center space-y-4">
+                    <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+                    <p className="text-slate-500 font-medium">Mengkalkulasi nilai akhir...</p>
+                  </div>
                 ) : finalGrades.length === 0 ? (
-                  <p className="text-center p-8 text-slate-500 italic">Belum ada kalkulasi nilai akhir.</p>
+                  <div className="py-20 flex flex-col items-center justify-center text-slate-300 grayscale opacity-50">
+                    <Calculator className="w-16 h-16 mb-4" />
+                    <p className="font-bold text-lg">Belum Ada Data Hasil Kalkulasi</p>
+                    <p className="text-sm italic">Klik tombol "Proses Sekarang" untuk memulai perhitungan.</p>
+                  </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
                     <table className="w-full text-left text-sm text-slate-600">
                       <thead>
-                        <tr className="bg-slate-50 border-b">
-                          <th className="px-4 py-3 font-semibold">Siswa</th>
-                          <th className="px-4 py-3 font-semibold text-center">Pengetahuan</th>
-                          <th className="px-4 py-3 font-semibold text-center">Keterampilan</th>
-                          <th className="px-4 py-3 font-semibold text-center">Nilai Akhir</th>
-                          <th className="px-4 py-3 font-semibold text-center">Predikat</th>
-                          <th className="px-4 py-3 font-semibold text-center">KKM</th>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">Peserta Didik</th>
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Pgt</th>
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Ket</th>
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Akhir</th>
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Predikat</th>
+                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {finalGrades.map((f: any) => (
-                          <tr key={f.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 font-medium text-slate-800">{f.student?.name}</td>
-                            <td className="px-4 py-3 text-center">{f.nilaiPengetahuan}</td>
-                            <td className="px-4 py-3 text-center">{f.nilaiKeterampilan}</td>
-                            <td className="px-4 py-3 text-center font-bold text-indigo-700">{f.nilaiAkhir}</td>
-                            <td className="px-4 py-3 text-center font-bold">{f.predikat}</td>
-                            <td className="px-4 py-3 text-center">
-                              {f.nilaiAkhir >= kkm ? <span className="text-green-600">Lulus</span> : <span className="text-red-600 font-bold">Tidak Tuntas</span>}
+                          <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-4 font-bold text-slate-800">{f.student?.name}</td>
+                            <td className="px-4 py-4 text-center font-medium">{f.nilaiPengetahuan}</td>
+                            <td className="px-4 py-4 text-center font-medium">{f.nilaiKeterampilan}</td>
+                            <td className="px-4 py-4 text-center">
+                              <span className="text-lg font-black text-indigo-600">{f.nilaiAkhir}</span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className="px-2 py-1 bg-slate-100 rounded font-black text-slate-700">{f.predikat}</span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              {f.nilaiAkhir >= kkm ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold ring-1 ring-emerald-100">
+                                  Tuntas
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-bold ring-1 ring-rose-100">
+                                  Belum Tuntas
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -380,37 +452,55 @@ export default function GradesPage() {
             )}
 
             {activeTab === "deskripsi" && (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  Deskripsi naratif ini digenerate secara otomatis saat Anda melakukan "Hitung Nilai Akhir". Anda tetap dapat mengubahnya secara manual jika diperlukan.
-                </p>
+              <div className="space-y-6">
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3 text-amber-800">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <p className="text-sm">
+                    <strong>Catatan:</strong> Deskripsi ini dihasilkan secara otomatis dari sistem pakar untuk membantu efisiensi Bapak/Ibu Guru. Anda tetap dapat mengedit narasi di bawah ini untuk hasil yang lebih personal.
+                  </p>
+                </div>
 
                 {finalGrades.length === 0 ? (
-                  <p className="text-center p-8 text-slate-500 italic">Nilai akhir belum dihitung.</p>
+                  <div className="py-20 flex flex-col items-center justify-center text-slate-300">
+                    <FileText className="w-16 h-16 mb-4 opacity-20" />
+                    <p className="italic text-sm">Lakukan kalkulasi nilai akhir terlebih dahulu untuk melihat deskripsi.</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {finalGrades.map((f: any) => (
-                      <div key={f.id} className="p-4 border border-slate-100 shadow-sm rounded-xl">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-bold text-slate-800">{f.student?.name}</span>
-                          <span className="text-xs px-2 py-1 bg-slate-100 rounded-md font-semibold text-slate-600">Nilai: {f.nilaiAkhir} ({f.predikat})</span>
+                  <div className="space-y-6">
+                    <div className="grid gap-4">
+                      {finalGrades.map((f: any) => (
+                        <div key={f.id} className="group p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-300 hover:shadow-md transition-all">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                              {f.student?.name}
+                              <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded leading-none">NIS: {f.student?.nis}</span>
+                            </h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-500">Nilai Akhir:</span>
+                              <span className="text-sm font-black text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded italic">{f.nilaiAkhir} ({f.predikat})</span>
+                            </div>
+                          </div>
+                          <textarea
+                            className="w-full min-h-[100px] text-sm leading-relaxed border-slate-200 bg-slate-50/50 rounded-xl p-4 outline-none transition-all focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-400"
+                            defaultValue={f.deskripsi}
+                            placeholder="Tuliskan catatan kemajuan belajar atau deskripsi naratif di sini..."
+                          />
                         </div>
-                        <textarea
-                          className="w-full h-20 text-sm border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                          defaultValue={f.deskripsi}
-                          placeholder="Masukkan catatan deskripsi capaian kompetensi..."
-                        />
-                      </div>
-                    ))}
-                    <div className="flex justify-end pt-2">
-                      <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl shadow-sm hover:bg-indigo-700">Simpan Perubahan Deskripsi</button>
+                      ))}
+                    </div>
+                    
+                    <div className="flex justify-end sticky bottom-6">
+                      <button className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                        <Save className="w-5 h-5" />
+                        Simpan Semua Deskripsi
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             )}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

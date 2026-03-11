@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Banknote } from "lucide-react";
 
 export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, atur-gaji, komponen
@@ -325,22 +328,12 @@ export default function PayrollPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#3b82f6 50%,#6366f1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.5rem", color: "#fff", margin: 0 }}>Manajemen Penggajian</h2>
-                <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", marginTop: "0.25rem" }}>Kelola komponen, atur gaji, generate slip, dan pantau riwayat.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Manajemen Penggajian"
+        subtitle="Kelola komponen, atur gaji, generate slip, dan pantau riwayat."
+        icon={<Banknote />}
+        gradient="from-sky-500 via-blue-500 to-indigo-500"
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit">
@@ -358,10 +351,10 @@ export default function PayrollPage() {
       {/* Panel: Riwayat */}
       {activeTab === "riwayat" && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
-              <h4 className="font-bold text-slate-800 text-sm">Terbitkan Slip Gaji Bulanan</h4>
+          <Card>
+            <div className="p-5 border-b border-slate-100 flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Terbitkan Slip Gaji Bulanan</h4>
             </div>
             <div className="p-6 flex flex-wrap gap-4 items-end">
               <div>
@@ -381,11 +374,14 @@ export default function PayrollPage() {
                 Generate Semua Slip
               </button>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h4 className="font-bold text-slate-800 text-sm">Log Histori Penggajian</h4>
+          <Card>
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+                <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Log Histori Penggajian</h4>
+              </div>
               {payrolls.length > 0 && (
                 <ExportButtons options={{
                   title: "Riwayat Penggajian",
@@ -467,16 +463,18 @@ export default function PayrollPage() {
                 </tbody>
               </table>
             </div>
-            <Pagination page={payPage} totalPages={payTotalPages} total={payTotal} limit={payLimit} onPageChange={(p) => { setPayPage(p); loadPayrolls(p); }} onLimitChange={(l) => { setPayLimit(l); setPayPage(1); loadPayrolls(1); }} />
-          </div>
+            <div className="p-5 border-t border-slate-100">
+              <Pagination page={payPage} totalPages={payTotalPages} total={payTotal} limit={payLimit} onPageChange={(p) => { setPayPage(p); loadPayrolls(p); }} onLimitChange={(l) => { setPayLimit(l); setPayPage(1); loadPayrolls(1); }} />
+            </div>
+          </Card>
         </div>
       )}
 
       {/* Panel: Atur Gaji */}
       {activeTab === "atur-gaji" && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm animate-fade-in">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h4 className="font-bold text-slate-800 text-sm">Pengaturan Komponen Gaji per Pegawai</h4>
+        <Card className="animate-fade-in">
+          <div className="p-5 border-b border-slate-100">
+            <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Pengaturan Komponen Gaji per Pegawai</h4>
             <p className="text-xs text-slate-500 mt-1">Nominal yang diset di sini akan menjadi patokan saat Generate Slip Gaji.</p>
           </div>
           <div className="p-6">
@@ -524,16 +522,16 @@ export default function PayrollPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Panel: Komponen */}
       {activeTab === "komponen" && (
         <div className="grid md:grid-cols-3 gap-6 animate-fade-in items-start">
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
-              <h4 className="font-bold text-slate-800 text-sm">Tambah Komponen</h4>
+          <Card>
+             <div className="p-5 border-b border-slate-100 flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Tambah Komponen</h4>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -551,11 +549,11 @@ export default function PayrollPage() {
                 Simpan Komponen
               </button>
             </div>
-          </div>
+          </Card>
 
-          <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h4 className="font-bold text-slate-800 text-sm">Daftar Master Komponen</h4>
+          <Card className="md:col-span-2">
+            <div className="p-5 border-b border-slate-100">
+              <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Master Komponen</h4>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -593,7 +591,7 @@ export default function PayrollPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

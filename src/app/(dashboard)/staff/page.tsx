@@ -5,46 +5,32 @@ import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function StaffPage() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside() {
-      setOpenActionId(null);
-    }
-    if (openActionId !== null) {
-      document.addEventListener("click", handleClickOutside);
-    }
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [openActionId]);
+  const { data: result, isLoading } = useQuery({
+    queryKey: ["staff"],
+    queryFn: async () => {
+      const res = await fetch("/api/staff?limit=500");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const loadStaff = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/staff");
-      const json = await res.json();
-      if (json.success) setData(json.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStaff();
-  }, []);
+  const data: any[] = result?.data || [];
+  const refreshStaff = () => queryClient.invalidateQueries({ queryKey: ["staff"] });
 
   const filteredData = data.filter((s) => {
     const matchSearch =
@@ -78,7 +64,7 @@ export default function StaffPage() {
         try {
           const res = await fetch(`/api/staff/${s.id}`, { method: "DELETE" });
           const json = await res.json();
-          if (json.success) { Swal.fire("Terhapus", json.message, "success"); loadStaff(); }
+          if (json.success) { Swal.fire("Terhapus", json.message, "success"); refreshStaff(); }
           else Swal.fire("Gagal", json.message, "error");
         } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
       }
@@ -86,45 +72,55 @@ export default function StaffPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#3b82f6 50%,#6366f1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Data Staf & Karyawan</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola direktori staf tata usaha dan karyawan secara terpusat.</p>
-              </div>
-            </div>
-            <Link href="/staff/new" style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 1.5rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "none" }} className="hover:bg-white/30 transition-colors">
-              <svg style={{ width: "1rem", height: "1rem", marginRight: "0.5rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Tambah Data Staf
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-5 animate-fade-in-up">
+      <PageHeader
+        title="Data Staf & Karyawan"
+        subtitle="Kelola direktori staf tata usaha dan karyawan secara terpusat."
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        }
+        actions={
+          <Link 
+            href="/staff/new" 
+            className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
+          >
+            <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Tambah Staf
+          </Link>
+        }
+      />
 
-      {/* Filter & Tabel */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", borderRadius: "50%" }}></div>
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Staf</h4>
-          </div>
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama, nik, jabatan..." style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem", border: "1px solid #e2e8f0", borderRadius: "0.625rem", width: 220, outline: "none" }} className="focus:border-blue-500" />
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: "0.5rem 2rem 0.5rem 1rem", fontSize: "0.8125rem", border: "1px solid #e2e8f0", borderRadius: "0.625rem", outline: "none", background: "#f8fafc", cursor: "pointer" }}>
+      <Card
+        title="Daftar Staf"
+        icon={
+          <div className="w-2 h-2 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500" />
+        }
+        actions={
+          <div className="flex gap-2 items-center flex-wrap">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari nama, nik, jabatan..."
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-48 transition-all"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 cursor-pointer transition-all"
+            >
               <option value="">Semua Status</option>
               <option value="aktif">Aktif</option>
               <option value="nonaktif">Non-Aktif</option>
             </select>
           </div>
-        </div>
+        }
+        noPadding
+      >
         {filteredData.length > 0 && (
           <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
             <ExportButtons options={{
@@ -160,7 +156,7 @@ export default function StaffPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#e0f2fe,#bae6fd)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
@@ -241,8 +237,15 @@ export default function StaffPage() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} totalPages={totalPages} total={filteredData.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+        <Pagination 
+          page={page} 
+          totalPages={totalPages} 
+          total={filteredData.length} 
+          limit={limit} 
+          onPageChange={(p) => setPage(p)} 
+          onLimitChange={(l) => { setLimit(l); setPage(1); }} 
+        />
+      </Card>
     </div>
   );
 }

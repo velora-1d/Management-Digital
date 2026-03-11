@@ -2,17 +2,18 @@
 import { useState, useEffect, useCallback } from "react";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Wallet } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function TabunganPage() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [classFilter, setClassFilter] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   // Modal setor/tarik
   const [showTransaction, setShowTransaction] = useState(false);
@@ -37,21 +38,21 @@ export default function TabunganPage() {
 
   const fmtRp = (n: number) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
-  const loadData = useCallback(async (filter = classFilter, p = page) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/tabungan?classId=${filter}&page=${p}&limit=${limit}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json.data);
-        if (json.pagination) {
-          setTotalPages(json.pagination.totalPages);
-          setTotal(json.pagination.total);
-        }
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [classFilter, page, limit]);
+  const { data: queryResult, isLoading } = useQuery({
+    queryKey: ["tabungan", classFilter, page, limit],
+    queryFn: async () => {
+      const res = await fetch(`/api/tabungan?classId=${classFilter}&page=${page}&limit=${limit}`);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
+
+  const data: any[] = queryResult?.data || [];
+  const totalPages = queryResult?.pagination?.totalPages || 1;
+  const total = queryResult?.pagination?.total || 0;
+
+  const refreshData = () => queryClient.invalidateQueries({ queryKey: ["tabungan"] });
 
   async function loadClassrooms() {
     try {
@@ -61,8 +62,7 @@ export default function TabunganPage() {
     } catch (e) { console.error(e); }
   }
 
-  useEffect(() => { loadClassrooms(); loadData(); }, []);
-  useEffect(() => { loadData(classFilter, page); }, [page]);
+  useEffect(() => { loadClassrooms(); }, []);
 
   // === Setor / Tarik ===
   async function handleTransaction() {
@@ -86,7 +86,7 @@ export default function TabunganPage() {
         setShowTransaction(false);
         setSelectedStudent(null);
         setTxAmount(""); setTxDesc("");
-        loadData();
+        refreshData();
       } else {
         showToast(json.message, "error");
       }
@@ -131,45 +131,42 @@ export default function TabunganPage() {
       )}
 
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a78bfa 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }} />
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Tabungan Siswa</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola setoran & penarikan tabungan seluruh siswa aktif.</p>
-              </div>
+      <PageHeader
+        title="Tabungan Siswa"
+        subtitle="Kelola setoran & penarikan tabungan seluruh siswa aktif."
+        icon={<Wallet />}
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2">
+              <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wider">Total Saldo</p>
+              <p className="font-heading text-lg font-extrabold text-white m-0 leading-tight">{fmtRp(totalSaldo)}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "0.75rem", padding: "0.75rem 1.25rem" }}>
-                <p style={{ fontSize: "0.625rem", fontWeight: 600, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Saldo</p>
-                <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.125rem", fontWeight: 800, color: "#fff", margin: 0 }}>{fmtRp(totalSaldo)}</p>
-              </div>
-              <select value={classFilter} onChange={e => { setClassFilter(e.target.value); setPage(1); loadData(e.target.value, 1); }} style={{ padding: "0.5rem 2rem 0.5rem 0.75rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: "0.625rem", fontSize: "0.8125rem", fontWeight: 500, cursor: "pointer", outline: "none" }}>
-                <option value="" style={{ color: "#1e293b" }}>Semua Kelas</option>
-                {classrooms.map((c: any) => <option key={c.id} value={c.id} style={{ color: "#1e293b" }}>{c.name}</option>)}
-              </select>
-            </div>
+            <select
+              value={classFilter}
+              onChange={e => { setClassFilter(e.target.value); setPage(1); }}
+              className="px-3 py-2 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-xl text-sm font-medium cursor-pointer outline-none hover:bg-white/20 transition-colors focus:ring-2 focus:ring-white/30"
+              style={{ paddingRight: "2rem" }}
+            >
+              <option value="" className="text-slate-800">Semua Kelas</option>
+              {classrooms.map((c: any) => (
+                <option key={c.id} value={c.id} className="text-slate-800">{c.name}</option>
+              ))}
+            </select>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabel Siswa & Saldo */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", borderRadius: "50%" }} />
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Siswa & Saldo</h4>
+      <Card>
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+            <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Siswa & Saldo</h4>
           </div>
-          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", padding: "0.25rem 0.75rem", borderRadius: 999 }}>{total} Siswa</span>
+          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{total} Siswa</span>
         </div>
         {data.length > 0 && (
-          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+          <div className="px-6 py-3 border-b border-slate-100">
             <ExportButtons options={{
               title: "Tabungan Siswa",
               filename: `tabungan_siswa_${new Date().toISOString().split("T")[0]}`,
@@ -201,7 +198,7 @@ export default function TabunganPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat data...</td></tr>
               ) : data.length === 0 ? (
                 <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center" }}>
@@ -246,7 +243,7 @@ export default function TabunganPage() {
           </table>
         </div>
         <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+      </Card>
 
       {/* Modal Setor/Tarik */}
       {showTransaction && selectedStudent && (

@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { ShoppingBag } from "lucide-react";
 
 interface Product { id: number; name: string; category: string; hargaJual: number; hargaBeli: number; stok: number; minStok: number; status: string; }
 
@@ -56,48 +59,50 @@ export default function CoopProductsPage() {
   const outStockCount = data.filter(d => d.stok === 0).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 font-heading tracking-tight">Produk Koperasi</h1>
-          <p className="text-sm text-slate-500 mt-1">Kelola stok dan harga produk</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => { setEditItem(null); setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" }); setShowModal(true); }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-            Tambah Produk
-          </button>
-          <button onClick={() => {
-            if (!data.length) return;
-            exportCSV(["No", "Nama", "Kategori", "Harga Jual", "Harga Beli", "Stok", "Min Stok"],
-              data.map((d, i) => [i + 1, d.name, d.category, d.hargaJual, d.hargaBeli, d.stok, d.minStok]), "produk_koperasi");
-          }} className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Export
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Produk Koperasi"
+        subtitle="Kelola stok dan harga produk"
+        icon={<ShoppingBag />}
+        gradient="from-indigo-500 to-blue-600"
+        actions={
+          <div className="flex gap-2">
+            <button onClick={() => { setEditItem(null); setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" }); setShowModal(true); }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-white/30 backdrop-blur-md cursor-pointer">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+              Tambah Produk
+            </button>
+            <button onClick={() => {
+              if (!data.length) return;
+              exportCSV(["No", "Nama", "Kategori", "Harga Jual", "Harga Beli", "Stok", "Min Stok"],
+                data.map((d, i) => [i + 1, d.name, d.category, d.hargaJual, d.hargaBeli, d.stok, d.minStok]), "produk_koperasi");
+            }} className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-white/30 backdrop-blur-md cursor-pointer">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export
+            </button>
+          </div>
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Total Produk</p><p className="text-2xl font-bold text-slate-800 mt-1">{data.length}</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Stok Rendah</p><p className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount}</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Habis</p><p className="text-2xl font-bold text-rose-600 mt-1">{outStockCount}</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Kategori</p><p className="text-2xl font-bold text-indigo-600 mt-1">{new Set(data.map(d => d.category).filter(Boolean)).size}</p></div>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Total Produk</p><p className="text-2xl font-bold text-slate-800 mt-1">{data.length}</p></Card>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Stok Rendah</p><p className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount}</p></Card>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Habis</p><p className="text-2xl font-bold text-rose-600 mt-1">{outStockCount}</p></Card>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Kategori</p><p className="text-2xl font-bold text-indigo-600 mt-1">{new Set(data.map(d => d.category).filter(Boolean)).size}</p></Card>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <Card className="p-4">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari produk..." className="w-full md:w-72 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
-      </div>
+      </Card>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+        <Card className="flex justify-center items-center h-64 border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></Card>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed"><p className="text-sm text-slate-500">Tidak ada produk</p></div>
+        <Card className="text-center py-12 border-dashed"><p className="text-sm text-slate-500">Tidak ada produk</p></Card>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <Card className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead><tr className="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
@@ -134,7 +139,7 @@ export default function CoopProductsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Modal */}

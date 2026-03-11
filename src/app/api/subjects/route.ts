@@ -23,7 +23,10 @@ export async function GET(request: Request) {
       orderBy: { name: 'asc' }
     });
 
-    return NextResponse.json({ success: true, data: subjects });
+    return NextResponse.json(
+      { success: true, data: subjects },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

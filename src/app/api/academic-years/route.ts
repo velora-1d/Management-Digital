@@ -8,7 +8,10 @@ export async function GET() {
       orderBy: { year: "desc" },
     });
 
-    return NextResponse.json({ success: true, data: list });
+    return NextResponse.json(
+      { success: true, data: list },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
+    );
   } catch (error) {
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
   }

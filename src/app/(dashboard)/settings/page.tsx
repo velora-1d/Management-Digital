@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Settings, UserPlus, Save, RefreshCw, Trash2, Database, Download } from "lucide-react";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profil');
@@ -414,69 +417,54 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-400 rounded-2xl overflow-hidden relative shadow-lg">
-        <div className="absolute -right-5 -top-5 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute right-20 -bottom-10 w-36 h-36 bg-white/5 rounded-full blur-xl"></div>
-        
-        <div className="p-8 relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-sm">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="font-heading font-bold text-2xl text-white m-0">Pengaturan Sistem</h2>
-                <p className="text-sm text-white/80 mt-1">Konfigurasi profil madrasah dan manajemen akses pengguna.</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setActiveTab('profil')} 
-                className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                  activeTab === 'profil' 
-                    ? 'bg-white/35 text-white border-white/50 shadow-sm' 
-                    : 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20'
-                }`}
-              >
-                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                Profil
-              </button>
-              <button 
-                onClick={() => setActiveTab('users')} 
-                className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                  activeTab === 'users' 
-                    ? 'bg-white/35 text-white border-white/50 shadow-sm' 
-                    : 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20'
-                }`}
-              >
-                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                Manajemen User
-              </button>
-              <button 
-                onClick={() => setActiveTab('tools')} 
-                className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                  activeTab === 'tools' 
-                    ? 'bg-white/35 text-white border-white/50 shadow-sm' 
-                    : 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20'
-                }`}
-              >
-                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
-                Alat Lanjut
-              </button>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        title="Pengaturan Sistem"
+        subtitle="Konfigurasi profil madrasah dan manajemen akses pengguna"
+        icon={<Settings />}
+      />
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 flex-wrap">
+        <button 
+          onClick={() => setActiveTab('profil')} 
+          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
+            activeTab === 'profil' 
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'profil' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Profil Madrasah
+        </button>
+        <button 
+          onClick={() => setActiveTab('users')} 
+          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
+            activeTab === 'users' 
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'users' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Manajemen User
+        </button>
+        <button 
+          onClick={() => setActiveTab('tools')} 
+          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
+            activeTab === 'tools' 
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'tools' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+          Alat Lanjut
+        </button>
       </div>
 
       {/* Tab 1: Profil */}
       {activeTab === 'profil' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm animate-fade-in-up">
+        <Card noPadding>
           <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
             <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Identitas Utama Madrasah</h4>
           </div>
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -536,24 +524,25 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="p-5 bg-slate-50 border-t border-slate-100 flex justify-end">
-            <button onClick={saveProfile} className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-[0_4px_12px_rgba(99,102,241,0.2)] hover:shadow-[0_6px_16px_rgba(99,102,241,0.3)] hover:-translate-y-0.5 transition-all">
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-              Simpan Perubahan Profil
+            <button onClick={saveProfile} className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-sm hover:shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
+              <Save className="w-4 h-4 mr-2" />
+              Simpan Perubahan
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Tab 2: Manajemen User */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm animate-fade-in-up">
+        <Card noPadding>
           <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
               <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Akses & Manajemen Pengguna</h4>
             </div>
-            <button onClick={addUser} className="inline-flex items-center px-5 py-2 text-xs font-bold text-white uppercase tracking-wider bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors shadow-sm">
-              + Tambah Akun
+            <button onClick={addUser} className="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Tambah Akun
             </button>
           </div>
           <div className="overflow-x-auto">
@@ -619,12 +608,12 @@ export default function SettingsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Tab 3: Alat Lanjut */}
       {activeTab === 'tools' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-8 animate-fade-in-up">
+        <Card className="p-8">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              {/* Backup */}
              <div className="text-center border border-sky-200 bg-sky-50 rounded-2xl p-6 flex flex-col justify-between">
@@ -679,7 +668,7 @@ export default function SettingsPage() {
                 </div>
              </div>
            </div>
-        </div>
+        </Card>
       )}
 
     </div>

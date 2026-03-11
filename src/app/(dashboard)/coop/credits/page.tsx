@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { ReceiptText } from "lucide-react";
 
 interface Credit { id: number; studentId: number; amount: number; paidAmount: number; status: string; dueDate: string; student?: { name: string; nis: string } | null; transaction?: { date: string; total: number } | null; }
 
@@ -57,13 +60,13 @@ export default function CoopCreditsPage() {
   const activeCount = data.filter(d => d.status !== "lunas").length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 font-heading tracking-tight">Piutang Siswa</h1>
-          <p className="text-sm text-slate-500 mt-1">Kelola bon dan pelunasan</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Piutang Siswa"
+        subtitle="Kelola bon dan pelunasan"
+        icon={<ReceiptText />}
+        gradient="from-indigo-500 to-blue-600"
+      />
 
       {/* Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -98,7 +101,7 @@ export default function CoopCreditsPage() {
             const sisa = c.amount - c.paidAmount;
             const persen = c.amount > 0 ? Math.round((c.paidAmount / c.amount) * 100) : 0;
             return (
-              <div key={c.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-indigo-100 transition-colors">
+              <Card key={c.id} className="p-4 hover:border-indigo-100 transition-colors">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -122,7 +125,7 @@ export default function CoopCreditsPage() {
                     <button onClick={() => handleBayar(c)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold border border-emerald-100 transition-colors shrink-0">Bayar</button>
                   )}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>

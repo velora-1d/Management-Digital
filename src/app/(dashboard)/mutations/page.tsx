@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { ArrowRightLeft } from "lucide-react";
 
 export default function MutationsPage() {
   const [classrooms, setClassrooms] = useState<any[]>([]);
@@ -98,23 +101,15 @@ export default function MutationsPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#dc2626 0%,#ef4444 50%,#f87171 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex items-center gap-3">
-            <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-              <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-            </div>
-            <div>
-              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Mutasi Siswa</h2>
-              <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Pindah kelas, kelulusan, atau perubahan status siswa.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Mutasi Siswa"
+        subtitle="Pindah kelas, kelulusan, atau perubahan status siswa."
+        icon={<ArrowRightLeft className="w-6 h-6 text-white" />}
+        gradient="from-red-600 via-rose-500 to-red-500"
+      />
 
       {/* Controls */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-2">Kelas Asal</label>
@@ -147,10 +142,10 @@ export default function MutationsPage() {
             </button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tabel Siswa */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <Card className="p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-gradient-to-br from-red-500 to-rose-500"></div>
@@ -200,7 +195,7 @@ export default function MutationsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

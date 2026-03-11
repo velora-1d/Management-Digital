@@ -2,6 +2,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
 
 export default function TeachingAssignmentsPage() {
   const [data, setData] = useState<any[]>([]);
@@ -265,77 +267,81 @@ export default function TeachingAssignmentsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Penugasan Guru Mapel</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Tentukan guru mata pelajaran untuk tiap kelas pada Tahun Ajaran berjalan.</p>
-              </div>
-            </div>
-            <button onClick={handleAdd} className="hover:bg-white/30" style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", transition: "all 0.2s ease" }}>
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Penugasan
-            </button>
-            <button onClick={() => {
-              if (data.length === 0) { Swal.fire("Info", "Tidak ada data", "info"); return; }
-              exportCSV(
-                ["No", "Guru", "Mata Pelajaran", "Kode", "Kelas", "Tahun Ajaran"],
-                data.map((d: any, i: number) => [i+1, d.employee?.name, d.subject?.name, d.subject?.code, d.classroom?.name, d.academicYear?.year]),
-                "data_penugasan_guru"
-              );
-            }} className="hover:bg-white/30" style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.2)", cursor: "pointer", transition: "all 0.2s ease" }}>
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Tahun Ajaran</label>
-          <select 
-            value={filterYear} onChange={(e) => setFilterYear(e.target.value)}
-            className="w-full text-sm border-slate-200 rounded-lg bg-slate-50 py-2 px-3 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
-          >
-            <option value="">Semua Tahun Ajaran</option>
-            {academicYears.map(y => (
-              <option key={y.id} value={y.id}>{y.year} - {y.semester}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Filter Kelas</label>
-          <select 
-            value={filterClass} onChange={(e) => setFilterClass(e.target.value)}
-            className="w-full text-sm border-slate-200 rounded-lg bg-slate-50 py-2 px-3 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
-          >
-            <option value="">Semua Kelas</option>
-            {classrooms.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+    <div className="space-y-5 animate-fade-in-up">
+      <PageHeader
+        title="Penugasan Guru Mapel"
+        subtitle="Tentukan guru mata pelajaran untuk tiap kelas pada Tahun Ajaran berjalan."
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-            <h3 className="font-heading font-bold text-sm text-slate-800 m-0">Daftar Penugasan</h3>
-            <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full ml-1">{data.length}</span>
+            <button 
+              onClick={() => {
+                if (data.length === 0) { Swal.fire("Info", "Tidak ada data untuk diekspor", "info"); return; }
+                exportCSV(
+                  ["No", "Guru", "Mata Pelajaran", "Kode", "Kelas", "Tahun Ajaran"],
+                  data.map((d: any, i: number) => [i+1, d.employee?.name, d.subject?.name, d.subject?.code, d.classroom?.name, d.academicYear?.year]),
+                  "data_penugasan_guru"
+                );
+              }}
+              className="inline-flex items-center px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold border border-indigo-500/20 transition-all uppercase tracking-wider"
+            >
+              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export
+            </button>
+            <button 
+              onClick={handleAdd}
+              className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold border border-blue-400 shadow-lg shadow-blue-900/20 transition-all uppercase tracking-wider"
+            >
+              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Tambah Penugasan
+            </button>
+          </div>
+        }
+      />
+
+      <Card noPadding>
+        <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Filter Tahun Ajaran</label>
+            <select 
+              value={filterYear} onChange={(e) => setFilterYear(e.target.value)}
+              className="w-full text-sm border-slate-200 rounded-lg bg-white py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
+            >
+              <option value="">Semua Tahun Ajaran</option>
+              {academicYears.map(y => (
+                <option key={y.id} value={y.id}>{y.year} - {y.semester}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Filter Kelas</label>
+            <select 
+              value={filterClass} onChange={(e) => setFilterClass(e.target.value)}
+              className="w-full text-sm border-slate-200 rounded-lg bg-white py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
+            >
+              <option value="">Semua Kelas</option>
+              {classrooms.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
         </div>
+      </Card>
+
+      <Card
+        title="Daftar Penugasan"
+        icon={<div className="w-2 h-2 rounded-full bg-amber-500" />}
+        actions={
+          <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{data.length}</span>
+        }
+        noPadding
+      >
         
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -380,9 +386,8 @@ export default function TeachingAssignmentsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Rekap Beban Mengajar Per Guru */}
       {data.length > 0 && (() => {
         const rekap: Record<string, { nama: string; jumlahKelas: number; mapelSet: Set<string> }> = {};
         data.forEach((d: any) => {
@@ -393,21 +398,24 @@ export default function TeachingAssignmentsPage() {
         });
         const rekapArr = Object.values(rekap).sort((a, b) => b.jumlahKelas - a.jumlahKelas);
         return (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-              <h3 className="font-heading font-bold text-sm text-slate-800">Rekap Beban Mengajar</h3>
-            </div>
+          <Card
+            title="Rekap Beban Mengajar"
+            icon={<div className="w-2 h-2 rounded-full bg-emerald-500" />}
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {rekapArr.map(r => (
-                <div key={r.nama} className="p-3 border border-slate-100 rounded-xl hover:border-amber-200 transition-colors">
-                  <p className="font-semibold text-sm text-slate-800">{r.nama}</p>
-                  <p className="text-xs text-slate-500 mt-1">{r.jumlahKelas} kelas · {r.mapelSet.size} mapel</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{Array.from(r.mapelSet).join(", ")}</p>
+                <div key={r.nama} className="p-3 border border-slate-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/10 transition-all group">
+                  <p className="font-bold text-sm text-slate-800 group-hover:text-blue-700 transition-colors uppercase tracking-tight">{r.nama}</p>
+                  <p className="text-xs font-semibold text-slate-500 mt-1">{r.jumlahKelas} kelas · {r.mapelSet.size} mapel</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {Array.from(r.mapelSet).map(m => (
+                      <span key={m} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200">{m}</span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         );
       })()}
     </div>

@@ -24,7 +24,10 @@ export async function GET() {
       student_count: cls._count.students,
     }));
 
-    return NextResponse.json({ success: true, data: classroomsWithCount });
+    return NextResponse.json(
+      { success: true, data: classroomsWithCount },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
+    );
   } catch (error) {
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
   }

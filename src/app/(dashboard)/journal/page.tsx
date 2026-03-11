@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah as fmtRupiahExport } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { BookOpen } from "lucide-react";
 
 // Fungsi format angka ke format rupiah (titik pemisah ribuan)
 function formatRupiah(value: string): string {
@@ -214,45 +217,37 @@ export default function JournalPage() {
       )}
 
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#1e3a8a 0%,#312e81 50%,#4f46e5 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.06)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.04)", borderRadius: "50%" }} />
-        <div style={{ padding: "2.5rem 2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.2)" }}>
-                  <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.5rem", color: "#fff", margin: 0 }}>Jurnal Umum</h2>
-              </div>
-              <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", maxWidth: 500, lineHeight: 1.5 }}>Kelola arus kas masuk dan keluar sekolah secara terpusat.</p>
-            </div>
-            <button onClick={() => setShowCreate(true)} style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "#fff", color: "#312e81", borderRadius: "0.5rem", fontSize: "0.8125rem", fontWeight: 700, border: "none", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", cursor: "pointer" }} className="hover:bg-slate-50 transition-colors">
-              <svg style={{ width: "1.25rem", height: "1.25rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Catat Jurnal Baru
-            </button>
-          </div>
+      {/* Hero Header */}
+      <PageHeader
+        title="Jurnal Umum"
+        subtitle="Kelola arus kas masuk dan keluar sekolah secara terpusat."
+        icon={<BookOpen />}
+        gradient="from-indigo-800 via-indigo-900 to-indigo-600"
+        actions={
+          <button onClick={() => setShowCreate(true)} className="inline-flex items-center px-4 py-2 bg-white text-indigo-900 rounded-lg text-sm font-bold shadow hover:bg-slate-50 transition-colors">
+            <svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Catat Jurnal Baru
+          </button>
+        }
+      />
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginTop: "2rem" }}>
-            <div style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", padding: "1.25rem", borderRadius: "0.75rem" }}>
-              <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>Total Saldo</p>
-              <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{fmtRp(kpi.totalBalance)}</h3>
-            </div>
-            <div style={{ background: "rgba(16,185,129,0.15)", backdropFilter: "blur(12px)", border: "1px solid rgba(16,185,129,0.3)", padding: "1.25rem", borderRadius: "0.75rem" }}>
-              <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "#a7f3d0", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>Pemasukan (Bulan Ini)</p>
-              <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{fmtRp(kpi.thisMonthIn)}</h3>
-            </div>
-            <div style={{ background: "rgba(225,29,72,0.15)", backdropFilter: "blur(12px)", border: "1px solid rgba(225,29,72,0.3)", padding: "1.25rem", borderRadius: "0.75rem" }}>
-              <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "#fecdd3", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>Pengeluaran (Bulan Ini)</p>
-              <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>{fmtRp(kpi.thisMonthOut)}</h3>
-            </div>
-          </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Total Saldo</p>
+          <h3 className="font-heading text-2xl font-bold text-slate-800 m-0">{fmtRp(kpi.totalBalance)}</h3>
+        </div>
+        <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-5 shadow-sm">
+          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1">Pemasukan (Bulan Ini)</p>
+          <h3 className="font-heading text-2xl font-bold text-emerald-700 m-0">{fmtRp(kpi.thisMonthIn)}</h3>
+        </div>
+        <div className="bg-rose-50 rounded-xl border border-rose-100 p-5 shadow-sm">
+          <p className="text-xs font-semibold text-rose-600 uppercase tracking-widest mb-1">Pengeluaran (Bulan Ini)</p>
+          <h3 className="font-heading text-2xl font-bold text-rose-700 m-0">{fmtRp(kpi.thisMonthOut)}</h3>
         </div>
       </div>
 
       {/* Filter & Tabel */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <Card className="animate-fade-in">
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
           <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#0f172a", margin: 0 }}>Riwayat Jurnal</h3>
           <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); loadData(e.target.value); }} style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem", border: "1px solid #cbd5e1", borderRadius: "0.5rem", color: "#475569", background: "#fff", outline: "none" }}>
@@ -378,8 +373,10 @@ export default function JournalPage() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
-      </div>
+        <div className="p-5 border-t border-slate-100">
+          <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
+        </div>
+      </Card>
 
       {/* Modal Catat Transaksi */}
       {showCreate && (

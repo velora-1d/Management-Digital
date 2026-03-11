@@ -26,6 +26,18 @@ export async function GET(request: Request) {
     const [inventories, total] = await Promise.all([
       prisma.inventory.findMany({
         where,
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          category: true,
+          location: true,
+          quantity: true,
+          condition: true,
+          acquisitionDate: true,
+          acquisitionCost: true,
+          notes: true,
+        },
         orderBy: { id: "desc" },
         skip: (page - 1) * limit,
         take: limit,

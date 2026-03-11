@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { UserPlus } from "lucide-react";
 
 const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "0.625rem 0.875rem", border: "1.5px solid #e2e8f0", borderRadius: "0.5rem", fontSize: "0.8125rem", outline: "none" };
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.375rem" };
@@ -78,22 +81,22 @@ export default function PpdbNewPage() {
   return (
     <div className="space-y-6 animate-fade-in-up" style={{ maxWidth: "100%" }}>
       {/* Header */}
-      <div style={{ background: "linear-gradient(135deg,#0ea5e9 0%,#0284c7 50%,#0369a1 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10, display: "flex", alignItems: "center", gap: "1rem" }}>
-          <Link href="/ppdb" style={{ width: 40, height: 40, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }} className="hover:bg-white/30">
-            <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      <PageHeader
+        title="Pendaftaran PPDB Mandiri"
+        subtitle="Formulir pendaftaran calon peserta didik (Format Dapodik)"
+        icon={<UserPlus />}
+        gradient="from-sky-500 via-blue-600 to-sky-700"
+        actions={
+          <Link href="/ppdb" className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all text-decoration-none">
+            <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Kembali
           </Link>
-          <div>
-            <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Pendaftaran PPDB Mandiri</h2>
-            <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Formulir pendaftaran calon peserta didik (Format Dapodik)</p>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       <form onSubmit={handleSubmit}>
         {/* A. Identitas Calon Murid */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
+        <Card className="p-8 mb-6">
           <SectionHeader letter="A" label="Identitas Calon Murid" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
             <Field label="Nama Lengkap (Sesuai Akta)" name="name" required span2 formData={f} onChange={handleChange} />
@@ -121,10 +124,10 @@ export default function PpdbNewPage() {
             <Field label="Asal Sekolah (TK/RA) Sebelumnya" name="previousSchool" formData={f} onChange={handleChange} />
             <Field label="No. HP Siswa (Jika Ada)" name="studentPhone" formData={f} onChange={handleChange} />
           </div>
-        </div>
+        </Card>
 
         {/* B. Data Periodik Fisik */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
+        <Card className="p-8 mb-6">
           <SectionHeader letter="B" label="Data Periodik Fisik" color="#0ea5e9" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1.25rem" }}>
             <Field label="Tinggi Badan (cm)" name="height" type="number" formData={f} onChange={handleChange} />
@@ -132,10 +135,10 @@ export default function PpdbNewPage() {
             <Select label="Jarak ke Sekolah" name="distanceToSchool" options={[["", "-- Pilih --"], ["< 1 km", "Kurang dari 1 km"], ["1-3 km", "1 - 3 km"], ["3-5 km", "3 - 5 km"], ["> 5 km", "Lebih dari 5 km"]]} formData={f} onChange={handleChange} />
             <Field label="Waktu Tempuh (Menit)" name="travelTime" type="number" formData={f} onChange={handleChange} />
           </div>
-        </div>
+        </Card>
 
         {/* C. Identitas Orang Tua */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
+        <Card className="p-8 mb-6">
           <SectionHeader letter="C" label="Identitas Orang Tua" color="#eab308" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
             {/* Kolom Ayah */}
@@ -172,10 +175,10 @@ export default function PpdbNewPage() {
             <Field label="No. Kontak Ortu (WA/HP Aktif)" name="phone" formData={f} onChange={handleChange} />
             <Select label="Penghasilan Rata-rata Gabungan" name="parentIncome" options={[["", "-- Pilih Range --"], ["< 1 jt", "Kurang dari Rp 1.000.000"], ["1-2 jt", "Rp 1.000.000 - Rp 2.000.000"], ["2-3 jt", "Rp 2.000.000 - Rp 3.000.000"], ["> 3 jt", "Lebih dari Rp 3.000.000"]]} formData={f} onChange={handleChange} />
           </div>
-        </div>
+        </Card>
 
         {/* D. Wali Murid */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
+        <Card className="p-8 mb-6">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
             <SectionHeader letter="D" label="Wali Murid (Jika Bersama Wali)" color="#ec4899" />
             <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Kosongkan jika bersama orang tua kandung.</span>
@@ -197,25 +200,25 @@ export default function PpdbNewPage() {
               <textarea name="guardianAddress" value={f.guardianAddress} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-sky-500 transition-colors" />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* E. Catatan */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
+        <Card className="p-8 mb-6">
           <SectionHeader letter="E" label="Tambahan & Catatan" color="#8b5cf6" />
           <div>
             <label style={labelStyle}>Catatan Khusus (Riwayat Medis / Keadaan Tertentu)</label>
             <textarea name="notes" value={f.notes} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: "none" }} className="focus:border-sky-500 transition-colors" />
           </div>
-        </div>
+        </Card>
 
         {/* Submit */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Card className="p-6 flex flex-wrap justify-between items-center gap-4">
           <Link href="/ppdb" style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", textDecoration: "none" }}>← Batal & Kembali</Link>
           <button type="submit" disabled={loading} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 2rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: loading ? "#94a3b8" : "linear-gradient(135deg,#0ea5e9,#0284c7)", border: "none", borderRadius: "0.625rem", cursor: loading ? "not-allowed" : "pointer" }} className="hover:opacity-90 transition-opacity">
             <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
             {loading ? "Menyimpan..." : "Simpan Data Pendaftaran"}
           </button>
-        </div>
+        </Card>
       </form>
     </div>
   );

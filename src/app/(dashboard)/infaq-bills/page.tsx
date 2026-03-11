@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/Pagination";
 import FilterBar from "@/components/FilterBar";
 import { ExportButtons, fmtRupiah, type ExportOptions } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { Wallet, Settings, RefreshCcw, Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const monthNames: Record<number, string> = {1:'Januari',2:'Februari',3:'Maret',4:'April',5:'Mei',6:'Juni',7:'Juli',8:'Agustus',9:'September',10:'Oktober',11:'November',12:'Desember'};
 const monthShort: Record<number, string> = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'Mei',6:'Jun',7:'Jul',8:'Agu',9:'Sep',10:'Okt',11:'Nov',12:'Des'};
@@ -12,10 +16,10 @@ const monthShort: Record<number, string> = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'M
 function InfaqBillsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 20 });
+
+  const queryString = searchParams.toString();
 
   // Modal states
   const [showGenerate, setShowGenerate] = useState(false);
@@ -77,26 +81,26 @@ function InfaqBillsContent() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const query = searchParams.toString();
-      const res = await fetch(`/api/infaq-bills?${query}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json.data);
-        if (json.pagination) setPagination(json.pagination);
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [searchParams]);
+  const { data: queryResult, isLoading } = useQuery({
+    queryKey: ["infaq-bills", queryString],
+    queryFn: async () => {
+      const res = await fetch(`/api/infaq-bills?${queryString}`);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
+
+  const data: any[] = queryResult?.data || [];
+  const pagination = queryResult?.pagination || { page: 1, totalPages: 1, total: 0, limit: 20 };
+
+  const refreshData = () => queryClient.invalidateQueries({ queryKey: ["infaq-bills"] });
 
   useEffect(() => {
-    loadData();
     fetch("/api/cash-accounts").then(r => r.json()).then(j => { if (j.success) setCashAccounts(j.data || []); }).catch(() => {});
     fetch("/api/classrooms").then(r => r.json()).then(j => { if (j.success) setClassrooms(j.data || []); }).catch(() => {});
     fetch("/api/academic-years").then(r => r.json()).then(j => { if (j.success) setAcademicYears(j.data || []); }).catch(() => {});
-  }, [loadData]);
+  }, []);
 
   // === Generate Tagihan ===
   async function handleGenerate() {
@@ -165,7 +169,7 @@ function InfaqBillsContent() {
         showToast(json.message);
         setShowGenerate(false);
         setGenMonths([]);
-        loadData();
+        refreshData();
       } else {
         showToast(json.message, "error");
       }
@@ -200,7 +204,7 @@ function InfaqBillsContent() {
         setPayNotes("");
         setPayMethod("tunai");
         setPayCashId("");
-        loadData();
+        refreshData();
       } else {
         showToast(json.message, "error");
       }
@@ -232,7 +236,7 @@ function InfaqBillsContent() {
         body: JSON.stringify({ nominal: Number(newNominal) }),
       });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal edit tagihan", "error"); }
   }
@@ -252,7 +256,7 @@ function InfaqBillsContent() {
     try {
       const res = await fetch(`/api/infaq-bills/${billId}`, { method: "DELETE" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal hapus tagihan", "error"); }
   }
@@ -272,7 +276,7 @@ function InfaqBillsContent() {
     try {
       const res = await fetch(`/api/infaq-bills/${billId}/void`, { method: "POST" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal void tagihan", "error"); }
   }
@@ -292,7 +296,7 @@ function InfaqBillsContent() {
     try {
       const res = await fetch(`/api/infaq-bills/${billId}/revert`, { method: "POST" });
       const json = await res.json();
-      if (json.success) { showToast(json.message); loadData(); }
+      if (json.success) { showToast(json.message); refreshData(); }
       else showToast(json.message, "error");
     } catch { showToast("Gagal revert tagihan", "error"); }
   }
@@ -345,25 +349,21 @@ function InfaqBillsContent() {
       <FilterBar />
 
       {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }} />
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Tagihan Infaq / SPP</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Monitor tagihan sesuai filter periode yang dipilih.</p>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => setShowBulkUpdate(true)} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 1.5rem", background: "rgba(99,102,241,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(99,102,241,0.3)", cursor: "pointer" }} className="hover:bg-indigo-500/30">
-                <svg style={{ width: "1rem", height: "1rem", marginRight: "0.5rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>Setting Biaya
-              </button>
-              <button onClick={async () => {
+      <PageHeader
+        title="Tagihan Infaq / SPP"
+        subtitle="Monitor tagihan sesuai filter periode yang dipilih."
+        icon={<Wallet />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setShowBulkUpdate(true)}
+              className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-bold text-xs uppercase tracking-wide border border-indigo-100 transition-colors"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Setting Biaya
+            </button>
+            <button
+              onClick={async () => {
                 // Cek nominal kelas sebelum buka form generate
                 const zeroClasses = classrooms.filter((c: any) => !c.infaqNominal || c.infaqNominal <= 0);
                 if (zeroClasses.length > 0) {
@@ -394,28 +394,33 @@ function InfaqBillsContent() {
                 }
                 setShowGenerate(true);
               }}
- style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 1.5rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer" }} className="hover:bg-white/30">
-                <svg style={{ width: "1rem", height: "1rem", marginRight: "0.5rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Generate Tagihan
-              </button>
-              <button onClick={() => setShowReset(true)} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 1.5rem", background: "rgba(239,68,68,0.3)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(239,68,68,0.4)", cursor: "pointer" }} className="hover:bg-red-500/40">
-                <svg style={{ width: "1rem", height: "1rem", marginRight: "0.5rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Reset Tagihan
-              </button>
-            </div>
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm"
+            >
+              <RefreshCcw className="w-4 h-4 mr-2" />
+              Generate Tagihan
+            </button>
+            <button
+              onClick={() => setShowReset(true)}
+              className="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold text-xs uppercase tracking-wide border border-red-100 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Reset Tagihan
+            </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabel Tagihan */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#f59e0b,#d97706)", borderRadius: "50%" }} />
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Tagihan</h4>
+      <Card>
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+            <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Tagihan</h4>
           </div>
-          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", padding: "0.25rem 0.75rem", borderRadius: 999 }}>{pagination.total} Data</span>
+          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{pagination.total} Data</span>
         </div>
         {data.length > 0 && (
-          <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+          <div className="px-6 py-3 border-b border-slate-100">
             <ExportButtons options={{
               title: "Daftar Tagihan Infaq / SPP",
               filename: `tagihan_infaq_${new Date().toISOString().split("T")[0]}`,
@@ -449,7 +454,7 @@ function InfaqBillsContent() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat...</td></tr>
               ) : data.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center" }}>
@@ -557,17 +562,17 @@ function InfaqBillsContent() {
             const params = new URLSearchParams(searchParams.toString());
             params.set("page", String(p));
             window.history.pushState({}, "", `?${params.toString()}`);
-            loadData();
+            refreshData();
           }} 
           onLimitChange={(l) => {
             const params = new URLSearchParams(searchParams.toString());
             params.set("limit", String(l));
             params.set("page", "1");
             window.history.pushState({}, "", `?${params.toString()}`);
-            loadData();
+            refreshData();
           }} 
         />
-      </div>
+      </Card>
 
       {/* Modal Generate Tagihan */}
       {showGenerate && (
@@ -772,7 +777,7 @@ function InfaqBillsContent() {
                 try {
                   const res = await fetch("/api/infaq-bills/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reqBody) });
                   const json = await res.json();
-                  if (json.success) { showToast(json.message); setShowReset(false); loadData(); } else showToast(json.message, "error");
+                  if (json.success) { showToast(json.message); setShowReset(false); refreshData(); } else showToast(json.message, "error");
                 } catch { showToast("Gagal reset", "error"); } finally { setResetLoading(false); }
               }} style={{ padding: "0.5rem 1.25rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: resetLoading ? "#94a3b8" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", borderRadius: "0.5rem", cursor: resetLoading ? "not-allowed" : "pointer" }}>{resetLoading ? "Memproses..." : "Reset Sekarang"}</button>
             </div>

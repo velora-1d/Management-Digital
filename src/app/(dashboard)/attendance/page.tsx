@@ -3,26 +3,17 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
-const Users = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-const Save = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-  </svg>
-);
-const Search = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { 
+  Users, 
+  Calendar, 
+  Save, 
+  Search, 
+  Download,
+  ClipboardList,
+  BarChart3
+} from "lucide-react";
 
 interface Option {
   id: number;
@@ -242,58 +233,54 @@ export default function AttendancePage() {
   }, [recapClassroom, recapStartDate, recapEndDate]);
 
   // View Renderers
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            <Users className="w-8 h-8 text-blue-600 p-1.5 bg-blue-100 rounded-lg" />
-            Absensi Siswa
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Kelola data kehadiran harian dan cetak rekapitulasi absensi siswa.
-          </p>
-        </div>
-        {activeAcademicYear && (
-          <div className="bg-white/60 backdrop-blur-sm border px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 shadow-sm">
-            T.A Aktif: <span className="text-blue-600">{activeAcademicYear.year}</span>
-          </div>
-        )}
-      </div>
+  const recapDisplayData = filterAlpha 
+    ? recapData.filter(r => r.stats.alpha >= alphaThreshold) 
+    : recapData;
 
-      {/* Tabs Layout */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Navigation Tabs */}
-        <div className="flex px-2 pt-2 bg-slate-50 border-b border-slate-200 gap-2 overflow-x-auto hide-scrollbar">
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Absensi Siswa"
+        subtitle="Kelola data kehadiran harian dan cetak rekapitulasi absensi siswa."
+        icon={<ClipboardList className="w-5 h-5 text-indigo-600" />}
+        actions={
+          activeAcademicYear && (
+            <div className="bg-white/60 backdrop-blur-sm border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm border-slate-200">
+              T.A Aktif: <span className="text-indigo-600 ml-1">{activeAcademicYear.year}</span>
+            </div>
+          )
+        }
+      />
+
+      {/* Navigation Card */}
+      <Card compact>
+        <div className="flex p-1 bg-slate-100/50 rounded-xl w-fit border border-slate-200/50">
           <button
             onClick={() => setActiveTab("input")}
-            className={`px-6 py-3 text-sm font-semibold transition-all relative ${
-              activeTab === "input" 
-                ? "text-blue-600" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-t-lg"
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "input"
+                ? "bg-white text-indigo-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
             }`}
           >
-            Input Absensi Harian
-            {activeTab === "input" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
-            )}
+            <ClipboardList className="w-4 h-4" />
+            Input Absensi
           </button>
           <button
             onClick={() => setActiveTab("recap")}
-            className={`px-6 py-3 text-sm font-semibold transition-all relative ${
-              activeTab === "recap" 
-                ? "text-blue-600" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-t-lg"
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "recap"
+                ? "bg-white text-indigo-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
             }`}
           >
-            Rekapitulasi Absensi
-            {activeTab === "recap" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full"></span>
-            )}
+            <BarChart3 className="w-4 h-4" />
+            Rekapitulasi
           </button>
         </div>
+      </Card>
 
+      <Card noPadding>
         <div className="p-6">
           {/* CONTENT INPUT ABSENSI */}
           {activeTab === "input" && (
@@ -315,7 +302,7 @@ export default function AttendancePage() {
                 <div className="w-full sm:w-64">
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Tanggal</label>
                   <div className="relative">
-                    <CalendarIcon className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                    <Calendar className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                     <input
                       type="date"
                       className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
@@ -515,79 +502,77 @@ export default function AttendancePage() {
                      }}
                      className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                    >
-                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                     <Download className="w-4 h-4" />
                      Export CSV
                    </button>
                  </div>
                )}
 
-               {recapData.length > 0 && !loadingRecap && (() => {
-                 const displayData = filterAlpha ? recapData.filter(r => r.stats.alpha >= alphaThreshold) : recapData;
-                 return displayData.length > 0 ? (
-                 <div className="bg-white border rounded-lg overflow-x-auto shadow-sm">
-                   <table className="w-full text-left border-collapse">
-                     <thead>
-                       <tr className="bg-slate-50 border-b border-slate-200">
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Nama Siswa</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Hadir</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Sakit</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Izin</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Alpha</th>
-                         <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center bg-blue-50">Total Hari</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-slate-100">
-                       {displayData.map((item, index) => (
-                          <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3 px-4 text-sm font-medium text-slate-400 text-center">{index + 1}</td>
-                            <td className="py-3 px-4">
-                              <div className="text-sm font-semibold text-slate-800">{item.name}</div>
-                              <div className="text-xs text-slate-500">{item.nisn}</div>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-sm">
-                                {item.stats.hadir}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-700 font-semibold text-sm">
-                                {item.stats.sakit}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-semibold text-sm">
-                                {item.stats.izin}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
-                                item.stats.alpha > 0 ? "bg-rose-100 text-rose-700" : "bg-slate-50 text-slate-500"
-                              }`}>
-                                {item.stats.alpha}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center bg-blue-50/30">
-                              <span className="font-bold text-blue-800 text-sm">
-                                {item.stats.total}
-                              </span>
-                            </td>
+               {recapData.length > 0 && !loadingRecap && (
+                  recapDisplayData.length > 0 ? (
+                    <div className="bg-white border rounded-lg overflow-x-auto shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Nama Siswa</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Hadir</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Sakit</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Izin</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Alpha</th>
+                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center bg-blue-50">Total Hari</th>
                           </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 </div>
-                 ) : (
-                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
-                     <p className="text-sm text-slate-500">Tidak ada siswa dengan alpha ≥ {alphaThreshold} hari.</p>
-                   </div>
-                 );
-               })()}
-
-           </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {recapDisplayData.map((item, index) => (
+                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="py-3 px-4 text-sm font-medium text-slate-400 text-center">{index + 1}</td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm font-semibold text-slate-800">{item.name}</div>
+                                <div className="text-xs text-slate-500">{item.nisn}</div>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-sm">
+                                  {item.stats.hadir}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-700 font-semibold text-sm">
+                                  {item.stats.sakit}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-semibold text-sm">
+                                  {item.stats.izin}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
+                                  item.stats.alpha > 0 ? "bg-rose-100 text-rose-700" : "bg-slate-50 text-slate-500"
+                                }`}>
+                                  {item.stats.alpha}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center bg-blue-50/30">
+                                <span className="font-bold text-blue-800 text-sm">
+                                  {item.stats.total}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+                      <p className="text-sm text-slate-500">Tidak ada siswa dengan alpha ≥ {alphaThreshold} hari.</p>
+                    </div>
+                  )
+                )}
+            </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

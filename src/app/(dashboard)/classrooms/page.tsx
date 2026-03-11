@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
 
 export default function ClassroomsPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -22,7 +23,6 @@ export default function ClassroomsPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [openActionId]);
 
-  const showToast = (msg: string, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 4000); };
 
   async function loadData() {
     setLoading(true);
@@ -41,40 +41,99 @@ export default function ClassroomsPage() {
     loadData();
   }, []);
 
-  function formatRp(n: number) {
-    return Number(n).toLocaleString('id-ID');
-  }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#d97706 0%,#f59e0b 50%,#fbbf24 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Ruang Kelas</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola rombongan belajar tingkat 1 sampai 6.</p>
-              </div>
-            </div>
-            <button style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer" }}>
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah Kelas
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-5 animate-fade-in-up">
+      <PageHeader
+        title="Ruang Kelas"
+        subtitle="Kelola rombongan belajar tingkat 1 sampai 6."
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        }
+        actions={
+          <button 
+            onClick={async () => {
+              const result = await Swal.fire({
+                title: "Tambah Kelas Baru",
+                html: `
+                  <div style="text-align: left; margin-bottom: 10px;">
+                    <label style="font-size: 14px; font-weight: 600;">Nama Kelas</label>
+                    <input id="swal-input1" class="swal2-input" placeholder="Contoh: 1-A" style="margin-top: 5px;">
+                  </div>
+                  <div style="text-align: left; margin-bottom: 10px;">
+                    <label style="font-size: 14px; font-weight: 600;">Tingkat</label>
+                    <select id="swal-input2" class="swal2-input" style="margin-top: 5px; width: 100%;">
+                      <option value="1">Tingkat 1</option>
+                      <option value="2">Tingkat 2</option>
+                      <option value="3">Tingkat 3</option>
+                      <option value="4">Tingkat 4</option>
+                      <option value="5">Tingkat 5</option>
+                      <option value="6">Tingkat 6</option>
+                    </select>
+                  </div>
+                  <div style="text-align: left;">
+                    <label style="font-size: 14px; font-weight: 600;">Tarif Infaq (Rp)</label>
+                    <input id="swal-input3" type="number" class="swal2-input" placeholder="0" style="margin-top: 5px;">
+                  </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: "Simpan",
+                cancelButtonText: "Batal",
+                preConfirm: () => {
+                  const input1 = document.getElementById('swal-input1') as HTMLInputElement;
+                  const input2 = document.getElementById('swal-input2') as HTMLSelectElement;
+                  const input3 = document.getElementById('swal-input3') as HTMLInputElement;
+                  return {
+                    name: input1 ? input1.value : '',
+                    level: input2 ? input2.value : '1',
+                    infaq: input3 ? input3.value : '0'
+                  }
+                }
+              });
 
-      {/* Tabel Kelas */}
-      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div style={{ width: 8, height: 8, background: "linear-gradient(135deg,#d97706,#f59e0b)", borderRadius: "50%" }}></div>
-          <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Daftar Kelas</h4>
-        </div>
+              if (!result.isConfirmed) return;
+              const { name, level, infaq } = result.value || {};
+              if (!name) {
+                Swal.fire("Error", "Nama kelas tidak boleh kosong", "error");
+                return;
+              }
+
+              try {
+                const res = await fetch("/api/classrooms", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name, level: Number(level), infaqNominal: Number(infaq) }),
+                });
+                const json = await res.json();
+                if (json.success) { 
+                  Swal.fire("Berhasil", "Kelas berhasil ditambahkan", "success"); 
+                  loadData(); 
+                } else {
+                  Swal.fire("Gagal", json.message, "error");
+                }
+              } catch { 
+                Swal.fire("Error", "Gagal menghubungi server", "error"); 
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
+          >
+            <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Kelas
+          </button>
+        }
+      />
+
+      <Card
+        title="Daftar Kelas"
+        icon={
+          <div className="w-2 h-2 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500" />
+        }
+        noPadding
+      >
         {data.length > 0 && (
           <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
             <ExportButtons options={{
@@ -144,7 +203,7 @@ export default function ClassroomsPage() {
                       {c.student_count || 0} <span style={{ fontSize: "0.6875rem", color: "#94a3b8", fontWeight: 400 }}>siswa</span>
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                      <span style={{ fontWeight: 700, fontSize: "0.8125rem", color: "#059669" }}>Rp {formatRp(c.infaq_nominal || 0)}</span>
+                      <span style={{ fontWeight: 700, fontSize: "0.8125rem", color: "#059669" }}>{fmtRupiah(c.infaq_nominal || 0)}</span>
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center", position: "relative" }}>
                       <button 
@@ -211,9 +270,15 @@ export default function ClassroomsPage() {
                                 body: JSON.stringify({ name: newName, infaqNominal: Number(newInfaq) }),
                               });
                               const json = await res.json();
-                              if (json.success) { showToast("Kelas berhasil diupdate"); loadData(); }
-                              else showToast(json.message, "error");
-                            } catch { showToast("Gagal update", "error"); }
+                              if (json.success) { 
+                                Swal.fire("Berhasil", "Kelas berhasil diupdate", "success"); 
+                                loadData(); 
+                              } else {
+                                Swal.fire("Gagal", json.message, "error");
+                              }
+                            } catch { 
+                              Swal.fire("Error", "Gagal update", "error"); 
+                            }
                           }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#6366f1", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-indigo-50">
                             Edit Data
                           </button>
@@ -232,9 +297,15 @@ export default function ClassroomsPage() {
                             try {
                               const res = await fetch(`/api/classrooms/${c.id}`, { method: "DELETE" });
                               const json = await res.json();
-                              if (json.success) { showToast("Kelas berhasil dihapus"); loadData(); }
-                              else showToast(json.message, "error");
-                            } catch { showToast("Gagal hapus", "error"); }
+                              if (json.success) { 
+                                Swal.fire("Berhasil", "Kelas berhasil dihapus", "success"); 
+                                loadData(); 
+                              } else {
+                                Swal.fire("Gagal", json.message, "error");
+                              }
+                            } catch { 
+                              Swal.fire("Error", "Gagal hapus", "error"); 
+                            }
                           }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#e11d48", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-rose-50">
                             Hapus Kelas
                           </button>
@@ -247,17 +318,7 @@ export default function ClassroomsPage() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: "fixed", bottom: 24, right: 24, padding: "0.75rem 1.25rem", borderRadius: "0.75rem",
-          background: toast.type === "error" ? "#fef2f2" : "#f0fdf4", color: toast.type === "error" ? "#991b1b" : "#166534",
-          border: `1px solid ${toast.type === "error" ? "#fecaca" : "#bbf7d0"}`, fontWeight: 600, fontSize: "0.8125rem",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 200,
-        }}>{toast.msg}</div>
-      )}
+      </Card>
     </div>
   );
 }

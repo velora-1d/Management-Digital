@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { ShoppingCart } from "lucide-react";
 
 interface Product { id: number; name: string; hargaJual: number; stok: number; }
 interface CartItem { productId: number; name: string; price: number; qty: number; }
@@ -89,26 +92,26 @@ export default function CoopTransactionsPage() {
   const dailyTotal = transactions.reduce((sum, t) => sum + t.total, 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 font-heading tracking-tight">Transaksi Koperasi</h1>
-          <p className="text-sm text-slate-500 mt-1">Point of Sale & riwayat penjualan</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Transaksi Koperasi"
+        subtitle="Point of Sale & riwayat penjualan"
+        icon={<ShoppingCart />}
+        gradient="from-indigo-500 to-blue-600"
+      />
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1 flex gap-1 max-w-xs">
+      <Card className="p-1 flex gap-1 max-w-xs">
         <button onClick={() => setTab("pos")} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${tab === "pos" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-700"}`}>Kasir</button>
         <button onClick={() => setTab("riwayat")} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${tab === "riwayat" ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-700"}`}>Riwayat</button>
-      </div>
+      </Card>
 
       {tab === "pos" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Produk */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <Card className="p-4">
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari produk..." className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
-            </div>
+            </Card>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredProducts.map(p => (
                 <button key={p.id} onClick={() => addToCart(p)}
@@ -123,7 +126,7 @@ export default function CoopTransactionsPage() {
           </div>
 
           {/* Keranjang */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 h-fit sticky top-4 space-y-4">
+          <Card className="p-5 h-fit sticky top-4 space-y-4">
             <h3 className="font-heading font-bold text-sm text-slate-800 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-indigo-500"></div>Keranjang
               {cart.length > 0 && <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">{cart.length}</span>}
@@ -185,34 +188,37 @@ export default function CoopTransactionsPage() {
                 Bayar
               </button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {tab === "riwayat" && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
-              <span className="text-sm text-slate-500">{transactions.length} transaksi · Total: <b className="text-indigo-700">Rp {dailyTotal.toLocaleString("id-ID")}</b></span>
+          <Card className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+              <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto" />
+              <span className="text-sm text-slate-500 whitespace-nowrap">{transactions.length} transaksi · Total: <b className="text-indigo-700">Rp {dailyTotal.toLocaleString("id-ID")}</b></span>
             </div>
             <button onClick={() => {
               if (!transactions.length) return;
               exportCSV(["No", "Waktu", "Pembeli", "Total", "Metode"],
                 transactions.map((t, i) => [i + 1, t.date, t.student?.name || "Tunai", t.total, t.paymentMethod]), `penjualan_${filterDate}`);
-            }} className="px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition-colors">Export</button>
-          </div>
+            }} className="w-full sm:w-auto px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export
+            </button>
+          </Card>
 
           {loadingTrx ? (
-            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+            <Card className="flex justify-center py-12 border-slate-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></Card>
           ) : transactions.length === 0 ? (
-            <div className="text-center py-8 bg-white rounded-xl border border-slate-200 border-dashed"><p className="text-sm text-slate-500">Belum ada transaksi hari ini</p></div>
+            <Card className="text-center py-8 border-dashed"><p className="text-sm text-slate-500">Belum ada transaksi hari ini</p></Card>
           ) : (
             <div className="space-y-2">
               {transactions.map(t => {
                 const items: { productId: number; qty: number; price: number }[] = JSON.parse(t.items || "[]");
                 return (
-                  <div key={t.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-indigo-100 transition-colors">
+                  <Card key={t.id} className="p-4 hover:border-indigo-100 transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold text-slate-800">Rp {t.total.toLocaleString("id-ID")}</p>
@@ -223,7 +229,7 @@ export default function CoopTransactionsPage() {
                         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${t.paymentMethod === "bon" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>{t.paymentMethod}</span>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
