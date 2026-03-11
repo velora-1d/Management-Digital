@@ -186,12 +186,27 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   const searchParams = await props.searchParams;
   const user = await getAuthUser();
   const data = await getDashboardData(searchParams);
-  const activeTab = searchParams?.tab || "overview";
+
+  const roleTabs: Record<string, string[]> = {
+    superadmin: ["overview", "finance", "academic", "hr"],
+    admin: ["overview", "academic", "hr"],
+    bendahara: ["finance"],
+    operator: ["overview", "academic"],
+    guru: ["academic"],
+    siswa: ["overview"]
+  };
+
+  const allowedTabs = roleTabs[user?.role || "operator"] || ["overview"];
+  let activeTab = searchParams?.tab || allowedTabs[0];
+
+  if (!allowedTabs.includes(activeTab)) {
+    activeTab = allowedTabs[0];
+  }
 
   return (
     <div className="space-y-6">
       <FilterBar />
-      <DashboardTabs initialTab={activeTab} />
+      <DashboardTabs initialTab={activeTab} allowedTabs={allowedTabs} />
 
       {/* Hero Header */}
       <div className="anim-hero" style={{ background: "linear-gradient(135deg,#312e81 0%,#1e1b4b 50%,#0f172a 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>

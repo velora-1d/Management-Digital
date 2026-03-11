@@ -10,20 +10,22 @@ const TABS = [
   { id: "hr", label: "HR & Umum", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" },
 ];
 
-export default function DashboardTabs({ initialTab = "overview" }: { initialTab?: string }) {
+export default function DashboardTabs({ initialTab = "overview", allowedTabs }: { initialTab?: string, allowedTabs?: string[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const visibleTabs = allowedTabs ? TABS.filter(t => allowedTabs.includes(t.id)) : TABS;
+
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && TABS.some(t => t.id === tabParam)) {
+    if (tabParam && visibleTabs.some(t => t.id === tabParam)) {
       setActiveTab(tabParam);
-    } else {
-      setActiveTab("overview");
+    } else if (visibleTabs.length > 0) {
+      setActiveTab(visibleTabs[0].id);
     }
-  }, [searchParams]);
+  }, [searchParams, visibleTabs]);
 
   const handleTabClick = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -36,9 +38,11 @@ export default function DashboardTabs({ initialTab = "overview" }: { initialTab?
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  if (visibleTabs.length <= 1) return null; // Sembunyikan jika hanya 1 tab
+
   return (
     <div className="flex overflow-x-auto pb-2 scrollbar-hide gap-2 mb-6 border-b border-slate-200">
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button

@@ -5,9 +5,9 @@
  * karena dipakai oleh middleware.ts yang berjalan di Edge Runtime.
  */
 
-export type Role = "superadmin" | "kepsek" | "admin" | "bendahara" | "operator" | "siswa" | "guru";
+export type Role = "superadmin" | "admin" | "bendahara" | "operator" | "siswa" | "guru";
 
-export const ALL_ROLES: Role[] = ["superadmin", "kepsek", "admin", "bendahara", "operator", "siswa", "guru"];
+export const ALL_ROLES: Role[] = ["superadmin", "admin", "bendahara", "operator", "siswa", "guru"];
 
 /**
  * Permission Map — role mana yang boleh mengakses path API tertentu.
