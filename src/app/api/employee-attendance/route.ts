@@ -34,28 +34,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tanggal dan data absensi wajib" }, { status: 400 });
     }
 
-    const results = [];
-    for (const rec of records) {
-      const record = await prisma.employeeAttendance.upsert({
-        where: {
-          unique_employee_attendance: {
+    const results = await prisma.$transaction(
+      records.map((rec: any) =>
+        prisma.employeeAttendance.upsert({
+          where: {
+            unique_employee_attendance: {
+              employeeId: parseInt(rec.employeeId),
+              date,
+            },
+          },
+          update: {
+            status: rec.status || "hadir",
+            note: rec.note || "",
+          },
+          create: {
             employeeId: parseInt(rec.employeeId),
             date,
+            status: rec.status || "hadir",
+            note: rec.note || "",
           },
-        },
-        update: {
-          status: rec.status || "hadir",
-          note: rec.note || "",
-        },
-        create: {
-          employeeId: parseInt(rec.employeeId),
-          date,
-          status: rec.status || "hadir",
-          note: rec.note || "",
-        },
-      });
-      results.push(record);
-    }
+        })
+      )
+    );
 
     return NextResponse.json({ count: results.length });
   } catch (error: unknown) {

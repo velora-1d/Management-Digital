@@ -41,30 +41,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const results = [];
-    for (const item of notes) {
-      const record = await prisma.classTeacherNote.upsert({
-        where: {
-          unique_teacher_note: {
+    const results = await prisma.$transaction(
+      notes.map((item: any) =>
+        prisma.classTeacherNote.upsert({
+          where: {
+            unique_teacher_note: {
+              studentId: parseInt(item.studentId),
+              classroomId: parseInt(classroomId),
+              semester,
+            },
+          },
+          update: {
+            note: item.note || "",
+            inputById: inputById ? parseInt(inputById) : null,
+          },
+          create: {
             studentId: parseInt(item.studentId),
             classroomId: parseInt(classroomId),
             semester,
+            note: item.note || "",
+            inputById: inputById ? parseInt(inputById) : null,
           },
-        },
-        update: {
-          note: item.note || "",
-          inputById: inputById ? parseInt(inputById) : null,
-        },
-        create: {
-          studentId: parseInt(item.studentId),
-          classroomId: parseInt(classroomId),
-          semester,
-          note: item.note || "",
-          inputById: inputById ? parseInt(inputById) : null,
-        },
-      });
-      results.push(record);
-    }
+        })
+      )
+    );
 
     return NextResponse.json({ count: results.length, data: results });
   } catch (error: unknown) {

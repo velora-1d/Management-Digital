@@ -52,37 +52,42 @@ export async function POST(req: Request) {
     const now = new Date();
     const dateStr = now.toISOString().replace("T", " ").substring(0, 19);
 
-    // Buat transaksi
-    const trx = await prisma.coopTransaction.create({
-      data: {
-        studentId: studentId ? parseInt(studentId) : null,
-        items: JSON.stringify(items),
-        total,
-        paymentMethod: paymentMethod || "tunai",
-        date: dateStr,
-      },
-    });
-
-    // Kurangi stok
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: parseInt(item.productId) },
-        data: { stok: { decrement: parseInt(item.qty) } },
-      });
-    }
-
-    // Jika bon, catat piutang
-    if (paymentMethod === "bon" && studentId) {
-      await prisma.studentCredit.create({
+    // Jalankan dalam Transaksi (ACID Compliance)
+    const trx = await prisma.$transaction(async (tx) => {
+      // 1. Buat transaksi
+      const t = await tx.coopTransaction.create({
         data: {
-          studentId: parseInt(studentId),
-          transactionId: trx.id,
-          amount: total,
-          paidAmount: 0,
-          status: "belum_lunas",
+          studentId: studentId ? parseInt(studentId) : null,
+          items: JSON.stringify(items),
+          total,
+          paymentMethod: paymentMethod || "tunai",
+          date: dateStr,
         },
       });
-    }
+
+      // 2. Kurangi stok
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: parseInt(item.productId) },
+          data: { stok: { decrement: parseInt(item.qty) } },
+        });
+      }
+
+      // 3. Jika bon, catat piutang
+      if (paymentMethod === "bon" && studentId) {
+        await tx.studentCredit.create({
+          data: {
+            studentId: parseInt(studentId),
+            transactionId: t.id,
+            amount: total,
+            paidAmount: 0,
+            status: "belum_lunas",
+          },
+        });
+      }
+
+      return t;
+    });
 
     return NextResponse.json(trx, { status: 201 });
   } catch (error: unknown) {
