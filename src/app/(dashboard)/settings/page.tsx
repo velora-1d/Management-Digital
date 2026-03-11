@@ -336,11 +336,11 @@ export default function SettingsPage() {
     const { value: file } = await Swal.fire({
       title: '📥 Restore Data dari Backup',
       html: `<div style="text-align:left">
-        <p style="font-size:0.875rem;color:#475569;">Pilih file backup JSON yang ingin di-restore.</p>
+        <p style="font-size:0.875rem;color:#475569;">Pilih file backup SQL yang ingin di-restore.</p>
         <p style="font-size:0.75rem;color:#94a3b8;margin-top:6px;">⚠️ Data saat ini akan <strong>digantikan</strong> sepenuhnya oleh data dari backup.</p>
       </div>`,
       input: 'file',
-      inputAttributes: { accept: '.json', 'aria-label': 'Upload file backup JSON' },
+      inputAttributes: { accept: '.sql', 'aria-label': 'Upload file backup SQL' },
       showCancelButton: true,
       confirmButtonColor: '#059669',
       confirmButtonText: 'Restore Data',
@@ -348,24 +348,33 @@ export default function SettingsPage() {
     });
     if (!file) return;
 
-    // Baca file
+    // Baca file SQL sebagai text
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const backup = JSON.parse(e.target?.result as string);
+        const sqlContent = e.target?.result as string;
 
         // Validasi format
-        if (!backup.meta || !backup.data) {
-          Swal.fire('Format Salah', 'File bukan backup yang valid. Pastikan menggunakan file dari fitur Backup.', 'error');
+        if (!sqlContent.includes('INSERT INTO')) {
+          Swal.fire('Format Salah', 'File bukan backup SQL yang valid. Pastikan menggunakan file .sql dari fitur Backup.', 'error');
           return;
         }
+
+        // Ambil tanggal backup dari header
+        let backupDate = 'Tidak diketahui';
+        const dateMatch = sqlContent.match(/-- DATABASE BACKUP — (.+)/);
+        if (dateMatch) backupDate = dateMatch[1].trim();
+
+        // Hitung jumlah INSERT statements
+        const insertCount = (sqlContent.match(/INSERT INTO/g) || []).length;
 
         // Konfirmasi restore
         const confirm = await Swal.fire({
           title: 'Konfirmasi Restore',
           html: `<div style="text-align:left">
             <p style="font-size:0.875rem;color:#475569;">File backup dari:</p>
-            <p style="font-size:0.8125rem;font-weight:700;color:#1e293b;margin-top:4px;">${new Date(backup.meta.exportedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            <p style="font-size:0.8125rem;font-weight:700;color:#1e293b;margin-top:4px;">${backupDate}</p>
+            <p style="font-size:0.75rem;color:#64748b;margin-top:4px;">${insertCount} data akan di-restore</p>
             <p style="font-size:0.75rem;color:#dc2626;margin-top:8px;font-weight:600;">Data saat ini akan dihapus dan digantikan oleh data dari backup ini.</p>
           </div>`,
           icon: 'warning',
@@ -380,8 +389,8 @@ export default function SettingsPage() {
 
         const res = await fetch('/api/settings/restore', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(backup),
+          headers: { 'Content-Type': 'text/plain' },
+          body: sqlContent,
         });
         const json = await res.json();
         Swal.close();
@@ -397,7 +406,7 @@ export default function SettingsPage() {
           Swal.fire('Gagal', json.error || 'Terjadi kesalahan saat restore', 'error');
         }
       } catch (err) {
-        Swal.fire('Error', 'File JSON tidak valid atau corrupt.', 'error');
+        Swal.fire('Error', 'File SQL tidak valid atau corrupt.', 'error');
       }
     };
     reader.readAsText(file);
@@ -624,7 +633,7 @@ export default function SettingsPage() {
                     <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                   </div>
                   <h3 className="text-lg font-heading font-bold text-sky-700 mb-1.5">Pencadangan Data</h3>
-                  <p className="text-sm text-slate-600 mb-5">Unduh seluruh data sistem sebagai file backup JSON. Disarankan dilakukan secara berkala.</p>
+                  <p className="text-sm text-slate-600 mb-5">Unduh seluruh data sistem sebagai file backup SQL. Disarankan dilakukan secara berkala.</p>
                 </div>
                 <div>
                   <button onClick={() => window.location.href = "/api/settings/backup"} className="w-full justify-center px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow-lg shadow-sky-200 hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 text-sm">
@@ -641,7 +650,7 @@ export default function SettingsPage() {
                     <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   </div>
                   <h3 className="text-lg font-heading font-bold text-emerald-700 mb-1.5">Restore Data</h3>
-                  <p className="text-sm text-slate-600 mb-5">Pulihkan data dari file backup JSON. Data saat ini akan digantikan oleh data dari backup.</p>
+                  <p className="text-sm text-slate-600 mb-5">Pulihkan data dari file backup SQL. Data saat ini akan digantikan oleh data dari backup.</p>
                 </div>
                 <div>
                   <button onClick={handleRestore} className="w-full justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-200 hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 text-sm">
