@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
