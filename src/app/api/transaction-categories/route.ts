@@ -1,15 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const categories = await prisma.transactionCategory.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-    });
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const q = searchParams.get("q") || "";
+    const type = searchParams.get("type"); // New filter
+    const skip = (page - 1) * limit;
+
+    const where: any = { deletedAt: null };
+    if (type) where.type = type;
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const [categories, total] = await Promise.all([
+      prisma.transactionCategory.findMany({
+        where,
+        orderBy: { name: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.transactionCategory.count({ where }),
+    ]);
 
     return NextResponse.json(
-      { success: true, data: categories },
+      { 
+        success: true, 
+        data: categories,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
     );
   } catch (error) {

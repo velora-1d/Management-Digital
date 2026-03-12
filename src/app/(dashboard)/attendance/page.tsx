@@ -12,8 +12,11 @@ import {
   Search, 
   Download,
   ClipboardList,
-  BarChart3
+  BarChart3,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Option {
   id: number;
@@ -75,6 +78,7 @@ export default function AttendancePage() {
   
   // State Recap
   const [recapData, setRecapData] = useState<RecapRecord[]>([]);
+  const [recapMeta, setRecapMeta] = useState({ page: 1, totalPages: 1, total: 0, limit: 10 });
   const [loadingRecap, setLoadingRecap] = useState(false);
   const [filterAlpha, setFilterAlpha] = useState(false);
   const [alphaThreshold, setAlphaThreshold] = useState(3);
@@ -203,7 +207,7 @@ export default function AttendancePage() {
   };
 
   // --- TAB REKAP ABSENSI ---
-  const fetchRecapData = useCallback(async () => {
+  const fetchRecapData = useCallback(async (page: number = 1) => {
     if (!recapClassroom || !recapStartDate || !recapEndDate) {
       Swal.fire("Peringatan", "Mohon lengkapi parameter filter rekap", "warning");
       return;
@@ -214,7 +218,9 @@ export default function AttendancePage() {
       const qs = new URLSearchParams({
         classroomId: recapClassroom,
         startDate: recapStartDate,
-        endDate: recapEndDate
+        endDate: recapEndDate,
+        page: page.toString(),
+        limit: "10"
       });
 
       const res = await fetch(`/api/attendance/recap?${qs.toString()}`);
@@ -222,6 +228,7 @@ export default function AttendancePage() {
 
       if (json.success) {
         setRecapData(json.data);
+        if (json.meta) setRecapMeta(json.meta);
       } else {
         Swal.fire("Error", json.error || "Gagal mengambil rekap", "error");
       }
@@ -452,7 +459,7 @@ export default function AttendancePage() {
                     />
                   </div>
                   <button
-                    onClick={fetchRecapData}
+                    onClick={() => fetchRecapData(1)}
                     disabled={loadingRecap}
                     className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
@@ -510,59 +517,70 @@ export default function AttendancePage() {
 
                {recapData.length > 0 && !loadingRecap && (
                   recapDisplayData.length > 0 ? (
-                    <div className="bg-white border rounded-lg overflow-x-auto shadow-sm">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Nama Siswa</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Hadir</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Sakit</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Izin</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Alpha</th>
-                            <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center bg-blue-50">Total Hari</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {recapDisplayData.map((item, index) => (
-                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="py-3 px-4 text-sm font-medium text-slate-400 text-center">{index + 1}</td>
-                              <td className="py-3 px-4">
-                                <div className="text-sm font-semibold text-slate-800">{item.name}</div>
-                                <div className="text-xs text-slate-500">{item.nisn}</div>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-sm">
-                                  {item.stats.hadir}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-700 font-semibold text-sm">
-                                  {item.stats.sakit}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-semibold text-sm">
-                                  {item.stats.izin}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
-                                  item.stats.alpha > 0 ? "bg-rose-100 text-rose-700" : "bg-slate-50 text-slate-500"
-                                }`}>
-                                  {item.stats.alpha}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center bg-blue-50/30">
-                                <span className="font-bold text-blue-800 text-sm">
-                                  {item.stats.total}
-                                </span>
-                              </td>
+                    <>
+                      <div className="bg-white border rounded-lg overflow-x-auto shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Nama Siswa</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Hadir</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Sakit</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Izin</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Alpha</th>
+                              <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center bg-blue-50">Total Hari</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {recapDisplayData.map((item, index) => (
+                              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="py-3 px-4 text-sm font-medium text-slate-400 text-center">{((recapMeta.page - 1) * recapMeta.limit) + index + 1}</td>
+                                <td className="py-3 px-4">
+                                  <div className="text-sm font-semibold text-slate-800">{item.name}</div>
+                                  <div className="text-xs text-slate-500">{item.nisn}</div>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-sm">
+                                    {item.stats.hadir}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-700 font-semibold text-sm">
+                                    {item.stats.sakit}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-semibold text-sm">
+                                    {item.stats.izin}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
+                                    item.stats.alpha > 0 ? "bg-rose-100 text-rose-700" : "bg-slate-50 text-slate-500"
+                                  }`}>
+                                    {item.stats.alpha}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-center bg-blue-50/30">
+                                  <span className="font-bold text-blue-800 text-sm">
+                                    {item.stats.total}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="mt-4">
+                        <Pagination
+                          page={recapMeta.page}
+                          totalPages={recapMeta.totalPages}
+                          total={recapMeta.total}
+                          limit={recapMeta.limit}
+                          onPageChange={(p) => fetchRecapData(p)}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
                       <p className="text-sm text-slate-500">Tidak ada siswa dengan alpha ≥ {alphaThreshold} hari.</p>

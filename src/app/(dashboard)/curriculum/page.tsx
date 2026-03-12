@@ -1,9 +1,9 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 
 const BookOpen = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,6 +58,26 @@ export default function CurriculumPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [kkmData, setKkmData] = useState<Record<number, { nilai: number; deskripsi: string }>>({});
 
+  // Pagination states
+  const [subPage, setSubPage] = useState(1);
+  const [subLimit] = useState(10);
+  const [subPagination, setSubPagination] = useState({ total: 0, totalPages: 1 });
+
+  const [compPage, setCompPage] = useState(1);
+  const [compLimit] = useState(5);
+  const [compPagination, setCompPagination] = useState({ total: 0, totalPages: 1 });
+
+  const loadSubjects = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/subjects?page=${subPage}&limit=${subLimit}`);
+      const json = await res.json();
+      if (json.success) {
+        setSubjects(json.data);
+        setSubPagination({ total: json.pagination.total, totalPages: json.pagination.totalPages });
+      }
+    } catch (e) { console.error(e); }
+  }, [subPage, subLimit]);
+
   useEffect(() => {
     fetch("/api/academic-years")
       .then((res) => res.json())
@@ -68,11 +88,8 @@ export default function CurriculumPage() {
       })
       .catch(console.error);
 
-    fetch("/api/subjects")
-      .then((res) => res.json())
-      .then((data) => setSubjects(data))
-      .catch(console.error);
-  }, []);
+    loadSubjects();
+  }, [loadSubjects]);
 
   useEffect(() => {
     if (!selectedYearId) return;
@@ -103,17 +120,35 @@ export default function CurriculumPage() {
 
   const loadKkm = async (curriculumId: number) => {
     try {
-      const res = await fetch(`/api/grades/kkm?curriculumId=${curriculumId}`);
-      const data = await res.json();
-      const mapped: any = {};
-      data.forEach((k: any) => {
-        mapped[k.subjectId] = { nilai: k.nilaiKKM, deskripsi: k.deskripsiKKTP };
-      });
-      setKkmData(mapped);
+      const res = await fetch(`/api/grades/kkm?curriculumId=${curriculumId}&limit=1000`); // Fetch all for lookup mapping
+      const json = await res.json();
+      if (json.success) {
+        const mapped: any = {};
+        json.data.forEach((k: any) => {
+          mapped[k.subjectId] = { nilai: k.nilaiKKM, deskripsi: k.deskripsiKKTP };
+        });
+        setKkmData(mapped);
+      }
     } catch (error) {
       console.error(error);
     }
   };
+
+  const loadComponents = useCallback(async () => {
+    if (!curriculum) return;
+    try {
+      const res = await fetch(`/api/grades/components?curriculumId=${curriculum.id}&page=${compPage}&limit=${compLimit}`);
+      const json = await res.json();
+      if (json.success) {
+        setComponents(json.data);
+        setCompPagination({ total: json.total, totalPages: json.totalPages });
+      }
+    } catch (e) { console.error(e); }
+  }, [curriculum, compPage, compLimit]);
+
+  useEffect(() => {
+    if (curriculum) loadComponents();
+  }, [loadComponents, curriculum]);
 
   const createCurriculum = async () => {
     if (!selectedYearId || !semester || !formType) return;
@@ -267,6 +302,16 @@ export default function CurriculumPage() {
                     <span className="font-bold text-indigo-600">{c.bobot}%</span>
                   </div>
                 ))}
+                {components.length > 0 && (
+                  <div className="pt-2">
+                    <Pagination
+                      page={compPage}
+                      totalPages={compPagination.totalPages}
+                      total={compPagination.total}
+                      onPageChange={(p) => setCompPage(p)}
+                    />
+                  </div>
+                )}
               </div>
 
               {!curriculum.isLocked && (
@@ -356,11 +401,21 @@ export default function CurriculumPage() {
                           </button>
                         </td>
                       </tr>
-                    );
+                     );
                   })}
                 </tbody>
               </table>
             </div>
+            {subjects.length > 0 && (
+              <div className="p-3 bg-slate-50 border-t border-slate-100">
+                <Pagination
+                  page={subPage}
+                  totalPages={subPagination.totalPages}
+                  total={subPagination.total}
+                  onPageChange={(p) => setSubPage(p)}
+                />
+              </div>
+            )}
           </Card>
         </div>
       ) : (

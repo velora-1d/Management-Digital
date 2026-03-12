@@ -2,13 +2,30 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/coop/products
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const data = await prisma.product.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      prisma.product.findMany({
+        where: { deletedAt: null },
+        orderBy: { name: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where: { deletedAt: null } }),
+    ]);
+
+    return NextResponse.json({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     });
-    return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memuat produk";
     return NextResponse.json({ error: msg }, { status: 500 });

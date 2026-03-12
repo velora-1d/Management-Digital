@@ -16,17 +16,35 @@ export async function GET(req: Request) {
     if (classroomId) where.classroomId = Number(classroomId);
     if (subjectId) where.subjectId = Number(subjectId);
 
-    const grades = await prisma.studentGrade.findMany({
-      where,
-      include: {
-        student: true,
-      },
-      orderBy: {
-        student: { name: 'asc' },
-      },
-    });
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "100");
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json(grades);
+    const [grades, total] = await Promise.all([
+      prisma.studentGrade.findMany({
+        where,
+        include: {
+          student: { select: { id: true, name: true, nis: true, nisn: true } },
+        },
+        orderBy: {
+          student: { name: 'asc' },
+        },
+        skip,
+        take: limit
+      }),
+      prisma.studentGrade.count({ where })
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: grades,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("Error fetching grades:", error);
     return NextResponse.json(

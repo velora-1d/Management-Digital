@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Info
 } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Classroom { id: number; name: string; }
 interface Curriculum { id: number; type: string; semester: string; academicYear?: { year: string }; }
@@ -41,6 +42,11 @@ export default function ReportCardsPage() {
   const [selectedCurriculum, setSelectedCurriculum] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("ganjil");
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });
+
   // Step 1 state
   const [students, setStudents] = useState<Student[]>([]);
   const [reportCards, setReportCards] = useState<ReportCard[]>([]);
@@ -65,17 +71,28 @@ export default function ReportCardsPage() {
   const fetchStudentsAndCards = useCallback(async () => {
     if (!selectedClassroom) return;
     try {
-      const res = await fetch(`/api/students?classroomId=${selectedClassroom}`);
-      const data = await res.json();
-      setStudents(Array.isArray(data) ? data : []);
+      // Students fetch (dengan paginasi)
+      const res = await fetch(`/api/students?classroomId=${selectedClassroom}&page=${page}&limit=${limit}`);
+      const stdData = await res.json();
+      
+      const studentsList = stdData.data || [];
+      setStudents(studentsList);
+      
+      // Update pagination metadata from students API
+      if (stdData.pagination) {
+        setPagination({
+          total: stdData.pagination.total,
+          totalPages: stdData.pagination.totalPages
+        });
+      }
 
       if (selectedCurriculum) {
-        const cardsRes = await fetch(`/api/report-cards?classroomId=${selectedClassroom}&curriculumId=${selectedCurriculum}&semester=${selectedSemester}`);
+        const cardsRes = await fetch(`/api/report-cards?classroomId=${selectedClassroom}&curriculumId=${selectedCurriculum}&semester=${selectedSemester}&page=${page}&limit=${limit}`);
         const cardsData = await cardsRes.json();
-        setReportCards(Array.isArray(cardsData) ? cardsData : []);
+        setReportCards(cardsData.data || []);
       }
     } catch { /* ignore */ }
-  }, [selectedClassroom, selectedCurriculum, selectedSemester]);
+  }, [selectedClassroom, selectedCurriculum, selectedSemester, page, limit]);
 
   useEffect(() => { fetchStudentsAndCards(); }, [fetchStudentsAndCards]);
 
@@ -261,7 +278,7 @@ export default function ReportCardsPage() {
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Kelas</label>
             <select
               value={selectedClassroom}
-              onChange={(e) => setSelectedClassroom(e.target.value)}
+              onChange={(e) => { setSelectedClassroom(e.target.value); setPage(1); }}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kelas —</option>
@@ -272,7 +289,7 @@ export default function ReportCardsPage() {
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Kurikulum</label>
             <select
               value={selectedCurriculum}
-              onChange={(e) => setSelectedCurriculum(e.target.value)}
+              onChange={(e) => { setSelectedCurriculum(e.target.value); setPage(1); }}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kurikulum —</option>
@@ -283,7 +300,7 @@ export default function ReportCardsPage() {
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Semester</label>
             <select
               value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
+              onChange={(e) => { setSelectedSemester(e.target.value); setPage(1); }}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="ganjil">Ganjil</option>
@@ -342,101 +359,103 @@ export default function ReportCardsPage() {
           )
         }
       >
-        {currentStep === 1 && (
+        {(currentStep === 1 || currentStep === 2) && (
           <div className="space-y-4">
             {!selectedClassroom || !selectedCurriculum ? (
               <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
                 <Info className="mx-auto h-12 w-12 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500">Pilih kelas dan kurikulum untuk memeriksa kelengkapan</p>
+                <p className="text-sm text-slate-500">Pilih kelas dan kurikulum untuk melanjutkan</p>
               </div>
             ) : students.length === 0 ? (
               <div className="text-center py-8 text-sm text-slate-500">Tidak ada siswa di kelas ini</div>
             ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                {students.map(st => {
-                  const pct = getCompletionPercent(st.id);
-                  const status = getStudentStatus(st.id);
-                  const checks = completionData[st.id] || [];
-                  return (
-                    <div key={st.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm ${
-                            pct === 100 ? "bg-emerald-100 text-emerald-700" : pct > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
-                          }`}>
-                            {pct}%
+              <>
+                <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                  {currentStep === 1 ? (
+                    students.map(st => {
+                      const pct = getCompletionPercent(st.id);
+                      const status = getStudentStatus(st.id);
+                      const checks = completionData[st.id] || [];
+                      return (
+                        <div key={st.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm ${
+                                pct === 100 ? "bg-emerald-100 text-emerald-700" : pct > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                              }`}>
+                                {pct}%
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm text-slate-800">{st.name}</p>
+                                <p className="text-[11px] text-slate-400 font-medium tracking-wide">NISN: {st.nisn} · NIS: {st.nis}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
+                                status === "PUBLISHED" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                                status === "GENERATED" ? "bg-blue-100 text-blue-700 border border-blue-200" :
+                                status === "DRAFT" ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                                "bg-slate-100 text-slate-500 border border-slate-200"
+                              }`}>
+                                {status === "NONE" ? "BELUM DIPROSES" : status}
+                              </span>
+                              {pct === 100 ? (
+                                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                              ) : (
+                                <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-sm text-slate-800">{st.name}</p>
-                            <p className="text-[11px] text-slate-400 font-medium tracking-wide">NISN: {st.nisn} · NIS: {st.nis}</p>
+                          <div className="w-full bg-slate-200 rounded-full h-2">
+                            <div className={`h-2 rounded-full transition-all duration-500 ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" : "bg-slate-300"}`} style={{ width: `${pct}%` }}></div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
-                            status === "PUBLISHED" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
-                            status === "GENERATED" ? "bg-blue-100 text-blue-700 border border-blue-200" :
-                            status === "DRAFT" ? "bg-amber-100 text-amber-700 border border-amber-200" :
-                            "bg-slate-100 text-slate-500 border border-slate-200"
-                          }`}>
-                            {status === "NONE" ? "BELUM DIPROSES" : status}
-                          </span>
-                          {pct === 100 ? (
-                            <CheckCircle className="w-5 h-5 text-emerald-500" />
-                          ) : (
-                            <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
+                          {checks.length > 0 && pct < 100 && (
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 mr-1 self-center uppercase tracking-tight">Belum Selesai:</span>
+                              {checks.filter(c => !c.isLocked).map((c, i) => (
+                                <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] rounded font-medium border border-rose-100 shadow-sm">{c.subjectName}</span>
+                              ))}
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div className={`h-2 rounded-full transition-all duration-500 ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" : "bg-slate-300"}`} style={{ width: `${pct}%` }}></div>
-                      </div>
-                      {checks.length > 0 && pct < 100 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          <span className="text-[10px] font-bold text-slate-400 mr-1 self-center uppercase tracking-tight">Belum Selesai:</span>
-                          {checks.filter(c => !c.isLocked).map((c, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] rounded font-medium border border-rose-100 shadow-sm">{c.subjectName}</span>
-                          ))}
+                      );
+                    })
+                  ) : (
+                    notes.map((item, idx) => (
+                      <div key={item.studentId} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">{(page-1)*limit + idx + 1}</div>
+                          <div>
+                            <p className="font-bold text-sm text-slate-800">{item.studentName}</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className="space-y-4">
-            {notes.length === 0 ? (
-              <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
-                <Info className="mx-auto h-12 w-12 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500">Pilih kelas terlebih dahulu untuk memuat daftar siswa</p>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                {notes.map((item, idx) => (
-                  <div key={item.studentId} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">{idx + 1}</div>
-                      <div>
-                        <p className="font-bold text-sm text-slate-800">{item.studentName}</p>
+                        <textarea
+                          value={item.note}
+                          onChange={(e) => {
+                            const updated = [...notes];
+                            updated[idx] = { ...updated[idx], note: e.target.value };
+                            setNotes(updated);
+                          }}
+                          placeholder="Tulis catatan wali kelas untuk siswa ini..."
+                          rows={3}
+                          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white transition-all hover:border-slate-300 shadow-sm"
+                        />
                       </div>
-                    </div>
-                    <textarea
-                      value={item.note}
-                      onChange={(e) => {
-                        const updated = [...notes];
-                        updated[idx] = { ...updated[idx], note: e.target.value };
-                        setNotes(updated);
-                      }}
-                      placeholder="Tulis catatan wali kelas untuk siswa ini (misal: Pertahankan prestasimu, tingkatkan kehadiran...)"
-                      rows={3}
-                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white transition-all hover:border-slate-300 shadow-sm"
+                    ))
+                  )}
+                </div>
+
+                {pagination.totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination
+                      page={page}
+                      totalPages={pagination.totalPages}
+                      total={pagination.total}
+                      onPageChange={setPage}
                     />
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         )}

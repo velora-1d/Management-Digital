@@ -7,17 +7,51 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
 
-    const where: Record<string, unknown> = {};
-    if (date) where.date = date;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
-    const data = await prisma.employeeAttendance.findMany({
+    const where: any = { status: "aktif", deletedAt: null };
+    
+    // Hitung total pegawai aktif
+    const total = await prisma.employee.count({ where });
+
+    const employees = await prisma.employee.findMany({
       where,
       include: {
-        employee: { select: { id: true, name: true, position: true, status: true } },
+        employeeAttendances: {
+          where: { date: date || "" }
+        },
       },
-      orderBy: { employee: { name: "asc" } },
+      orderBy: { name: "asc" },
+      skip: limit > 0 ? skip : undefined,
+      take: limit > 0 ? limit : undefined,
     });
-    return NextResponse.json(data);
+
+    // Transformasi data agar frontend tetap kompatibel (record = data[0] atau null)
+    const data = employees.map(emp => ({
+      employeeId: emp.id,
+      employee: { 
+        id: emp.id, 
+        name: emp.name, 
+        position: emp.position, 
+        status: emp.status 
+      },
+      status: emp.employeeAttendances[0]?.status || "hadir",
+      note: emp.employeeAttendances[0]?.note || "",
+      id: emp.employeeAttendances[0]?.id || null, // ID record absensi jika ada
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: limit > 0 ? Math.ceil(total / limit) : 1,
+      }
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memuat absensi pegawai";
     return NextResponse.json({ error: msg }, { status: 500 });

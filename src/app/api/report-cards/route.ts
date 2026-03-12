@@ -14,17 +14,34 @@ export async function GET(req: Request) {
     if (curriculumId) where.curriculumId = parseInt(curriculumId);
     if (semester) where.semester = semester;
 
-    const data = await prisma.reportCard.findMany({
-      where,
-      include: {
-        student: { select: { id: true, name: true, nisn: true, nis: true } },
-        classroom: { select: { id: true, name: true } },
-        curriculum: { select: { id: true, type: true, semester: true } },
-      },
-      orderBy: { student: { name: "asc" } },
-    });
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "100");
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json(data);
+    const [reportCards, total] = await Promise.all([
+      prisma.reportCard.findMany({
+        where,
+        include: {
+          student: { select: { id: true, name: true, nisn: true, nis: true } },
+          classroom: { select: { id: true, name: true } },
+          curriculum: { select: { id: true, type: true, semester: true } },
+        },
+        orderBy: { student: { name: "asc" } },
+        skip,
+        take: limit,
+      }),
+      prisma.reportCard.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data: reportCards,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Gagal memuat data rapor";
     return NextResponse.json({ error: message }, { status: 500 });

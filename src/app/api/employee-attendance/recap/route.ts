@@ -8,13 +8,24 @@ export async function GET(req: Request) {
     const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
 
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
     const prefix = `${year}-${String(month).padStart(2, "0")}`;
 
-    // Ambil semua pegawai aktif
+    // Hitung total pegawai aktif untuk metadata
+    const total = await prisma.employee.count({
+      where: { status: "aktif" }
+    });
+
+    // Ambil pegawai aktif dengan paginasi
     const employees = await prisma.employee.findMany({
       where: { status: "aktif" },
       select: { id: true, name: true, position: true },
       orderBy: { name: "asc" },
+      skip: limit > 0 ? skip : undefined,
+      take: limit > 0 ? limit : undefined,
     });
 
     // Ambil semua absensi bulan ini
@@ -45,7 +56,17 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ month, year, recap });
+    return NextResponse.json({ 
+      month, 
+      year, 
+      recap,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: limit > 0 ? Math.ceil(total / limit) : 1,
+      }
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memuat rekap absensi";
     return NextResponse.json({ error: msg }, { status: 500 });

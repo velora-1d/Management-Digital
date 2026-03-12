@@ -18,26 +18,44 @@ export async function GET(request: Request) {
     if (classroomId) filter.classroomId = parseInt(classroomId);
     if (academicYearId) filter.academicYearId = parseInt(academicYearId);
 
-    const assignments = await prisma.teachingAssignment.findMany({
-      where: filter,
-      include: {
-        employee: {
-          select: { id: true, name: true }
-        },
-        subject: {
-          select: { id: true, name: true, code: true, type: true }
-        },
-        classroom: {
-          select: { id: true, name: true }
-        },
-        academicYear: {
-          select: { id: true, year: true, isActive: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ success: true, data: assignments });
+    const [assignments, total] = await Promise.all([
+      prisma.teachingAssignment.findMany({
+        where: filter,
+        include: {
+          employee: {
+            select: { id: true, name: true }
+          },
+          subject: {
+            select: { id: true, name: true, code: true, type: true }
+          },
+          classroom: {
+            select: { id: true, name: true }
+          },
+          academicYear: {
+            select: { id: true, year: true, isActive: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.teachingAssignment.count({ where: filter })
+    ]);
+
+    return NextResponse.json({ 
+      success: true, 
+      data: assignments,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

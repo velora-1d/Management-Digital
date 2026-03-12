@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 import { 
   Plus, 
   Bell, 
@@ -66,29 +67,41 @@ export default function AnnouncementsPage() {
     channel: "dashboard", 
     scheduledAt: "" 
   });
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 9,
+    totalPages: 0
+  });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/announcements");
-      const d = await res.json();
-      setData(Array.isArray(d) ? d : []);
+      const res = await fetch(`/api/announcements?page=${page}&limit=${paginationMeta.limit}&search=${searchQuery}&target=${targetFilter}`);
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data);
+        if (json.pagination) {
+          setPaginationMeta(json.pagination);
+        }
+      } else if (Array.isArray(json)) {
+        setData(json);
+      } else {
+        setData([]);
+      }
     } catch (error) {
       console.error("Failed to fetch announcements:", error);
     }
     setLoading(false);
-  }, []);
+  }, [paginationMeta.limit, searchQuery, targetFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    const timer = setTimeout(() => {
+      fetchData(1); 
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, targetFilter, fetchData]);
 
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           item.content.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTarget = targetFilter === "all" || item.target === targetFilter;
-      return matchesSearch && matchesTarget;
-    });
-  }, [data, searchQuery, targetFilter]);
 
   const handleSubmit = async () => {
     if (!form.title) { 
@@ -238,7 +251,7 @@ export default function AnnouncementsPage() {
             <Card key={i} className="h-48 animate-pulse bg-slate-50"><div /></Card>
           ))}
         </div>
-      ) : filteredData.length === 0 ? (
+      ) : data.length === 0 ? (
         <Card className="py-16 flex flex-col items-center justify-center text-center border-dashed border-2 border-slate-200">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <Bell className="w-8 h-8 text-slate-300" />
@@ -251,52 +264,64 @@ export default function AnnouncementsPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredData.map(item => (
-            <Card key={item.id} className="group hover:border-indigo-200 hover:shadow-md transition-all flex flex-col">
-              <div className="p-5 flex-1">
-                <div className="flex justify-between items-start mb-3">
-                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${statusColors[item.status as keyof typeof statusColors] || statusColors.draft}`}>
-                    {item.status === "sent" ? <Send className="w-3 h-3" /> : item.status === "scheduled" ? <Clock className="w-3 h-3" /> : null}
-                    {item.status === "sent" ? "Terkirim" : item.status === "scheduled" ? "Terjadwal" : "Draft"}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data.map(item => (
+              <Card key={item.id} className="group hover:border-indigo-200 hover:shadow-md transition-all flex flex-col">
+                <div className="p-5 flex-1">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${statusColors[item.status as keyof typeof statusColors] || statusColors.draft}`}>
+                      {item.status === "sent" ? <Send className="w-3 h-3" /> : item.status === "scheduled" ? <Clock className="w-3 h-3" /> : null}
+                      {item.status === "sent" ? "Terkirim" : item.status === "scheduled" ? "Terjadwal" : "Draft"}
+                    </span>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleEdit(item)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <h4 className="font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-indigo-700 transition-colors">{item.title}</h4>
+                  <p className="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed">{item.content}</p>
+                  
+                  <div className="space-y-2 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                      <div className="p-1 bg-slate-100 rounded text-slate-600">
+                        {getTargetIcon(item.target)}
+                      </div>
+                      <span>Target: <strong>{targetLabels[item.target as keyof typeof targetLabels] || item.target}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                      <div className="p-1 bg-slate-100 rounded text-slate-600">
+                        <LayoutGrid className="w-3 h-3" />
+                      </div>
+                      <span>Channel: <strong>{channelLabels[item.channel as keyof typeof channelLabels] || item.channel}</strong></span>
+                    </div>
+                  </div>
+                </div>
+                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex justify-between items-center text-[10px] text-slate-400 italic">
+                  <span>Oleh: {item.createdBy?.name || "Sistem"}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {item.sentAt ? item.sentAt.split("T")[0] : item.scheduledAt ? `Jadwal: ${item.scheduledAt}` : "Baru saja"}
                   </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEdit(item)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(item.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                       <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
-                
-                <h4 className="font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-indigo-700 transition-colors">{item.title}</h4>
-                <p className="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed">{item.content}</p>
-                
-                <div className="space-y-2 pt-3 border-t border-slate-100">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                    <div className="p-1 bg-slate-100 rounded text-slate-600">
-                      {getTargetIcon(item.target)}
-                    </div>
-                    <span>Target: <strong>{targetLabels[item.target as keyof typeof targetLabels] || item.target}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                    <div className="p-1 bg-slate-100 rounded text-slate-600">
-                      <LayoutGrid className="w-3 h-3" />
-                    </div>
-                    <span>Channel: <strong>{channelLabels[item.channel as keyof typeof channelLabels] || item.channel}</strong></span>
-                  </div>
-                </div>
-              </div>
-              <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex justify-between items-center text-[10px] text-slate-400 italic">
-                <span>Oleh: {item.createdBy?.name || "Sistem"}</span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {item.sentAt ? item.sentAt.split("T")[0] : item.scheduledAt ? `Jadwal: ${item.scheduledAt}` : "Baru saja"}
-                </span>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
+
+          <Card className="p-4">
+            <Pagination
+              page={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              total={paginationMeta.total}
+              limit={paginationMeta.limit}
+              onPageChange={(p: number) => fetchData(p)}
+            />
+          </Card>
         </div>
       )}
 

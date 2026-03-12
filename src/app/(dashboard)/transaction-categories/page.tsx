@@ -1,27 +1,48 @@
 "use client";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import Pagination from "@/components/Pagination";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Tag, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { ExportButtons } from "@/lib/export-utils";
+import Card from "@/components/ui/Card";
 
 export default function TransactionCategoriesPage() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [inPage, setInPage] = useState(1);
+  const [outPage, setOutPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [limit] = useState(5);
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/transaction-categories`);
-      const json = await res.json();
-      if (json.success) setData(json.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const { data: inResult, isLoading: inLoading } = useQuery({
+    queryKey: ["transaction-categories", "in", inPage, search],
+    queryFn: async () => {
+      const res = await fetch(`/api/transaction-categories?type=in&page=${inPage}&limit=${limit}&q=${search}`);
+      return res.json();
+    },
+  });
+
+  const { data: outResult, isLoading: outLoading } = useQuery({
+    queryKey: ["transaction-categories", "out", outPage, search],
+    queryFn: async () => {
+      const res = await fetch(`/api/transaction-categories?type=out&page=${outPage}&limit=${limit}&q=${search}`);
+      return res.json();
+    },
+  });
+
+  const inCats = inResult?.data || [];
+  const inPagination = inResult?.pagination || { total: 0, totalPages: 1 };
+  const outCats = outResult?.data || [];
+  const outPagination = outResult?.pagination || { total: 0, totalPages: 1 };
+
+  const refreshData = (type?: string) => {
+    if (type) {
+      queryClient.invalidateQueries({ queryKey: ["transaction-categories", type] });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["transaction-categories"] });
     }
-  }
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  };
 
   const handleAdd = () => {
     Swal.fire({
@@ -53,14 +74,17 @@ export default function TransactionCategoriesPage() {
         try {
           const res = await fetch("/api/transaction-categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
           const json = await res.json();
-          if (res.ok && json.success) { Swal.fire("Berhasil", "Kategori ditambahkan", "success"); loadData(); }
+          if (res.ok && json.success) { 
+            Swal.fire("Berhasil", "Kategori ditambahkan", "success"); 
+            refreshData(r.value.type); 
+          }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
         } catch { Swal.fire("Error", "Server error", "error"); }
       }
     });
   };
 
-  const handleEdit = (cat: any) => {
+  const handleEditCat = (cat: any) => {
     Swal.fire({
       title: "Edit Kategori",
       html: `
@@ -90,14 +114,17 @@ export default function TransactionCategoriesPage() {
         try {
           const res = await fetch(`/api/transaction-categories?id=${cat.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
           const json = await res.json();
-          if (res.ok && json.success) { Swal.fire("Berhasil", "Kategori diperbarui", "success"); loadData(); }
+          if (res.ok && json.success) { 
+            Swal.fire("Berhasil", "Kategori diperbarui", "success"); 
+            refreshData(); 
+          }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
         } catch { Swal.fire("Error", "Server error", "error"); }
       }
     });
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteCat = async (id: number, type: string) => {
     Swal.fire({
       title: "Hapus Kategori?",
       text: "Data yang dihapus tidak bisa dikembalikan.",
@@ -110,47 +137,79 @@ export default function TransactionCategoriesPage() {
         try {
           const res = await fetch(`/api/transaction-categories?id=${id}`, { method: "DELETE" });
           const json = await res.json();
-          if (res.ok && json.success) { Swal.fire("Berhasil", "Dihapus", "success"); loadData(); }
+          if (res.ok && json.success) { 
+            Swal.fire("Berhasil", "Dihapus", "success"); 
+            refreshData(type); 
+          }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
         } catch { Swal.fire("Error", "Server error", "error"); }
       }
     });
   };
 
-  const inCats = data.filter((c: any) => c.type === 'in');
-  const outCats = data.filter((c: any) => c.type === 'out');
+  const allInCats = inResult?.data || [];
+  const allOutCats = outResult?.data || [];
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Hero Header */}
-      <div style={{ background: "linear-gradient(135deg,#7c3aed 0%,#8b5cf6 50%,#a78bfa 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.05)", borderRadius: "50%" }}></div>
-        <div style={{ padding: "2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                <svg style={{ width: 22, height: 22, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff", margin: 0 }}>Kategori Keuangan</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.7)", marginTop: "0.125rem" }}>Kelola kategori pemasukan & pengeluaran madrasah.</p>
-              </div>
-            </div>
-            <button onClick={handleAdd} style={{ display: "inline-flex", alignItems: "center", padding: "0.625rem 1.25rem", background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff", borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", transition: "all 0.2s ease" }} className="hover:bg-white/30">
-              <svg style={{ width: "0.875rem", height: "0.875rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>Tambah
-            </button>
+      <PageHeader
+        title="Kategori Keuangan"
+        subtitle="Kelola kategori pemasukan & pengeluaran madrasah."
+        icon={
+          <div className="p-2 bg-purple-500/20 rounded-lg">
+             <Tag className="w-6 h-6 text-purple-200" />
           </div>
-        </div>
-      </div>
+        }
+        actions={
+          <div className="flex items-center gap-4">
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <input
+                  type="text"
+                  placeholder="Cari kategori..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setInPage(1);
+                    setOutPage(1);
+                  }}
+                  className="pl-9 pr-4 py-2 text-xs bg-white/10 border border-white/20 text-white rounded-xl focus:ring-2 focus:ring-white/20 focus:bg-white/20 outline-none w-full sm:w-64 transition-all placeholder:text-white/40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <ExportButtons 
+                  options={{
+                    title: "Kategori Keuangan",
+                    filename: `kategori_keuangan_${new Date().toISOString().split("T")[0]}`,
+                    columns: [
+                      { header: "Tipe", key: "type", width: 15, format: (v: string) => v === 'in' ? 'Pemasukan' : 'Pengeluaran' },
+                      { header: "Nama Kategori", key: "name", width: 35 },
+                      { header: "Keterangan", key: "description", width: 45 },
+                    ],
+                    data: [...allInCats, ...allOutCats]
+                  }}
+                />
+                <button 
+                  onClick={handleAdd} 
+                  className="inline-flex items-center px-4 py-2 bg-white text-purple-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50 active:scale-95 shadow-lg shadow-purple-900/20"
+                >
+                  <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                  Tambah
+                </button>
+              </div>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tabel Pemasukan */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "#059669", borderRadius: "50%" }}></div>
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Pemasukan</h4>
-            <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#059669", background: "#d1fae5", padding: "0.125rem 0.5rem", borderRadius: 999, marginLeft: "0.25rem" }}>{inCats.length}</span>
+        {/* Card Pemasukan */}
+        <Card>
+          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <ArrowUpCircle className="w-5 h-5 text-emerald-400" />
+               <h3 className="font-heading font-bold text-white">Pemasukan</h3>
+               <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full">{inPagination.total}</span>
+            </div>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -163,20 +222,25 @@ export default function TransactionCategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat...</td></tr>
+                {inLoading ? (
+                  <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>
+                    <div className="flex flex-col items-center gap-2">
+                       <svg className="animate-spin w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                       <span>Memuat...</span>
+                    </div>
+                  </td></tr>
                 ) : inCats.length === 0 ? (
-                  <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Belum ada kategori pemasukan.</td></tr>
+                  <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pemasukan."}</td></tr>
                 ) : (
-                  inCats.map((c: any, i) => (
+                   inCats.map((c: any, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{i + 1}</td>
+                      <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(inPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", color: "#64748b" }}>{c.description || "-"}</td>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
-                          <button onClick={() => handleEdit(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
-                          <button onClick={() => handleDelete(c.id)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
+                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
+                          <button onClick={() => handleDeleteCat(c.id, 'in')} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
                         </div>
                       </td>
                     </tr>
@@ -185,14 +249,27 @@ export default function TransactionCategoriesPage() {
               </tbody>
             </table>
           </div>
-        </div>
+          {inCats.length > 0 && (
+            <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+              <Pagination
+                page={inPage}
+                totalPages={inPagination.totalPages}
+                total={inPagination.total}
+                onPageChange={(p) => setInPage(p)}
+                limit={limit}
+              />
+            </div>
+          )}
+        </Card>
 
-        {/* Tabel Pengeluaran */}
-        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, background: "#e11d48", borderRadius: "50%" }}></div>
-            <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Pengeluaran</h4>
-            <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#ffe4e6", padding: "0.125rem 0.5rem", borderRadius: 999, marginLeft: "0.25rem" }}>{outCats.length}</span>
+        {/* Card Pengeluaran */}
+        <Card>
+          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <ArrowDownCircle className="w-5 h-5 text-rose-400" />
+               <h3 className="font-heading font-bold text-white">Pengeluaran</h3>
+               <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 text-[10px] font-bold rounded-full">{outPagination.total}</span>
+            </div>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -205,20 +282,25 @@ export default function TransactionCategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat...</td></tr>
+                {outLoading ? (
+                  <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>
+                    <div className="flex flex-col items-center gap-2">
+                       <svg className="animate-spin w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                       <span>Memuat...</span>
+                    </div>
+                  </td></tr>
                 ) : outCats.length === 0 ? (
-                  <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Belum ada kategori pengeluaran.</td></tr>
+                  <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pengeluaran."}</td></tr>
                 ) : (
-                  outCats.map((c: any, i) => (
+                   outCats.map((c: any, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{i + 1}</td>
+                      <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(outPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", color: "#64748b" }}>{c.description || "-"}</td>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
-                          <button onClick={() => handleEdit(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
-                          <button onClick={() => handleDelete(c.id)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
+                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
+                          <button onClick={() => handleDeleteCat(c.id, 'out')} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
                         </div>
                       </td>
                     </tr>
@@ -227,7 +309,7 @@ export default function TransactionCategoriesPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

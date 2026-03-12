@@ -543,7 +543,7 @@ export default function PpdbPage() {
 
                 return (
                   <tr key={reg.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9", opacity: s === "ditolak" ? 0.5 : 1 }}>
-                    <td style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{i + 1}</td>
+                    <td style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
                     <td style={{ padding: "1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#0ea5e9" }}>{reg.formNo || `#${reg.id}`}</td>
                     <td style={{ padding: "1rem" }}>
                       <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{reg.name || "-"}</p>

@@ -2,19 +2,41 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/extracurricular
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const data = await prisma.extracurricular.findMany({
-      where: { deletedAt: null },
-      include: {
-        employee: { select: { id: true, name: true } },
-        members: {
-          include: { student: { select: { id: true, name: true, nisn: true } } },
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    const where = { deletedAt: null };
+
+    const [data, total] = await Promise.all([
+      prisma.extracurricular.findMany({
+        where,
+        include: {
+          employee: { select: { id: true, name: true } },
+          members: {
+            include: { student: { select: { id: true, name: true, nisn: true } } },
+          },
         },
-      },
-      orderBy: { name: "asc" },
+        orderBy: { name: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.extracurricular.count({ where })
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
-    return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memuat data ekskul";
     return NextResponse.json({ error: msg }, { status: 500 });

@@ -1,17 +1,35 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const classrooms = await prisma.classroom.findMany({
-      where: { deletedAt: null },
-      include: {
-        academicYear: { select: { id: true, year: true } },
-        waliKelas: { select: { id: true, name: true } },
-        _count: { select: { students: { where: { deletedAt: null } } } },
-      },
-      orderBy: [{ name: "asc" }],
-    });
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const q = searchParams.get("q") || "";
+    const skip = (page - 1) * limit;
+
+    const where: any = { deletedAt: null };
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const [classrooms, total] = await Promise.all([
+      prisma.classroom.findMany({
+        where,
+        include: {
+          academicYear: { select: { id: true, year: true } },
+          waliKelas: { select: { id: true, name: true } },
+          _count: { select: { students: { where: { deletedAt: null } } } },
+        },
+        orderBy: [{ name: "asc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.classroom.count({ where }),
+    ]);
 
     const classroomsWithCount = classrooms.map((cls) => ({
       id: cls.id,
@@ -25,7 +43,14 @@ export async function GET() {
     }));
 
     return NextResponse.json(
-      { success: true, data: classroomsWithCount },
+      { 
+        success: true, 
+        data: classroomsWithCount,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
     );
   } catch (error) {

@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 
 interface Schedule {
   id: number;
@@ -77,6 +78,14 @@ export default function SchedulePage() {
     }
   };
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(100); // Default besar untuk jadwal
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0
+  });
+
   const fetchSchedules = useCallback(async () => {
     if (!selectedClassroom || !selectedAcademicYear) {
       setSchedules([]);
@@ -89,11 +98,17 @@ export default function SchedulePage() {
       const qs = new URLSearchParams();
       if (selectedClassroom) qs.append("classroomId", selectedClassroom);
       if (selectedAcademicYear) qs.append("academicYearId", selectedAcademicYear);
+      qs.append("page", page.toString());
+      qs.append("limit", limit.toString());
 
       const res = await fetch(`/api/schedules?${qs.toString()}`);
       const json = await res.json();
       if (json.success) {
         setSchedules(json.data);
+        setPagination({
+          total: json.pagination?.total || 0,
+          totalPages: json.pagination?.totalPages || 0
+        });
       } else {
         Swal.fire("Error", json.error || "Gagal mengambil data", "error");
       }
@@ -102,7 +117,7 @@ export default function SchedulePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedClassroom, selectedAcademicYear]);
+  }, [selectedClassroom, selectedAcademicYear, page, limit]);
 
   // Deteksi bentrok: guru yang sama mengajar di hari dan jam yang tumpang tindih
   const conflicts = useMemo(() => {
@@ -305,7 +320,7 @@ export default function SchedulePage() {
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Filter Tahun Ajaran</label>
             <select
               value={selectedAcademicYear}
-              onChange={(e) => setSelectedAcademicYear(e.target.value)}
+              onChange={(e) => { setSelectedAcademicYear(e.target.value); setPage(1); }}
               className="w-full text-sm border-slate-200 rounded-lg bg-white py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
             >
               <option value="">Pilih Tahun Ajaran...</option>
@@ -319,7 +334,7 @@ export default function SchedulePage() {
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Filter Kelas</label>
             <select
               value={selectedClassroom}
-              onChange={(e) => setSelectedClassroom(e.target.value)}
+              onChange={(e) => { setSelectedClassroom(e.target.value); setPage(1); }}
               className="w-full text-sm border-slate-200 rounded-lg bg-white py-2 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
             >
               <option value="">-- Pilih Kelas --</option>
@@ -412,6 +427,19 @@ export default function SchedulePage() {
               </Card>
             ))}
           </div>
+
+          {pagination.totalPages > 1 && (
+            <div className="mt-6 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                limit={limit}
+                onPageChange={setPage}
+                onLimitChange={(l) => { setLimit(l); setPage(1); }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -2,9 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Calendar, Download, Save, Users, Clock, History } from "lucide-react";
+import { Calendar, Download, Save, Users, Clock, History, ChevronLeft, ChevronRight } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Employee { id: number; name: string; position: string; status: string; }
 interface AttendanceRecord { id: number; employeeId: number; date: string; status: string; note: string; employee: Employee; }
@@ -25,33 +27,36 @@ export default function EmployeeAttendancePage() {
   const [recap, setRecap] = useState<RecapItem[]>([]);
   const [loadingRecap, setLoadingRecap] = useState(false);
 
-  // Load employees
-  useEffect(() => {
-    fetch("/api/staff").then(r => r.json()).then(d => {
-      const list = (Array.isArray(d) ? d : []).filter((e: Employee) => e.status === "aktif");
-      setEmployees(list);
-    });
-  }, []);
+  // State Paginasi
+  const [inputMeta, setInputMeta] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
+  const [recapMeta, setRecapMeta] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
 
-  // Load absensi per tanggal
-  const loadAttendance = useCallback(async () => {
+  // Load absensi per tanggal (Input Harian)
+  const loadAttendance = useCallback(async (page: number = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/employee-attendance?date=${selectedDate}`);
-      const data = await res.json();
-      setExistingRecords(Array.isArray(data) ? data : []);
+      const res = await fetch(`/api/employee-attendance?date=${selectedDate}&page=${page}&limit=${inputMeta.limit}`);
+      const result = await res.json();
+      
+      if (result.success) {
+        setExistingRecords(result.data || []);
+        setInputMeta(result.pagination);
 
-      // Init records
-      const recs = employees.map(emp => {
-        const existing = (Array.isArray(data) ? data : []).find((a: AttendanceRecord) => a.employeeId === emp.id);
-        return { employeeId: emp.id, status: existing?.status || "hadir", note: existing?.note || "" };
-      });
-      setRecords(recs);
+        // Map records
+        const recs = result.data.map((item: any) => ({
+          employeeId: item.employeeId,
+          status: item.status || "hadir",
+          note: item.note || ""
+        }));
+        setRecords(recs);
+      }
     } catch { /* ignore */ }
     setLoading(false);
-  }, [selectedDate, employees]);
+  }, [selectedDate, inputMeta.limit]);
 
-  useEffect(() => { if (employees.length) loadAttendance(); }, [loadAttendance, employees]);
+  useEffect(() => {
+    loadAttendance(1);
+  }, [loadAttendance]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -75,17 +80,18 @@ export default function EmployeeAttendancePage() {
   };
 
   // Rekap
-  const loadRecap = useCallback(async () => {
+  const loadRecap = useCallback(async (page: number = 1) => {
     setLoadingRecap(true);
     try {
-      const res = await fetch(`/api/employee-attendance/recap?month=${recapMonth}&year=${recapYear}`);
+      const res = await fetch(`/api/employee-attendance/recap?month=${recapMonth}&year=${recapYear}&page=${page}&limit=${recapMeta.limit}`);
       const data = await res.json();
       setRecap(data.recap || []);
+      if (data.pagination) setRecapMeta(data.pagination);
     } catch { /* ignore */ }
     setLoadingRecap(false);
-  }, [recapMonth, recapYear]);
+  }, [recapMonth, recapYear, recapMeta.limit]);
 
-  useEffect(() => { if (tab === "rekap") loadRecap(); }, [tab, loadRecap]);
+  useEffect(() => { if (tab === "rekap") loadRecap(1); }, [tab, loadRecap]);
 
   const updateRecord = (empId: number, field: "status" | "note", value: string) => {
     setRecords(prev => prev.map(r => r.employeeId === empId ? { ...r, [field]: value } : r));
@@ -177,11 +183,12 @@ export default function EmployeeAttendancePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {employees.map((emp, idx) => {
+                  {existingRecords.map((item, idx) => {
+                    const emp = item.employee;
                     const rec = records.find(r => r.employeeId === emp.id);
                     return (
                       <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="py-3 px-6 text-sm text-slate-500 text-center">{idx + 1}</td>
+                        <td className="py-3 px-6 text-sm text-slate-500 text-center">{((inputMeta.page - 1) * inputMeta.limit) + idx + 1}</td>
                         <td className="py-3 px-6">
                           <div className="font-medium text-slate-800">{emp.name}</div>
                           <div className="text-xs text-slate-500">{emp.position}</div>
@@ -219,6 +226,16 @@ export default function EmployeeAttendancePage() {
                   })}
                 </tbody>
               </table>
+              
+              <div className="p-4 border-t border-slate-100">
+                <Pagination
+                  page={inputMeta.page}
+                  totalPages={inputMeta.totalPages}
+                  total={inputMeta.total}
+                  limit={inputMeta.limit}
+                  onPageChange={(p) => loadAttendance(p)}
+                />
+              </div>
             </div>
           )}
         </Card>
@@ -246,18 +263,27 @@ export default function EmployeeAttendancePage() {
               </select>
             </div>
             
-            <button 
-              onClick={() => {
-                if (!recap.length) return;
-                exportCSV(["No", "Nama", "Jabatan", "Hadir", "Sakit", "Izin", "Alpha", "Total", "%"],
-                  recap.map((r, i) => [i + 1, r.name, r.position, r.hadir, r.sakit, r.izin, r.alpha, r.total, r.persen]), `rekap_absensi_pegawai_${recapMonth}_${recapYear}`);
-              }} 
-              disabled={!recap.length}
-              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Download className="w-4 h-4 text-slate-500" />
-              Export CSV
-            </button>
+            <ExportButtons 
+              options={{
+                title: "Rekapitulasi Absensi Pegawai",
+                subtitle: `Periode: ${["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"][recapMonth-1]} ${recapYear}`,
+                filename: `rekap_absensi_pegawai_${recapMonth}_${recapYear}`,
+                columns: [
+                  { header: "No", key: "_no", width: 10, align: "center" },
+                  { header: "Nama Pegawai", key: "name", width: 50 },
+                  { header: "Jabatan", key: "position", width: 30 },
+                  { header: "Hadir", key: "hadir", width: 15, align: "center" },
+                  { header: "Sakit", key: "sakit", width: 15, align: "center" },
+                  { header: "Izin", key: "izin", width: 15, align: "center" },
+                  { header: "Alpha", key: "alpha", width: 15, align: "center" },
+                  { header: "Persen", key: "persen", width: 15, align: "center", format: (v) => `${v}%` },
+                ],
+                data: recap.map((r, i) => ({
+                  ...r,
+                  _no: ((recapMeta.page - 1) * recapMeta.limit) + i + 1
+                }))
+              }}
+            />
           </div>
 
           {loadingRecap ? (
@@ -291,7 +317,7 @@ export default function EmployeeAttendancePage() {
                 <tbody className="divide-y divide-slate-100">
                   {recap.map((r, idx) => (
                     <tr key={r.employeeId} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-slate-500 text-center">{idx + 1}</td>
+                      <td className="py-3 px-4 text-sm text-slate-500 text-center">{((recapMeta.page - 1) * recapMeta.limit) + idx + 1}</td>
                       <td className="py-3 px-4 text-sm font-medium text-slate-800">{r.name}</td>
                       <td className="py-3 px-4 text-sm text-slate-500">{r.position}</td>
                       <td className="py-3 px-4 text-center">
@@ -331,6 +357,15 @@ export default function EmployeeAttendancePage() {
                   ))}
                 </tbody>
               </table>
+              <div className="p-4 border-t border-slate-100">
+                <Pagination
+                  page={recapMeta.page}
+                  totalPages={recapMeta.totalPages}
+                  total={recapMeta.total}
+                  limit={recapMeta.limit}
+                  onPageChange={(p) => loadRecap(p)}
+                />
+              </div>
             </div>
           )}
         </Card>

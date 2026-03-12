@@ -151,6 +151,31 @@ export default function FilterBar() {
         </select>
       </div>
 
+      {pathname === "/students" && (
+        <>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Umur Min</label>
+            <input 
+              type="number"
+              placeholder="Min"
+              value={searchParams.get("ageMin") || ""}
+              onChange={(e) => updateFilter("ageMin", e.target.value)}
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-20 p-2.5 font-semibold outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Umur Max</label>
+            <input 
+              type="number"
+              placeholder="Max"
+              value={searchParams.get("ageMax") || ""}
+              onChange={(e) => updateFilter("ageMax", e.target.value)}
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-20 p-2.5 font-semibold outline-none"
+            />
+          </div>
+        </>
+      )}
+
       <button
         onClick={() => {
           setFilters({ academicYearId: "", semester: "", month: "", classroomId: "", gender: "" });

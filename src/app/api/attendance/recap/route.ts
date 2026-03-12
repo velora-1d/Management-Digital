@@ -11,6 +11,10 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate'); // YYYY-MM-DD
     const endDate = searchParams.get('endDate'); // YYYY-MM-DD
 
+    const page = parseInt(searchParams.get('page') || "1");
+    const limit = parseInt(searchParams.get('limit') || "10");
+    const skip = (page - 1) * limit;
+
     if (!classroomId || !startDate || !endDate) {
       return NextResponse.json({ 
         success: false, 
@@ -18,7 +22,15 @@ export async function GET(request: Request) {
       }, { status: 400 });
     }
 
-    // Ambil semua murid di kelas ini terlebih dahulu
+    // Ambil total murid untuk metadata paginasi
+    const totalStudents = await prisma.student.count({
+      where: {
+        classroomId: parseInt(classroomId),
+        deletedAt: null,
+      }
+    });
+
+    // Ambil murid di kelas ini dengan paginasi
     const students = await prisma.student.findMany({
       where: {
         classroomId: parseInt(classroomId),
@@ -29,11 +41,22 @@ export async function GET(request: Request) {
         name: true,
         nisn: true,
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+      skip: limit > 0 ? skip : undefined,
+      take: limit > 0 ? limit : undefined,
     });
 
     if (!students || students.length === 0) {
-      return NextResponse.json({ success: true, data: [] });
+      return NextResponse.json({ 
+        success: true, 
+        data: [], 
+        meta: { 
+          total: totalStudents, 
+          page, 
+          limit, 
+          totalPages: limit > 0 ? Math.ceil(totalStudents / limit) : 1 
+        } 
+      });
     }
 
     // Ambil data absensi dalam range tanggal yang diminta untuk kelas tersebut

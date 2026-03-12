@@ -4,10 +4,17 @@ import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 
 export default function TeachingAssignmentsPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
 
   // States for dropdowns (employees, subjects, classrooms, academicYears)
   const [employees, setEmployees] = useState<any[]>([]);
@@ -67,16 +74,21 @@ export default function TeachingAssignmentsPage() {
     }
   }
 
-  async function loadData() {
+  async function loadData(page = 1) {
     setLoading(true);
     try {
-      let url = `/api/teaching-assignments?`;
+      let url = `/api/teaching-assignments?page=${page}&limit=${paginationMeta.limit}&`;
       if (filterYear) url += `academicYearId=${filterYear}&`;
       if (filterClass) url += `classroomId=${filterClass}&`;
 
       const res = await fetch(url);
       const json = await res.json();
-      if (json.success) setData(json.data);
+      if (json.success) {
+        setData(json.data);
+        if (json.pagination) {
+          setPaginationMeta(json.pagination);
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -338,14 +350,14 @@ export default function TeachingAssignmentsPage() {
         title="Daftar Penugasan"
         icon={<div className="w-2 h-2 rounded-full bg-amber-500" />}
         actions={
-          <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{data.length}</span>
+          <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{paginationMeta.total}</span>
         }
         noPadding
       >
         
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
+          <table className="w-full border-collapse text-left bg-white">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr className="bg-gradient-to-b from-slate-50 to-slate-100/50">
                 <th className="py-3 px-4 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200 w-[50px]">No</th>
                 <th className="py-3 px-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Guru</th>
@@ -355,7 +367,7 @@ export default function TeachingAssignmentsPage() {
                 <th className="py-3 px-4 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200 w-[120px]">Aksi</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan={6} className="p-8 text-center text-[13px] text-slate-400">Memuat data penugasan...</td></tr>
               ) : data.length === 0 ? (
@@ -363,7 +375,7 @@ export default function TeachingAssignmentsPage() {
               ) : (
                 data.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 border-dashed last:border-0">
-                    <td className="py-2.5 px-4 text-center text-[13px] font-semibold text-slate-400">{index + 1}</td>
+                    <td className="py-2.5 px-4 text-center text-[13px] font-semibold text-slate-400">{((paginationMeta.page - 1) * paginationMeta.limit) + index + 1}</td>
                     <td className="py-2.5 px-4 text-[13px] font-semibold text-slate-800">
                       {item.employee?.name}
                     </td>
@@ -385,6 +397,16 @@ export default function TeachingAssignmentsPage() {
               )}
             </tbody>
           </table>
+          
+          <div className="p-4 border-t border-slate-100">
+            <Pagination
+              page={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              total={paginationMeta.total}
+              limit={paginationMeta.limit}
+              onPageChange={(p: number) => loadData(p)}
+            />
+          </div>
         </div>
       </Card>
 

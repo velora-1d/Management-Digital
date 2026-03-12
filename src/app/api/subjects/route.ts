@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +7,10 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
     const status = searchParams.get('status');
     const unitId = searchParams.get('unitId');
+    const q = searchParams.get('q') || "";
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
 
     const filter: any = {
       deletedAt: null,
@@ -17,14 +19,34 @@ export async function GET(request: Request) {
     if (type) filter.type = type;
     if (status) filter.status = status;
     if (unitId) filter.unitId = unitId;
+    if (q) {
+      filter.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { code: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
-    const subjects = await prisma.subject.findMany({
-      where: filter,
-      orderBy: { name: 'asc' }
-    });
+    const [subjects, total] = await Promise.all([
+      prisma.subject.findMany({
+        where: filter,
+        orderBy: { name: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.subject.count({ where: filter })
+    ]);
 
     return NextResponse.json(
-      { success: true, data: subjects },
+      { 
+        success: true, 
+        data: subjects,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
     );
   } catch (error: any) {

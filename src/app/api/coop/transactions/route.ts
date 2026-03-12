@@ -9,6 +9,9 @@ export async function GET(req: Request) {
     const month = searchParams.get("month");
     const year = searchParams.get("year");
     const paymentMethod = searchParams.get("paymentMethod");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
     if (date) {
@@ -19,12 +22,24 @@ export async function GET(req: Request) {
     }
     if (paymentMethod) where.paymentMethod = paymentMethod;
 
-    const data = await prisma.coopTransaction.findMany({
-      where,
-      include: { student: { select: { id: true, name: true, nis: true } } },
-      orderBy: { createdAt: "desc" },
+    const [data, total] = await Promise.all([
+      prisma.coopTransaction.findMany({
+        where,
+        include: { student: { select: { id: true, name: true, nis: true } } },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.coopTransaction.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     });
-    return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memuat transaksi";
     return NextResponse.json({ error: msg }, { status: 500 });

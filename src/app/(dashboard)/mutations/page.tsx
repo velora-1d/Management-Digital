@@ -4,6 +4,8 @@ import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { ArrowRightLeft } from "lucide-react";
+import Pagination from "@/components/Pagination";
+import { ExportButtons } from "@/lib/export-utils";
 
 export default function MutationsPage() {
   const [classrooms, setClassrooms] = useState<any[]>([]);
@@ -14,16 +16,22 @@ export default function MutationsPage() {
   const [selected, setSelected] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
 
   useEffect(() => {
     loadClassrooms();
   }, []);
 
   useEffect(() => {
-    if (selectedClass) loadStudents(selectedClass);
-    else setStudents([]);
+    if (selectedClass) loadStudents(selectedClass, page);
+    else {
+      setStudents([]);
+      setPagination({ total: 0, page: 1, limit: 20, totalPages: 0 });
+    }
     setSelected([]);
-  }, [selectedClass]);
+  }, [selectedClass, page]);
 
   const loadClassrooms = async () => {
     try {
@@ -33,12 +41,15 @@ export default function MutationsPage() {
     } catch (e) { console.error(e); }
   };
 
-  const loadStudents = async (classId: string) => {
+  const loadStudents = async (classId: string, pageNum: number = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/students?classroom=${classId}`);
+      const res = await fetch(`/api/students?classroom=${classId}&page=${pageNum}&limit=${limit}`);
       const json = await res.json();
-      if (json.success) setStudents(json.data || []);
+      if (json.success) {
+        setStudents(json.data || []);
+        if (json.pagination) setPagination(json.pagination);
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -90,7 +101,7 @@ export default function MutationsPage() {
       if (json.success) {
         Swal.fire("Berhasil", json.message, "success");
         setSelected([]);
-        if (selectedClass) loadStudents(selectedClass);
+        if (selectedClass) loadStudents(selectedClass, page);
       } else {
         Swal.fire("Gagal", json.message || "Terjadi kesalahan", "error");
       }
@@ -106,6 +117,27 @@ export default function MutationsPage() {
         subtitle="Pindah kelas, kelulusan, atau perubahan status siswa."
         icon={<ArrowRightLeft className="w-6 h-6 text-white" />}
         gradient="from-red-600 via-rose-500 to-red-500"
+        actions={
+          <div className="flex items-center gap-2">
+            <ExportButtons 
+              options={{
+                title: "Data Calon Mutasi Siswa",
+                filename: `mutasi_siswa_${new Date().toISOString().split("T")[0]}`,
+                columns: [
+                  { header: "No", key: "_no", width: 8, align: "center" },
+                  { header: "NISN", key: "nisn", width: 15 },
+                  { header: "Nama Siswa", key: "name", width: 35 },
+                  { header: "JK", key: "gender", width: 10, align: "center" },
+                  { header: "Status", key: "status", width: 15, align: "center" },
+                ],
+                data: students.map((s: any, i: number) => ({
+                  ...s,
+                  _no: (page - 1) * limit + i + 1,
+                })),
+              }}
+            />
+          </div>
+        }
       />
 
       {/* Controls */}
@@ -113,7 +145,7 @@ export default function MutationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-2">Kelas Asal</label>
-            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 bg-white">
+            <select value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setPage(1); }} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 bg-white">
               <option value="">— Pilih Kelas —</option>
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -162,6 +194,7 @@ export default function MutationsPage() {
             <thead>
               <tr className="bg-slate-50">
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200 w-12">✓</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200 w-12">No</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">NISN</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">Nama Siswa</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">JK</th>
@@ -170,17 +203,18 @@ export default function MutationsPage() {
             </thead>
             <tbody>
               {!selectedClass ? (
-                <tr><td colSpan={5} className="p-12 text-center text-sm text-slate-400">Pilih kelas asal untuk melihat daftar siswa.</td></tr>
+                <tr><td colSpan={6} className="p-12 text-center text-sm text-slate-400">Pilih kelas asal untuk melihat daftar siswa.</td></tr>
               ) : loading ? (
-                <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-400">Memuat...</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-sm text-slate-400">Memuat...</td></tr>
               ) : students.length === 0 ? (
-                <tr><td colSpan={5} className="p-12 text-center text-sm text-slate-400">Tidak ada siswa di kelas ini.</td></tr>
+                <tr><td colSpan={6} className="p-12 text-center text-sm text-slate-400">Tidak ada siswa di kelas ini.</td></tr>
               ) : (
-                students.map(s => (
+                students.map((s, i) => (
                   <tr key={s.id} onClick={() => toggleSelect(s.id)} className={`border-b border-slate-100 cursor-pointer transition-colors ${selected.includes(s.id) ? "bg-indigo-50" : "hover:bg-slate-50"}`}>
                     <td className="px-6 py-3 text-center">
                       <input type="checkbox" checked={selected.includes(s.id)} readOnly className="w-4 h-4 accent-indigo-600" />
                     </td>
+                    <td className="px-6 py-3 text-center text-xs text-slate-400">{(page - 1) * limit + i + 1}</td>
                     <td className="px-6 py-3 text-sm text-slate-600">{s.nisn || "-"}</td>
                     <td className="px-6 py-3 text-sm font-semibold text-slate-800">{s.name}</td>
                     <td className="px-6 py-3 text-center">
@@ -195,6 +229,17 @@ export default function MutationsPage() {
             </tbody>
           </table>
         </div>
+        {students.length > 0 && (
+          <div className="p-4 border-t border-slate-100 bg-slate-50/30">
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              onPageChange={setPage}
+              total={pagination.total}
+              limit={limit}
+            />
+          </div>
+        )}
       </Card>
     </div>
   );

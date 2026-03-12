@@ -18,21 +18,39 @@ export async function GET(request: Request) {
     if (day) filter.day = parseInt(day);
     if (academicYearId) filter.academicYearId = parseInt(academicYearId);
 
-    const schedules = await prisma.schedule.findMany({
-      where: filter,
-      include: {
-        classroom: { select: { name: true } },
-        subject: { select: { name: true, code: true } },
-        employee: { select: { name: true } },
-        academicYear: { select: { year: true, isActive: true } }
-      },
-      orderBy: [
-        { day: 'asc' },
-        { startTime: 'asc' }
-      ]
-    });
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "1000"); // Default tinggi karena jadwal biasanya butuh semua data per kriteria
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ success: true, data: schedules });
+    const [schedules, total] = await Promise.all([
+      prisma.schedule.findMany({
+        where: filter,
+        include: {
+          classroom: { select: { name: true } },
+          subject: { select: { name: true, code: true } },
+          employee: { select: { name: true } },
+          academicYear: { select: { year: true, isActive: true } }
+        },
+        orderBy: [
+          { day: 'asc' },
+          { startTime: 'asc' }
+        ],
+        skip,
+        take: limit
+      }),
+      prisma.schedule.count({ where: filter })
+    ]);
+
+    return NextResponse.json({ 
+      success: true, 
+      data: schedules,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

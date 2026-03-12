@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { ExportButtons } from "@/lib/export-utils";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { ReceiptText } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Credit { id: number; studentId: number; amount: number; paidAmount: number; status: string; dueDate: string; student?: { name: string; nis: string } | null; transaction?: { date: string; total: number } | null; }
 
@@ -15,20 +17,32 @@ export default function CoopCreditsPage() {
   const [totalPiutang, setTotalPiutang] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("belum_lunas");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const q = filter ? `?status=${filter}` : "";
-      const res = await fetch(`/api/coop/credits${q}`);
+      const q = filter ? `status=${filter}&` : "";
+      const res = await fetch(`/api/coop/credits?${q}page=${page}&limit=${limit}`);
       const d = await res.json();
-      setData(d.credits || []);
+      setData(d.data || d.credits || []);
       setTotalPiutang(d.totalPiutang || 0);
+      setPagination({
+        total: d.total || (d.credits ? d.credits.length : 0),
+        totalPages: d.totalPages || 1
+      });
     } catch { /* ignore */ }
     setLoading(false);
-  }, [filter]);
+  }, [filter, page, limit]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
 
   const handleBayar = async (credit: Credit) => {
     const sisa = credit.amount - credit.paidAmount;
@@ -66,6 +80,32 @@ export default function CoopCreditsPage() {
         subtitle="Kelola bon dan pelunasan"
         icon={<ReceiptText />}
         gradient="from-indigo-500 to-blue-600"
+        actions={
+          <ExportButtons 
+            options={{
+              title: "Daftar Piutang Siswa Koperasi",
+              subtitle: `Status: ${statusLabels[filter] || 'Semua'} | Total Piutang Aktif: Rp ${totalPiutang.toLocaleString("id-ID")}`,
+              filename: `piutang_siswa_${new Date().toISOString().split("T")[0]}`,
+              columns: [
+                { header: "No", key: "_no", width: 10, align: "center" },
+                { header: "Nama Siswa", key: "student_name", width: 45 },
+                { header: "NIS", key: "student_nis", width: 20 },
+                { header: "Total Hutang", key: "amount", width: 25, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                { header: "Dibayar", key: "paidAmount", width: 25, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                { header: "Sisa", key: "sisa", width: 25, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                { header: "Status", key: "status", width: 25, align: "center", format: (v: string) => statusLabels[v] || String(v) },
+                { header: "Jatuh Tempo", key: "dueDate", width: 25, align: "center" },
+              ],
+              data: data.map((c, i) => ({
+                ...c,
+                _no: ((page - 1) * limit) + i + 1,
+                student_name: c.student?.name || "-",
+                student_nis: c.student?.nis || "-",
+                sisa: c.amount - c.paidAmount
+              }))
+            }}
+          />
+        }
       />
 
       {/* Dashboard */}
@@ -128,6 +168,17 @@ export default function CoopCreditsPage() {
               </Card>
             );
           })}
+
+          {pagination.totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

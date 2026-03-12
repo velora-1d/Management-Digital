@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 import { 
   Plus, 
   Download, 
@@ -62,31 +64,41 @@ export default function LettersPage() {
     number: "", 
     status: "belum_disposisi" 
   });
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/letters?type=${tab}`);
-      const d = await res.json();
-      setData(Array.isArray(d) ? d : []);
+      const res = await fetch(`/api/letters?type=${tab}&page=${page}&limit=${paginationMeta.limit}&search=${searchQuery}`);
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data);
+        if (json.pagination) {
+          setPaginationMeta(json.pagination);
+        }
+      } else if (Array.isArray(json)) {
+        setData(json);
+      } else {
+        setData([]);
+      }
     } catch (error) {
       console.error("Gagal mengambil data surat:", error);
     }
     setLoading(false);
-  }, [tab]);
+  }, [tab, paginationMeta.limit, searchQuery]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    const timer = setTimeout(() => {
+      fetchData(1); 
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [tab, searchQuery, fetchData]);
 
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchesSearch = 
-        item.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (item.number && item.number.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.sender && item.sender.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.receiver && item.receiver.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesSearch;
-    });
-  }, [data, searchQuery]);
 
   const handleSubmit = async () => {
     if (!form.subject) { 
@@ -221,20 +233,35 @@ export default function LettersPage() {
               <Plus className="w-4 h-4" />
               <span>{tab === "masuk" ? "Catat Surat Masuk" : "Buat Surat Keluar"}</span>
             </button>
-            <button 
-              onClick={() => {
-                if (!data.length) {
-                  Swal.fire("Info", "Tidak ada data untuk diexport", "info");
-                  return;
-                }
-                exportCSV(["No", "Nomor", "Perihal", "Pengirim", "Penerima", "Tanggal", "Status"],
-                  data.map((d, i) => [i + 1, d.number, d.subject, d.sender, d.receiver, d.date, statusLabels[d.status] || d.status]), `surat_${tab}`);
-              }} 
-              className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export CSV</span>
-            </button>
+            <ExportButtons 
+              options={{
+                title: tab === "masuk" ? "Daftar Surat Masuk" : "Daftar Surat Keluar",
+                subtitle: `Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                filename: `surat_${tab}_${new Date().toISOString().split("T")[0]}`,
+                columns: [
+                  { header: "No", key: "_no", width: 10, align: "center" },
+                  { header: "Nomor Surat", key: "number", width: 40 },
+                  { header: "Perihal", key: "subject", width: 60 },
+                  { 
+                    header: tab === "masuk" ? "Pengirim" : "Penerima", 
+                    key: tab === "masuk" ? "sender" : "receiver", 
+                    width: 40 
+                  },
+                  { header: "Tanggal", key: "date", width: 30, align: "center" },
+                  { 
+                    header: "Status", 
+                    key: "status", 
+                    width: 30, 
+                    align: "center",
+                    format: (v: string) => statusLabels[v as keyof typeof statusLabels] || String(v)
+                  },
+                ],
+                data: data.map((d, i) => ({
+                  ...d,
+                  _no: ((paginationMeta.page - 1) * paginationMeta.limit) + i + 1
+                }))
+              }}
+            />
           </div>
         }
       />
@@ -277,7 +304,7 @@ export default function LettersPage() {
             <Card key={i} className="h-28 animate-pulse bg-slate-50"><div /></Card>
           ))}
         </div>
-      ) : filteredData.length === 0 ? (
+      ) : data.length === 0 ? (
         <Card className="py-16 flex flex-col items-center justify-center text-center border-dashed border-2 border-slate-200">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <FileText className="w-8 h-8 text-slate-300" />
@@ -290,8 +317,9 @@ export default function LettersPage() {
           </p>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {filteredData.map(item => (
+        <div className="space-y-6">
+          <div className="space-y-4">
+            {data.map(item => (
             <Card key={item.id} className="group hover:border-indigo-200 hover:shadow-md transition-all">
               <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 
@@ -365,6 +393,17 @@ export default function LettersPage() {
               </div>
             </Card>
           ))}
+          </div>
+
+          <Card className="p-4">
+            <Pagination
+              page={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              total={paginationMeta.total}
+              limit={paginationMeta.limit}
+              onPageChange={(p: number) => fetchData(p)}
+            />
+          </Card>
         </div>
       )}
 

@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 import { 
   Plus, 
   Download, 
@@ -33,16 +35,31 @@ export default function ExtracurricularPage() {
   const [assignTargetId, setAssignTargetId] = useState<number | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
   const [form, setForm] = useState({ name: "", employeeId: "", schedule: "", status: "aktif" });
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/extracurricular");
-      const d = await res.json();
-      setData(Array.isArray(d) ? d : []);
+      const res = await fetch(`/api/extracurricular?page=${page}&limit=${paginationMeta.limit}`);
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data);
+        if (json.pagination) {
+          setPaginationMeta(json.pagination);
+        }
+      } else if (Array.isArray(json)) {
+        setData(json);
+      } else {
+        setData([]);
+      }
     } catch { /* ignore */ }
     setLoading(false);
-  }, []);
+  }, [paginationMeta.limit]);
 
   useEffect(() => {
     fetchData();
@@ -135,17 +152,34 @@ export default function ExtracurricularPage() {
               <Plus className="w-4 h-4" />
               Tambah Ekskul
             </button>
-            <button 
-              onClick={() => {
-                if (!data.length) return;
-                const rows = data.flatMap(e => e.members.length ? e.members.map((m, i) => [i === 0 ? e.name : "", m.student.name, m.student.nisn, m.predicate || "-"]) : [[e.name, "-", "-", "-"]]);
-                exportCSV(["Ekskul", "Nama Siswa", "NISN", "Predikat"], rows, "daftar_ekskul");
-              }} 
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
+            <ExportButtons 
+              options={{
+                title: "Daftar Anggota Ekstrakurikuler",
+                subtitle: `Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                filename: `daftar_ekskul_${new Date().toISOString().split("T")[0]}`,
+                columns: [
+                  { header: "Ekskul", key: "ekskul_name", width: 40 },
+                  { header: "Nama Siswa", key: "student_name", width: 45 },
+                  { header: "NISN", key: "student_nisn", width: 20 },
+                  { header: "Predikat", key: "predicate", width: 30, align: "center" },
+                ],
+                data: data.flatMap(e => 
+                  e.members.length > 0 
+                    ? e.members.map(m => ({
+                        ekskul_name: e.name,
+                        student_name: m.student.name,
+                        student_nisn: m.student.nisn,
+                        predicate: m.predicate || "-"
+                      }))
+                    : [{
+                        ekskul_name: e.name,
+                        student_name: "-",
+                        student_nisn: "-",
+                        predicate: "-"
+                      }]
+                )
+              }}
+            />
           </div>
         }
       />
@@ -284,6 +318,16 @@ export default function ExtracurricularPage() {
                 )}
               </div>
             ))}
+            
+            <div className="p-4 border-t border-slate-100 pb-10">
+              <Pagination
+                page={paginationMeta.page}
+                totalPages={paginationMeta.totalPages}
+                total={paginationMeta.total}
+                limit={paginationMeta.limit}
+                onPageChange={(p: number) => fetchData(p)}
+              />
+            </div>
           </div>
         )}
       </Card>

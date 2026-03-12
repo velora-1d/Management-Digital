@@ -73,6 +73,8 @@ export async function GET(request: Request) {
   const academicYearId = searchParams.get("academicYearId") || "";
   const gender = searchParams.get("gender") || "";
   const status = searchParams.get("status") || "aktif";
+  const ageMin = searchParams.get("ageMin");
+  const ageMax = searchParams.get("ageMax");
 
   try {
     // 1. Tentukan Tahun Ajaran Target
@@ -111,6 +113,12 @@ export async function GET(request: Request) {
         } : {}),
         ...(gender ? { gender } : {}),
         ...(status ? { status } : {}),
+        ...((ageMin || ageMax) ? {
+          birthDate: {
+            ...(ageMin ? { lte: new Date(new Date().getFullYear() - Number(ageMin), new Date().getMonth(), new Date().getDate()) } : {}),
+            ...(ageMax ? { gte: new Date(new Date().getFullYear() - Number(ageMax) - 1, new Date().getMonth(), new Date().getDate() + 1) } : {}),
+          }
+        } : {}),
       };
     }
 

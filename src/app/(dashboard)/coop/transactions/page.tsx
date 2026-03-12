@@ -2,9 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { ShoppingCart } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Product { id: number; name: string; hargaJual: number; stok: number; }
 interface CartItem { productId: number; name: string; price: number; qty: number; }
@@ -27,10 +29,21 @@ export default function CoopTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
   const [loadingTrx, setLoadingTrx] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });
 
   useEffect(() => {
-    fetch("/api/coop/products").then(r => r.json()).then(d => setProducts(Array.isArray(d) ? d.filter((p: Product) => p.stok > 0) : []));
-    fetch("/api/students").then(r => r.json()).then(d => setStudents(Array.isArray(d) ? d : []));
+    // POS needs products and students. Fetching with a large limit for POS searchability or handle with server-side search.
+    // For now, handling the new API format.
+    fetch("/api/coop/products?limit=100").then(r => r.json()).then(d => {
+      const items = d.data || (Array.isArray(d) ? d : []);
+      setProducts(items.filter((p: Product) => p.stok > 0));
+    });
+    fetch("/api/students?limit=1000").then(r => r.json()).then(d => {
+      const items = d.data || (Array.isArray(d) ? d : []);
+      setStudents(items);
+    });
   }, []);
 
   const addToCart = (p: Product) => {
@@ -69,7 +82,10 @@ export default function CoopTransactionsPage() {
       Swal.fire("Berhasil", `Transaksi Rp ${total.toLocaleString("id-ID")} berhasil`, "success");
       setCart([]); setSelectedStudent(null); setStudentSearch(""); setBuyerType("tunai"); setPaymentMethod("tunai");
       // Refresh products
-      fetch("/api/coop/products").then(r => r.json()).then(d => setProducts(Array.isArray(d) ? d.filter((p: Product) => p.stok > 0) : []));
+      fetch("/api/coop/products?limit=100").then(r => r.json()).then(d => {
+        const items = d.data || (Array.isArray(d) ? d : []);
+        setProducts(items.filter((p: Product) => p.stok > 0));
+      });
     } catch { Swal.fire("Error", "Transaksi gagal", "error"); }
     setProcessing(false);
   };
@@ -78,14 +94,25 @@ export default function CoopTransactionsPage() {
   const loadTransactions = useCallback(async () => {
     setLoadingTrx(true);
     try {
-      const res = await fetch(`/api/coop/transactions?date=${filterDate}`);
+      const res = await fetch(`/api/coop/transactions?date=${filterDate}&page=${page}&limit=${limit}`);
       const d = await res.json();
-      setTransactions(Array.isArray(d) ? d : []);
+      if (d.data) {
+        setTransactions(d.data);
+        setPagination({ total: d.total, totalPages: d.totalPages });
+      } else {
+        setTransactions(Array.isArray(d) ? d : []);
+        setPagination({ total: (Array.isArray(d) ? d.length : 0), totalPages: 1 });
+      }
     } catch { /* ignore */ }
     setLoadingTrx(false);
-  }, [filterDate]);
+  }, [filterDate, page, limit]);
 
   useEffect(() => { if (tab === "riwayat") loadTransactions(); }, [tab, loadTransactions]);
+
+  // Reset page when filter date changes
+  useEffect(() => {
+    setPage(1);
+  }, [filterDate]);
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   const filteredStudents = students.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.nis.includes(studentSearch));
@@ -197,16 +224,27 @@ export default function CoopTransactionsPage() {
           <Card className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
               <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto" />
-              <span className="text-sm text-slate-500 whitespace-nowrap">{transactions.length} transaksi · Total: <b className="text-indigo-700">Rp {dailyTotal.toLocaleString("id-ID")}</b></span>
+              <span className="text-sm text-slate-500 whitespace-nowrap">{pagination.total || transactions.length} transaksi · Total: <b className="text-indigo-700">Rp {dailyTotal.toLocaleString("id-ID")}</b></span>
             </div>
-            <button onClick={() => {
-              if (!transactions.length) return;
-              exportCSV(["No", "Waktu", "Pembeli", "Total", "Metode"],
-                transactions.map((t, i) => [i + 1, t.date, t.student?.name || "Tunai", t.total, t.paymentMethod]), `penjualan_${filterDate}`);
-            }} className="w-full sm:w-auto px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              Export
-            </button>
+            <ExportButtons 
+              options={{
+                title: "Riwayat Transaksi Koperasi",
+                subtitle: `Tanggal: ${new Date(filterDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                filename: `penjualan_koperasi_${filterDate}`,
+                columns: [
+                  { header: "No", key: "_no", width: 10, align: "center" },
+                  { header: "Waktu", key: "date", width: 30 },
+                  { header: "Pembeli", key: "buyer_name", width: 40 },
+                  { header: "Total", key: "total", width: 25, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                  { header: "Metode", key: "paymentMethod", width: 20, align: "center", format: (v: string) => v.toUpperCase() },
+                ],
+                data: transactions.map((t, i) => ({
+                  ...t,
+                  _no: ((page - 1) * limit) + i + 1,
+                  buyer_name: t.student?.name || "Tunai"
+                }))
+              }}
+            />
           </Card>
 
           {loadingTrx ? (
@@ -232,6 +270,17 @@ export default function CoopTransactionsPage() {
                   </Card>
                 );
               })}
+
+              {pagination.totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination
+                    page={page}
+                    totalPages={pagination.totalPages}
+                    total={pagination.total}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

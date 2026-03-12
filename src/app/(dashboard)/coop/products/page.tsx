@@ -2,9 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { ShoppingBag } from "lucide-react";
+import Pagination from "@/components/Pagination";
 
 interface Product { id: number; name: string; category: string; hargaJual: number; hargaBeli: number; stok: number; minStok: number; status: string; }
 
@@ -17,18 +19,31 @@ export default function CoopProductsPage() {
   const [editItem, setEditItem] = useState<Product | null>(null);
   const [form, setForm] = useState({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" });
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/coop/products");
+      const res = await fetch(`/api/coop/products?page=${page}&limit=${limit}`);
       const d = await res.json();
-      setData(Array.isArray(d) ? d : []);
+      if (d.data) {
+        setData(d.data);
+        setPagination({ total: d.total, totalPages: d.totalPages });
+      } else {
+        setData(Array.isArray(d) ? d : []);
+      }
     } catch { /* ignore */ }
     setLoading(false);
-  }, []);
+  }, [page, limit]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const handleSubmit = async () => {
     if (!form.name) { Swal.fire("Error", "Nama produk wajib", "error"); return; }
@@ -72,21 +87,33 @@ export default function CoopProductsPage() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               Tambah Produk
             </button>
-            <button onClick={() => {
-              if (!data.length) return;
-              exportCSV(["No", "Nama", "Kategori", "Harga Jual", "Harga Beli", "Stok", "Min Stok"],
-                data.map((d, i) => [i + 1, d.name, d.category, d.hargaJual, d.hargaBeli, d.stok, d.minStok]), "produk_koperasi");
-            }} className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-white/30 backdrop-blur-md cursor-pointer">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              Export
-            </button>
+            <ExportButtons 
+              options={{
+                title: "Daftar Produk Koperasi",
+                subtitle: `Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                filename: `produk_koperasi_${new Date().toISOString().split("T")[0]}`,
+                columns: [
+                  { header: "No", key: "_no", width: 10, align: "center" },
+                  { header: "Nama Produk", key: "name", width: 50 },
+                  { header: "Kategori", key: "category", width: 30 },
+                  { header: "H. Beli", key: "hargaBeli", width: 20, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                  { header: "H. Jual", key: "hargaJual", width: 20, align: "right", format: (v: number) => `Rp ${v.toLocaleString("id-ID")}` },
+                  { header: "Stok", key: "stok", width: 15, align: "center" },
+                  { header: "Min Stok", key: "minStok", width: 15, align: "center" },
+                ],
+                data: data.map((d, i) => ({
+                  ...d,
+                  _no: ((page - 1) * limit) + i + 1
+                }))
+              }}
+            />
           </div>
         }
       />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Total Produk</p><p className="text-2xl font-bold text-slate-800 mt-1">{data.length}</p></Card>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Total Produk</p><p className="text-2xl font-bold text-slate-800 mt-1">{pagination.total || data.length}</p></Card>
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Stok Rendah</p><p className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount}</p></Card>
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Habis</p><p className="text-2xl font-bold text-rose-600 mt-1">{outStockCount}</p></Card>
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Kategori</p><p className="text-2xl font-bold text-indigo-600 mt-1">{new Set(data.map(d => d.category).filter(Boolean)).size}</p></Card>
@@ -102,44 +129,57 @@ export default function CoopProductsPage() {
       ) : filtered.length === 0 ? (
         <Card className="text-center py-12 border-dashed"><p className="text-sm text-slate-500">Tidak ada produk</p></Card>
       ) : (
-        <Card className="p-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead><tr className="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
-                <th className="py-3 px-4">Produk</th><th className="py-3 px-4">Kategori</th><th className="py-3 px-4 text-right">H. Beli</th><th className="py-3 px-4 text-right">H. Jual</th><th className="py-3 px-4 text-center">Stok</th><th className="py-3 px-4"></th>
-              </tr></thead>
-              <tbody className="divide-y divide-slate-50">
-                {filtered.map(item => {
-                  const isLow = item.stok <= item.minStok && item.stok > 0;
-                  const isOut = item.stok === 0;
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3 px-4">
-                        <p className="text-sm font-medium text-slate-800">{item.name}</p>
-                      </td>
-                      <td className="py-3 px-4"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">{item.category || "-"}</span></td>
-                      <td className="py-3 px-4 text-right text-xs text-slate-500">Rp {item.hargaBeli.toLocaleString("id-ID")}</td>
-                      <td className="py-3 px-4 text-right text-sm font-semibold text-slate-800">Rp {item.hargaJual.toLocaleString("id-ID")}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${isOut ? "bg-rose-100 text-rose-700" : isLow ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                          {item.stok}
-                        </span>
-                        {isLow && <span className="ml-1 text-[9px] text-amber-500">⚠️ rendah</span>}
-                        {isOut && <span className="ml-1 text-[9px] text-rose-500">❌ habis</span>}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button onClick={() => handleEdit(item)} className="px-2 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded text-[11px] font-semibold transition-colors">Edit</button>
-                          <button onClick={() => handleDelete(item.id)} className="px-2 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded text-[11px] font-semibold transition-colors">Hapus</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <>
+          <Card className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead><tr className="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
+                  <th className="py-3 px-4">Produk</th><th className="py-3 px-4">Kategori</th><th className="py-3 px-4 text-right">H. Beli</th><th className="py-3 px-4 text-right">H. Jual</th><th className="py-3 px-4 text-center">Stok</th><th className="py-3 px-4"></th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filtered.map((item, idx) => {
+                    const isLow = item.stok <= item.minStok && item.stok > 0;
+                    const isOut = item.stok === 0;
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3 px-4">
+                          <p className="text-sm font-medium text-slate-800">{item.name}</p>
+                        </td>
+                        <td className="py-3 px-4"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">{item.category || "-"}</span></td>
+                        <td className="py-3 px-4 text-right text-xs text-slate-500">Rp {item.hargaBeli.toLocaleString("id-ID")}</td>
+                        <td className="py-3 px-4 text-right text-sm font-semibold text-slate-800">Rp {item.hargaJual.toLocaleString("id-ID")}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${isOut ? "bg-rose-100 text-rose-700" : isLow ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            {item.stok}
+                          </span>
+                          {isLow && <span className="ml-1 text-[9px] text-amber-500">⚠️ rendah</span>}
+                          {isOut && <span className="ml-1 text-[9px] text-rose-500">❌ habis</span>}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button onClick={() => handleEdit(item)} className="px-2 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded text-[11px] font-semibold transition-colors">Edit</button>
+                            <button onClick={() => handleDelete(item.id)} className="px-2 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded text-[11px] font-semibold transition-colors">Hapus</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {pagination.totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}

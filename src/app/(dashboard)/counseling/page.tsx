@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Pagination from "@/components/Pagination";
 import { 
   Plus, 
   Download, 
@@ -52,19 +54,34 @@ export default function CounselingPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ studentId: "", counselorId: "", date: new Date().toISOString().split("T")[0], category: "akademik", description: "", followUp: "", status: "aktif" });
+  const [paginationMeta, setPaginationMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      let url = "/api/counseling?";
+      let url = `/api/counseling?page=${page}&limit=${paginationMeta.limit}&`;
       if (filterCategory) url += `category=${filterCategory}&`;
       if (filterStatus) url += `status=${filterStatus}&`;
       const res = await fetch(url);
-      const d = await res.json();
-      setData(Array.isArray(d) ? d : []);
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data);
+        if (json.pagination) {
+          setPaginationMeta(json.pagination);
+        }
+      } else if (Array.isArray(json)) {
+        setData(json);
+      } else {
+        setData([]);
+      }
     } catch { /* ignore */ }
     setLoading(false);
-  }, [filterCategory, filterStatus]);
+  }, [filterCategory, filterStatus, paginationMeta.limit]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => {
@@ -119,17 +136,27 @@ export default function CounselingPage() {
               <Plus className="w-4 h-4" />
               Tambah Catatan
             </button>
-            <button 
-              onClick={() => {
-                if (!data.length) return;
-                exportCSV(["No", "Tanggal", "Siswa", "Kategori", "Status", "Deskripsi", "Tindak Lanjut"],
-                  data.map((d, i) => [i + 1, d.date, d.student?.name || "", d.category, d.status, d.description, d.followUp]), "catatan_bk");
-              }} 
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
+            <ExportButtons 
+              options={{
+                title: "Laporan Bimbingan Konseling",
+                subtitle: `Filter - Kategori: ${filterCategory || 'Semua'} | Status: ${filterStatus || 'Semua'}`,
+                filename: `catatan_bk_${new Date().toISOString().split("T")[0]}`,
+                columns: [
+                  { header: "No", key: "_no", width: 10, align: "center" },
+                  { header: "Tanggal", key: "date", width: 25 },
+                  { header: "Siswa", key: "student_name", width: 40 },
+                  { header: "Kategori", key: "category", width: 25, align: "center", format: (v: string) => v.toUpperCase() },
+                  { header: "Status", key: "status", width: 25, align: "center", format: (v: string) => v.toUpperCase() },
+                  { header: "Deskripsi", key: "description", width: 60 },
+                  { header: "Tindak Lanjut", key: "followUp", width: 40 },
+                ],
+                data: data.map((d, i) => ({
+                  ...d,
+                  _no: ((paginationMeta.page - 1) * paginationMeta.limit) + i + 1,
+                  student_name: d.student?.name || "-"
+                }))
+              }}
+            />
           </div>
         }
       />
@@ -263,6 +290,16 @@ export default function CounselingPage() {
               </div>
             </div>
           ))}
+          
+          <div className="mt-4 pb-10">
+            <Pagination
+              page={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              total={paginationMeta.total}
+              limit={paginationMeta.limit}
+              onPageChange={(p: number) => fetchData(p)}
+            />
+          </div>
         </div>
       )}
 
