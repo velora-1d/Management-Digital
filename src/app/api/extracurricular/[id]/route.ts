@@ -1,22 +1,28 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { extracurriculars } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // PUT /api/extracurricular/[id]
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await req.json();
     const { name, employeeId, schedule, status } = body;
 
-    const data = await prisma.extracurricular.update({
-      where: { id: parseInt(id) },
-      data: {
+    const [data] = await db
+      .update(extracurriculars)
+      .set({
         ...(name !== undefined && { name }),
         ...(employeeId !== undefined && { employeeId: employeeId ? parseInt(employeeId) : null }),
         ...(schedule !== undefined && { schedule }),
         ...(status !== undefined && { status }),
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(extracurriculars.id, parseInt(id)))
+      .returning();
+
     return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate ekskul";
@@ -25,13 +31,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 // DELETE /api/extracurricular/[id]
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
-    const { id } = await params;
-    await prisma.extracurricular.update({
-      where: { id: parseInt(id) },
-      data: { deletedAt: new Date() },
-    });
+    const { id } = params;
+    await db
+      .update(extracurriculars)
+      .set({ deletedAt: new Date() })
+      .where(eq(extracurriculars.id, parseInt(id)));
+
     return NextResponse.json({ message: "Ekskul berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus ekskul";

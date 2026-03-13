@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, isNull, sql } from "drizzle-orm";
 
 /**
  * POST /api/journal/create
- * 
- * Catat transaksi baru ke jurnal umum.
- * Input: { type (in/out), amount, cashAccountId (opsional), categoryId, date, description }
- * Logic:
- *   1. Validasi input
- *   2. Jika cashAccountId dikirim → validasi saldo & update kas (backward compatible)
- *   3. Jika tidak → buat transaksi tanpa update saldo kas
- *   4. Semua dalam $transaction (ACID)
  */
 export async function POST(request: Request) {
   try {
@@ -19,64 +13,43 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { type, amount, cashAccountId, categoryId, date, description } = body;
 
-    // Validasi input
     if (!type || !["in", "out"].includes(type)) {
-      return NextResponse.json(
-        { success: false, message: "Tipe transaksi harus 'in' atau 'out'" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Tipe transaksi harus 'in' atau 'out'" }, { status: 400 });
     }
     if (!amount || Number(amount) <= 0) {
-      return NextResponse.json(
-        { success: false, message: "Jumlah harus lebih dari 0" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Jumlah harus lebih dari 0" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      let cashAccount = null;
+    const result = await db.transaction(async (tx) => {
+      let cashAccount: any = null;
       let newBalance: number | null = null;
 
-      // Jika cashAccountId dikirim, proses akun kas (backward compatible)
       if (cashAccountId) {
-        cashAccount = await tx.cashAccount.findUnique({
-          where: { id: Number(cashAccountId) },
-        });
-
-        if (!cashAccount || cashAccount.deletedAt) {
-          throw new Error("Akun kas tidak ditemukan");
-        }
-
-        // Validasi saldo untuk pengeluaran
+        const [ca] = await tx.select().from(cashAccounts).where(eq(cashAccounts.id, Number(cashAccountId))).limit(1);
+        cashAccount = ca;
+        if (!cashAccount || cashAccount.deletedAt) throw new Error("Akun kas tidak ditemukan");
         if (type === "out" && cashAccount.balance < Number(amount)) {
-          throw new Error(
-            `Saldo tidak cukup. Saldo: Rp ${cashAccount.balance.toLocaleString("id-ID")}, Dibutuhkan: Rp ${Number(amount).toLocaleString("id-ID")}`
-          );
+          throw new Error(`Saldo tidak cukup. Saldo: Rp ${cashAccount.balance.toLocaleString("id-ID")}, Dibutuhkan: Rp ${Number(amount).toLocaleString("id-ID")}`);
         }
       }
 
-      // Buat transaksi
-      const transaction = await tx.generalTransaction.create({
-        data: {
-          type,
-          amount: Number(amount),
-          cashAccountId: cashAccountId ? Number(cashAccountId) : null,
-          transactionCategoryId: categoryId ? Number(categoryId) : null,
-          date: date || new Date().toISOString().split("T")[0],
-          description: description || "",
-          status: "valid",
-          userId: user.userId,
-          unitId: user.unitId || "",
-        },
-      });
+      const [transaction] = await tx.insert(generalTransactions).values({
+        type: type as any,
+        amount: Number(amount),
+        cashAccountId: cashAccountId ? Number(cashAccountId) : null,
+        categoryId: categoryId ? Number(categoryId) : null,
+        date: date || new Date().toISOString().split("T")[0],
+        description: description || "",
+        status: "valid" as any,
+        userId: user.userId,
+        unitId: user.unitId || "",
+      }).returning();
 
-      // Update saldo kas jika ada cashAccountId
       if (cashAccount) {
         const balanceChange = type === "in" ? Number(amount) : -Number(amount);
-        await tx.cashAccount.update({
-          where: { id: cashAccount.id },
-          data: { balance: { increment: balanceChange } },
-        });
+        await tx.update(cashAccounts)
+          .set({ balance: sql`${cashAccounts.balance} + ${balanceChange}` })
+          .where(eq(cashAccounts.id, cashAccount.id));
         newBalance = cashAccount.balance + balanceChange;
       }
 
@@ -86,10 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: `Transaksi ${type === "in" ? "pemasukan" : "pengeluaran"} Rp ${Number(amount).toLocaleString("id-ID")} berhasil dicatat`,
-      data: {
-        id: result.transaction.id,
-        newBalance: result.newBalance,
-      },
+      data: { id: result.transaction.id, newBalance: result.newBalance },
     });
   } catch (error) {
     if (error instanceof AuthError) {

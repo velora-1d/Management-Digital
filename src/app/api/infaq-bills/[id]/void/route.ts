@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { infaqBills, infaqPayments } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, sql } from "drizzle-orm";
 
 /**
  * POST /api/infaq-bills/[id]/void
- * 
- * Void tagihan infaq — sesuai Laravel:
- * - TOLAK jika tagihan sudah lunas
- * - TOLAK jika sudah ada pembayaran (hapus pembayaran dulu)
- * - Hanya ubah status → 'void'
  */
 export async function POST(
   request: Request,
@@ -20,45 +17,29 @@ export async function POST(
     const billId = Number(params.id);
 
     if (isNaN(billId)) {
-      return NextResponse.json(
-        { success: false, message: "ID tagihan tidak valid" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "ID tagihan tidak valid" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const bill = await tx.infaqBill.findUnique({
-        where: { id: billId },
-        include: { payments: { where: { deletedAt: null } } },
-      });
+    await db.transaction(async (tx) => {
+      const [bill] = await tx.select().from(infaqBills).where(eq(infaqBills.id, billId)).limit(1);
 
       if (!bill) throw new Error("Tagihan tidak ditemukan");
       if (bill.deletedAt) throw new Error("Tagihan sudah dihapus");
       if (bill.status === "void") throw new Error("Tagihan sudah berstatus void");
+      if (bill.status === "lunas") throw new Error("Tagihan yang sudah LUNAS tidak dapat dibatalkan (void).");
 
-      // Sesuai Laravel: tolak void jika tagihan sudah lunas
-      if (bill.status === "lunas") {
-        throw new Error("Tagihan yang sudah LUNAS tidak dapat dibatalkan (void).");
-      }
+      const [{ paymentCount }] = await tx.select({ paymentCount: sql<number>`count(*)`.mapWith(Number) })
+        .from(infaqPayments)
+        .where(and(eq(infaqPayments.billId, billId), isNull(infaqPayments.deletedAt)));
 
-      // Sesuai Laravel: tolak void jika sudah ada riwayat pembayaran
-      if (bill.payments.length > 0) {
+      if (paymentCount > 0) {
         throw new Error("Tagihan ini memiliki riwayat pembayaran. Hapus pembayaran terlebih dahulu sebelum me-void tagihan.");
       }
 
-      // Update status bill ke void
-      await tx.infaqBill.update({
-        where: { id: bill.id },
-        data: { status: "void" },
-      });
-
-      return {};
+      await tx.update(infaqBills).set({ status: "void" as any, updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Tagihan berhasil dibatalkan (void).",
-    });
+    return NextResponse.json({ success: true, message: "Tagihan berhasil dibatalkan (void)." });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });

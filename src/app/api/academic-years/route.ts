@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { academicYears } from "@/db/schema";
+import { and, ilike, isNull, desc, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,22 +11,25 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q") || "";
     const skip = (page - 1) * limit;
 
-    const where: any = { deletedAt: null };
+    const conditions = [isNull(academicYears.deletedAt)];
     if (q) {
-      where.OR = [
-        { year: { contains: q, mode: "insensitive" } },
-      ];
+      conditions.push(ilike(academicYears.year, `%${q}%`));
     }
+    const whereClause = and(...conditions);
 
-    const [list, total] = await Promise.all([
-      prisma.academicYear.findMany({
-        where,
-        orderBy: { year: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.academicYear.count({ where }),
+    const [list, totalRes] = await Promise.all([
+      db.select()
+        .from(academicYears)
+        .where(whereClause)
+        .orderBy(desc(academicYears.year))
+        .limit(limit)
+        .offset(skip),
+      db.select({ count: sql`count(*)`.mapWith(Number) })
+        .from(academicYears)
+        .where(whereClause),
     ]);
+
+    const total = totalRes[0].count;
 
     return NextResponse.json(
       { 

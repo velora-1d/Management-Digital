@@ -1,9 +1,16 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { 
+  academicYears, studentEnrollments, students, employees, classrooms, 
+  ppdbRegistrations, generalTransactions, studentSavings, infaqBills, 
+  coopTransactions, studentCredits, counselingRecords, announcements, letters,
+  transactionCategories
+} from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
 import DashboardCharts from "@/components/DashboardCharts";
 import FilterBar from "@/components/FilterBar";
 import DashboardTabs from "@/components/DashboardTabs";
 import { Suspense } from "react";
+import { and, eq, ilike, gte, lte, isNull, inArray, not, sql, asc } from "drizzle-orm";
 
 // ISR: revalidate setiap 60 detik agar lebih ringan dan mengurangi SSR time (bottleneck LCP).
 export const revalidate = 60;
@@ -18,134 +25,212 @@ async function getDashboardData(searchParams: any) {
   // 1. Tentukan Tahun Ajaran Target
   let targetAcademicYearId = academicYearId;
   if (!targetAcademicYearId) {
-    const activeYear = await prisma.academicYear.findFirst({
-      where: { isActive: true, deletedAt: null },
-    });
-    targetAcademicYearId = activeYear?.id || null;
+    const activeYearRes = await db.select({ id: academicYears.id })
+      .from(academicYears)
+      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .limit(1);
+    targetAcademicYearId = activeYearRes.length > 0 ? activeYearRes[0].id : null;
   }
 
   // 2. Rentang Waktu Keuangan
   const now = new Date();
-  let dateFilter: any = {};
+  let dateStart: string, dateEnd: string;
+  
   if (month) {
     const monthMap: Record<string, number> = {
       "Januari": 0, "Februari": 1, "Maret": 2, "April": 3, "Mei": 4, "Juni": 5,
       "Juli": 6, "Agustus": 7, "September": 8, "Oktober": 9, "November": 10, "Desember": 11
     };
     const mIdx = monthMap[month] ?? now.getMonth();
-    const start = new Date(now.getFullYear(), mIdx, 1);
-    const end = new Date(now.getFullYear(), mIdx + 1, 0, 23, 59, 59);
-    dateFilter = { gte: start, lte: end };
+    dateStart = new Date(now.getFullYear(), mIdx, 1).toISOString();
+    dateEnd = new Date(now.getFullYear(), mIdx + 1, 0, 23, 59, 59).toISOString();
   } else {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    dateFilter = { gte: start, lte: end };
+    dateStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    dateEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
   }
 
-  // 3. Filter Query
-  const enrollmentWhere: any = { 
-    deletedAt: null, 
-    ...(targetAcademicYearId ? { academicYearId: targetAcademicYearId } : {}),
-    ...(classroomId ? { classroomId } : {}),
-    ...(gender ? { student: { gender } } : {})
+  // 3. Filter Query untuk Enrollment
+  const enrollmentConds = [isNull(studentEnrollments.deletedAt)];
+  if (targetAcademicYearId) enrollmentConds.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));
+  if (classroomId) enrollmentConds.push(eq(studentEnrollments.classroomId, classroomId));
+  const enrollmentWhere = and(...enrollmentConds);
+
+  // Helper untuk Subquery join dengan students untuk filter gender di enrollment
+  const getEnrollmentBaseQuery = () => {
+    const finalWhere = gender ? and(enrollmentWhere, eq(students.gender, gender)) : enrollmentWhere;
+    return db.select({ id: studentEnrollments.id, gender: students.gender })
+      .from(studentEnrollments)
+      .leftJoin(students, eq(studentEnrollments.studentId, students.id))
+      .where(finalWhere);
   };
 
-  const billWhere: any = { 
-    status: "belum_lunas", 
-    deletedAt: null,
-    ...(targetAcademicYearId ? { academicYearId: targetAcademicYearId } : {}),
-    ...(month ? { month } : {}),
-    ...(classroomId ? { student: { classroomId } } : {}),
-    ...(gender ? { student: { gender } } : {})
-  };
-
+  // 4. Filter Query untuk Infaq Bills
+  const billConds = [eq(infaqBills.status, "belum_lunas"), isNull(infaqBills.deletedAt)];
+  if (targetAcademicYearId) billConds.push(eq(infaqBills.academicYearId, targetAcademicYearId));
+  if (month) billConds.push(eq(infaqBills.month, month));
+  
   if (semester) {
     const ganjilMonths = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const genapMonths = ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
-    billWhere.month = { in: semester.toLowerCase() === "ganjil" ? ganjilMonths : genapMonths };
+    billConds.push(inArray(infaqBills.month, semester.toLowerCase() === "ganjil" ? ganjilMonths : genapMonths));
   }
+  const billWhere = and(...billConds);
+
+  const getBillBaseQuery = () => {
+    const extraConds = [];
+    if (classroomId) extraConds.push(eq(students.classroomId, classroomId));
+    if (gender) extraConds.push(eq(students.gender, gender));
+
+    const finalWhere = extraConds.length > 0 ? and(billWhere, ...extraConds) : billWhere;
+
+    return db.select({ 
+      id: infaqBills.id, 
+      nominal: infaqBills.nominal,
+      studentId: infaqBills.studentId,
+      gender: students.gender 
+    })
+    .from(infaqBills)
+    .leftJoin(students, eq(infaqBills.studentId, students.id))
+    .where(finalWhere);
+  };
+
+  // --- EKSEKUSI SEMUA AGREGASI PARALEL ---
+  
+  const enrollmentData = await getEnrollmentBaseQuery();
+  const totalSiswa = enrollmentData.length;
+  const totalSiswaPa = enrollmentData.filter(e => e.gender === "L").length;
+  const totalSiswaPi = enrollmentData.filter(e => e.gender === "P").length;
 
   const [
-    totalSiswa,
-    totalSiswaPa,
-    totalSiswaPi,
     employeesGroup,
-    classroomsCount,
+    classroomsCountRes,
     ppdbGroup,
-    incomePeriode,
-    expensePeriode,
-    savingsAgg,
-    tunggakanCount,
-    tunggakanTotalNominalAgg,
-    tunggakanPa,
-    tunggakanPi,
-    tunggakanSiswaUniq,
-    wakafAgg,
-    coopTrxAgg,
-    coopCreditAgg,
-    counselingCount,
-    announcementsCount,
-    lettersCount,
+    incomePeriodeRes,
+    expensePeriodeRes,
+    savingsAggRes,
+    billData,
+    wakafAggRes,
+    coopTrxAggRes,
+    coopCreditAggRes,
+    counselingCountRes,
+    announcementsCountRes,
+    lettersCountRes,
   ] = await Promise.all([
-    prisma.studentEnrollment.count({ where: enrollmentWhere }),
-    prisma.studentEnrollment.count({ where: { ...enrollmentWhere, student: { gender: "L" } } }),
-    prisma.studentEnrollment.count({ where: { ...enrollmentWhere, student: { gender: "P" } } }),
-    prisma.employee.groupBy({ by: ["type"], _count: { id: true }, where: { deletedAt: null, status: "aktif" } }),
-    prisma.classroom.count({ where: { deletedAt: null, ...(targetAcademicYearId ? { academicYearId: targetAcademicYearId } : {}) } }),
-    prisma.ppdbRegistration.groupBy({ by: ["status"], _count: { id: true }, where: { deletedAt: null, ...(gender ? { gender } : {}) } }),
-    prisma.generalTransaction.aggregate({
-      where: { type: "in", status: "valid", deletedAt: null, createdAt: dateFilter },
-      _sum: { amount: true },
-    }),
-    prisma.generalTransaction.aggregate({
-      where: { type: "out", status: "valid", deletedAt: null, createdAt: dateFilter },
-      _sum: { amount: true },
-    }),
-    prisma.studentSaving.aggregate({
-      where: { deletedAt: null, ...(gender ? { student: { gender } } : {}) },
-      _sum: { amount: true },
-    }),
-    prisma.infaqBill.count({ where: billWhere }),
-    prisma.infaqBill.aggregate({ where: billWhere, _sum: { nominal: true } }),
-    prisma.infaqBill.count({ where: { ...billWhere, student: { gender: "L" } } }),
-    prisma.infaqBill.count({ where: { ...billWhere, student: { gender: "P" } } }),
-    prisma.infaqBill.groupBy({ by: ["studentId"], where: billWhere }),
-    prisma.generalTransaction.aggregate({
-      where: { type: "in", status: "valid", deletedAt: null, createdAt: dateFilter, category: { name: { contains: "wakaf", mode: "insensitive" as any } } },
-      _sum: { amount: true },
-    }),
-    prisma.coopTransaction.aggregate({
-      where: { createdAt: dateFilter },
-      _sum: { total: true },
-      _count: { id: true },
-    }),
-    prisma.studentCredit.aggregate({
-      where: { status: { not: "lunas" } },
-      _sum: { amount: true, paidAmount: true },
-    }),
-    prisma.counselingRecord.count({
-      where: { date: { startsWith: now.toISOString().substring(0, 7) } }
-    }),
-    prisma.announcement.count({
-      where: { status: "aktif" }
-    }),
-    prisma.letter.count({
-      where: { date: { startsWith: now.toISOString().substring(0, 7) } }
-    }),
+    db.select({ type: employees.type, count: sql<number>`count(*)`.mapWith(Number) })
+      .from(employees)
+      .where(and(isNull(employees.deletedAt), eq(employees.status, "aktif")))
+      .groupBy(employees.type),
+
+    db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(classrooms)
+      .where(and(
+        isNull(classrooms.deletedAt), 
+        targetAcademicYearId ? eq(classrooms.academicYearId, targetAcademicYearId) : undefined
+      )),
+
+    db.select({ status: ppdbRegistrations.status, count: sql<number>`count(*)`.mapWith(Number) })
+      .from(ppdbRegistrations)
+      .where(and(
+        isNull(ppdbRegistrations.deletedAt), 
+        gender ? eq(ppdbRegistrations.gender, gender) : undefined
+      ))
+      .groupBy(ppdbRegistrations.status),
+
+    db.select({ sum: sql<number>`sum(${generalTransactions.amount})`.mapWith(Number) })
+      .from(generalTransactions)
+      .where(and(
+        eq(generalTransactions.type, "in"), 
+        eq(generalTransactions.status, "valid"), 
+        isNull(generalTransactions.deletedAt), 
+        gte(generalTransactions.createdAt, new Date(dateStart)), 
+        lte(generalTransactions.createdAt, new Date(dateEnd))
+      )),
+
+    db.select({ sum: sql<number>`sum(${generalTransactions.amount})`.mapWith(Number) })
+      .from(generalTransactions)
+      .where(and(
+        eq(generalTransactions.type, "out"), 
+        eq(generalTransactions.status, "valid"), 
+        isNull(generalTransactions.deletedAt), 
+        gte(generalTransactions.createdAt, new Date(dateStart)), 
+        lte(generalTransactions.createdAt, new Date(dateEnd))
+      )),
+
+    // Savings aggregate with conditional gender join
+    db.select({ sum: sql<number>`sum(${studentSavings.amount})`.mapWith(Number) })
+      .from(studentSavings)
+      .leftJoin(students, eq(studentSavings.studentId, students.id))
+      .where(and(
+        isNull(studentSavings.deletedAt),
+        gender ? eq(students.gender, gender) : undefined
+      )),
+
+    // Ambill semua data tagihan yang sesuai kriteria untuk diolah di JS array (lebih efisien drpd multiple query count)
+    getBillBaseQuery(),
+
+    // Wakaf (Kategori LIKE '%wakaf%')
+    db.select({ sum: sql<number>`sum(${generalTransactions.amount})`.mapWith(Number) })
+      .from(generalTransactions)
+      .leftJoin(transactionCategories, eq(generalTransactions.categoryId, transactionCategories.id))
+      .where(and(
+        eq(generalTransactions.type, "in"), 
+        eq(generalTransactions.status, "valid"), 
+        isNull(generalTransactions.deletedAt), 
+        gte(generalTransactions.createdAt, new Date(dateStart)), 
+        lte(generalTransactions.createdAt, new Date(dateEnd)),
+        ilike(transactionCategories.name, "%wakaf%")
+      )),
+
+    db.select({ 
+        sum: sql<number>`sum(${coopTransactions.total})`.mapWith(Number),
+        count: sql<number>`count(*)`.mapWith(Number) 
+      })
+      .from(coopTransactions)
+      .where(and(
+        gte(coopTransactions.createdAt, new Date(dateStart)), 
+        lte(coopTransactions.createdAt, new Date(dateEnd))
+      )),
+
+    db.select({ 
+        sumAmount: sql<number>`sum(${studentCredits.amount})`.mapWith(Number),
+        sumPaid: sql<number>`sum(${studentCredits.paidAmount})`.mapWith(Number)
+      })
+      .from(studentCredits)
+      .where(not(eq(studentCredits.status, "lunas"))),
+
+    db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(counselingRecords)
+      .where(gte(counselingRecords.date, new Date(now.getFullYear(), now.getMonth(), 1).toISOString())),
+
+    db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(announcements)
+      .where(eq(announcements.status, "aktif")),
+
+    db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(letters)
+      .where(gte(letters.date, new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0])),
   ]);
 
-  const totalGuru = employeesGroup.find(e => e.type === "guru")?._count.id || 0;
-  const totalStaff = employeesGroup.find(e => e.type === "staf")?._count.id || 0;
+  // Aggregate in-memory results
+  const totalGuru = employeesGroup.find(e => e.type === "guru")?.count || 0;
+  const totalStaff = employeesGroup.find(e => e.type === "staf")?.count || 0;
+  const classroomsCount = classroomsCountRes[0]?.count || 0;
   
-  const ppdbPending = ppdbGroup.find(p => p.status === "pending" || p.status === "menunggu")?._count.id || 0;
-  const ppdbDiterima = ppdbGroup.find(p => p.status === "diterima")?._count.id || 0;
+  const ppdbPending = ppdbGroup.find(p => p.status === "pending" || p.status === "menunggu")?.count || 0;
+  const ppdbDiterima = ppdbGroup.find(p => p.status === "diterima")?.count || 0;
 
-  const tunggakanTotalNominal = tunggakanTotalNominalAgg._sum.nominal || 0;
+  const tunggakanCount = billData.length;
+  const tunggakanTotalNominal = billData.reduce((acc, curr) => acc + (curr.nominal || 0), 0);
+  const tunggakanPa = billData.filter(b => b.gender === "L").length;
+  const tunggakanPi = billData.filter(b => b.gender === "P").length;
+  const tunggakanSiswaUniq = new Set(billData.map(b => b.studentId)).size;
 
-  const lunasCount = totalSiswa - tunggakanSiswaUniq.length;
+  const lunasCount = totalSiswa - tunggakanSiswaUniq;
   const complianceRate = totalSiswa > 0 ? Math.round((lunasCount / totalSiswa) * 100) : 0;
 
-  const piutangKoperasi = (coopCreditAgg._sum.amount || 0) - (coopCreditAgg._sum.paidAmount || 0);
+  const coopTotal = coopTrxAggRes[0]?.sum || 0;
+  const coopCount = coopTrxAggRes[0]?.count || 0;
+  const piutangKoperasi = (coopCreditAggRes[0]?.sumAmount || 0) - (coopCreditAggRes[0]?.sumPaid || 0);
 
   return {
     totalSiswa,
@@ -156,25 +241,25 @@ async function getDashboardData(searchParams: any) {
     totalKelas: classroomsCount,
     ppdbPending,
     ppdbDiterima,
-    pemasukanPeriode: incomePeriode._sum.amount || 0,
-    pengeluaranPeriode: expensePeriode._sum.amount || 0,
+    pemasukanPeriode: incomePeriodeRes[0]?.sum || 0,
+    pengeluaranPeriode: expensePeriodeRes[0]?.sum || 0,
     // Alias agar kompatibel dengan DashboardCharts
-    pemasukanBulanIni: incomePeriode._sum.amount || 0,
-    pengeluaranBulanIni: expensePeriode._sum.amount || 0,
-    saldoTabungan: savingsAgg._sum.amount || 0,
-    totalWakaf: wakafAgg._sum.amount || 0,
+    pemasukanBulanIni: incomePeriodeRes[0]?.sum || 0,
+    pengeluaranBulanIni: expensePeriodeRes[0]?.sum || 0,
+    saldoTabungan: savingsAggRes[0]?.sum || 0,
+    totalWakaf: wakafAggRes[0]?.sum || 0,
     tunggakanTotal: tunggakanCount,
     tunggakanTotalNominal,
     tunggakanPa,
     tunggakanPi,
     complianceRate,
     // Modul Baru
-    coopTotal: coopTrxAgg._sum.total || 0,
-    coopCount: coopTrxAgg._count.id || 0,
+    coopTotal,
+    coopCount,
     piutangKoperasi,
-    counselingCount,
-    announcementsCount,
-    lettersCount,
+    counselingCount: counselingCountRes[0]?.count || 0,
+    announcementsCount: announcementsCountRes[0]?.count || 0,
+    lettersCount: lettersCountRes[0]?.count || 0,
   };
 }
 

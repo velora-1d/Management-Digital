@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
+import { db } from "@/db";
+import { registrationPayments } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const payments = await prisma.registrationPayment.findMany({
-      where: { payableType: "reregistration", isPaid: true, deletedAt: null },
-    });
+    const paymentsList = await db
+      .select({
+        paymentType: registrationPayments.paymentType,
+        nominal: registrationPayments.nominal,
+      })
+      .from(registrationPayments)
+      .where(
+        and(
+          eq(registrationPayments.payableType, "reregistration"),
+          eq(registrationPayments.isPaid, true),
+          isNull(registrationPayments.deletedAt)
+        )
+      );
 
     let total_fee = 0, count_fee = 0;
     let total_books = 0, count_books = 0;
     let total_uniform = 0, count_uniform = 0;
 
-    payments.forEach((p) => {
+    paymentsList.forEach((p) => {
       if (p.paymentType === "fee") {
         total_fee += p.nominal;
         count_fee++;
@@ -35,6 +46,7 @@ export async function GET() {
       grand_total: total_fee + total_books + total_uniform,
     });
   } catch (error) {
+    console.error("Reregistration Stats GET error:", error);
     return NextResponse.json(
       { error: "Gagal mengambil statistik pembayaran" },
       { status: 500 }

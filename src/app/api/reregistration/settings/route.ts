@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { schoolSettings } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 
 // GET /api/reregistration/settings
 export async function GET() {
   try {
     const keys = ["re_registration_fee", "books_fee", "uniform_fee"];
-    const settings = await prisma.schoolSetting.findMany({
-      where: { key: { in: keys } },
-    });
+    const settingsList = await db
+      .select({ key: schoolSettings.key, value: schoolSettings.value })
+      .from(schoolSettings)
+      .where(inArray(schoolSettings.key, keys));
 
     const config: Record<string, number> = {
       re_registration_fee: 0,
@@ -16,7 +19,7 @@ export async function GET() {
       uniform_fee: 0,
     };
 
-    settings.forEach((s) => {
+    settingsList.forEach((s) => {
       config[s.key] = Number(s.value) || 0;
     });
 
@@ -38,25 +41,28 @@ export async function POST(request: Request) {
     // Update or Create settings
     for (const key of keys) {
       if (body[key] !== undefined) {
-        const existing = await prisma.schoolSetting.findFirst({
-          where: { key },
-        });
+        const [existing] = await db
+          .select()
+          .from(schoolSettings)
+          .where(eq(schoolSettings.key, key))
+          .limit(1);
 
         if (existing) {
-          await prisma.schoolSetting.update({
-            where: { id: existing.id },
-            data: { value: body[key].toString() },
-          });
+          await db
+            .update(schoolSettings)
+            .set({ value: body[key].toString(), updatedAt: new Date() })
+            .where(eq(schoolSettings.id, existing.id));
         } else {
-          await prisma.schoolSetting.create({
-            data: { key, value: body[key].toString() },
-          });
+          await db
+            .insert(schoolSettings)
+            .values({ key, value: body[key].toString() });
         }
       }
     }
 
     return NextResponse.json({ success: true, message: "Pengaturan berhasil disimpan" });
   } catch (error) {
+    console.error("Reregistration Settings POST error:", error);
     return NextResponse.json(
       { error: "Gagal menyimpan pengaturan" },
       { status: 500 }

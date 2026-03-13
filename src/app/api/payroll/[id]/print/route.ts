@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { payrolls, employees, payrollDetails, salaryComponents } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull } from "drizzle-orm";
 
 /**
  * GET /api/payroll/[id]/print — Data slip gaji untuk print view
@@ -18,31 +20,49 @@ export async function GET(
       return NextResponse.json({ success: false, message: "ID tidak valid" }, { status: 400 });
     }
 
-    const payroll = await prisma.payroll.findUnique({
-      where: { id: payrollId },
-      include: {
-        employee: true,
-        details: {
-          include: { component: true },
-          orderBy: { id: "asc" },
+    const [payroll] = await db
+      .select({
+        id: payrolls.id,
+        month: payrolls.month,
+        year: payrolls.year,
+        status: payrolls.status,
+        createdAt: payrolls.createdAt,
+        employee: {
+          id: employees.id,
+          name: employees.name,
+          nip: employees.nip,
+          position: employees.position,
         },
-      },
-    });
+      })
+      .from(payrolls)
+      .leftJoin(employees, eq(payrolls.employeeId, employees.id))
+      .where(and(eq(payrolls.id, payrollId), isNull(payrolls.deletedAt)))
+      .limit(1);
 
-    if (!payroll || payroll.deletedAt) {
+    if (!payroll) {
       return NextResponse.json({ success: false, message: "Payroll tidak ditemukan" }, { status: 404 });
     }
+
+    const details = await db
+      .select({
+        amount: payrollDetails.amount,
+        componentName: payrollDetails.componentName,
+        type: payrollDetails.type,
+      })
+      .from(payrollDetails)
+      .where(and(eq(payrollDetails.payrollId, payrollId), isNull(payrollDetails.deletedAt)))
+      .orderBy(payrollDetails.id);
 
     // Hitung earning & deduction
     let totalEarning = 0;
     let totalDeduction = 0;
 
-    const items = payroll.details.map((d: any) => {
-      const type = d.component?.type || "earning";
+    const items = details.map((d) => {
+      const type = d.type || "earning";
       if (type === "earning") totalEarning += d.amount;
       else totalDeduction += d.amount;
       return {
-        name: d.component?.name || "-",
+        name: d.componentName || "-",
         type,
         amount: d.amount,
       };
@@ -54,12 +74,7 @@ export async function GET(
         id: payroll.id,
         period: `${payroll.month} ${payroll.year}`,
         status: payroll.status,
-        employee: {
-          id: payroll.employee?.id,
-          name: payroll.employee?.name || "-",
-          nip: payroll.employee?.nip || "-",
-          position: payroll.employee?.position || "-",
-        },
+        employee: payroll.employee,
         items,
         totalEarning,
         totalDeduction,
@@ -71,6 +86,7 @@ export async function GET(
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     }
+    console.error("Payroll Print error:", error);
     return NextResponse.json({ success: false, message: "Gagal memuat slip gaji" }, { status: 500 });
   }
 }

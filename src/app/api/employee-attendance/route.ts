@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees, employeeAttendances } from "@/db/schema";
+import { isNull, and, eq, asc, sql } from "drizzle-orm";
 
 // GET /api/employee-attendance?date=YYYY-MM-DD
 export async function GET(req: Request) {
@@ -11,35 +13,46 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const where: any = { status: "aktif", deletedAt: null };
-    
-    // Hitung total pegawai aktif
-    const total = await prisma.employee.count({ where });
+    const empWhere = and(eq(employees.status, "aktif" as any), isNull(employees.deletedAt));
 
-    const employees = await prisma.employee.findMany({
-      where,
-      include: {
-        employeeAttendances: {
-          where: { date: date || "" }
-        },
-      },
-      orderBy: { name: "asc" },
-      skip: limit > 0 ? skip : undefined,
-      take: limit > 0 ? limit : undefined,
-    });
+    const [{ total }] = await db.select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(employees).where(empWhere);
 
-    // Transformasi data agar frontend tetap kompatibel (record = data[0] atau null)
-    const data = employees.map(emp => ({
+    const empList = await db.select({
+      id: employees.id,
+      name: employees.name,
+      position: employees.position,
+      status: employees.status,
+    })
+    .from(employees)
+    .where(empWhere)
+    .orderBy(asc(employees.name))
+    .limit(limit > 0 ? limit : 1000)
+    .offset(limit > 0 ? skip : 0);
+
+    // Ambil absensi untuk tanggal tertentu
+    let attendanceMap: Record<number, { id: number; status: string; note: string | null }> = {};
+    if (date && empList.length > 0) {
+      const empIds = empList.map(e => e.id);
+      const attendances = await db.select()
+        .from(employeeAttendances)
+        .where(and(
+          eq(employeeAttendances.date, date),
+          sql`${employeeAttendances.employeeId} = ANY(${empIds})`
+        ));
+      attendances.forEach(a => {
+        if (a.employeeId !== null) {
+          attendanceMap[a.employeeId] = { id: a.id, status: a.status, note: a.note };
+        }
+      });
+    }
+
+    const data = empList.map(emp => ({
       employeeId: emp.id,
-      employee: { 
-        id: emp.id, 
-        name: emp.name, 
-        position: emp.position, 
-        status: emp.status 
-      },
-      status: emp.employeeAttendances[0]?.status || "hadir",
-      note: emp.employeeAttendances[0]?.note || "",
-      id: emp.employeeAttendances[0]?.id || null, // ID record absensi jika ada
+      employee: { id: emp.id, name: emp.name, position: emp.position, status: emp.status },
+      status: attendanceMap[emp.id]?.status || "hadir",
+      note: attendanceMap[emp.id]?.note || "",
+      id: attendanceMap[emp.id]?.id || null,
     }));
 
     return NextResponse.json({
@@ -68,30 +81,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tanggal dan data absensi wajib" }, { status: 400 });
     }
 
-    const results = await prisma.$transaction(
-      records.map((rec: any) =>
-        prisma.employeeAttendance.upsert({
-          where: {
-            unique_employee_attendance: {
-              employeeId: parseInt(rec.employeeId),
-              date,
-            },
-          },
-          update: {
+    let count = 0;
+    await db.transaction(async (tx) => {
+      for (const rec of records) {
+        await tx.insert(employeeAttendances).values({
+          employeeId: parseInt(rec.employeeId),
+          date,
+          status: rec.status || "hadir",
+          note: rec.note || "",
+        }).onConflictDoUpdate({
+          target: [employeeAttendances.employeeId, employeeAttendances.date],
+          set: {
             status: rec.status || "hadir",
             note: rec.note || "",
-          },
-          create: {
-            employeeId: parseInt(rec.employeeId),
-            date,
-            status: rec.status || "hadir",
-            note: rec.note || "",
-          },
-        })
-      )
-    );
+            updatedAt: new Date(),
+          }
+        });
+        count++;
+      }
+    });
 
-    return NextResponse.json({ count: results.length });
+    return NextResponse.json({ count });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menyimpan absensi";
     return NextResponse.json({ error: msg }, { status: 500 });

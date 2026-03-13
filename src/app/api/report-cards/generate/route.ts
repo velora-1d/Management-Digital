@@ -1,5 +1,21 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { 
+    curriculums, 
+    academicYears, 
+    classrooms, 
+    employees, 
+    schoolSettings, 
+    students, 
+    finalGrades, 
+    subjects, 
+    attendances, 
+    extracurricularMembers, 
+    extracurriculars, 
+    classTeacherNotes,
+    reportCards
+} from "@/db/schema";
+import { eq, and, asc, inArray } from "drizzle-orm";
 
 // POST /api/report-cards/generate — Generate data rapor lengkap per siswa
 export async function POST(req: Request) {
@@ -16,23 +32,42 @@ export async function POST(req: Request) {
     const sIds = studentIds.map((s: string | number) => parseInt(String(s)));
 
     // Ambil data kurikulum
-    const curriculum = await prisma.curriculum.findUnique({
-      where: { id: curId },
-      include: { academicYear: true },
-    });
+    const [curriculum] = await db
+        .select({
+            id: curriculums.id,
+            type: curriculums.type,
+            semester: curriculums.semester,
+            academicYear: {
+                id: academicYears.id,
+                year: academicYears.year
+            }
+        })
+        .from(curriculums)
+        .leftJoin(academicYears, eq(curriculums.academicYearId, academicYears.id))
+        .where(eq(curriculums.id, curId))
+        .limit(1);
 
     if (!curriculum) {
       return NextResponse.json({ error: "Kurikulum tidak ditemukan" }, { status: 404 });
     }
 
     // Ambil data kelas + wali kelas
-    const classroom = await prisma.classroom.findUnique({
-      where: { id: cId },
-      include: { waliKelas: true },
-    });
+    const [classroom] = await db
+        .select({
+            id: classrooms.id,
+            name: classrooms.name,
+            waliKelas: {
+                id: employees.id,
+                name: employees.name
+            }
+        })
+        .from(classrooms)
+        .leftJoin(employees, eq(classrooms.waliKelasId, employees.id))
+        .where(eq(classrooms.id, cId))
+        .limit(1);
 
     // Ambil setting sekolah
-    const settings = await prisma.schoolSetting.findMany();
+    const settings = await db.select().from(schoolSettings);
     const settingsMap: Record<string, string> = {};
     settings.forEach((s) => { settingsMap[s.key] = s.value; });
 
@@ -41,65 +76,89 @@ export async function POST(req: Request) {
 
     for (const studentId of sIds) {
       // Identitas siswa
-      const student = await prisma.student.findUnique({
-        where: { id: studentId },
-        select: {
-          id: true, name: true, nisn: true, nis: true, gender: true,
-          birthPlace: true, birthDate: true,
-          fatherName: true, motherName: true, guardianName: true,
-          address: true,
-        },
-      });
+      const [student] = await db
+        .select({
+          id: students.id, name: students.name, nisn: students.nisn, nis: students.nis, gender: students.gender,
+          birthPlace: students.birthPlace, birthDate: students.birthDate,
+          fatherName: students.fatherName, motherName: students.motherName, guardianName: students.guardianName,
+          address: students.address,
+        })
+        .from(students)
+        .where(eq(students.id, studentId))
+        .limit(1);
 
       if (!student) continue;
 
       // Nilai akhir per mapel
-      const finalGrades = await prisma.finalGrade.findMany({
-        where: {
-          studentId,
-          classroomId: cId,
-          curriculumId: curId,
-        },
-        include: {
-          subject: { select: { id: true, name: true, code: true, type: true } },
-        },
-        orderBy: { subject: { name: "asc" } },
-      });
+      const gradesRes = await db
+        .select({
+          nilaiPengetahuan: finalGrades.nilaiPengetahuan,
+          nilaiKeterampilan: finalGrades.nilaiKeterampilan,
+          nilaiAkhir: finalGrades.nilaiAkhir,
+          predikat: finalGrades.predikat,
+          deskripsi: finalGrades.deskripsi,
+          subject: {
+             id: subjects.id,
+             name: subjects.name,
+             code: subjects.code,
+             type: subjects.type
+          }
+        })
+        .from(finalGrades)
+        .leftJoin(subjects, eq(finalGrades.subjectId, subjects.id))
+        .where(
+          and(
+            eq(finalGrades.studentId, studentId),
+            eq(finalGrades.classroomId, cId),
+            eq(finalGrades.curriculumId, curId)
+          )
+        )
+        .orderBy(asc(subjects.name));
 
       // Rekap absensi
-      const attendances = await prisma.attendance.findMany({
-        where: {
-          studentId,
-          classroomId: cId,
-        },
-      });
+      const atts = await db
+        .select()
+        .from(attendances)
+        .where(
+          and(
+            eq(attendances.studentId, studentId),
+            eq(attendances.classroomId, cId)
+          )
+        );
 
       const attendanceSummary = {
-        sakit: attendances.filter((a) => a.status === "sakit").length,
-        izin: attendances.filter((a) => a.status === "izin").length,
-        alpha: attendances.filter((a) => a.status === "alpha").length,
+        sakit: atts.filter((a) => a.status === "sakit").length,
+        izin: atts.filter((a) => a.status === "izin").length,
+        alpha: atts.filter((a) => a.status === "alpha").length,
       };
 
       // Ekstrakurikuler
-      const extracurriculars = await prisma.extracurricularMember.findMany({
-        where: { studentId },
-        include: {
-          extracurricular: { select: { name: true } },
-        },
-      });
+      const extras = await db
+        .select({
+          name: extracurriculars.name,
+          score: extracurricularMembers.score,
+          predicate: extracurricularMembers.predicate,
+        })
+        .from(extracurricularMembers)
+        .leftJoin(extracurriculars, eq(extracurricularMembers.extracurricularId, extracurriculars.id))
+        .where(eq(extracurricularMembers.studentId, studentId));
 
       // Catatan wali kelas
-      const teacherNote = await prisma.classTeacherNote.findFirst({
-        where: {
-          studentId,
-          classroomId: cId,
-          semester: semester || "ganjil",
-        },
-      });
+      const [teacherNote] = await db
+        .select()
+        .from(classTeacherNotes)
+        .where(
+          and(
+            eq(classTeacherNotes.studentId, studentId),
+            eq(classTeacherNotes.classroomId, cId),
+            eq(classTeacherNotes.semester, semester || "ganjil")
+          )
+        )
+        .limit(1);
 
       studentsData.push({
         student,
-        finalGrades: finalGrades.map((fg) => ({
+        finalGrades: gradesRes.map((fg) => ({
           subjectName: fg.subject?.name || "",
           subjectCode: fg.subject?.code || "",
           subjectType: fg.subject?.type || "",
@@ -110,8 +169,8 @@ export async function POST(req: Request) {
           deskripsi: fg.deskripsi,
         })),
         attendanceSummary,
-        extracurriculars: extracurriculars.map((e) => ({
-          name: e.extracurricular?.name || "",
+        extracurriculars: extras.map((e) => ({
+          name: e.name || "",
           score: e.score,
           predicate: e.predicate,
         })),
@@ -119,15 +178,17 @@ export async function POST(req: Request) {
       });
 
       // Update status report card ke GENERATED
-      await prisma.reportCard.updateMany({
-        where: {
-          studentId,
-          classroomId: cId,
-          curriculumId: curId,
-          semester: semester || "ganjil",
-        },
-        data: { status: "GENERATED" },
-      });
+      await db
+        .update(reportCards)
+        .set({ status: "GENERATED", updatedAt: new Date() })
+        .where(
+          and(
+            eq(reportCards.studentId, studentId),
+            eq(reportCards.classroomId, cId),
+            eq(reportCards.curriculumId, curId),
+            eq(reportCards.semester, semester || "ganjil")
+          )
+        );
     }
 
     return NextResponse.json({
@@ -144,6 +205,7 @@ export async function POST(req: Request) {
       students: studentsData,
     });
   } catch (error: unknown) {
+    console.error("Report cards generate error:", error);
     const message = error instanceof Error ? error.message : "Gagal generate data rapor";
     return NextResponse.json({ error: message }, { status: 500 });
   }

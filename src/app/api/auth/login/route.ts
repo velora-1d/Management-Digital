@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { verifyPassword, setAuthCookie, isLegacyHash, hashPassword } from "@/lib/auth";
 
 // =============================================================
@@ -74,13 +76,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Cari user berdasarkan email
-    const user = await prisma.user.findFirst({
-      where: {
-        email: email,
-        deletedAt: null,
-        status: "aktif",
-      },
-    });
+    const [user] = await db.select()
+      .from(users)
+      .where(and(
+        eq(users.email, email),
+        isNull(users.deletedAt),
+        eq(users.status, "aktif")
+      ))
+      .limit(1);
 
     if (!user) {
       recordAttempt(ip);
@@ -106,10 +109,9 @@ export async function POST(request: NextRequest) {
     // Auto-rehash password legasi (SHA256) ke bcrypt
     if (isLegacyHash(user.password)) {
       try {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { password: hashPassword(password) },
-        });
+        await db.update(users)
+          .set({ password: hashPassword(password) })
+          .where(eq(users.id, user.id));
         console.log(`[SECURITY] Password user ${user.id} berhasil di-rehash dari SHA256 ke bcrypt.`);
       } catch (e) {
         // Jangan gagalkan login hanya karena rehash gagal

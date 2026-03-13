@@ -1,32 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { gradeComponents } from "@/db/schema";
+import { eq, asc, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const curriculumId = searchParams.get("curriculumId");
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limit = parseInt(searchParams.get("limit") || "100");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    if (curriculumId) where.curriculumId = Number(curriculumId);
+    let whereClause = undefined;
+    if (curriculumId) whereClause = eq(gradeComponents.curriculumId, Number(curriculumId));
 
-    const [components, total] = await Promise.all([
-      prisma.gradeComponent.findMany({
-        where,
-        orderBy: {
-          urutan: "asc",
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.gradeComponent.count({ where }),
+    const [results, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(gradeComponents)
+        .where(whereClause)
+        .orderBy(asc(gradeComponents.urutan))
+        .limit(limit)
+        .offset(skip),
+      db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(gradeComponents)
+        .where(whereClause),
     ]);
+
+    const total = totalResult[0]?.count || 0;
 
     return NextResponse.json({
       success: true,
-      data: components,
+      data: results,
       total,
       page,
       limit,
@@ -53,8 +59,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const component = await prisma.gradeComponent.create({
-      data: {
+    const [component] = await db
+      .insert(gradeComponents)
+      .values({
         curriculumId,
         name,
         code,
@@ -63,8 +70,8 @@ export async function POST(req: Request) {
         bobot: bobot || 0,
         urutan: urutan || 1,
         isWajib: isWajib ?? true,
-      },
-    });
+      })
+      .returning();
 
     return NextResponse.json(component, { status: 201 });
   } catch (error) {

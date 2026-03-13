@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { teachingAssignments, employees, subjects, classrooms, academicYears } from "@/db/schema";
+import { isNull, and, eq, desc, sql } from "drizzle-orm";
 
 export async function GET(request: Request) {
   try {
@@ -9,42 +11,63 @@ export async function GET(request: Request) {
     const classroomId = searchParams.get('classroomId');
     const academicYearId = searchParams.get('academicYearId');
 
-    const filter: any = {
-      deletedAt: null,
-    };
-
-    if (employeeId) filter.employeeId = parseInt(employeeId);
-    if (subjectId) filter.subjectId = parseInt(subjectId);
-    if (classroomId) filter.classroomId = parseInt(classroomId);
-    if (academicYearId) filter.academicYearId = parseInt(academicYearId);
+    const conditions = [isNull(teachingAssignments.deletedAt)];
+    if (employeeId) conditions.push(eq(teachingAssignments.employeeId, parseInt(employeeId)));
+    if (subjectId) conditions.push(eq(teachingAssignments.subjectId, parseInt(subjectId)));
+    if (classroomId) conditions.push(eq(teachingAssignments.classroomId, parseInt(classroomId)));
+    if (academicYearId) conditions.push(eq(teachingAssignments.academicYearId, parseInt(academicYearId)));
 
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const [assignments, total] = await Promise.all([
-      prisma.teachingAssignment.findMany({
-        where: filter,
-        include: {
-          employee: {
-            select: { id: true, name: true }
-          },
-          subject: {
-            select: { id: true, name: true, code: true, type: true }
-          },
-          classroom: {
-            select: { id: true, name: true }
-          },
-          academicYear: {
-            select: { id: true, year: true, isActive: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.teachingAssignment.count({ where: filter })
+    const whereClause = and(...conditions);
+
+    const [rawData, [{ total }]] = await Promise.all([
+      db.select({
+        id: teachingAssignments.id,
+        employeeId: teachingAssignments.employeeId,
+        subjectId: teachingAssignments.subjectId,
+        classroomId: teachingAssignments.classroomId,
+        academicYearId: teachingAssignments.academicYearId,
+        createdAt: teachingAssignments.createdAt,
+        updatedAt: teachingAssignments.updatedAt,
+        employeeName: employees.name,
+        subjectName: subjects.name,
+        subjectCode: subjects.code,
+        subjectType: subjects.type,
+        classroomName: classrooms.name,
+        academicYearName: academicYears.year,
+        academicYearIsActive: academicYears.isActive,
+      })
+      .from(teachingAssignments)
+      .leftJoin(employees, eq(teachingAssignments.employeeId, employees.id))
+      .leftJoin(subjects, eq(teachingAssignments.subjectId, subjects.id))
+      .leftJoin(classrooms, eq(teachingAssignments.classroomId, classrooms.id))
+      .leftJoin(academicYears, eq(teachingAssignments.academicYearId, academicYears.id))
+      .where(whereClause)
+      .orderBy(desc(teachingAssignments.createdAt))
+      .limit(limit)
+      .offset(skip),
+      
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(teachingAssignments)
+      .where(whereClause)
     ]);
+
+    const assignments = rawData.map(r => ({
+      id: r.id,
+      employeeId: r.employeeId,
+      subjectId: r.subjectId,
+      classroomId: r.classroomId,
+      academicYearId: r.academicYearId,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      employee: { id: r.employeeId, name: r.employeeName },
+      subject: { id: r.subjectId, name: r.subjectName, code: r.subjectCode, type: r.subjectType },
+      classroom: { id: r.classroomId, name: r.classroomName },
+      academicYear: { id: r.academicYearId, year: r.academicYearName, isActive: r.academicYearIsActive },
+    }));
 
     return NextResponse.json({ 
       success: true, 
@@ -66,7 +89,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { employeeId, subjectId, classroomId, academicYearId } = body;
 
-    // Validate required fields
     if (!employeeId || !subjectId || !classroomId || !academicYearId) {
       return NextResponse.json({ 
         success: false, 
@@ -75,15 +97,16 @@ export async function POST(request: Request) {
     }
 
     // Check for duplicate assignment
-    const existing = await prisma.teachingAssignment.findFirst({
-      where: {
-        employeeId: parseInt(employeeId),
-        subjectId: parseInt(subjectId),
-        classroomId: parseInt(classroomId),
-        academicYearId: parseInt(academicYearId),
-        deletedAt: null
-      }
-    });
+    const [existing] = await db.select({ id: teachingAssignments.id })
+      .from(teachingAssignments)
+      .where(and(
+        eq(teachingAssignments.employeeId, parseInt(employeeId)),
+        eq(teachingAssignments.subjectId, parseInt(subjectId)),
+        eq(teachingAssignments.classroomId, parseInt(classroomId)),
+        eq(teachingAssignments.academicYearId, parseInt(academicYearId)),
+        isNull(teachingAssignments.deletedAt)
+      ))
+      .limit(1);
 
     if (existing) {
       return NextResponse.json({ 
@@ -92,19 +115,12 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const newAssignment = await prisma.teachingAssignment.create({
-      data: {
-        employeeId: parseInt(employeeId),
-        subjectId: parseInt(subjectId),
-        classroomId: parseInt(classroomId),
-        academicYearId: parseInt(academicYearId)
-      },
-      include: {
-        employee: { select: { name: true } },
-        subject: { select: { name: true } },
-        classroom: { select: { name: true } },
-      }
-    });
+    const [newAssignment] = await db.insert(teachingAssignments).values({
+      employeeId: parseInt(employeeId),
+      subjectId: parseInt(subjectId),
+      classroomId: parseInt(classroomId),
+      academicYearId: parseInt(academicYearId)
+    }).returning();
 
     return NextResponse.json({ success: true, data: newAssignment }, { status: 201 });
   } catch (error: any) {

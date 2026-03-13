@@ -94,11 +94,15 @@ export default function AttendancePage() {
         fetch("/api/academic-years").then(r => r.json()),
       ]);
 
-      if (crRes.success) setClassrooms(crRes.data || []);
-      if (ayRes.success) {
-        setAcademicYears(ayRes.data || []);
+      if (crRes.success && Array.isArray(crRes.data)) setClassrooms(crRes.data);
+      else setClassrooms([]);
+
+      if (ayRes.success && Array.isArray(ayRes.data)) {
+        setAcademicYears(ayRes.data);
         const active = ayRes.data.find((a: any) => a.isActive);
         if (active) setActiveAcademicYear(active);
+      } else {
+        setAcademicYears([]);
       }
     } catch (error) {
       console.error("Gagal mengambil metadata", error);

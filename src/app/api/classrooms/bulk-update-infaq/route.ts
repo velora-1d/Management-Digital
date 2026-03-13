@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { classrooms, auditLogs } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { inArray, and, isNull } from "drizzle-orm";
 
 /**
  * PATCH /api/classrooms/bulk-update-infaq
@@ -41,31 +43,30 @@ export async function PATCH(request: Request) {
     }
 
     // 2. Eksekusi Update Masal
-    const result = await prisma.classroom.updateMany({
-      where: {
-        id: { in: classIds.map(Number) },
-        deletedAt: null, // Hanya kelas yang masih aktif
-      },
-      data: {
+    const result = await db.update(classrooms)
+      .set({ 
         infaqNominal: Number(nominal),
-      },
-    });
+        updatedAt: new Date()
+      })
+      .where(and(
+        inArray(classrooms.id, classIds.map(Number)),
+        isNull(classrooms.deletedAt)
+      ))
+      .returning({ id: classrooms.id });
 
     // 3. Tambahkan Audit Log (opsional tapi disarankan sesuai schema Anda)
-    await prisma.auditLog.create({
-      data: {
-        userId: user.userId,
-        action: "BULK_UPDATE_INFAQ_NOMINAL",
-        modelType: "Classroom",
-        modelId: classIds.join(","),
-        newValues: JSON.stringify({ nominal, affectedRows: result.count }),
-      },
+    await db.insert(auditLogs).values({
+      userId: user.userId,
+      action: "BULK_UPDATE_INFAQ_NOMINAL",
+      modelType: "Classroom",
+      modelId: classIds.join(","),
+      newValues: JSON.stringify({ nominal, affectedRows: result.length }),
     });
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil memperbarui biaya SPP untuk ${result.count} kelas.`,
-      count: result.count,
+      message: `Berhasil memperbarui biaya SPP untuk ${result.length} kelas.`,
+      count: result.length,
     });
 
   } catch (error) {

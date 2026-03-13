@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { academicYears, classrooms, studentEnrollments, generalTransactions, infaqBills } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, gte, lte, asc, sql } from "drizzle-orm";
 
 /**
  * GET /api/dashboard/charts — Data untuk charts dashboard dengan filter
@@ -11,15 +13,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const academicYearId = searchParams.get("academicYearId") ? Number(searchParams.get("academicYearId")) : null;
-    const classroomId = searchParams.get("classroomId") ? Number(searchParams.get("classroomId")) : null;
-    const gender = searchParams.get("gender");
 
     // 1. Tentukan Tahun Ajaran Aktif jika tidak difilter
     let targetAcademicYearId = academicYearId;
     if (!targetAcademicYearId) {
-      const activeYear = await prisma.academicYear.findFirst({
-        where: { isActive: true, deletedAt: null },
-      });
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
       targetAcademicYearId = activeYear?.id || null;
     }
 
@@ -34,64 +35,50 @@ export async function GET(request: Request) {
       months.push({ label, start: d, end });
     }
 
-    // Cashflow per bulan (Transaksi umum biasanya lintas tahun, tapi kita filter status & deletedAt)
+    // Cashflow per bulan
     const cashflowData = await Promise.all(
       months.map(async (m) => {
-        const [incomeAgg, expenseAgg] = await Promise.all([
-          prisma.generalTransaction.aggregate({
-            where: { type: "in", status: "valid", deletedAt: null, createdAt: { gte: m.start, lte: m.end } },
-            _sum: { amount: true },
-          }),
-          prisma.generalTransaction.aggregate({
-            where: { type: "out", status: "valid", deletedAt: null, createdAt: { gte: m.start, lte: m.end } },
-            _sum: { amount: true },
-          }),
+        const [[{ income }], [{ expense }]] = await Promise.all([
+          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
+            .from(generalTransactions)
+            .where(and(eq(generalTransactions.type, "in" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
+          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
+            .from(generalTransactions)
+            .where(and(eq(generalTransactions.type, "out" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
         ]);
-        return {
-          month: m.label,
-          income: incomeAgg._sum.amount || 0,
-          expense: expenseAgg._sum.amount || 0,
-        };
+        return { month: m.label, income, expense };
       })
     );
 
-    // 2. Distribusi siswa per kelas (Hanya untuk Tahun Ajaran terpilih)
-    const classDistribution = await prisma.classroom.findMany({
-      where: { 
-        deletedAt: null,
-        ...(targetAcademicYearId ? { academicYearId: targetAcademicYearId } : {})
-      },
-      select: {
-        name: true,
-        _count: { 
-          select: { 
-            studentEnrollments: {
-              where: {
-                deletedAt: null,
-                ...(gender ? { student: { gender } } : {})
-              }
-            }
-          } 
-        },
-      },
-      orderBy: { name: "asc" },
-    });
+    // 2. Distribusi siswa per kelas
+    const classroomConditions = [isNull(classrooms.deletedAt)];
+    if (targetAcademicYearId) classroomConditions.push(eq(classrooms.academicYearId, targetAcademicYearId));
 
-    // 3. SPP compliance (Berdasarkan Tahun Ajaran terpilih)
-    const billWhere: any = { deletedAt: null };
-    if (targetAcademicYearId) billWhere.academicYearId = targetAcademicYearId;
-    if (classroomId) billWhere.student = { classroomId };
-    if (gender) billWhere.student = { ...billWhere.student, gender };
+    const classDistribution = await db.select({
+      name: classrooms.name,
+      students: sql<number>`count(distinct ${studentEnrollments.id})`.mapWith(Number),
+    })
+    .from(classrooms)
+    .leftJoin(studentEnrollments, and(
+      eq(classrooms.id, studentEnrollments.classroomId),
+      isNull(studentEnrollments.deletedAt)
+    ))
+    .where(and(...classroomConditions))
+    .groupBy(classrooms.id, classrooms.name)
+    .orderBy(asc(classrooms.name));
 
-    // Kita ambil kepatuhan untuk bulan berjalan (jika ada tagihannya)
+    // 3. SPP compliance
     const currentMonthStr = now.toLocaleDateString("id-ID", { month: "long" });
-    const [sppTotal, sppLunas] = await Promise.all([
-      prisma.infaqBill.count({ 
-        where: { ...billWhere, month: currentMonthStr } 
-      }),
-      prisma.infaqBill.count({ 
-        where: { ...billWhere, month: currentMonthStr, status: "lunas" } 
-      }),
+    const billBaseConditions = [isNull(infaqBills.deletedAt)];
+    if (targetAcademicYearId) billBaseConditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
+
+    const [[{ sppTotal }], [{ sppLunas }]] = await Promise.all([
+      db.select({ sppTotal: sql<number>`count(*)`.mapWith(Number) })
+        .from(infaqBills)
+        .where(and(...billBaseConditions, eq(infaqBills.month, currentMonthStr))),
+      db.select({ sppLunas: sql<number>`count(*)`.mapWith(Number) })
+        .from(infaqBills)
+        .where(and(...billBaseConditions, eq(infaqBills.month, currentMonthStr), eq(infaqBills.status, "lunas" as any))),
     ]);
 
     return NextResponse.json({
@@ -100,7 +87,7 @@ export async function GET(request: Request) {
         cashflow: cashflowData,
         classDistribution: classDistribution.map((c) => ({
           name: c.name,
-          students: c._count.studentEnrollments,
+          students: c.students,
         })),
         sppCompliance: {
           total: sppTotal,

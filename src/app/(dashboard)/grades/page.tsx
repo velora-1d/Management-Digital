@@ -51,10 +51,15 @@ export default function GradesPage() {
       fetch("/api/classrooms").then(r => r.json()),
       fetch("/api/subjects").then(r => r.json()),
     ]).then(([years, classes, subs]) => {
-      setAcademicYears(years);
-      setClassrooms(classes);
-      setSubjects(subs);
-      const active = years.find((y: any) => y.isActive);
+      const validYears = Array.isArray(years) ? years : [];
+      const validClasses = Array.isArray(classes) ? classes : [];
+      const validSubs = Array.isArray(subs) ? subs : [];
+
+      setAcademicYears(validYears);
+      setClassrooms(validClasses);
+      setSubjects(validSubs);
+      
+      const active = validYears.find((y: any) => y.isActive);
       if (active) setSelectedYearId(String(active.id));
     }).catch(console.error);
   }, []);

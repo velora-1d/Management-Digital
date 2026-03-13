@@ -1,37 +1,24 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { schoolSettings } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-
-/**
- * GET /api/ppdb/settings — Ambil settings biaya PPDB
- * PUT /api/ppdb/settings — Update settings biaya PPDB
- * Menggunakan model SchoolSetting (key-value store)
- */
+import { eq, inArray } from "drizzle-orm";
 
 const KEYS = ["ppdb_fee_daftar", "ppdb_fee_buku", "ppdb_fee_seragam"];
 
 export async function GET() {
   try {
     await requireAuth();
-    const settings = await prisma.schoolSetting.findMany({
-      where: { key: { in: KEYS } },
-    });
-
+    const settings = await db.select().from(schoolSettings).where(inArray(schoolSettings.key, KEYS));
     const map: Record<string, number> = {};
-    settings.forEach((s: any) => { map[s.key] = Number(s.value) || 0; });
+    settings.forEach(s => { map[s.key] = Number(s.value) || 0; });
 
     return NextResponse.json({
       success: true,
-      data: {
-        daftar: map["ppdb_fee_daftar"] || 0,
-        buku: map["ppdb_fee_buku"] || 0,
-        seragam: map["ppdb_fee_seragam"] || 0,
-      },
+      data: { daftar: map["ppdb_fee_daftar"] || 0, buku: map["ppdb_fee_buku"] || 0, seragam: map["ppdb_fee_seragam"] || 0 },
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json({ success: false, message: "Gagal mengambil settings" }, { status: 500 });
   }
 }
@@ -48,32 +35,18 @@ export async function PUT(request: Request) {
       { key: "ppdb_fee_seragam", value: String(seragam || 0) },
     ];
 
-    // Upsert via findFirst + create/update karena key belum @@unique
     for (const u of updates) {
-      const existing = await prisma.schoolSetting.findFirst({
-        where: { key: u.key },
-      });
-
+      const [existing] = await db.select({ id: schoolSettings.id }).from(schoolSettings).where(eq(schoolSettings.key, u.key)).limit(1);
       if (existing) {
-        await prisma.schoolSetting.update({
-          where: { id: existing.id },
-          data: { value: u.value },
-        });
+        await db.update(schoolSettings).set({ value: u.value, updatedAt: new Date() }).where(eq(schoolSettings.id, existing.id));
       } else {
-        await prisma.schoolSetting.create({
-          data: { key: u.key, value: u.value, unitId: user.unitId || "" },
-        });
+        await db.insert(schoolSettings).values({ key: u.key, value: u.value, unitId: user.unitId || "" });
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Settings biaya PPDB berhasil disimpan.",
-    });
+    return NextResponse.json({ success: true, message: "Settings biaya PPDB berhasil disimpan." });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json({ success: false, message: "Gagal menyimpan settings" }, { status: 500 });
   }
 }

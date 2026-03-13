@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, studentEnrollments, classrooms, academicYears } from "@/db/schema";
+import { and, eq, ilike, or, gte, lte, isNull, asc, sql } from "drizzle-orm";
 
 /**
  * Mengekstrak field Dapodik dari body request.
@@ -69,8 +71,8 @@ export async function GET(request: Request) {
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 20));
   const search = searchParams.get("q") || "";
-  const classroomId = searchParams.get("classroomId") || searchParams.get("classroom") || "";
-  const academicYearId = searchParams.get("academicYearId") || "";
+  const reqClassroomId = searchParams.get("classroomId") || searchParams.get("classroom") || "";
+  const reqAcademicYearId = searchParams.get("academicYearId") || "";
   const gender = searchParams.get("gender") || "";
   const status = searchParams.get("status") || "aktif";
   const ageMin = searchParams.get("ageMin");
@@ -78,79 +80,106 @@ export async function GET(request: Request) {
 
   try {
     // 1. Tentukan Tahun Ajaran Target
-    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    let targetAcademicYearId = reqAcademicYearId ? Number(reqAcademicYearId) : null;
     if (!targetAcademicYearId) {
-      const activeYear = await prisma.academicYear.findFirst({
-        where: { isActive: true, deletedAt: null },
-      });
-      targetAcademicYearId = activeYear?.id || null;
+      const activeYearRes = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYearRes.length > 0 ? activeYearRes[0].id : null;
     }
 
     // 2. Bangun Filter Enrollment (Sumber Utama Kebenaran Data per Tahun Ajaran)
-    const enrollmentWhere: any = { 
-      deletedAt: null,
-      student: { deletedAt: null }
-    };
+    const conditions = [
+      isNull(studentEnrollments.deletedAt),
+      isNull(students.deletedAt)
+    ];
 
     if (targetAcademicYearId) {
-      enrollmentWhere.academicYearId = targetAcademicYearId;
+      conditions.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));
     }
 
-    if (classroomId) {
-      enrollmentWhere.classroomId = Number(classroomId);
+    if (reqClassroomId) {
+      conditions.push(eq(studentEnrollments.classroomId, Number(reqClassroomId)));
     }
 
-    // Filter di level Siswa (Nested)
-    if (search || gender || status) {
-      enrollmentWhere.student = {
-        ...enrollmentWhere.student,
-        ...(search ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { nisn: { contains: search } },
-            { nis: { contains: search } },
-          ]
-        } : {}),
-        ...(gender ? { gender } : {}),
-        ...(status ? { status } : {}),
-        ...((ageMin || ageMax) ? {
-          birthDate: {
-            ...(ageMin ? { lte: new Date(new Date().getFullYear() - Number(ageMin), new Date().getMonth(), new Date().getDate()) } : {}),
-            ...(ageMax ? { gte: new Date(new Date().getFullYear() - Number(ageMax) - 1, new Date().getMonth(), new Date().getDate() + 1) } : {}),
-          }
-        } : {}),
-      };
+    if (search) {
+      const searchCondition = or(
+        ilike(students.name, `%${search}%`),
+        ilike(students.nisn, `%${search}%`),
+        ilike(students.nis, `%${search}%`)
+      );
+      if (searchCondition) conditions.push(searchCondition);
     }
 
-    const [enrollments, total] = await Promise.all([
-      prisma.studentEnrollment.findMany({
-        where: enrollmentWhere,
-        include: { 
-          student: true,
-          classroom: { select: { id: true, name: true } },
-          academicYear: { select: { id: true, year: true } }
+    if (gender) {
+      conditions.push(eq(students.gender, gender));
+    }
+
+    if (status) {
+      conditions.push(eq(students.status, status));
+    }
+
+    if (ageMin || ageMax) {
+      if (ageMin) {
+        const d = new Date();
+        const maxDate = new Date(d.getFullYear() - Number(ageMin), d.getMonth(), d.getDate()).toISOString();
+        conditions.push(lte(students.birthDate, maxDate));
+      }
+      if (ageMax) {
+        const d = new Date();
+        const minDate = new Date(d.getFullYear() - Number(ageMax) - 1, d.getMonth(), d.getDate() + 1).toISOString();
+        conditions.push(gte(students.birthDate, minDate));
+      }
+    }
+
+    const whereClause = and(...conditions);
+
+    const [enrollmentsRes, totalRes] = await Promise.all([
+      db.select({
+        student: students,
+        enrollmentId: studentEnrollments.id,
+        enrollmentType: studentEnrollments.enrollmentType,
+        classroom: {
+          id: classrooms.id,
+          name: classrooms.name
         },
-        orderBy: { student: { name: "asc" } },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.studentEnrollment.count({ where: enrollmentWhere }),
+        academicYear: {
+          id: academicYears.id,
+          year: academicYears.year
+        }
+      })
+      .from(studentEnrollments)
+      .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+      .leftJoin(classrooms, eq(studentEnrollments.classroomId, classrooms.id))
+      .leftJoin(academicYears, eq(studentEnrollments.academicYearId, academicYears.id))
+      .where(whereClause)
+      .orderBy(asc(students.name))
+      .limit(limit)
+      .offset((page - 1) * limit),
+
+      db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(studentEnrollments)
+      .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+      .where(whereClause)
     ]);
 
     // Transform agar format output tetap sama dengan yang diharapkan frontend (List of Students)
-    const students = enrollments.map(e => ({
+    const resultStudents = enrollmentsRes.map(e => ({
       ...e.student,
       classroom: e.classroom,
       enrollment: {
-        id: e.id,
+        id: e.enrollmentId,
         enrollmentType: e.enrollmentType,
         academicYear: e.academicYear
       }
     }));
 
+    const total = totalRes[0].count;
+
     return NextResponse.json({
       success: true,
-      data: students,
+      data: resultStudents,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
@@ -168,11 +197,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Nama siswa wajib diisi" }, { status: 400 });
     }
 
-    const student = await prisma.student.create({ data });
+    const [student] = await db.insert(students).values(data).returning();
 
     return NextResponse.json({ success: true, message: "Data siswa berhasil ditambahkan", data: student });
   } catch (error: any) {
-    if (error.code === 'P2002') {
+    // Drizzle postgres duplicate key error is usually 23505
+    if (error.code === '23505' || error.message?.includes('duplicate key')) {
       return NextResponse.json({ success: false, message: "NISN sudah dipakai siswa lain" }, { status: 400 });
     }
     console.error("Error creating student:", error);

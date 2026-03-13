@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { reRegistrations } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 
 export async function PUT(
@@ -18,13 +20,15 @@ export async function PUT(
         return NextResponse.json({ error: "Status tidak valid" }, { status: 400 });
     }
 
-    const updated = await prisma.reRegistration.update({
-      where: { id },
-      data: { status },
-    });
+    const [updated] = await db
+      .update(reRegistrations)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(reRegistrations.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
+    console.error("Reregistration Status PUT error:", error);
     return NextResponse.json(
       { error: "Gagal memperbarui status daftar ulang" },
       { status: 500 }

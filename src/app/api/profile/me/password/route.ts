@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq, isNull, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
-
 async function getMe() {
-  return await prisma.user.findFirst({
-    where: { deletedAt: null },
-    orderBy: { id: "asc" }
-  });
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(isNull(users.deletedAt))
+    .orderBy(asc(users.id))
+    .limit(1);
+  return user;
 }
 
 export async function POST(req: Request) {
@@ -29,13 +33,14 @@ export async function POST(req: Request) {
 
     const hashed = await bcrypt.hash(new_password, 10);
     
-    await prisma.user.update({
-      where: { id: me.id },
-      data: { password: hashed }
-    });
+    await db
+      .update(users)
+      .set({ password: hashed, updatedAt: new Date() })
+      .where(eq(users.id, me.id));
 
     return NextResponse.json({ success: true, message: "Password berhasil diubah" });
   } catch (error) {
+    console.error("Profile password POST error:", error);
     return NextResponse.json({ error: "Gagal mengubah password" }, { status: 500 });
   }
 }

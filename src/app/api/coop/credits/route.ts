@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { studentCredits, students, coopTransactions } from "@/db/schema";
+import { eq, and, ne, desc, sql } from "drizzle-orm";
 
 // GET /api/coop/credits?status=belum_lunas
 export async function GET(req: Request) {
@@ -10,25 +12,53 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
+    const conditions = [];
+    if (status) conditions.push(eq(studentCredits.status, status));
 
-    const [data, total, allCreditsForTotal] = await Promise.all([
-      prisma.studentCredit.findMany({
-        where,
-        include: {
-          student: { select: { id: true, name: true, nis: true } },
-          transaction: { select: { id: true, date: true, total: true } },
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    // Create where clause specifically for the "not lunas" query
+    const notLunasConditions = [ne(studentCredits.status, "lunas")];
+    if (status) notLunasConditions.push(eq(studentCredits.status, status));
+    const notLunasWhereClause = and(...notLunasConditions);
+
+    const [data, [{ total }], allCreditsForTotal] = await Promise.all([
+      db.select({
+        id: studentCredits.id,
+        transactionId: studentCredits.transactionId,
+        studentId: studentCredits.studentId,
+        amount: studentCredits.amount,
+        paidAmount: studentCredits.paidAmount,
+        status: studentCredits.status,
+        dueDate: studentCredits.dueDate,
+        createdAt: studentCredits.createdAt,
+        updatedAt: studentCredits.updatedAt,
+        student: {
+          id: students.id,
+          name: students.name,
+          nis: students.nis,
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.studentCredit.count({ where }),
-      prisma.studentCredit.findMany({
-        where: { ...where, status: { not: "lunas" } },
-        select: { amount: true, paidAmount: true },
-      }),
+        transaction: {
+          id: coopTransactions.id,
+          date: coopTransactions.date,
+          total: coopTransactions.total,
+        }
+      })
+      .from(studentCredits)
+      .leftJoin(students, eq(studentCredits.studentId, students.id))
+      .leftJoin(coopTransactions, eq(studentCredits.transactionId, coopTransactions.id))
+      .where(whereClause)
+      .orderBy(desc(studentCredits.createdAt))
+      .limit(limit)
+      .offset(skip),
+      
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(studentCredits)
+      .where(whereClause),
+
+      db.select({ amount: studentCredits.amount, paidAmount: studentCredits.paidAmount })
+      .from(studentCredits)
+      .where(notLunasWhereClause)
     ]);
 
     // Hitung total piutang aktif dari seluruh data yang belum lunas

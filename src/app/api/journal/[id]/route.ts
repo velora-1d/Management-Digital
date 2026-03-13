@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, sql } from "drizzle-orm";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
     const resolvedParams = await params;
     const id = Number(resolvedParams.id);
     if (!id) return NextResponse.json({ success: false, message: "ID tidak valid" }, { status: 400 });
@@ -12,119 +14,64 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const body = await req.json();
     const { description, date, categoryId, amount, type } = body;
 
-    const existingId = await prisma.generalTransaction.findUnique({
-      where: { id }
-    });
+    const [existing] = await db.select().from(generalTransactions).where(eq(generalTransactions.id, id)).limit(1);
+    if (!existing) return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
+    if (existing.status === "void") return NextResponse.json({ success: false, message: "Data sudah void, tidak bisa diedit" }, { status: 400 });
 
-    if(!existingId) return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
-    if(existingId.status === "void") return NextResponse.json({ success: false, message: "Data sudah void, tidak bisa diedit" }, { status: 400 });
-
-    const oldAmount = existingId.amount;
-    const oldType = existingId.type;
+    const oldAmount = existing.amount;
+    const oldType = existing.type;
     const newAmount = Number(amount) || oldAmount;
     const newType = type || oldType;
-    
-    await prisma.$transaction(async (tx) => {
-      const accountId = existingId.cashAccountId;
-      
+
+    await db.transaction(async (tx) => {
+      const accountId = existing.cashAccountId;
       if (accountId) {
-        // 1. Revert the old value
-        if (oldType === "in") {
-          await tx.cashAccount.update({
-            where: { id: accountId },
-            data: { balance: { decrement: oldAmount } }
-          });
-        } else {
-          await tx.cashAccount.update({
-            where: { id: accountId },
-            data: { balance: { increment: oldAmount } }
-          });
-        }
-
-        // 2. Add the new value
-        if (newType === "in") {
-          await tx.cashAccount.update({
-            where: { id: accountId },
-            data: { balance: { increment: newAmount } }
-          });
-        } else {
-          await tx.cashAccount.update({
-            where: { id: accountId },
-            data: { balance: { decrement: newAmount } }
-          });
-        }
+        const revertOld = oldType === "in" ? -oldAmount : oldAmount;
+        await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${revertOld}` }).where(eq(cashAccounts.id, accountId));
+        const applyNew = newType === "in" ? newAmount : -newAmount;
+        await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${applyNew}` }).where(eq(cashAccounts.id, accountId));
       }
-
-      // 3. Update the journal entry
-      await tx.generalTransaction.update({
-        where: { id },
-        data: {
-          description: description || existingId.description,
-          date: date || existingId.date,
-          transactionCategoryId: categoryId ? Number(categoryId) : existingId.transactionCategoryId,
-          amount: newAmount,
-          type: newType,
-        }
-      });
+      await tx.update(generalTransactions).set({
+        description: description || existing.description,
+        date: date || existing.date,
+        categoryId: categoryId ? Number(categoryId) : existing.categoryId,
+        amount: newAmount,
+        type: newType as any,
+        updatedAt: new Date(),
+      }).where(eq(generalTransactions.id, id));
     });
 
     return NextResponse.json({ success: true, message: "Transaksi berhasil diperbarui" });
   } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     console.error("Error updating journal:", error);
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
     const resolvedParams = await params;
     const id = Number(resolvedParams.id);
     if (!id) return NextResponse.json({ success: false, message: "ID tidak valid" }, { status: 400 });
 
-    const entry = await prisma.generalTransaction.findUnique({
-      where: { id }
-    });
+    const [entry] = await db.select().from(generalTransactions).where(eq(generalTransactions.id, id)).limit(1);
+    if (!entry) return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
+    if (entry.status === "void") return NextResponse.json({ success: false, message: "Transaksi sudah di-void" }, { status: 400 });
 
-    if (!entry) {
-      return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
-    }
-
-    if (entry.status === "void") {
-      return NextResponse.json({ success: false, message: "Transaksi sudah di-void" }, { status: 400 });
-    }
-
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       if (entry.cashAccountId) {
-        // 1. Revert balance
-        if (entry.type === "in") {
-          await tx.cashAccount.update({
-            where: { id: entry.cashAccountId },
-            data: { balance: { decrement: entry.amount } }
-          });
-        } else {
-          await tx.cashAccount.update({
-            where: { id: entry.cashAccountId },
-            data: { balance: { increment: entry.amount } }
-          });
-        }
+        const revert = entry.type === "in" ? -entry.amount : entry.amount;
+        await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${revert}` }).where(eq(cashAccounts.id, entry.cashAccountId));
       }
-
-      // 2. Delete entry
-      await tx.generalTransaction.delete({
-        where: { id }
-      });
+      await tx.delete(generalTransactions).where(eq(generalTransactions.id, id));
     });
 
     return NextResponse.json({ success: true, message: "Transaksi berhasil dihapus" });
   } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     console.error("Error deleting journal:", error);
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
   }
 }

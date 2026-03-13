@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { coopTransactions, students, products, studentCredits } from "@/db/schema";
+import { eq, like, desc, and, sql } from "drizzle-orm";
 
 // GET /api/coop/transactions?date=YYYY-MM-DD&month=3&year=2026&paymentMethod=tunai
 export async function GET(req: Request) {
@@ -13,24 +15,45 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const conditions = [];
     if (date) {
-      where.date = { startsWith: date };
+      conditions.push(like(coopTransactions.date, `${date}%`));
     } else if (month && year) {
       const prefix = `${year}-${String(parseInt(month)).padStart(2, "0")}`;
-      where.date = { startsWith: prefix };
+      conditions.push(like(coopTransactions.date, `${prefix}%`));
     }
-    if (paymentMethod) where.paymentMethod = paymentMethod;
+    if (paymentMethod) {
+      conditions.push(eq(coopTransactions.paymentMethod, paymentMethod as any));
+    }
 
-    const [data, total] = await Promise.all([
-      prisma.coopTransaction.findMany({
-        where,
-        include: { student: { select: { id: true, name: true, nis: true } } },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.coopTransaction.count({ where }),
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [data, [{ total }]] = await Promise.all([
+      db.select({
+        id: coopTransactions.id,
+        studentId: coopTransactions.studentId,
+        items: coopTransactions.items,
+        total: coopTransactions.total,
+        paymentMethod: coopTransactions.paymentMethod,
+        date: coopTransactions.date,
+        createdAt: coopTransactions.createdAt,
+        updatedAt: coopTransactions.updatedAt,
+        student: {
+          id: students.id,
+          name: students.name,
+          nis: students.nis,
+        }
+      })
+      .from(coopTransactions)
+      .leftJoin(students, eq(coopTransactions.studentId, students.id))
+      .where(whereClause)
+      .orderBy(desc(coopTransactions.createdAt))
+      .limit(limit)
+      .offset(skip),
+      
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(coopTransactions)
+      .where(whereClause)
     ]);
 
     return NextResponse.json({
@@ -57,7 +80,7 @@ export async function POST(req: Request) {
 
     // Validasi stok
     for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: parseInt(item.productId) } });
+      const [product] = await db.select().from(products).where(eq(products.id, parseInt(item.productId))).limit(1);
       if (!product) return NextResponse.json({ error: `Produk ID ${item.productId} tidak ditemukan` }, { status: 400 });
       if (product.stok < parseInt(item.qty)) return NextResponse.json({ error: `Stok ${product.name} tidak cukup (sisa: ${product.stok})` }, { status: 400 });
     }
@@ -68,36 +91,31 @@ export async function POST(req: Request) {
     const dateStr = now.toISOString().replace("T", " ").substring(0, 19);
 
     // Jalankan dalam Transaksi (ACID Compliance)
-    const trx = await prisma.$transaction(async (tx) => {
+    const trx = await db.transaction(async (tx) => {
       // 1. Buat transaksi
-      const t = await tx.coopTransaction.create({
-        data: {
-          studentId: studentId ? parseInt(studentId) : null,
-          items: JSON.stringify(items),
-          total,
-          paymentMethod: paymentMethod || "tunai",
-          date: dateStr,
-        },
-      });
+      const [t] = await tx.insert(coopTransactions).values({
+        studentId: studentId ? parseInt(studentId) : null,
+        items: JSON.stringify(items),
+        total,
+        paymentMethod: paymentMethod || "tunai",
+        date: dateStr,
+      }).returning();
 
       // 2. Kurangi stok
       for (const item of items) {
-        await tx.product.update({
-          where: { id: parseInt(item.productId) },
-          data: { stok: { decrement: parseInt(item.qty) } },
-        });
+        await tx.update(products)
+          .set({ stok: sql`${products.stok} - ${parseInt(item.qty)}` })
+          .where(eq(products.id, parseInt(item.productId)));
       }
 
       // 3. Jika bon, catat piutang
       if (paymentMethod === "bon" && studentId) {
-        await tx.studentCredit.create({
-          data: {
-            studentId: parseInt(studentId),
-            transactionId: t.id,
-            amount: total,
-            paidAmount: 0,
-            status: "belum_lunas",
-          },
+        await tx.insert(studentCredits).values({
+          studentId: parseInt(studentId),
+          transactionId: t.id,
+          amount: total,
+          paidAmount: 0,
+          status: "belum_lunas",
         });
       }
 

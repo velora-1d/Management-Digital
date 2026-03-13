@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, infaqBills, infaqPayments } from "@/db/schema";
+import { eq, and, isNull, inArray, asc, sql } from "drizzle-orm";
 
 /**
  * GET /api/infaq-bills/tracking/[studentId]
- * 
- * Tracking 12 bulan tagihan infaq per siswa.
- * Return: array 12 bulan dengan status dan total pembayaran per bulan.
  */
 export async function GET(
   request: Request,
@@ -16,46 +15,39 @@ export async function GET(
     const studentId = Number(params.studentId);
 
     if (isNaN(studentId)) {
-      return NextResponse.json(
-        { success: false, message: "ID siswa tidak valid" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "ID siswa tidak valid" }, { status: 400 });
     }
 
-    // Ambil data siswa
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
-      select: { id: true, name: true, nisn: true, classroomId: true, infaqNominal: true },
-    });
+    const [student] = await db.select({ id: students.id, name: students.name, nisn: students.nisn, infaqNominal: students.infaqNominal })
+      .from(students).where(eq(students.id, studentId)).limit(1);
 
     if (!student) {
-      return NextResponse.json(
-        { success: false, message: "Siswa tidak ditemukan" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "Siswa tidak ditemukan" }, { status: 404 });
     }
 
-    // Ambil parameter tahun dari query string (default tahun ini)
     const { searchParams } = new URL(request.url);
     const year = searchParams.get("year") || new Date().getFullYear().toString();
 
-    // Ambil semua tagihan siswa ini untuk tahun tersebut
-    const bills = await prisma.infaqBill.findMany({
-      where: {
-        studentId: student.id,
-        year: year,
-        deletedAt: null,
-      },
-      include: {
-        payments: {
-          where: { deletedAt: null },
-          select: { id: true, amountPaid: true, paymentDate: true },
-        },
-      },
-      orderBy: { month: "asc" },
-    });
+    const bills = await db.select()
+      .from(infaqBills)
+      .where(and(eq(infaqBills.studentId, student.id), eq(infaqBills.year, year), isNull(infaqBills.deletedAt)))
+      .orderBy(asc(infaqBills.month));
 
-    // Buat tracking 12 bulan
+    // Get payments
+    const billIds = bills.map(b => b.id);
+    let paymentsByBill: Record<number, { id: number; amountPaid: number; paymentDate: string | null }[]> = {};
+    if (billIds.length > 0) {
+      const payments = await db.select({ id: infaqPayments.id, billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid, paymentDate: infaqPayments.paymentDate })
+        .from(infaqPayments)
+        .where(and(inArray(infaqPayments.billId, billIds), isNull(infaqPayments.deletedAt)));
+      payments.forEach(p => {
+        if (p.billId !== null) {
+          if (!paymentsByBill[p.billId]) paymentsByBill[p.billId] = [];
+          paymentsByBill[p.billId].push({ id: p.id, amountPaid: p.amountPaid, paymentDate: p.paymentDate });
+        }
+      });
+    }
+
     const namaBulan = [
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
       "Juli", "Agustus", "September", "Oktober", "November", "Desember",
@@ -67,37 +59,22 @@ export async function GET(
 
       if (!bill) {
         return {
-          month: monthStr,
-          monthName: namaBln,
-          status: "belum_digenerate",
-          nominal: student.infaqNominal || 0,
-          totalPaid: 0,
-          remaining: student.infaqNominal || 0,
-          payments: [],
+          month: monthStr, monthName: namaBln, status: "belum_digenerate",
+          nominal: student.infaqNominal || 0, totalPaid: 0, remaining: student.infaqNominal || 0, payments: [],
         };
       }
 
-      const totalPaid = bill.payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      const billPayments = paymentsByBill[bill.id] || [];
+      const totalPaid = billPayments.reduce((sum, p) => sum + p.amountPaid, 0);
       return {
-        month: bill.month,
-        monthName: namaBln,
-        billId: bill.id,
-        status: bill.status,
-        nominal: bill.nominal,
-        totalPaid,
-        remaining: Math.max(0, bill.nominal - totalPaid),
-        payments: bill.payments,
+        month: bill.month, monthName: namaBln, billId: bill.id, status: bill.status,
+        nominal: bill.nominal, totalPaid, remaining: Math.max(0, bill.nominal - totalPaid), payments: billPayments,
       };
     });
 
     return NextResponse.json({
       success: true,
-      student: {
-        id: student.id,
-        name: student.name,
-        nisn: student.nisn,
-        infaqNominal: student.infaqNominal,
-      },
+      student: { id: student.id, name: student.name, nisn: student.nisn, infaqNominal: student.infaqNominal },
       year,
       tracking,
       summary: {
@@ -111,9 +88,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Tracking error:", error);
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil tracking infaq" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Gagal mengambil tracking infaq" }, { status: 500 });
   }
 }

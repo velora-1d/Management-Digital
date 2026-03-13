@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { classrooms } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq } from "drizzle-orm";
 
 /**
  * PUT /api/classrooms/[id]
@@ -20,21 +22,27 @@ export async function PUT(
       return NextResponse.json({ success: false, message: "ID tidak valid" }, { status: 400 });
     }
 
-    const existing = await prisma.classroom.findUnique({ where: { id } });
+    const [existing] = await db.select()
+      .from(classrooms)
+      .where(eq(classrooms.id, id))
+      .limit(1);
+
     if (!existing || existing.deletedAt) {
       return NextResponse.json({ success: false, message: "Kelas tidak ditemukan" }, { status: 404 });
     }
 
-    const data: Record<string, unknown> = {};
-    if (body.name !== undefined) data.name = body.name;
-    if (body.academicYearId !== undefined) data.academicYearId = body.academicYearId ? Number(body.academicYearId) : null;
-    if (body.waliKelasId !== undefined) data.waliKelasId = body.waliKelasId ? Number(body.waliKelasId) : null;
-    if (body.infaqNominal !== undefined) data.infaqNominal = Number(body.infaqNominal);
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.academicYearId !== undefined) updateData.academicYearId = body.academicYearId ? Number(body.academicYearId) : null;
+    if (body.waliKelasId !== undefined) updateData.waliKelasId = body.waliKelasId ? Number(body.waliKelasId) : null;
+    if (body.infaqNominal !== undefined) updateData.infaqNominal = Number(body.infaqNominal);
 
-    const updated = await prisma.classroom.update({
-      where: { id },
-      data,
-    });
+    updateData.updatedAt = new Date();
+
+    const [updated] = await db.update(classrooms)
+      .set(updateData)
+      .where(eq(classrooms.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, message: "Kelas berhasil diperbarui", data: updated });
   } catch (error) {

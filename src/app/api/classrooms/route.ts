@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { classrooms, academicYears, employees, students } from "@/db/schema";
+import { eq, or, and, isNull, asc, ilike, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,47 +11,63 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q") || "";
     const skip = (page - 1) * limit;
 
-    const where: any = { deletedAt: null };
+    const conditions = [isNull(classrooms.deletedAt)];
     if (q) {
-      where.OR = [
-        { name: { contains: q, mode: "insensitive" } },
-      ];
+      conditions.push(or(
+        ilike(classrooms.name, `%${q}%`)
+      )!);
     }
 
-    const [classrooms, total] = await Promise.all([
-      prisma.classroom.findMany({
-        where,
-        include: {
-          academicYear: { select: { id: true, year: true } },
-          waliKelas: { select: { id: true, name: true } },
-          _count: { select: { students: { where: { deletedAt: null } } } },
-        },
-        orderBy: [{ name: "asc" }],
-        skip,
-        take: limit,
-      }),
-      prisma.classroom.count({ where }),
+    const whereClause = and(...conditions);
+
+    const [classroomsData, [{ count }]] = await Promise.all([
+      db.select({
+        id: classrooms.id,
+        name: classrooms.name,
+        academicYearId: classrooms.academicYearId,
+        academicYear: academicYears.year,
+        waliKelasId: classrooms.waliKelasId,
+        waliKelas: employees.name,
+        infaqNominal: classrooms.infaqNominal,
+        student_count: sql<number>`count(distinct ${students.id})`.mapWith(Number),
+      })
+      .from(classrooms)
+      .leftJoin(academicYears, eq(classrooms.academicYearId, academicYears.id))
+      .leftJoin(employees, eq(classrooms.waliKelasId, employees.id))
+      .leftJoin(students, and(
+        eq(classrooms.id, students.classroomId),
+        isNull(students.deletedAt)
+      ))
+      .where(whereClause)
+      .groupBy(classrooms.id, academicYears.year, employees.name)
+      .orderBy(asc(classrooms.name))
+      .limit(limit)
+      .offset(skip),
+      
+      db.select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(classrooms)
+      .where(whereClause)
     ]);
 
-    const classroomsWithCount = classrooms.map((cls) => ({
+    const classroomsWithCount = classroomsData.map((cls) => ({
       id: cls.id,
       name: cls.name,
       academicYearId: cls.academicYearId,
-      academicYear: cls.academicYear?.year || "-",
+      academicYear: cls.academicYear || "-",
       waliKelasId: cls.waliKelasId,
-      waliKelas: cls.waliKelas?.name || "-",
+      waliKelas: cls.waliKelas || "-",
       infaqNominal: cls.infaqNominal || 0,
-      student_count: cls._count.students,
+      student_count: cls.student_count,
     }));
 
     return NextResponse.json(
       { 
         success: true, 
         data: classroomsWithCount,
-        total,
+        total: count,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(count / limit)
       },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" } }
     );

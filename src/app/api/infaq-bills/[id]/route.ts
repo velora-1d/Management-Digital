@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { infaqBills, infaqPayments } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, sql } from "drizzle-orm";
 
 /**
  * DELETE /api/infaq-bills/[id]
- * Hapus (soft-delete) tagihan infaq.
- * Hanya bisa hapus jika belum ada pembayaran.
  */
 export async function DELETE(
   request: Request,
@@ -20,26 +20,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: "ID tidak valid" }, { status: 400 });
     }
 
-    const bill = await prisma.infaqBill.findUnique({
-      where: { id: billId },
-      include: { payments: { where: { deletedAt: null } } },
-    });
+    const [bill] = await db.select().from(infaqBills).where(eq(infaqBills.id, billId)).limit(1);
 
     if (!bill || bill.deletedAt) {
       return NextResponse.json({ success: false, message: "Tagihan tidak ditemukan" }, { status: 404 });
     }
 
-    if (bill.payments.length > 0) {
+    // Check if has payments
+    const [{ paymentCount }] = await db.select({ paymentCount: sql<number>`count(*)`.mapWith(Number) })
+      .from(infaqPayments)
+      .where(and(eq(infaqPayments.billId, billId), isNull(infaqPayments.deletedAt)));
+
+    if (paymentCount > 0) {
       return NextResponse.json(
         { success: false, message: "Tidak bisa hapus tagihan yang sudah memiliki pembayaran. Void tagihan jika ingin membatalkan." },
         { status: 400 }
       );
     }
 
-    await prisma.infaqBill.update({
-      where: { id: billId },
-      data: { deletedAt: new Date() },
-    });
+    await db.update(infaqBills).set({ deletedAt: new Date() }).where(eq(infaqBills.id, billId));
 
     return NextResponse.json({ success: true, message: "Tagihan berhasil dihapus." });
   } catch (error) {
@@ -52,8 +51,6 @@ export async function DELETE(
 
 /**
  * PUT /api/infaq-bills/[id]
- * Edit nominal tagihan infaq.
- * Hanya bisa edit jika status belum_lunas.
  */
 export async function PUT(
   request: Request,
@@ -74,7 +71,7 @@ export async function PUT(
       return NextResponse.json({ success: false, message: "Nominal wajib diisi" }, { status: 400 });
     }
 
-    const bill = await prisma.infaqBill.findUnique({ where: { id: billId } });
+    const [bill] = await db.select().from(infaqBills).where(eq(infaqBills.id, billId)).limit(1);
     if (!bill || bill.deletedAt) {
       return NextResponse.json({ success: false, message: "Tagihan tidak ditemukan" }, { status: 404 });
     }
@@ -86,10 +83,7 @@ export async function PUT(
       );
     }
 
-    await prisma.infaqBill.update({
-      where: { id: billId },
-      data: { nominal: Number(nominal) },
-    });
+    await db.update(infaqBills).set({ nominal: Number(nominal), updatedAt: new Date() }).where(eq(infaqBills.id, billId));
 
     return NextResponse.json({
       success: true,

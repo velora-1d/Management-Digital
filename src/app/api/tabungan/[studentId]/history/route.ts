@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, studentSavings } from "@/db/schema";
+import { eq, and, isNull, desc } from "drizzle-orm";
 
 /**
  * GET /api/tabungan/[studentId]/history
- * 
- * Riwayat transaksi tabungan per siswa.
  */
 export async function GET(
   request: Request,
@@ -21,10 +21,8 @@ export async function GET(
       );
     }
 
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
-      select: { id: true, name: true, nisn: true, classroomId: true },
-    });
+    const [student] = await db.select({ id: students.id, name: students.name, nisn: students.nisn })
+      .from(students).where(eq(students.id, studentId)).limit(1);
 
     if (!student) {
       return NextResponse.json(
@@ -33,14 +31,14 @@ export async function GET(
       );
     }
 
-    const savings = await prisma.studentSaving.findMany({
-      where: {
-        studentId: student.id,
-        deletedAt: null,
-        status: "active",
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const savings = await db.select()
+      .from(studentSavings)
+      .where(and(
+        eq(studentSavings.studentId, student.id),
+        isNull(studentSavings.deletedAt),
+        eq(studentSavings.status, "active" as any)
+      ))
+      .orderBy(desc(studentSavings.createdAt));
 
     // Hitung saldo akhir
     let balance = 0;

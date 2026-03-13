@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
+import { eq, and, isNull, asc } from "drizzle-orm";
 
 
 // GET /api/payroll/employees
 export async function GET() {
   try {
-    const employees = await prisma.employee.findMany({
-      where: { deletedAt: null, status: "aktif" },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        position: true,
-        baseSalary: true,
-      },
-    });
-    return NextResponse.json(employees);
+    const result = await db
+      .select({
+        id: employees.id,
+        name: employees.name,
+        type: employees.type,
+        position: employees.position,
+        baseSalary: employees.baseSalary,
+      })
+      .from(employees)
+      .where(and(eq(employees.status, "aktif"), isNull(employees.deletedAt)))
+      .orderBy(asc(employees.name));
+      
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: "Gagal mengambil data pegawai" },

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { transactionCategories } from "@/db/schema";
+import { isNull, and, eq, or, ilike, asc, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,26 +9,23 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const q = searchParams.get("q") || "";
-    const type = searchParams.get("type"); // New filter
+    const type = searchParams.get("type");
     const skip = (page - 1) * limit;
 
-    const where: any = { deletedAt: null };
-    if (type) where.type = type;
+    const conditions = [isNull(transactionCategories.deletedAt)];
+    if (type) conditions.push(eq(transactionCategories.type, type as any));
     if (q) {
-      where.OR = [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-      ];
+      conditions.push(or(
+        ilike(transactionCategories.name, `%${q}%`),
+        ilike(transactionCategories.description, `%${q}%`)
+      )!);
     }
 
-    const [categories, total] = await Promise.all([
-      prisma.transactionCategory.findMany({
-        where,
-        orderBy: { name: "asc" },
-        skip,
-        take: limit,
-      }),
-      prisma.transactionCategory.count({ where }),
+    const whereClause = and(...conditions);
+
+    const [categories, [{ total }]] = await Promise.all([
+      db.select().from(transactionCategories).where(whereClause).orderBy(asc(transactionCategories.name)).limit(limit).offset(skip),
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) }).from(transactionCategories).where(whereClause),
     ]);
 
     return NextResponse.json(
@@ -54,13 +53,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Nama dan Tipe wajib diisi" }, { status: 400 });
     }
 
-    const category = await prisma.transactionCategory.create({
-      data: {
-        name,
-        type,
-        description,
-      },
-    });
+    const [category] = await db.insert(transactionCategories).values({
+      name,
+      type: type as any,
+      description,
+    }).returning();
 
     return NextResponse.json({ success: true, message: "Kategori berhasil ditambahkan", data: category });
   } catch (error) {
@@ -82,14 +79,10 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, message: "Nama dan Tipe wajib diisi" }, { status: 400 });
     }
 
-    const category = await prisma.transactionCategory.update({
-      where: { id: Number(id) },
-      data: {
-        name,
-        type,
-        description,
-      },
-    });
+    const [category] = await db.update(transactionCategories)
+      .set({ name, type: type as any, description, updatedAt: new Date() })
+      .where(eq(transactionCategories.id, Number(id)))
+      .returning();
 
     return NextResponse.json({ success: true, message: "Kategori berhasil diubah", data: category });
   } catch (error) {
@@ -104,12 +97,10 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ success: false, message: "ID kategori diperlukan" }, { status: 400 });
 
-    const category = await prisma.transactionCategory.update({
-      where: { id: Number(id) },
-      data: {
-        deletedAt: new Date(),
-      },
-    });
+    const [category] = await db.update(transactionCategories)
+      .set({ deletedAt: new Date() })
+      .where(eq(transactionCategories.id, Number(id)))
+      .returning();
 
     return NextResponse.json({ success: true, message: "Kategori berhasil dihapus", data: category });
   } catch (error) {

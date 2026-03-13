@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { payrolls, employees, payrollDetails } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
 // GET /api/payroll/[id]
 export async function GET(
@@ -13,22 +15,39 @@ export async function GET(
       return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
     }
 
-    const payroll = await prisma.payroll.findUnique({
-      where: { id: payrollId },
-      include: {
-        employee: { select: { id: true, name: true } },
-        details: { where: { deletedAt: null }, orderBy: { id: "asc" } },
-      },
-    });
+    const [payroll] = await db
+      .select({
+        id: payrolls.id,
+        month: payrolls.month,
+        year: payrolls.year,
+        baseSalary: payrolls.baseSalary,
+        totalAllowance: payrolls.totalAllowance,
+        totalDeduction: payrolls.totalDeduction,
+        netSalary: payrolls.netSalary,
+        status: payrolls.status,
+        createdAt: payrolls.createdAt,
+        employeeName: employees.name,
+        employeeId: employees.id,
+      })
+      .from(payrolls)
+      .leftJoin(employees, eq(payrolls.employeeId, employees.id))
+      .where(eq(payrolls.id, payrollId))
+      .limit(1);
 
     if (!payroll) {
       return NextResponse.json({ error: "Slip gaji tidak ditemukan" }, { status: 404 });
     }
 
+    const details = await db
+      .select()
+      .from(payrollDetails)
+      .where(and(eq(payrollDetails.payrollId, payrollId), isNull(payrollDetails.deletedAt)))
+      .orderBy(payrollDetails.id);
+
     return NextResponse.json({
       id: payroll.id,
       code: `PAY-${payroll.year}${payroll.month.padStart(2, '0')}-${payroll.id.toString().padStart(4, '0')}`,
-      employee_name: payroll.employee?.name || "Unknown",
+      employee_name: payroll.employeeName || "Unknown",
       month: payroll.month,
       year: payroll.year,
       base_salary: payroll.baseSalary,
@@ -37,7 +56,7 @@ export async function GET(
       net_salary: payroll.netSalary,
       status: payroll.status,
       created_at: payroll.createdAt,
-      components: payroll.details.map(c => ({
+      components: details.map(c => ({
         id: c.componentId,
         name: c.componentName,
         type: c.type,
@@ -45,6 +64,7 @@ export async function GET(
       })),
     });
   } catch (error) {
+    console.error("Payroll [id] GET error:", error);
     return NextResponse.json({ error: "Gagal mengambil data slip gaji" }, { status: 500 });
   }
 }
@@ -63,7 +83,12 @@ export async function PUT(
       return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
     }
 
-    const payroll = await prisma.payroll.findUnique({ where: { id: payrollId } });
+    const [payroll] = await db
+      .select()
+      .from(payrolls)
+      .where(eq(payrolls.id, payrollId))
+      .limit(1);
+
     if (!payroll) {
       return NextResponse.json({ error: "Slip gaji tidak ditemukan" }, { status: 404 });
     }
@@ -72,9 +97,9 @@ export async function PUT(
       return NextResponse.json({ error: "Hanya slip berstatus draft yang bisa diedit" }, { status: 400 });
     }
 
-    await prisma.$transaction(async (tx) => {
-      // Hapus detail lama
-      await tx.payrollDetail.deleteMany({ where: { payrollId: payrollId } });
+    await db.transaction(async (tx) => {
+      // Hapus detail lama (hard delete detail)
+      await tx.delete(payrollDetails).where(eq(payrollDetails.payrollId, payrollId));
 
       let totalEarning = 0;
       let totalDeduction = 0;
@@ -107,22 +132,24 @@ export async function PUT(
       }
 
       if (detailsData.length > 0) {
-        await tx.payrollDetail.createMany({ data: detailsData });
+        await tx.insert(payrollDetails).values(detailsData);
       }
 
-      await tx.payroll.update({
-        where: { id: payrollId },
-        data: {
+      await tx
+        .update(payrolls)
+        .set({
           baseSalary,
           totalAllowance: totalEarning - baseSalary,
           totalDeduction,
           netSalary: totalEarning - totalDeduction,
-        },
-      });
+          updatedAt: new Date(),
+        })
+        .where(eq(payrolls.id, payrollId));
     });
 
     return NextResponse.json({ success: true, message: "Slip gaji diperbarui" });
   } catch (error) {
+    console.error("Payroll [id] PUT error:", error);
     return NextResponse.json({ error: "Gagal menyimpan detail slip gaji" }, { status: 500 });
   }
 }
@@ -139,7 +166,12 @@ export async function DELETE(
       return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
     }
 
-    const payroll = await prisma.payroll.findUnique({ where: { id: payrollId } });
+    const [payroll] = await db
+      .select()
+      .from(payrolls)
+      .where(eq(payrolls.id, payrollId))
+      .limit(1);
+
     if (!payroll) {
       return NextResponse.json({ error: "Slip gaji tidak ditemukan" }, { status: 404 });
     }
@@ -148,10 +180,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Hanya slip berstatus draft yang bisa dihapus" }, { status: 400 });
     }
 
-    await prisma.payroll.update({
-      where: { id: payrollId },
-      data: { deletedAt: new Date() },
-    });
+    await db
+      .update(payrolls)
+      .set({ deletedAt: new Date() })
+      .where(eq(payrolls.id, payrollId));
 
     return NextResponse.json({ success: true, message: "Slip gaji dihapus" });
   } catch (error) {

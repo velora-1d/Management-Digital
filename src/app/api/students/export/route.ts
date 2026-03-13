@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, classrooms } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { isNull, and, eq, asc } from "drizzle-orm";
 
 /**
  * GET /api/students/export — Export data siswa ke CSV
- * Query: ?classroomId=&status=
  */
 export async function GET(request: Request) {
   try {
@@ -13,24 +14,40 @@ export async function GET(request: Request) {
     const classroomId = searchParams.get("classroomId");
     const status = searchParams.get("status");
 
-    const where: any = { deletedAt: null };
-    if (classroomId) where.classroomId = Number(classroomId);
-    if (status) where.status = status;
+    const conditions = [isNull(students.deletedAt)];
+    if (classroomId) conditions.push(eq(students.classroomId, Number(classroomId)));
+    if (status) conditions.push(eq(students.status, status as any));
 
-    const students = await prisma.student.findMany({
-      where,
-      include: { classroom: { select: { name: true } } },
-      orderBy: { name: "asc" },
-    });
+    const studentList = await db.select({
+      id: students.id,
+      nisn: students.nisn,
+      nis: students.nis,
+      nik: students.nik,
+      name: students.name,
+      gender: students.gender,
+      status: students.status,
+      birthPlace: students.birthPlace,
+      birthDate: students.birthDate,
+      fatherName: students.fatherName,
+      motherName: students.motherName,
+      phone: students.phone,
+      address: students.address,
+      infaqNominal: students.infaqNominal,
+      classroomName: classrooms.name,
+    })
+    .from(students)
+    .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
+    .where(and(...conditions))
+    .orderBy(asc(students.name));
 
-    const rows = students.map((s, i) => ({
+    const rows = studentList.map((s, i) => ({
       no: i + 1,
       nisn: s.nisn || "-",
       nis: s.nis || "-",
       nik: s.nik || "-",
       nama: (s.name || "").replace(/"/g, '""'),
       jk: s.gender === "L" ? "Laki-laki" : "Perempuan",
-      kelas: s.classroom?.name || "-",
+      kelas: s.classroomName || "-",
       status: s.status || "-",
       tempat_lahir: s.birthPlace || "-",
       tanggal_lahir: s.birthDate || "-",

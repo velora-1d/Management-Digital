@@ -1,55 +1,68 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/db";
+import { schedules, classrooms, subjects, employees, academicYears } from "@/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const classroomId = searchParams.get('classroomId');
-    const employeeId = searchParams.get('employeeId');
-    const day = searchParams.get('day');
-    const academicYearId = searchParams.get('academicYearId');
+    const classroomIdParam = searchParams.get("classroomId");
+    const employeeIdParam = searchParams.get("employeeId");
+    const dayParam = searchParams.get("day");
+    const academicYearIdParam = searchParams.get("academicYearId");
 
-    const filter: any = {};
-
-    if (classroomId) filter.classroomId = parseInt(classroomId);
-    if (employeeId) filter.employeeId = parseInt(employeeId);
-    if (day) filter.day = parseInt(day);
-    if (academicYearId) filter.academicYearId = parseInt(academicYearId);
+    const conditions = [];
+    if (classroomIdParam) conditions.push(eq(schedules.classroomId, parseInt(classroomIdParam)));
+    if (employeeIdParam) conditions.push(eq(schedules.employeeId, parseInt(employeeIdParam)));
+    if (dayParam) conditions.push(eq(schedules.day, dayParam));
+    if (academicYearIdParam) conditions.push(eq(schedules.academicYearId, parseInt(academicYearIdParam)));
 
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "1000"); // Default tinggi karena jadwal biasanya butuh semua data per kriteria
-    const skip = (page - 1) * limit;
+    const limit = parseInt(searchParams.get("limit") || "1000");
+    const offset = (page - 1) * limit;
 
-    const [schedules, total] = await Promise.all([
-      prisma.schedule.findMany({
-        where: filter,
-        include: {
-          classroom: { select: { name: true } },
-          subject: { select: { name: true, code: true } },
-          employee: { select: { name: true } },
-          academicYear: { select: { year: true, isActive: true } }
-        },
-        orderBy: [
-          { day: 'asc' },
-          { startTime: 'asc' }
-        ],
-        skip,
-        take: limit
-      }),
-      prisma.schedule.count({ where: filter })
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [rows, countRows] = await Promise.all([
+      db
+        .select({
+          id: schedules.id,
+          classroomId: schedules.classroomId,
+          subjectId: schedules.subjectId,
+          employeeId: schedules.employeeId,
+          academicYearId: schedules.academicYearId,
+          day: schedules.day,
+          startTime: schedules.startTime,
+          endTime: schedules.endTime,
+          unitId: schedules.unitId,
+          createdAt: schedules.createdAt,
+          updatedAt: schedules.updatedAt,
+          classroom: { name: classrooms.name },
+          subject: { name: subjects.name, code: subjects.code },
+          employee: { name: employees.name },
+          academicYear: { year: academicYears.year, isActive: academicYears.isActive },
+        })
+        .from(schedules)
+        .leftJoin(classrooms, eq(schedules.classroomId, classrooms.id))
+        .leftJoin(subjects, eq(schedules.subjectId, subjects.id))
+        .leftJoin(employees, eq(schedules.employeeId, employees.id))
+        .leftJoin(academicYears, eq(schedules.academicYearId, academicYears.id))
+        .where(whereClause)
+        .orderBy(asc(schedules.day), asc(schedules.startTime))
+        .limit(limit)
+        .offset(offset),
+      db.select({ id: schedules.id }).from(schedules).where(whereClause),
     ]);
 
-    return NextResponse.json({ 
-      success: true, 
-      data: schedules,
+    return NextResponse.json({
+      success: true,
+      data: rows,
       pagination: {
-        total,
+        total: countRows.length,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(countRows.length / limit),
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -61,33 +74,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { classroomId, subjectId, employeeId, day, startTime, endTime, academicYearId } = body;
 
-    // Validate required fields
     if (!classroomId || !subjectId || !employeeId || day === undefined || !startTime || !endTime || !academicYearId) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Kelas, Mapel, Guru, Hari, Jam Mulai, Jam Selesai, dan Tahun Ajaran wajib diisi" 
+      return NextResponse.json({
+        success: false,
+        error: "Kelas, Mapel, Guru, Hari, Jam Mulai, Jam Selesai, dan Tahun Ajaran wajib diisi",
       }, { status: 400 });
     }
 
-    // Optional: Basic validation to prevent time clash for the same employee or classroom
-    // In a real app, we'd do a time overlap check. Here we just ensure we have the data.
-    
-    const newSchedule = await prisma.schedule.create({
-      data: {
+    const [newSchedule] = await db
+      .insert(schedules)
+      .values({
         classroomId: parseInt(classroomId),
         subjectId: parseInt(subjectId),
         employeeId: parseInt(employeeId),
         academicYearId: parseInt(academicYearId),
         day,
         startTime,
-        endTime
-      },
-      include: {
-        classroom: { select: { name: true } },
-        subject: { select: { name: true } },
-        employee: { select: { name: true } },
-      }
-    });
+        endTime,
+      })
+      .returning();
 
     return NextResponse.json({ success: true, data: newSchedule }, { status: 201 });
   } catch (error: any) {

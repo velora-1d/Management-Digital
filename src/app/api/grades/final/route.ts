@@ -1,33 +1,46 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
+import { db } from "@/db";
+import { finalGrades, students, curriculums, subjects, gradeComponents, studentGrades } from "@/db/schema";
+import { eq, and, asc, inArray } from "drizzle-orm";
 import { hitungNilaiAkhir, hitungPredikat, generateDeskripsi } from "@/lib/grade-engine";
 
 export async function GET(req: Request) {
   try {
-    const headersList = await headers();
-
     const { searchParams } = new URL(req.url);
     const classroomId = searchParams.get("classroomId");
     const subjectId = searchParams.get("subjectId");
     const curriculumId = searchParams.get("curriculumId");
 
-    const where: any = {};
-    if (classroomId) where.classroomId = Number(classroomId);
-    if (subjectId) where.subjectId = Number(subjectId);
-    if (curriculumId) where.curriculumId = Number(curriculumId);
+    const filters = [];
+    if (classroomId) filters.push(eq(finalGrades.classroomId, Number(classroomId)));
+    if (subjectId) filters.push(eq(finalGrades.subjectId, Number(subjectId)));
+    if (curriculumId) filters.push(eq(finalGrades.curriculumId, Number(curriculumId)));
 
-    const finalGrades = await prisma.finalGrade.findMany({
-      where,
-      include: {
-        student: true,
-      },
-      orderBy: {
-        student: { name: 'asc' },
-      },
-    });
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-    return NextResponse.json(finalGrades);
+    const results = await db
+      .select({
+        id: finalGrades.id,
+        nilaiPengetahuan: finalGrades.nilaiPengetahuan,
+        nilaiKeterampilan: finalGrades.nilaiKeterampilan,
+        nilaiAkhir: finalGrades.nilaiAkhir,
+        predikat: finalGrades.predikat,
+        deskripsi: finalGrades.deskripsi,
+        isLocked: finalGrades.isLocked,
+        studentId: finalGrades.studentId,
+        student: {
+            id: students.id,
+            name: students.name,
+            nis: students.nis,
+            nisn: students.nisn
+        }
+      })
+      .from(finalGrades)
+      .leftJoin(students, eq(finalGrades.studentId, students.id))
+      .where(whereClause)
+      .orderBy(asc(students.name));
+
+    return NextResponse.json(results);
   } catch (error) {
     console.error("Error fetching final grades:", error);
     return NextResponse.json(
@@ -39,8 +52,6 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const headersList = await headers();
-
     const body = await req.json();
     const { curriculumId, classroomId, subjectId } = body;
 
@@ -51,38 +62,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ambil data kurikulum untuk tahu tipenya
-    const cur = await prisma.curriculum.findUnique({ where: { id: Number(curriculumId) } });
+    // Ambil data kurikulum
+    const [cur] = await db.select().from(curriculums).where(eq(curriculums.id, Number(curriculumId))).limit(1);
     if (!cur) {
       return NextResponse.json({ error: "Curriculum not found" }, { status: 404 });
     }
 
     // Ambil Mapel
-    const subject = await prisma.subject.findUnique({ where: { id: Number(subjectId) } });
+    const [subject] = await db.select().from(subjects).where(eq(subjects.id, Number(subjectId))).limit(1);
 
-    // 1. Ambil Formula dari tabel GradeFormula (atau kita pakai semua komponen terdaftar)
-    const components = await prisma.gradeComponent.findMany({
-      where: { curriculumId: Number(curriculumId) },
-    });
+    // 1. Ambil Komponen dari kurikulum ini
+    const components = await db.select().from(gradeComponents).where(eq(gradeComponents.curriculumId, Number(curriculumId)));
 
-    const totalBobot = components.reduce((acc: number, c: any) => acc + c.bobot, 0);
     const formatFormula = components.map(c => ({
       kode: c.code,
       bobot: c.bobot,
     }));
 
     // 2. Ambil nilai siswa di kelas & mapel tsb
-    const grades = await prisma.studentGrade.findMany({
-      where: {
-        classroomId: Number(classroomId),
-        subjectId: Number(subjectId),
-        componentId: { in: components.map(c => c.id) },
-      },
-      include: {
-        component: true,
-        student: true, // untuk ambil nama untuk generate deskripsi
-      },
-    });
+    const grades = await db
+      .select({
+        id: studentGrades.id,
+        studentId: studentGrades.studentId,
+        nilaiAngka: studentGrades.nilaiAngka,
+        componentId: studentGrades.componentId,
+        componentCode: gradeComponents.code,
+        studentName: students.name,
+      })
+      .from(studentGrades)
+      .leftJoin(gradeComponents, eq(studentGrades.componentId, gradeComponents.id))
+      .leftJoin(students, eq(studentGrades.studentId, students.id))
+      .where(
+        and(
+          eq(studentGrades.classroomId, Number(classroomId)),
+          eq(studentGrades.subjectId, Number(subjectId)),
+          inArray(studentGrades.componentId, components.map(c => c.id))
+        )
+      );
 
     // Kelompokkan berdasarkan studentId
     const studentGradesMap: Record<number, any[]> = {};
@@ -93,15 +109,13 @@ export async function POST(req: Request) {
     });
 
     // 3. Kalkulasi per siswa
-    const promises = [];
+    const results = [];
     for (const [sId, sGrades] of Object.entries(studentGradesMap)) {
       const studentId = Number(sId);
-      const studentName = sGrades[0]?.student?.name || "Siswa";
+      const studentName = sGrades[0]?.studentName || "Siswa";
 
-      // Pisahkan pengetahuan dan keterampilan jika nanti perlu,
-      // saat ini gabung jadi nilai akhir
       const nilaiKomponenInput = sGrades.map((sg: any) => ({
-        kode: sg.component?.code || "",
+        kode: sg.componentCode || "",
         nilai: sg.nilaiAngka,
       }));
 
@@ -109,41 +123,50 @@ export async function POST(req: Request) {
       const predikat = hitungPredikat(finalScore, cur.type as any);
       const deskripsi = generateDeskripsi(studentName, subject?.name || "", finalScore, predikat, cur.type as any);
 
-      promises.push(
-        prisma.finalGrade.upsert({
-          where: {
-            unique_final_grade: {
-              curriculumId: Number(curriculumId),
-              studentId: studentId,
-              subjectId: Number(subjectId),
-            },
-          },
-          update: {
-            classroomId: Number(classroomId),
-            nilaiPengetahuan: finalScore,
-            nilaiKeterampilan: finalScore, // Asumsi merged
-            nilaiAkhir: finalScore,
-            predikat,
-            deskripsi,
-            isLocked: false,
-          },
-          create: {
-            curriculumId: Number(curriculumId),
-            studentId: studentId,
-            subjectId: Number(subjectId),
-            classroomId: Number(classroomId),
-            nilaiPengetahuan: finalScore,
-            nilaiKeterampilan: finalScore,
-            nilaiAkhir: finalScore,
-            predikat,
-            deskripsi,
-            isLocked: false,
-          },
-        })
-      );
-    }
+      // Upsert manual with Drizzle
+      const [existing] = await db.select().from(finalGrades).where(
+          and(
+              eq(finalGrades.curriculumId, Number(curriculumId)),
+              eq(finalGrades.studentId, studentId),
+              eq(finalGrades.subjectId, Number(subjectId))
+          )
+      ).limit(1);
 
-    const results = await Promise.all(promises);
+      if (existing) {
+          const [updated] = await db
+            .update(finalGrades)
+            .set({
+                classroomId: Number(classroomId),
+                nilaiPengetahuan: finalScore,
+                nilaiKeterampilan: finalScore,
+                nilaiAkhir: finalScore,
+                predikat,
+                deskripsi,
+                isLocked: false,
+                updatedAt: new Date(),
+            })
+            .where(eq(finalGrades.id, existing.id))
+            .returning();
+          results.push(updated);
+      } else {
+          const [created] = await db
+            .insert(finalGrades)
+            .values({
+                curriculumId: Number(curriculumId),
+                studentId: studentId,
+                subjectId: Number(subjectId),
+                classroomId: Number(classroomId),
+                nilaiPengetahuan: finalScore,
+                nilaiKeterampilan: finalScore,
+                nilaiAkhir: finalScore,
+                predikat,
+                deskripsi,
+                isLocked: false,
+            })
+            .returning();
+          results.push(created);
+      }
+    }
 
     return NextResponse.json({ success: true, count: results.length });
   } catch (error) {

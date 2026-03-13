@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { subjects } from "@/db/schema";
+import { isNull, and, eq, or, ilike, asc, sql } from "drizzle-orm";
 
 export async function GET(request: Request) {
   try {
@@ -12,34 +14,28 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const filter: any = {
-      deletedAt: null,
-    };
-
-    if (type) filter.type = type;
-    if (status) filter.status = status;
-    if (unitId) filter.unitId = unitId;
+    const conditions = [isNull(subjects.deletedAt)];
+    if (type) conditions.push(eq(subjects.type, type as any));
+    if (status) conditions.push(eq(subjects.status, status as any));
+    if (unitId) conditions.push(eq(subjects.unitId, unitId));
     if (q) {
-      filter.OR = [
-        { name: { contains: q, mode: 'insensitive' } },
-        { code: { contains: q, mode: 'insensitive' } },
-      ];
+      conditions.push(or(
+        ilike(subjects.name, `%${q}%`),
+        ilike(subjects.code, `%${q}%`)
+      )!);
     }
 
-    const [subjects, total] = await Promise.all([
-      prisma.subject.findMany({
-        where: filter,
-        orderBy: { name: 'asc' },
-        skip,
-        take: limit,
-      }),
-      prisma.subject.count({ where: filter })
+    const whereClause = and(...conditions);
+
+    const [data, [{ total }]] = await Promise.all([
+      db.select().from(subjects).where(whereClause).orderBy(asc(subjects.name)).limit(limit).offset(skip),
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) }).from(subjects).where(whereClause)
     ]);
 
     return NextResponse.json(
       { 
         success: true, 
-        data: subjects,
+        data,
         pagination: {
           total,
           page,
@@ -59,21 +55,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, code, type, tingkatKelas, unitId } = body;
 
-    // Validate required fields
     if (!name) {
       return NextResponse.json({ success: false, error: "Nama mata pelajaran wajib diisi" }, { status: 400 });
     }
 
-    const newSubject = await prisma.subject.create({
-      data: {
-        name,
-        code: code || '',
-        type: type || 'wajib',
-        tingkatKelas: tingkatKelas || '',
-        unitId: unitId || '',
-        status: 'aktif',
-      }
-    });
+    const [newSubject] = await db.insert(subjects).values({
+      name,
+      code: code || '',
+      type: (type as any) || 'wajib',
+      tingkatKelas: tingkatKelas || '',
+      unitId: unitId || '',
+      status: 'aktif',
+    }).returning();
 
     return NextResponse.json({ success: true, data: newSubject }, { status: 201 });
   } catch (error: any) {

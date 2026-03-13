@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { announcements, users } from "@/db/schema";
+import { and, eq, ilike, or, desc, sql } from "drizzle-orm";
 
 // GET /api/announcements
 export async function GET(req: Request) {
@@ -12,26 +14,50 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    if (status) where.status = status;
-    if (target && target !== "all") where.target = target;
+    const conditions = [];
+    if (status) conditions.push(eq(announcements.status, status));
+    if (target && target !== "all") conditions.push(eq(announcements.target, target));
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { content: { contains: search, mode: "insensitive" } }
-      ];
+      conditions.push(or(
+        ilike(announcements.title, `%${search}%`),
+        ilike(announcements.content, `%${search}%`)
+      ));
     }
 
-    const [data, total] = await Promise.all([
-      prisma.announcement.findMany({
-        where,
-        include: { createdBy: { select: { id: true, name: true } } },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.announcement.count({ where })
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [data, totalRes] = await Promise.all([
+      db.select({
+        id: announcements.id,
+        title: announcements.title,
+        content: announcements.content,
+        target: announcements.target,
+        channel: announcements.channel,
+        scheduledAt: announcements.scheduledAt,
+        sentAt: announcements.sentAt,
+        status: announcements.status,
+        createdById: announcements.createdById,
+        unitId: announcements.unitId,
+        createdAt: announcements.createdAt,
+        updatedAt: announcements.updatedAt,
+        createdBy: {
+          id: users.id,
+          name: users.name
+        }
+      })
+      .from(announcements)
+      .leftJoin(users, eq(announcements.createdById, users.id))
+      .where(whereClause)
+      .orderBy(desc(announcements.createdAt))
+      .limit(limit)
+      .offset(skip),
+      
+      db.select({ count: sql`count(*)`.mapWith(Number) })
+      .from(announcements)
+      .where(whereClause),
     ]);
+
+    const total = totalRes[0].count;
 
     return NextResponse.json({
       success: true,
@@ -58,18 +84,17 @@ export async function POST(req: Request) {
     if (!title) return NextResponse.json({ error: "Judul pengumuman wajib" }, { status: 400 });
 
     const isScheduled = scheduledAt && scheduledAt !== "";
-    const data = await prisma.announcement.create({
-      data: {
-        title,
-        content: content || "",
-        target: target || "all",
-        channel: channel || "dashboard",
-        scheduledAt: scheduledAt || "",
-        sentAt: isScheduled ? "" : new Date().toISOString(),
-        status: isScheduled ? "scheduled" : "sent",
-        createdById: createdById ? parseInt(createdById) : null,
-      },
-    });
+    const [data] = await db.insert(announcements).values({
+      title,
+      content: content || "",
+      target: target || "all",
+      channel: channel || "dashboard",
+      scheduledAt: scheduledAt || "",
+      sentAt: isScheduled ? "" : new Date().toISOString(),
+      status: isScheduled ? "scheduled" : "sent",
+      createdById: createdById ? parseInt(createdById) : null,
+    }).returning();
+    
     return NextResponse.json(data, { status: 201 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal membuat pengumuman";

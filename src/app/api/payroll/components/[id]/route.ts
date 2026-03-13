@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { salaryComponents } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 
 // DELETE /api/payroll/components/[id]
@@ -16,10 +18,10 @@ export async function DELETE(
     }
 
     // Soft delete
-    await prisma.salaryComponent.update({
-      where: { id: componentId },
-      data: { deletedAt: new Date() },
-    });
+    await db
+      .update(salaryComponents)
+      .set({ deletedAt: new Date() })
+      .where(eq(salaryComponents.id, componentId));
 
     return NextResponse.json({ success: true, message: "Komponen dihapus" });
   } catch (error) {

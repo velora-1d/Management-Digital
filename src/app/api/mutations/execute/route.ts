@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students } from "@/db/schema";
+import { inArray, eq, isNull, and } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 /**
@@ -20,18 +22,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Tentukan kelas tujuan atau status baru" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updateData: any = {};
+    const result = await db.transaction(async (tx) => {
+      const updateData: any = { updatedAt: new Date() };
       if (targetClassroomId) updateData.classroomId = Number(targetClassroomId);
       if (newStatus) updateData.status = newStatus;
 
-      const updated = await tx.student.updateMany({
-        where: { id: { in: studentIds.map(Number) }, deletedAt: null },
-        data: updateData,
-      });
+      const updated = await tx
+        .update(students)
+        .set(updateData)
+        .where(
+            and(
+                inArray(students.id, studentIds.map(Number)),
+                isNull(students.deletedAt)
+            )
+        )
+        .returning();
 
-      return { count: updated.count };
+      return { count: updated.length };
     });
+    
+    // I need to import 'and' - wait, I forgot to import it.
+    // Let me fix the imports in the write_to_file call below.
 
     const action = newStatus
       ? `Status ${result.count} siswa diubah ke "${newStatus}"`
@@ -43,6 +54,7 @@ export async function POST(request: Request) {
       data: { affected: result.count },
     });
   } catch (error) {
+     console.error("Mutation error:", error);
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     }

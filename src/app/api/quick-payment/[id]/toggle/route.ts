@@ -1,22 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { registrationPayments, generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, sql } from "drizzle-orm";
 
 /**
  * POST /api/quick-payment/[id]/toggle
  * 
  * Toggle pembayaran item (formulir/buku/seragam) untuk PPDB/Daftar Ulang.
- * Input: { field: "formulir"|"buku"|"seragam", amount: number, cashAccountId: number }
- * 
- * Logic ON (isPaid false → true):
- *   1. Update RegistrationPayment isPaid=true, nominal=amount, paidAt=now
- *   2. Create GeneralTransaction type=in
- *   3. Update saldo CashAccount
- * 
- * Logic OFF (isPaid true → false) — revert:
- *   1. Update RegistrationPayment isPaid=false
- *   2. Void GeneralTransaction terkait
- *   3. Revert saldo CashAccount
  */
 export async function POST(
   request: Request,
@@ -34,10 +25,12 @@ export async function POST(
     const body = await request.json();
     const { amount, cashAccountId } = body;
 
-    const result = await prisma.$transaction(async (tx) => {
-      const payment = await tx.registrationPayment.findUnique({
-        where: { id: paymentId },
-      });
+    const result = await db.transaction(async (tx) => {
+      const [payment] = await tx
+        .select()
+        .from(registrationPayments)
+        .where(eq(registrationPayments.id, paymentId))
+        .limit(1);
 
       if (!payment) throw new Error("Payment item tidak ditemukan");
       if (payment.deletedAt) throw new Error("Payment sudah dihapus");
@@ -48,67 +41,70 @@ export async function POST(
         if (payAmount <= 0) throw new Error("Nominal pembayaran harus lebih dari 0");
 
         // Update payment
-        await tx.registrationPayment.update({
-          where: { id: paymentId },
-          data: {
+        await tx
+          .update(registrationPayments)
+          .set({
             isPaid: true,
             nominal: payAmount,
             paidAt: new Date().toISOString(),
-          },
-        });
+            updatedAt: new Date(),
+          })
+          .where(eq(registrationPayments.id, paymentId));
 
         // Create jurnal (jika ada akun kas)
         if (cashAccountId) {
-          await tx.generalTransaction.create({
-            data: {
-              type: "in",
-              amount: payAmount,
-              cashAccountId: Number(cashAccountId),
-              description: `Pembayaran ${payment.paymentType} - ${payment.payableType} #${payment.payableId}`,
-              date: new Date().toISOString().split("T")[0],
-              status: "valid",
-              referenceType: "registration_payment",
-              referenceId: String(paymentId),
-              userId: user.userId,
-              unitId: user.unitId || "",
-            },
+          await tx.insert(generalTransactions).values({
+            type: "in",
+            amount: payAmount,
+            cashAccountId: Number(cashAccountId),
+            description: `Pembayaran ${payment.paymentType} - ${payment.payableType} #${payment.payableId}`,
+            date: new Date().toISOString().split("T")[0],
+            status: "valid",
+            referenceType: "registration_payment",
+            referenceId: String(paymentId),
+            userId: user.userId,
+            unitId: user.unitId || "",
           });
 
-          await tx.cashAccount.update({
-            where: { id: Number(cashAccountId) },
-            data: { balance: { increment: payAmount } },
-          });
+          await tx
+            .update(cashAccounts)
+            .set({ balance: sql`${cashAccounts.balance} + ${payAmount}` })
+            .where(eq(cashAccounts.id, Number(cashAccountId)));
         }
 
         return { action: "paid", amount: payAmount };
       } else {
         // === TOGGLE OFF: Revert ===
-        await tx.registrationPayment.update({
-          where: { id: paymentId },
-          data: { isPaid: false, paidAt: null },
-        });
+        await tx
+          .update(registrationPayments)
+          .set({ isPaid: false, paidAt: null, updatedAt: new Date() })
+          .where(eq(registrationPayments.id, paymentId));
 
         // Void jurnal terkait
-        const relatedTx = await tx.generalTransaction.findFirst({
-          where: {
-            referenceType: "registration_payment",
-            referenceId: String(paymentId),
-            status: "valid",
-            deletedAt: null,
-          },
-        });
+        const [relatedTx] = await tx
+          .select()
+          .from(generalTransactions)
+          .where(
+            and(
+              eq(generalTransactions.referenceType, "registration_payment"),
+              eq(generalTransactions.referenceId, String(paymentId)),
+              eq(generalTransactions.status, "valid"),
+              isNull(generalTransactions.deletedAt)
+            )
+          )
+          .limit(1);
 
         if (relatedTx) {
-          await tx.generalTransaction.update({
-            where: { id: relatedTx.id },
-            data: { status: "void" },
-          });
+          await tx
+            .update(generalTransactions)
+            .set({ status: "void", updatedAt: new Date() })
+            .where(eq(generalTransactions.id, relatedTx.id));
 
           if (relatedTx.cashAccountId) {
-            await tx.cashAccount.update({
-              where: { id: relatedTx.cashAccountId },
-              data: { balance: { decrement: relatedTx.amount } },
-            });
+            await tx
+              .update(cashAccounts)
+              .set({ balance: sql`${cashAccounts.balance} - ${relatedTx.amount}` })
+              .where(eq(cashAccounts.id, relatedTx.cashAccountId));
           }
         }
 

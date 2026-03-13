@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { wakafPurposes, generalTransactions } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, sql, asc } from "drizzle-orm";
 
 /**
  * GET /api/wakaf/purposes — List tujuan wakaf
- * POST /api/wakaf/purposes — Tambah tujuan wakaf
- * DELETE /api/wakaf/purposes — Hapus tujuan wakaf (body: { id })
  */
-
 export async function GET() {
   try {
     await requireAuth();
-    const purposes = await prisma.wakafPurpose.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-    });
+    const purposes = await db
+      .select()
+      .from(wakafPurposes)
+      .where(isNull(wakafPurposes.deletedAt))
+      .orderBy(asc(wakafPurposes.name));
+    
     return NextResponse.json({ success: true, data: purposes });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -24,6 +25,9 @@ export async function GET() {
   }
 }
 
+/**
+ * POST /api/wakaf/purposes — Tambah tujuan wakaf
+ */
 export async function POST(request: Request) {
   try {
     const user = await requireAuth();
@@ -34,13 +38,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Nama tujuan wajib diisi" }, { status: 400 });
     }
 
-    const purpose = await prisma.wakafPurpose.create({
-      data: {
+    const [purpose] = await db
+      .insert(wakafPurposes)
+      .values({
         name: name.trim(),
         description: description || "",
         unitId: user.unitId || "",
-      },
-    });
+      })
+      .returning();
 
     return NextResponse.json({ success: true, message: "Tujuan wakaf berhasil ditambahkan.", data: purpose });
   } catch (error) {
@@ -51,6 +56,9 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * DELETE /api/wakaf/purposes — Hapus tujuan wakaf (body: { id })
+ */
 export async function DELETE(request: Request) {
   try {
     await requireAuth();
@@ -61,10 +69,20 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: "ID wajib diisi" }, { status: 400 });
     }
 
+    const purposeId = Number(id);
+
     // Cek apakah masih dipakai
-    const used = await prisma.generalTransaction.count({
-      where: { wakafPurposeId: Number(id), deletedAt: null },
-    });
+    const [usedResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(generalTransactions)
+      .where(
+        and(
+          eq(generalTransactions.wakafPurposeId, purposeId),
+          isNull(generalTransactions.deletedAt)
+        )
+      );
+
+    const used = usedResult?.count || 0;
 
     if (used > 0) {
       return NextResponse.json({
@@ -73,10 +91,10 @@ export async function DELETE(request: Request) {
       }, { status: 400 });
     }
 
-    await prisma.wakafPurpose.update({
-      where: { id: Number(id) },
-      data: { deletedAt: new Date() },
-    });
+    await db
+      .update(wakafPurposes)
+      .set({ deletedAt: new Date() })
+      .where(eq(wakafPurposes.id, purposeId));
 
     return NextResponse.json({ success: true, message: "Tujuan wakaf berhasil dihapus." });
   } catch (error) {

@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { 
+    infaqBills, 
+    students, 
+    infaqPayments, 
+    ppdbRegistrations, 
+    studentSavings, 
+    classrooms,
+    generalTransactions,
+    transactionCategories
+} from "@/db/schema";
+import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -12,16 +23,33 @@ export async function GET(
     const { type } = params;
 
     if (type === "infaq") {
-      const bills = await prisma.infaqBill.findMany({
-        where: { deletedAt: null },
-        include: {
-          student: { select: { id: true, name: true } },
-          payments: { where: { deletedAt: null } },
-        },
-      });
+      const bills = await db
+        .select({
+          id: infaqBills.id,
+          month: infaqBills.month,
+          year: infaqBills.year,
+          nominal: infaqBills.nominal,
+          student: {
+            id: students.id,
+            name: students.name
+          }
+        })
+        .from(infaqBills)
+        .leftJoin(students, eq(infaqBills.studentId, students.id))
+        .where(isNull(infaqBills.deletedAt));
 
-      const result = bills.map((bill) => {
-        const paid = bill.payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      const result = await Promise.all(bills.map(async (bill) => {
+        const payments = await db
+            .select({ amountPaid: infaqPayments.amountPaid })
+            .from(infaqPayments)
+            .where(
+                and(
+                    eq(infaqPayments.billId, bill.id),
+                    isNull(infaqPayments.deletedAt)
+                )
+            );
+        
+        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
         const amount = bill.nominal || 0;
         const remaining = amount - paid;
         return {
@@ -33,55 +61,84 @@ export async function GET(
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      });
+      }));
 
       return NextResponse.json({ success: true, data: result });
     }
 
     if (type === "pendaftaran") {
-      const registrations = await prisma.ppdbRegistration.findMany({
-        where: { deletedAt: null },
-        orderBy: { id: "desc" },
-      });
+      const registrations = await db
+        .select()
+        .from(ppdbRegistrations)
+        .where(isNull(ppdbRegistrations.deletedAt))
+        .orderBy(desc(ppdbRegistrations.id));
       return NextResponse.json({ success: true, data: registrations });
     }
 
     if (type === "tabungan") {
-      const students = await prisma.student.findMany({
-        where: { deletedAt: null },
-        include: {
-          classroom: { select: { id: true, name: true } },
-          savings: { where: { deletedAt: null, status: "active" } },
-        },
-      });
+      const activeStudents = await db
+        .select({
+          id: students.id,
+          name: students.name,
+          classroomName: classrooms.name
+        })
+        .from(students)
+        .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
+        .where(isNull(students.deletedAt));
 
-      const result = students
-        .map((s) => {
+      const result = [];
+      for (const s of activeStudents) {
+          const savingsData = await db
+            .select({ type: studentSavings.type, amount: studentSavings.amount })
+            .from(studentSavings)
+            .where(
+                and(
+                    eq(studentSavings.studentId, s.id),
+                    eq(studentSavings.status, "active"),
+                    isNull(studentSavings.deletedAt)
+                )
+            );
+          
           let balance = 0;
-          s.savings.forEach((sv) => {
+          savingsData.forEach((sv) => {
             if (sv.type === "setor") balance += sv.amount;
             else if (sv.type === "tarik") balance -= sv.amount;
           });
-          return {
-            student_id: s.id,
-            student_name: s.name,
-            classroom: s.classroom?.name || "-",
-            balance,
-          };
-        })
-        .filter((s) => s.balance !== 0);
+
+          if (balance !== 0) {
+              result.push({
+                student_id: s.id,
+                student_name: s.name,
+                classroom: s.classroomName || "-",
+                balance,
+              });
+          }
+      }
 
       return NextResponse.json({ success: true, data: result });
     }
 
     if (type === "aruskas") {
-      const transactions = await prisma.generalTransaction.findMany({
-        where: { deletedAt: null, status: "valid" },
-        include: {
-          category: { select: { id: true, name: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      const transactions = await db
+        .select({
+          id: generalTransactions.id,
+          date: generalTransactions.date,
+          createdAt: generalTransactions.createdAt,
+          description: generalTransactions.description,
+          type: generalTransactions.type,
+          amount: generalTransactions.amount,
+          status: generalTransactions.status,
+          categoryName: transactionCategories.name
+        })
+        .from(generalTransactions)
+        .leftJoin(transactionCategories, eq(generalTransactions.categoryId, transactionCategories.id))
+        .where(
+            and(
+                isNull(generalTransactions.deletedAt),
+                eq(generalTransactions.status, "valid")
+            )
+        )
+        .orderBy(desc(generalTransactions.createdAt));
 
       let total_income = 0;
       let total_expense = 0;
@@ -93,7 +150,7 @@ export async function GET(
           id: t.id,
           date: t.date || t.createdAt,
           description: t.description,
-          category: t.category?.name || "Umum",
+          category: t.categoryName || "Umum",
           type: t.type === "in" ? "income" : "expense",
           amount: t.amount,
           status: t.status,
@@ -108,6 +165,7 @@ export async function GET(
 
     return NextResponse.json({ success: false, message: "Tipe laporan tidak dikenali" }, { status: 400 });
   } catch (error) {
+    console.error("Reports error:", error);
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     }

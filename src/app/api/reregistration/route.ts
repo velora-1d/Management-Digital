@@ -1,32 +1,53 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { reRegistrations, students, classrooms, registrationPayments } from "@/db/schema";
+import { eq, and, isNull, desc, inArray } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const reregList = await prisma.reRegistration.findMany({
-      where: { deletedAt: null },
-      include: {
+    const reregList = await db
+      .select({
+        id: reRegistrations.id,
+        status: reRegistrations.status,
+        studentId: reRegistrations.studentId,
         student: {
-          select: { id: true, name: true, classroomId: true, gender: true },
-        },
-      },
-      orderBy: { id: "desc" },
-    });
+          id: students.id,
+          name: students.name,
+          classroomId: students.classroomId,
+          gender: students.gender,
+        }
+      })
+      .from(reRegistrations)
+      .leftJoin(students, eq(reRegistrations.studentId, students.id))
+      .where(isNull(reRegistrations.deletedAt))
+      .orderBy(desc(reRegistrations.id));
 
     // Map classrooms
-    const classRooms = await prisma.classroom.findMany({
-      select: { id: true, name: true },
-    });
-    const classMap = Object.fromEntries(classRooms.map(c => [c.id, c.name]));
+    const classRoomsList = await db
+      .select({ id: classrooms.id, name: classrooms.name })
+      .from(classrooms);
+    const classMap = Object.fromEntries(classRoomsList.map(c => [c.id, c.name]));
 
     // Map payments
-    const payments = await prisma.registrationPayment.findMany({
-      where: { payableType: "reregistration", deletedAt: null },
-    });
+    const reregIds = reregList.map(r => r.id);
+    let payments: any[] = [];
+    if (reregIds.length > 0) {
+      payments = await db
+        .select()
+        .from(registrationPayments)
+        .where(
+          and(
+            eq(registrationPayments.payableType, "reregistration"),
+            isNull(registrationPayments.deletedAt),
+            inArray(registrationPayments.payableId, reregIds)
+          )
+        );
+    }
+
     const paymentMap = payments.reduce((acc, p) => {
       const key = String(p.payableId);
       if (!acc[key]) acc[key] = {};
-      acc[key][p.paymentType] = p.isPaid;
+      acc[key][p.paymentType as string] = p.isPaid;
       return acc;
     }, {} as Record<string, Record<string, boolean>>);
 
@@ -66,6 +87,7 @@ export async function GET() {
       not_registered,
     });
   } catch (error) {
+    console.error("Reregistration GET error:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data daftar ulang" },
       { status: 500 }

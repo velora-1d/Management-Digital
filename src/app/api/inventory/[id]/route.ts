@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
+import { db } from "@/db";
+import { inventories } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // GET /api/inventory/[id]
 export async function GET(
@@ -12,9 +13,7 @@ export async function GET(
     const id = parseInt(params.id);
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 
-    const inventory = await prisma.inventory.findUnique({
-      where: { id },
-    });
+    const [inventory] = await db.select().from(inventories).where(eq(inventories.id, id)).limit(1);
 
     if (!inventory || inventory.deletedAt) {
       return NextResponse.json({ error: "Data tidak ditemukan" }, { status: 404 });
@@ -39,17 +38,18 @@ export async function PUT(
     const body = await request.json();
     const { name, category, quantity, condition, location, acquisitionCost } = body;
 
-    const inventory = await prisma.inventory.update({
-      where: { id },
-      data: {
+    const [inventory] = await db.update(inventories)
+      .set({
         name,
         category,
         quantity: Number(quantity),
         condition,
         location,
         acquisitionCost: Number(acquisitionCost) || 0,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(inventories.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, message: "Data berhasil diperbarui", data: inventory });
   } catch (error) {
@@ -67,10 +67,9 @@ export async function DELETE(
     const id = parseInt(params.id);
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 
-    await prisma.inventory.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await db.update(inventories)
+      .set({ deletedAt: new Date() })
+      .where(eq(inventories.id, id));
 
     return NextResponse.json({ success: true, message: "Data berhasil dihapus" });
   } catch (error) {

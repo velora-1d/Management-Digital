@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { infaqBills } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq } from "drizzle-orm";
 
 /**
  * POST /api/infaq-bills/[id]/revert
- * 
- * Revert tagihan dari 'lunas' kembali ke 'belum_lunas' — sesuai Laravel:
- * - Hanya bisa revert tagihan berstatus LUNAS
- * - Ubah status saja, JANGAN hapus payment records
  */
 export async function POST(
   request: Request,
@@ -19,38 +17,20 @@ export async function POST(
     const billId = Number(params.id);
 
     if (isNaN(billId)) {
-      return NextResponse.json(
-        { success: false, message: "ID tagihan tidak valid" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "ID tagihan tidak valid" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const bill = await tx.infaqBill.findUnique({
-        where: { id: billId },
-      });
+    await db.transaction(async (tx) => {
+      const [bill] = await tx.select().from(infaqBills).where(eq(infaqBills.id, billId)).limit(1);
 
       if (!bill) throw new Error("Tagihan tidak ditemukan");
       if (bill.deletedAt) throw new Error("Tagihan sudah dihapus");
+      if (bill.status !== "lunas") throw new Error("Hanya tagihan berstatus LUNAS yang bisa di-revert.");
 
-      // Sesuai Laravel: hanya tagihan berstatus LUNAS yang bisa di-revert
-      if (bill.status !== "lunas") {
-        throw new Error("Hanya tagihan berstatus LUNAS yang bisa di-revert.");
-      }
-
-      // Ubah status ke belum_lunas — JANGAN hapus payment records (sesuai Laravel)
-      await tx.infaqBill.update({
-        where: { id: bill.id },
-        data: { status: "belum_lunas" },
-      });
-
-      return {};
+      await tx.update(infaqBills).set({ status: "belum_lunas" as any, updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Status tagihan berhasil dikembalikan ke Belum Lunas.",
-    });
+    return NextResponse.json({ success: true, message: "Status tagihan berhasil dikembalikan ke Belum Lunas." });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });

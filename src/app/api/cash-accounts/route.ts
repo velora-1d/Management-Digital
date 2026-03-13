@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { cashAccounts, generalTransactions } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, isNull, asc, and, sql } from "drizzle-orm";
 
 /**
  * GET /api/cash-accounts — List semua akun kas
@@ -8,24 +10,24 @@ import { requireAuth, AuthError } from "@/lib/rbac";
  */
 export async function GET() {
   try {
-    const accounts = await prisma.cashAccount.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-      include: {
-        _count: {
-          select: { transactions: { where: { deletedAt: null } } },
-        },
-      },
-    });
+    const records = await db.select({
+      id: cashAccounts.id,
+      name: cashAccounts.name,
+      balance: cashAccounts.balance,
+      transactionCount: sql<number>`count(${generalTransactions.id})`.mapWith(Number),
+    })
+    .from(cashAccounts)
+    .leftJoin(generalTransactions, and(
+      eq(cashAccounts.id, generalTransactions.cashAccountId),
+      isNull(generalTransactions.deletedAt)
+    ))
+    .where(isNull(cashAccounts.deletedAt))
+    .groupBy(cashAccounts.id)
+    .orderBy(asc(cashAccounts.name));
 
     return NextResponse.json({
       success: true,
-      data: accounts.map(a => ({
-        id: a.id,
-        name: a.name,
-        balance: a.balance,
-        transactionCount: a._count.transactions,
-      })),
+      data: records,
     });
   } catch (error) {
     console.error("Cash accounts GET error:", error);
@@ -50,9 +52,11 @@ export async function POST(request: Request) {
     }
 
     // Cek duplikasi nama
-    const existing = await prisma.cashAccount.findFirst({
-      where: { name: name.trim(), deletedAt: null },
-    });
+    const [existing] = await db.select()
+      .from(cashAccounts)
+      .where(and(eq(cashAccounts.name, name.trim()), isNull(cashAccounts.deletedAt)))
+      .limit(1);
+
     if (existing) {
       return NextResponse.json(
         { success: false, message: "Nama akun kas sudah ada" },
@@ -60,13 +64,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const account = await prisma.cashAccount.create({
-      data: {
-        name: name.trim(),
-        balance: 0,
-        unitId: user.unitId || "",
-      },
-    });
+    const [account] = await db.insert(cashAccounts).values({
+      name: name.trim(),
+      balance: 0,
+      unitId: user.unitId || "",
+    }).returning();
 
     return NextResponse.json({
       success: true,

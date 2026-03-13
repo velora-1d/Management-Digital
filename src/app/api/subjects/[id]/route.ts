@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/db";
+import { subjects } from "@/db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,9 +14,10 @@ export async function GET(
       return NextResponse.json({ success: false, error: "ID tidak valid" }, { status: 400 });
     }
 
-    const subject = await prisma.subject.findUnique({
-      where: { id, deletedAt: null },
-    });
+    const [subject] = await db
+      .select()
+      .from(subjects)
+      .where(and(eq(subjects.id, id), isNull(subjects.deletedAt)));
 
     if (!subject) {
       return NextResponse.json({ success: false, error: "Mata pelajaran tidak ditemukan" }, { status: 404 });
@@ -42,35 +43,32 @@ export async function PUT(
     const body = await request.json();
     const { name, code, type, tingkatKelas, status } = body;
 
-    const existingSubject = await prisma.subject.findUnique({
-      where: { id, deletedAt: null },
-    });
+    const existing = await db
+      .select({ id: subjects.id })
+      .from(subjects)
+      .where(and(eq(subjects.id, id), isNull(subjects.deletedAt)));
 
-    if (!existingSubject) {
+    if (existing.length === 0) {
       return NextResponse.json({ success: false, error: "Mata pelajaran tidak ditemukan" }, { status: 404 });
     }
 
-    // Prepare update data
-    const updateData: any = {};
+    const updateData: Partial<typeof subjects.$inferInsert> = { updatedAt: new Date() };
     if (name !== undefined) updateData.name = name;
     if (code !== undefined) updateData.code = code;
     if (type !== undefined) updateData.type = type;
     if (tingkatKelas !== undefined) updateData.tingkatKelas = tingkatKelas;
     if (status !== undefined) updateData.status = status;
 
-    const updatedSubject = await prisma.subject.update({
-      where: { id },
-      data: updateData,
-    });
+    const [updated] = await db.update(subjects).set(updateData).where(eq(subjects.id, id)).returning();
 
-    return NextResponse.json({ success: true, data: updatedSubject });
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -81,13 +79,10 @@ export async function DELETE(
     }
 
     // Soft delete
-    await prisma.subject.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        status: 'dihapus'
-      },
-    });
+    await db
+      .update(subjects)
+      .set({ deletedAt: new Date(), status: "dihapus", updatedAt: new Date() })
+      .where(eq(subjects.id, id));
 
     return NextResponse.json({ success: true, message: "Mata pelajaran berhasil dihapus" });
   } catch (error: any) {

@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { auditLogs } from "@/db/schema";
 
 /**
  * Audit Log Helper
@@ -28,15 +29,13 @@ interface AuditLogInput {
 
 export async function writeAuditLog(input: AuditLogInput): Promise<void> {
   try {
-    await prisma.auditLog.create({
-      data: {
-        userId: input.userId,
-        action: input.action,
-        modelType: input.modelType,
-        modelId: String(input.modelId),
-        oldValues: input.oldValues ? JSON.stringify(input.oldValues) : "",
-        newValues: input.newValues ? JSON.stringify(input.newValues) : "",
-      },
+    await db.insert(auditLogs).values({
+      userId: input.userId,
+      action: input.action,
+      modelType: input.modelType,
+      modelId: String(input.modelId),
+      oldValues: input.oldValues ? JSON.stringify(input.oldValues) : "",
+      newValues: input.newValues ? JSON.stringify(input.newValues) : "",
     });
   } catch (error) {
     // Audit log TIDAK boleh menggagalkan operasi utama

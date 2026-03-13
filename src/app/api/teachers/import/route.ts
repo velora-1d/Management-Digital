@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull } from "drizzle-orm";
 
 /**
  * POST /api/teachers/import — Import guru/staf dari CSV
@@ -49,27 +51,31 @@ export async function POST(request: Request) {
 
         // Skip duplicate NIP
         if (nip && nip.trim()) {
-          const existing = await prisma.employee.findFirst({ where: { nip: nip.trim(), deletedAt: null } });
+          const [existing] = await db
+            .select()
+            .from(employees)
+            .where(and(eq(employees.nip, nip.trim()), isNull(employees.deletedAt)))
+            .limit(1);
+            
           if (existing) {
             skip++;
             continue;
           }
         }
 
-        await prisma.employee.create({
-          data: {
-            nip: nip?.trim() || "",
-            name: nama.trim(),
-            type: tipe?.trim()?.toLowerCase() || "guru",
-            position: jabatan?.trim() || "",
-            status: status?.trim()?.toLowerCase() || "aktif",
-            phone: telepon?.trim() || "",
-            address: alamat?.trim() || "",
-            joinDate: tglMasuk?.trim() || "",
-            baseSalary: gajiStr ? parseFloat(gajiStr) || 0 : 0,
-            unitId: user.unitId || "",
-          },
+        await db.insert(employees).values({
+          nip: nip?.trim() || "",
+          name: nama.trim(),
+          type: (tipe?.trim()?.toLowerCase() || "guru") as any,
+          position: jabatan?.trim() || "",
+          status: (status?.trim()?.toLowerCase() || "aktif") as any,
+          phone: telepon?.trim() || "",
+          address: alamat?.trim() || "",
+          joinDate: tglMasuk?.trim() || "",
+          baseSalary: gajiStr ? parseFloat(gajiStr) || 0 : 0,
+          unitId: user.unitId || "",
         });
+        
         sukses++;
       } catch (err) {
         errors.push(`Baris ${i + 2}: ${err instanceof Error ? err.message : "error"}`);

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { infaqBills, students, academicYears, classrooms, infaqPayments } from "@/db/schema";
+import { isNull, and, eq, ilike, asc, desc, sql, inArray } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,7 +10,6 @@ export async function GET(request: Request) {
   const semester = searchParams.get("semester") || "";
   const academicYearId = searchParams.get("academicYearId") || "";
   const classroomId = searchParams.get("classroomId") || "";
-  const gender = searchParams.get("gender") || "";
   const statusFilter = searchParams.get("status") || "";
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 25));
@@ -17,75 +18,99 @@ export async function GET(request: Request) {
     // 1. Tentukan Tahun Ajaran Target
     let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
     if (!targetAcademicYearId) {
-      const activeYear = await prisma.academicYear.findFirst({
-        where: { isActive: true, deletedAt: null },
-      });
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
       targetAcademicYearId = activeYear?.id || null;
     }
 
     // 2. Build where clause
-    const where: any = { deletedAt: null };
-    
-    if (targetAcademicYearId) where.academicYearId = targetAcademicYearId;
-    if (month) where.month = month;
-    if (statusFilter) where.status = statusFilter;
+    const conditions = [isNull(infaqBills.deletedAt)];
+    if (targetAcademicYearId) conditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
+    if (month) conditions.push(eq(infaqBills.month, month));
+    if (statusFilter) conditions.push(eq(infaqBills.status, statusFilter as any));
 
     // Filter Semester
     if (semester) {
       const ganjilMonths = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
       const genapMonths = ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
-      where.month = { in: semester.toLowerCase() === "ganjil" ? ganjilMonths : genapMonths };
+      const monthList = semester.toLowerCase() === "ganjil" ? ganjilMonths : genapMonths;
+      conditions.push(inArray(infaqBills.month, monthList));
     }
 
     // Filter Relasi Siswa
-    if (search || classroomId || gender) {
-      where.student = {
-        deletedAt: null,
-        ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
-        ...(classroomId ? { classroomId: Number(classroomId) } : {}),
-        ...(gender ? { gender } : {}),
-      };
-    }
+    if (search) conditions.push(ilike(students.name, `%${search}%`));
+    if (classroomId) conditions.push(eq(students.classroomId, Number(classroomId)));
 
-    const [bills, total] = await Promise.all([
-      prisma.infaqBill.findMany({
-        where,
-        include: {
-          student: {
-            select: { id: true, name: true, nisn: true, classroomId: true, gender: true },
-          },
-          academicYear: {
-            select: { id: true, year: true },
-          },
-          payments: {
-            where: { deletedAt: null },
-            select: { amountPaid: true },
-          },
-        },
-        orderBy: [{ createdAt: "desc" }],
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.infaqBill.count({ where }),
+    const whereClause = and(...conditions);
+
+    const [rawBills, [{ total }]] = await Promise.all([
+      db.select({
+        id: infaqBills.id,
+        studentId: infaqBills.studentId,
+        month: infaqBills.month,
+        year: infaqBills.year,
+        nominal: infaqBills.nominal,
+        status: infaqBills.status,
+        createdAt: infaqBills.createdAt,
+        studentName: students.name,
+        studentNisn: students.nisn,
+        studentGender: students.gender,
+        studentClassroomId: students.classroomId,
+        academicYearName: academicYears.year,
+      })
+      .from(infaqBills)
+      .leftJoin(students, eq(infaqBills.studentId, students.id))
+      .leftJoin(academicYears, eq(infaqBills.academicYearId, academicYears.id))
+      .where(whereClause)
+      .orderBy(desc(infaqBills.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit),
+
+      db.select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(infaqBills)
+      .leftJoin(students, eq(infaqBills.studentId, students.id))
+      .where(whereClause)
     ]);
 
-    // Ambil semua Classroom ID unik untuk mapping nama kelas
-    const classIds = [...new Set(bills.map(b => b.student?.classroomId).filter((id): id is number => id != null))];
-    const classrooms = classIds.length > 0 
-      ? await prisma.classroom.findMany({ where: { id: { in: classIds } }, select: { id: true, name: true } }) 
-      : [];
-    const classMap = Object.fromEntries(classrooms.map(c => [c.id, c.name]));
+    // Ambil total pembayaran per bill
+    const billIds = rawBills.map(b => b.id);
+    let paymentMap: Record<number, number> = {};
+    if (billIds.length > 0) {
+      const paymentSums = await db.select({
+        billId: infaqPayments.billId,
+        totalPaid: sql<number>`coalesce(sum(${infaqPayments.amountPaid}), 0)`.mapWith(Number),
+      })
+      .from(infaqPayments)
+      .where(and(inArray(infaqPayments.billId, billIds), isNull(infaqPayments.deletedAt)))
+      .groupBy(infaqPayments.billId);
+      
+      paymentSums.forEach(p => { 
+        if (p.billId !== null) {
+          paymentMap[p.billId] = p.totalPaid; 
+        }
+      });
+    }
 
-    const formattedBills = bills.map(b => {
-      const totalPaid = b.payments.reduce((sum, p) => sum + p.amountPaid, 0);
+    // Ambil nama kelas
+    const classIds = [...new Set(rawBills.map(b => b.studentClassroomId).filter((id): id is number => id != null))];
+    let classMap: Record<number, string> = {};
+    if (classIds.length > 0) {
+      const cls = await db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(inArray(classrooms.id, classIds));
+      cls.forEach(c => { classMap[c.id] = c.name; });
+    }
+
+    const formattedBills = rawBills.map(b => {
+      const totalPaid = paymentMap[b.id] || 0;
       return {
         id: b.id,
         student_id: b.studentId,
-        student_name: b.student?.name || "Unknown",
-        nisn: b.student?.nisn || "-",
-        gender: b.student?.gender || "-",
-        classroom: b.student?.classroomId ? classMap[b.student.classroomId] || "-" : "-",
-        academic_year: b.academicYear?.year || "-",
+        student_name: b.studentName || "Unknown",
+        nisn: b.studentNisn || "-",
+        gender: b.studentGender || "-",
+        classroom: b.studentClassroomId ? classMap[b.studentClassroomId] || "-" : "-",
+        academic_year: b.academicYearName || "-",
         month: b.month,
         year: b.year,
         nominal: b.nominal,

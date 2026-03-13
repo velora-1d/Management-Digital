@@ -1,80 +1,82 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/db";
+import { attendances, students } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
-const prisma = new PrismaClient();
-
-// GET: Fetch attendance for a specific class and date
+// GET: Fetch attendance untuk kelas dan tanggal tertentu
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const classroomId = searchParams.get('classroomId');
-    const dateQuery = searchParams.get('date'); // YYYY-MM-DD format
-    
+    const classroomId = searchParams.get("classroomId");
+    const dateQuery = searchParams.get("date");
+
     if (!classroomId || !dateQuery) {
       return NextResponse.json({ success: false, error: "classroomId dan date wajib diisi" }, { status: 400 });
     }
 
-    const dateStr = new Date(dateQuery).toISOString().split('T')[0];
+    const dateStr = new Date(dateQuery).toISOString().split("T")[0];
 
-    const attendances = await prisma.attendance.findMany({
-      where: {
-        classroomId: parseInt(classroomId),
-        date: dateStr
-      },
-      include: {
-        student: { select: { name: true, nisn: true } }
-      }
-    });
+    const rows = await db
+      .select({
+        id: attendances.id,
+        studentId: attendances.studentId,
+        classroomId: attendances.classroomId,
+        date: attendances.date,
+        status: attendances.status,
+        note: attendances.note,
+        createdAt: attendances.createdAt,
+        updatedAt: attendances.updatedAt,
+        student: { name: students.name, nisn: students.nisn },
+      })
+      .from(attendances)
+      .leftJoin(students, eq(attendances.studentId, students.id))
+      .where(and(eq(attendances.classroomId, parseInt(classroomId)), eq(attendances.date, dateStr)));
 
-    return NextResponse.json({ success: true, data: attendances });
+    return NextResponse.json({ success: true, data: rows });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// POST: Mass Insert or Upsert Attendance
+// POST: Mass Upsert Attendance
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { classroomId, academicYearId, date, attendances } = body;
-    // attendances is an array of objects: { studentId, status, notes }
+    const { classroomId, date, attendances: attendanceList } = body;
 
-    if (!classroomId || !academicYearId || !date || !Array.isArray(attendances)) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "classroomId, academicYearId, date, dan array attendances wajib diisi" 
+    if (!classroomId || !date || !Array.isArray(attendanceList)) {
+      return NextResponse.json({
+        success: false,
+        error: "classroomId, date, dan array attendances wajib diisi",
       }, { status: 400 });
     }
 
-    const dateStr = new Date(date).toISOString().split('T')[0];
+    const dateStr = new Date(date).toISOString().split("T")[0];
 
-    // Using transaction for safe mass insert/update
-    const results = await prisma.$transaction(
-      attendances.map((att: { studentId: number, status: string, notes?: string }) => {
-        return prisma.attendance.upsert({
-          where: {
-            unique_attendance: {
-              studentId: att.studentId,
-              date: dateStr
-            }
-          },
-          update: {
-            status: att.status,
-            note: att.notes || "",
-            classroomId: parseInt(classroomId),
-          },
-          create: {
-            studentId: att.studentId,
-            classroomId: parseInt(classroomId),
-            date: dateStr,
-            status: att.status,
-            note: att.notes || ""
-          }
-        });
+    const results = await db
+      .insert(attendances)
+      .values(
+        attendanceList.map((att: { studentId: number; status: string; notes?: string }) => ({
+          studentId: att.studentId,
+          classroomId: parseInt(classroomId),
+          date: dateStr,
+          status: att.status,
+          note: att.notes || "",
+        }))
+      )
+      .onConflictDoUpdate({
+        target: [attendances.studentId, attendances.date],
+        set: {
+          status: sql`excluded.status`,
+          note: sql`excluded.note`,
+          classroomId: sql`excluded.classroom_id`,
+          updatedAt: new Date(),
+        },
       })
-    );
+      .returning();
 
-    return NextResponse.json({ success: true, count: results.length, data: results }, { status: 200 });
+    return NextResponse.json({ success: true, count: results.length, data: results });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

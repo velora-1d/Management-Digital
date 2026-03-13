@@ -1,43 +1,61 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
+import { db } from "@/db";
+import { studentGrades, students } from "@/db/schema";
+import { eq, and, asc, sql } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
-    const headersList = await headers();
-
     const { searchParams } = new URL(req.url);
     const componentId = searchParams.get("componentId");
     const classroomId = searchParams.get("classroomId");
     const subjectId = searchParams.get("subjectId");
 
-    const where: any = {};
-    if (componentId) where.componentId = Number(componentId);
-    if (classroomId) where.classroomId = Number(classroomId);
-    if (subjectId) where.subjectId = Number(subjectId);
+    let whereClause = undefined;
+    const filters = [];
+    if (componentId) filters.push(eq(studentGrades.componentId, Number(componentId)));
+    if (classroomId) filters.push(eq(studentGrades.classroomId, Number(classroomId)));
+    if (subjectId) filters.push(eq(studentGrades.subjectId, Number(subjectId)));
+    
+    if (filters.length > 0) whereClause = and(...filters);
 
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "100");
     const skip = (page - 1) * limit;
 
-    const [grades, total] = await Promise.all([
-      prisma.studentGrade.findMany({
-        where,
-        include: {
-          student: { select: { id: true, name: true, nis: true, nisn: true } },
-        },
-        orderBy: {
-          student: { name: 'asc' },
-        },
-        skip,
-        take: limit
-      }),
-      prisma.studentGrade.count({ where })
+    const [results, totalResult] = await Promise.all([
+      db
+        .select({
+          id: studentGrades.id,
+          nilaiAngka: studentGrades.nilaiAngka,
+          predikat: studentGrades.predikat,
+          componentId: studentGrades.componentId,
+          studentId: studentGrades.studentId,
+          subjectId: studentGrades.subjectId,
+          classroomId: studentGrades.classroomId,
+          student: {
+            id: students.id,
+            name: students.name,
+            nis: students.nis,
+            nisn: students.nisn
+          }
+        })
+        .from(studentGrades)
+        .leftJoin(students, eq(studentGrades.studentId, students.id))
+        .where(whereClause)
+        .orderBy(asc(students.name))
+        .limit(limit)
+        .offset(skip),
+      db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(studentGrades)
+        .where(whereClause)
     ]);
+
+    const total = totalResult[0]?.count || 0;
 
     return NextResponse.json({
       success: true,
-      data: grades,
+      data: results,
       pagination: {
         total,
         page,
@@ -56,11 +74,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const headersList = await headers();
-
     const body = await req.json();
     const { componentId, classroomId, subjectId, grades } = body;
-    // grades = [{ studentId: 1, nilaiAngka: 80, predikat: "B" }, ...]
 
     if (!componentId || !classroomId || !subjectId || !Array.isArray(grades)) {
       return NextResponse.json(
@@ -69,36 +84,48 @@ export async function POST(req: Request) {
       );
     }
 
-    const results = [];
-
-    // Lakukan upsert dalam transaksi sequential untuk setiap nilai
-    // Karena SQLite/Neon kadang punya limit concurrency, kita await promise all
-    const promises = grades.map((g) => {
-      return prisma.studentGrade.upsert({
-        where: {
-          unique_grade: {
-            componentId: Number(componentId),
-            studentId: Number(g.studentId),
-            subjectId: Number(subjectId),
-          },
-        },
-        update: {
-          classroomId: Number(classroomId),
-          nilaiAngka: Number(g.nilaiAngka),
-          predikat: g.predikat || "",
-        },
-        create: {
-          componentId: Number(componentId),
-          studentId: Number(g.studentId),
-          subjectId: Number(subjectId),
-          classroomId: Number(classroomId),
-          nilaiAngka: Number(g.nilaiAngka),
-          predikat: g.predikat || "",
-        },
-      });
-    });
-
-    const savedGrades = await Promise.all(promises);
+    const savedGrades = [];
+    for (const g of grades) {
+        // Upsert manual with Drizzle
+        const [existing] = await db
+            .select()
+            .from(studentGrades)
+            .where(
+                and(
+                    eq(studentGrades.componentId, Number(componentId)),
+                    eq(studentGrades.studentId, Number(g.studentId)),
+                    eq(studentGrades.subjectId, Number(subjectId))
+                )
+            )
+            .limit(1);
+        
+        if (existing) {
+            const [updated] = await db
+                .update(studentGrades)
+                .set({
+                    classroomId: Number(classroomId),
+                    nilaiAngka: Number(g.nilaiAngka),
+                    predikat: g.predikat || "",
+                    updatedAt: new Date(),
+                })
+                .where(eq(studentGrades.id, existing.id))
+                .returning();
+            savedGrades.push(updated);
+        } else {
+            const [created] = await db
+                .insert(studentGrades)
+                .values({
+                    componentId: Number(componentId),
+                    studentId: Number(g.studentId),
+                    subjectId: Number(subjectId),
+                    classroomId: Number(classroomId),
+                    nilaiAngka: Number(g.nilaiAngka),
+                    predikat: g.predikat || "",
+                })
+                .returning();
+            savedGrades.push(created);
+        }
+    }
 
     return NextResponse.json({ success: true, count: savedGrades.length }, { status: 201 });
   } catch (error) {

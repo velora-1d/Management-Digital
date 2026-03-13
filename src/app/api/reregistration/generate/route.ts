@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, academicYears, reRegistrations, schoolSettings, registrationPayments } from "@/db/schema";
 import { requireAuth } from "@/lib/rbac";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 
 export async function POST() {
   try {
     const user = await requireAuth();
 
     // Cari siswa aktif
-    const activeStudents = await prisma.student.findMany({
-      where: { status: "aktif", deletedAt: null },
-      select: { id: true, name: true },
-    });
+    const activeStudents = await db
+      .select({ id: students.id, name: students.name })
+      .from(students)
+      .where(and(eq(students.status, "aktif"), isNull(students.deletedAt)));
 
     if (activeStudents.length === 0) {
       return NextResponse.json({ success: true, count: 0, message: "Tidak ada siswa aktif ditemukan" });
     }
 
     // Cari academic year yang aktif
-    const currentAcademicYear = await prisma.academicYear.findFirst({
-      where: { isActive: true, deletedAt: null },
-    });
+    const [currentAcademicYear] = await db
+      .select()
+      .from(academicYears)
+      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .limit(1);
 
     if (!currentAcademicYear) {
       return NextResponse.json(
@@ -31,33 +35,36 @@ export async function POST() {
     const academicYearId = currentAcademicYear.id;
 
     // Cari existing reregistrations
-    const existing = await prisma.reRegistration.findMany({
-      where: { academicYearId, deletedAt: null },
-      select: { studentId: true },
-    });
+    const existingList = await db
+      .select({ studentId: reRegistrations.studentId })
+      .from(reRegistrations)
+      .where(and(eq(reRegistrations.academicYearId, academicYearId), isNull(reRegistrations.deletedAt)));
 
-    const existingStudentIds = new Set(existing.map((e) => e.studentId));
+    const existingStudentIds = new Set(existingList.map((e) => e.studentId));
     let count = 0;
 
     // Ambil settings biaya daftar ulang dan buku
     const feeKeys = ["re_registration_fee", "books_fee"];
-    const settings = await prisma.schoolSetting.findMany({
-      where: { key: { in: feeKeys } },
-    });
+    const settingsList = await db
+      .select()
+      .from(schoolSettings)
+      .where(inArray(schoolSettings.key, feeKeys));
+      
     const feeMap: Record<string, number> = {};
-    settings.forEach((s: any) => { feeMap[s.key] = Number(s.value) || 0; });
+    settingsList.forEach((s) => { feeMap[s.key] = Number(s.value) || 0; });
 
     // Generate dalam transaction
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       for (const student of activeStudents) {
         if (!existingStudentIds.has(student.id)) {
-          const newReg = await tx.reRegistration.create({
-            data: {
+          const [newReg] = await tx
+            .insert(reRegistrations)
+            .values({
               studentId: student.id,
               academicYearId: academicYearId,
               status: "pending",
-            },
-          });
+            })
+            .returning();
 
           // Buat otomatis tagihan Daftar Ulang fee & books_fee
           const paymentTypes = [
@@ -65,16 +72,16 @@ export async function POST() {
             { type: "books", nominal: feeMap["books_fee"] || 0 },
           ];
 
-          await tx.registrationPayment.createMany({
-            data: paymentTypes.map(pt => ({
+          await tx.insert(registrationPayments).values(
+            paymentTypes.map(pt => ({
               payableType: "reregistration",
               payableId: newReg.id,
               paymentType: pt.type,
               nominal: pt.nominal,
               isPaid: false,
               unitId: user.unitId || "",
-            })),
-          });
+            }))
+          );
 
           count++;
         }
@@ -87,6 +94,7 @@ export async function POST() {
       message: `Pendaftaran ulang untuk ${count} siswa berhasil digenerate.`,
     });
   } catch (error) {
+    console.error("Reregistration Generate error:", error);
     return NextResponse.json(
       { error: "Gagal men-generate data daftar ulang" },
       { status: 500 }

@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { sql } from "drizzle-orm";
 import { requireAuth, requireRole, AuthError } from "@/lib/rbac";
 
 /**
  * Daftar tabel yang harus di-wipe sebelum restore.
- * Urutan sesuai foreign key (child tables dulu).
  */
 const WIPE_ORDER = [
   "payroll_details",
@@ -31,19 +31,13 @@ const WIPE_ORDER = [
   "school_settings",
 ];
 
-/**
- * POST /api/settings/restore — Restore data dari file backup SQL
- * Hanya superadmin yang boleh
- */
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();
     requireRole(user, ["superadmin"]);
 
-    // Baca body sebagai text (file SQL)
     const sqlContent = await req.text();
 
-    // Validasi format: harus mengandung header backup kita
     if (!sqlContent.includes("-- DATABASE BACKUP") && !sqlContent.includes("INSERT INTO")) {
       return NextResponse.json(
         { success: false, error: "Format file tidak valid. Pastikan file berasal dari fitur Backup (.sql)." },
@@ -51,14 +45,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse metadata dari header SQL
     let exportedAt = "Tidak diketahui";
     const dateMatch = sqlContent.match(/-- DATABASE BACKUP — (.+)/);
     if (dateMatch) {
       exportedAt = dateMatch[1].trim();
     }
 
-    // Ekstrak semua INSERT statements
     const insertStatements = sqlContent
       .split("\n")
       .map((line) => line.trim())
@@ -71,7 +63,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hitung jumlah per tabel untuk laporan
     const tableCounts: Record<string, number> = {};
     for (const stmt of insertStatements) {
       const match = stmt.match(/INSERT INTO "([^"]+)"/);
@@ -81,38 +72,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Eksekusi restore dalam transaksi
-    await prisma.$transaction(
-      async (tx) => {
-        // 1. Wipe existing data (urutan sesuai foreign key)
-        for (const table of WIPE_ORDER) {
-          try {
-            await tx.$executeRawUnsafe(`DELETE FROM "${table}"`);
-          } catch {
-            // Tabel mungkin tidak ada, skip saja
-          }
+    await db.transaction(async (tx) => {
+      for (const table of WIPE_ORDER) {
+        try {
+          await tx.execute(sql.raw(`DELETE FROM "${table}"`));
+        } catch (e) {
+          // Skip if table doesn't exist
         }
+      }
 
-        // 2. Eksekusi INSERT statements satu per satu
-        for (const stmt of insertStatements) {
-          await tx.$executeRawUnsafe(stmt);
+      for (const stmt of insertStatements) {
+        await tx.execute(sql.raw(stmt));
+      }
+
+      for (const table of Object.keys(tableCounts)) {
+        try {
+          await tx.execute(
+            sql.raw(`SELECT setval(pg_get_serial_sequence('"${table}"', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1, false)`)
+          );
+        } catch (e) {
+          // Skip
         }
+      }
+    });
 
-        // 3. Reset sequence autoincrement agar sinkron
-        for (const table of Object.keys(tableCounts)) {
-          try {
-            await tx.$executeRawUnsafe(
-              `SELECT setval(pg_get_serial_sequence('"${table}"', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1, false)`
-            );
-          } catch {
-            // Tabel tanpa serial ID, skip
-          }
-        }
-      },
-      { timeout: 120000 } // Timeout 2 menit untuk data besar
-    );
-
-    // Buat laporan
     const restored = Object.entries(tableCounts).map(
       ([table, count]) => `${table}: ${count} baris`
     );
@@ -128,16 +111,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: error.statusCode }
-      );
+      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     }
     console.error("Restore error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { success: false, error: `Gagal restore data: ${msg}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: `Gagal restore data: ${msg}` }, { status: 500 });
   }
 }

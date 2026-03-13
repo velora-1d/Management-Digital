@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { salaryComponents, employeeSalaries } from "@/db/schema";
+import { eq, and, isNull, asc } from "drizzle-orm";
 
 // GET /api/payroll/employees/[id]/salary
 export async function GET(
@@ -13,17 +15,19 @@ export async function GET(
       return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
     }
 
-    const components = await prisma.salaryComponent.findMany({
-      where: { deletedAt: null },
-      orderBy: { id: "asc" },
-    });
+    const componentsList = await db
+      .select()
+      .from(salaryComponents)
+      .where(isNull(salaryComponents.deletedAt))
+      .orderBy(asc(salaryComponents.id));
 
-    const employeeSalaries = await prisma.employeeSalary.findMany({
-      where: { employeeId: employeeId, deletedAt: null },
-    });
+    const empSalariesList = await db
+      .select()
+      .from(employeeSalaries)
+      .where(and(eq(employeeSalaries.employeeId, employeeId), isNull(employeeSalaries.deletedAt)));
 
-    const result = components.map(c => {
-      const existing = employeeSalaries.find(es => es.componentId === c.id);
+    const result = componentsList.map(c => {
+      const existing = empSalariesList.find(es => es.componentId === c.id);
       return {
         id: c.id,
         name: c.name,
@@ -34,6 +38,7 @@ export async function GET(
 
     return NextResponse.json({ components: result });
   } catch (error) {
+    console.error("Employee Salary GET error:", error);
     return NextResponse.json({ error: "Gagal mengambil detail gaji pegawai" }, { status: 500 });
   }
 }
@@ -52,8 +57,9 @@ export async function PUT(
 
     const body = await request.json();
 
-    await prisma.$transaction(async (tx) => {
-      await tx.employeeSalary.deleteMany({ where: { employeeId: employeeId } });
+    await db.transaction(async (tx) => {
+      // Hard delete employee salaries for this employee
+      await tx.delete(employeeSalaries).where(eq(employeeSalaries.employeeId, employeeId));
 
       const dataToInsert = body.map((item: any) => ({
         employeeId: employeeId,
@@ -62,12 +68,13 @@ export async function PUT(
       }));
 
       if (dataToInsert.length > 0) {
-        await tx.employeeSalary.createMany({ data: dataToInsert });
+        await tx.insert(employeeSalaries).values(dataToInsert);
       }
     });
 
     return NextResponse.json({ success: true, message: "Gaji diperbarui" });
   } catch (error) {
+    console.error("Employee Salary PUT error:", error);
     return NextResponse.json({ error: "Gagal menyimpan detail gaji" }, { status: 500 });
   }
 }

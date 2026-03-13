@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { isNull, asc } from "drizzle-orm";
 
 /**
  * GET /api/teachers/export — Export data guru/staf ke CSV
@@ -9,12 +11,13 @@ import { requireAuth, AuthError } from "@/lib/rbac";
 export async function GET() {
   try {
     await requireAuth();
-    const employees = await prisma.employee.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-    });
+    const results = await db
+      .select()
+      .from(employees)
+      .where(isNull(employees.deletedAt))
+      .orderBy(asc(employees.name));
 
-    const rows = employees.map((e, i) => ({
+    const rows = results.map((e, i) => ({
       no: i + 1,
       nip: e.nip || "-",
       nama: (e.name || "").replace(/"/g, '""'),

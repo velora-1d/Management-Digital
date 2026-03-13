@@ -1,22 +1,33 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { announcements } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // PUT /api/announcements/[id]
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const body = await req.json();
-    const data = await prisma.announcement.update({
-      where: { id: parseInt(id) },
-      data: {
-        ...(body.title !== undefined && { title: body.title }),
-        ...(body.content !== undefined && { content: body.content }),
-        ...(body.target !== undefined && { target: body.target }),
-        ...(body.channel !== undefined && { channel: body.channel }),
-        ...(body.scheduledAt !== undefined && { scheduledAt: body.scheduledAt }),
-        ...(body.status !== undefined && { status: body.status }),
-      },
-    });
+    
+    const updateData: any = {};
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.content !== undefined) updateData.content = body.content;
+    if (body.target !== undefined) updateData.target = body.target;
+    if (body.channel !== undefined) updateData.channel = body.channel;
+    if (body.scheduledAt !== undefined) updateData.scheduledAt = body.scheduledAt;
+    if (body.status !== undefined) updateData.status = body.status;
+    
+    updateData.updatedAt = new Date();
+
+    const [data] = await db.update(announcements)
+      .set(updateData)
+      .where(eq(announcements.id, parseInt(id)))
+      .returning();
+      
+    if (!data) {
+      return NextResponse.json({ error: "Pengumuman tidak ditemukan" }, { status: 404 });
+    }
+
     return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate pengumuman";
@@ -28,7 +39,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.announcement.delete({ where: { id: parseInt(id) } });
+    await db.delete(announcements).where(eq(announcements.id, parseInt(id)));
     return NextResponse.json({ message: "Pengumuman berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus pengumuman";

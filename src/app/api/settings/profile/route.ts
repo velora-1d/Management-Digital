@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
+import { db } from "@/db";
+import { schoolSettings } from "@/db/schema";
+import { inArray, eq } from "drizzle-orm";
 
 const PROFILE_KEYS = [
   "school_name",
@@ -14,9 +15,10 @@ const PROFILE_KEYS = [
 
 export async function GET() {
   try {
-    const settings = await prisma.schoolSetting.findMany({
-      where: { key: { in: PROFILE_KEYS } },
-    });
+    const settings = await db
+      .select()
+      .from(schoolSettings)
+      .where(inArray(schoolSettings.key, PROFILE_KEYS));
 
     const profile: Record<string, string> = {
       name: "",
@@ -40,6 +42,7 @@ export async function GET() {
 
     return NextResponse.json(profile);
   } catch (error) {
+    console.error("Settings profile GET error:", error);
     return NextResponse.json(
       { error: "Gagal mengambil profil madrasah" },
       { status: 500 }
@@ -62,25 +65,28 @@ export async function POST(request: Request) {
 
     for (const [bodyKey, dbKey] of Object.entries(mapKeys)) {
       if (body[bodyKey] !== undefined) {
-        const existing = await prisma.schoolSetting.findFirst({
-          where: { key: dbKey },
-        });
+        const [existing] = await db
+          .select()
+          .from(schoolSettings)
+          .where(eq(schoolSettings.key, dbKey))
+          .limit(1);
 
         if (existing) {
-          await prisma.schoolSetting.update({
-            where: { id: existing.id },
-            data: { value: body[bodyKey].toString() },
-          });
+          await db
+            .update(schoolSettings)
+            .set({ value: body[bodyKey].toString(), updatedAt: new Date() })
+            .where(eq(schoolSettings.id, existing.id));
         } else {
-          await prisma.schoolSetting.create({
-            data: { key: dbKey, value: body[bodyKey].toString() },
-          });
+          await db
+            .insert(schoolSettings)
+            .values({ key: dbKey, value: body[bodyKey].toString() });
         }
       }
     }
 
     return NextResponse.json({ success: true, message: "Profil madrasah diperbarui" });
   } catch (error) {
+    console.error("Settings profile POST error:", error);
     return NextResponse.json(
       { error: "Gagal menyimpan profil madrasah" },
       { status: 500 }

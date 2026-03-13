@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { payrolls, employees, salaryComponents, employeeSalaries, payrollDetails } from "@/db/schema";
+import { eq, and, isNull, desc, sql } from "drizzle-orm";
 
 // GET /api/payroll
 export async function GET(request: Request) {
@@ -10,25 +12,42 @@ export async function GET(request: Request) {
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 20));
 
-    const whereClause: any = { deletedAt: null };
-    if (month) whereClause.month = month;
-    if (year) whereClause.year = year;
+    let whereClause = isNull(payrolls.deletedAt);
+    if (month) whereClause = and(whereClause, eq(payrolls.month, month)) as any;
+    if (year) whereClause = and(whereClause, eq(payrolls.year, year)) as any;
 
-    const [payrolls, total] = await Promise.all([
-      prisma.payroll.findMany({
-        where: whereClause,
-        include: { employee: { select: { id: true, name: true } } },
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.payroll.count({ where: whereClause }),
+    const [results, totalResult] = await Promise.all([
+      db
+        .select({
+          id: payrolls.id,
+          month: payrolls.month,
+          year: payrolls.year,
+          baseSalary: payrolls.baseSalary,
+          totalAllowance: payrolls.totalAllowance,
+          totalDeduction: payrolls.totalDeduction,
+          netSalary: payrolls.netSalary,
+          status: payrolls.status,
+          createdAt: payrolls.createdAt,
+          employeeName: employees.name,
+        })
+        .from(payrolls)
+        .leftJoin(employees, eq(payrolls.employeeId, employees.id))
+        .where(whereClause)
+        .orderBy(desc(payrolls.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(payrolls)
+        .where(whereClause)
     ]);
 
-    const result = payrolls.map((p) => ({
+    const total = totalResult[0]?.count || 0;
+
+    const data = results.map((p) => ({
       id: p.id,
       code: `PAY-${p.year}${p.month.padStart(2, '0')}-${p.id.toString().padStart(4, '0')}`,
-      employee_name: p.employee?.name || "Unknown",
+      employee_name: p.employeeName || "Unknown",
       total_earning: p.baseSalary + p.totalAllowance,
       total_deduction: p.totalDeduction,
       net_salary: p.netSalary,
@@ -38,7 +57,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data: data,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
@@ -58,11 +77,12 @@ export async function POST(request: Request) {
     const year = String(body.year || new Date().getFullYear());
 
     // 1. Ambil semua pegawai aktif
-    const employees = await prisma.employee.findMany({
-      where: { deletedAt: null, status: "aktif" },
-    });
+    const activeEmployees = await db
+      .select()
+      .from(employees)
+      .where(and(eq(employees.status, "aktif"), isNull(employees.deletedAt)));
 
-    if (employees.length === 0) {
+    if (activeEmployees.length === 0) {
       return NextResponse.json(
         { success: false, message: "Tidak ada pegawai aktif untuk digenerate" },
         { status: 400 }
@@ -70,33 +90,39 @@ export async function POST(request: Request) {
     }
 
     // 2. Ambil semua komponen gaji dan setup gaji pegawai
-    const allComponents = await prisma.salaryComponent.findMany({
-      where: { deletedAt: null },
-    });
+    const allComponents = await db
+      .select()
+      .from(salaryComponents)
+      .where(isNull(salaryComponents.deletedAt));
 
-    const employeeSalaries = await prisma.employeeSalary.findMany({
-      where: { deletedAt: null },
-    });
+    const allEmployeeSalaries = await db
+      .select()
+      .from(employeeSalaries)
+      .where(isNull(employeeSalaries.deletedAt));
 
     // 3. Generate slip gaji per pegawai dalam transaction
-    await prisma.$transaction(async (tx) => {
-      for (const emp of employees) {
+    await db.transaction(async (tx) => {
+      for (const emp of activeEmployees) {
         // Cek apakah sudah digenerate bulan ini
-        const existing = await tx.payroll.findFirst({
-          where: {
-            employeeId: emp.id,
-            month: month,
-            year: year,
-            deletedAt: null,
-          },
-        });
+        const [existing] = await tx
+          .select()
+          .from(payrolls)
+          .where(
+            and(
+              eq(payrolls.employeeId, emp.id),
+              eq(payrolls.month, month),
+              eq(payrolls.year, year),
+              isNull(payrolls.deletedAt)
+            )
+          )
+          .limit(1);
 
         if (existing) continue;
 
         // Hitung gaji
         let totalEarning = emp.baseSalary || 0;
         let totalDeduction = 0;
-        const detailsData: { componentId: number | null; componentName: string; type: string; amount: number }[] = [];
+        const detailsData: any[] = [];
 
         // Masukkan base salary sebagai komponen detail jika > 0
         if (emp.baseSalary > 0) {
@@ -109,7 +135,7 @@ export async function POST(request: Request) {
         }
 
         // Ambil komponen spesifik dari employeeSalaries
-        const empComps = employeeSalaries.filter(es => es.employeeId === emp.id);
+        const empComps = allEmployeeSalaries.filter(es => es.employeeId === emp.id);
 
         // Loop ke semua master komponen
         for (const comp of allComponents) {
@@ -135,8 +161,9 @@ export async function POST(request: Request) {
         const netSalary = totalEarning - totalDeduction;
 
         // Create Payroll
-        const newPayroll = await tx.payroll.create({
-          data: {
+        const [newPayroll] = await tx
+          .insert(payrolls)
+          .values({
             employeeId: emp.id,
             month: month,
             year: year,
@@ -145,24 +172,24 @@ export async function POST(request: Request) {
             totalDeduction: totalDeduction,
             netSalary: netSalary,
             status: "draft",
-          },
-        });
+          })
+          .returning();
 
         // Create Details
         if (detailsData.length > 0) {
-          await tx.payrollDetail.createMany({
-            data: detailsData.map(d => ({
+          await tx.insert(payrollDetails).values(
+            detailsData.map(d => ({
               ...d,
               payrollId: newPayroll.id,
-            })),
-          });
+            }))
+          );
         }
       }
     });
 
     return NextResponse.json({ success: true, message: "Generate slip gaji bulanan selesai" });
   } catch (error) {
-    console.error(error);
+    console.error("Payroll POST error:", error);
     return NextResponse.json(
       { success: false, message: "Gagal men-generate penggajian" },
       { status: 500 }

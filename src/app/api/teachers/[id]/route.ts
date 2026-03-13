@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    const employee = await prisma.employee.findFirst({
-      where: { id: parseInt(params.id), deletedAt: null },
-    });
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(and(eq(employees.id, parseInt(params.id)), isNull(employees.deletedAt)))
+      .limit(1);
+
     if (!employee) return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
     return NextResponse.json({ success: true, data: employee });
   } catch (error) {
@@ -18,20 +23,23 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   try {
     const body = await request.json();
-    const employee = await prisma.employee.update({
-      where: { id: parseInt(params.id) },
-      data: {
+    const [employee] = await db
+      .update(employees)
+      .set({
         name: body.name,
         nip: body.nip || "",
-        type: body.type || "guru",
+        type: (body.type || "guru") as any,
         position: body.position || "",
-        status: body.status || "aktif",
+        status: (body.status || "aktif") as any,
         phone: body.phone || "",
         address: body.address || "",
         joinDate: body.joinDate || "",
         baseSalary: body.baseSalary ? Number(body.baseSalary) : 0,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(employees.id, parseInt(params.id)))
+      .returning();
+
     return NextResponse.json({ success: true, message: "Data berhasil diperbarui", data: employee });
   } catch (error) {
     console.error("Employee PUT error:", error);
@@ -42,10 +50,11 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await prisma.employee.update({
-      where: { id: parseInt(params.id) },
-      data: { deletedAt: new Date() },
-    });
+    await db
+      .update(employees)
+      .set({ deletedAt: new Date() })
+      .where(eq(employees.id, parseInt(params.id)));
+
     return NextResponse.json({ success: true, message: "Data berhasil dihapus" });
   } catch (error) {
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { infaqBills, students, classrooms } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { isNull, and, eq, asc, sql, inArray } from "drizzle-orm";
 
 /**
  * GET /api/infaq-bills/export — Export data tagihan sebagai CSV
- * Query: ?month=&year=&status=
  */
 export async function GET(request: Request) {
   try {
@@ -14,22 +15,39 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
     const status = searchParams.get("status");
 
-    const where: any = { deletedAt: null };
-    if (month) where.month = Number(month);
-    if (year) where.year = year;
-    if (status) where.status = status;
+    const conditions = [isNull(infaqBills.deletedAt)];
+    if (month) conditions.push(eq(infaqBills.month, month));
+    if (year) conditions.push(eq(infaqBills.year, year));
+    if (status) conditions.push(eq(infaqBills.status, status as any));
 
-    const bills = await prisma.infaqBill.findMany({
-      where,
-      include: { student: { select: { name: true, nisn: true, classroom: { select: { name: true } } } } },
-      orderBy: [{ month: "asc" }, { createdAt: "asc" }],
-    });
+    const bills = await db.select({
+      id: infaqBills.id,
+      month: infaqBills.month,
+      year: infaqBills.year,
+      nominal: infaqBills.nominal,
+      status: infaqBills.status,
+      studentName: students.name,
+      studentNisn: students.nisn,
+      studentClassroomId: students.classroomId,
+    })
+    .from(infaqBills)
+    .leftJoin(students, eq(infaqBills.studentId, students.id))
+    .where(and(...conditions))
+    .orderBy(asc(infaqBills.month), asc(infaqBills.createdAt));
+
+    // Get class names
+    const classIds = [...new Set(bills.map(b => b.studentClassroomId).filter((id): id is number => id != null))];
+    let classMap: Record<number, string> = {};
+    if (classIds.length > 0) {
+      const cls = await db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(sql`${classrooms.id} = ANY(${classIds})`);
+      cls.forEach(c => { classMap[c.id] = c.name; });
+    }
 
     const rows = bills.map((b, i) => ({
       no: i + 1,
-      nama: b.student?.name || "-",
-      nisn: b.student?.nisn || "-",
-      kelas: b.student?.classroom?.name || "-",
+      nama: b.studentName || "-",
+      nisn: b.studentNisn || "-",
+      kelas: b.studentClassroomId ? classMap[b.studentClassroomId] || "-" : "-",
       bulan: b.month,
       tahun: b.year || "-",
       nominal: b.nominal,

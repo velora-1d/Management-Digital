@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, classrooms } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { isNull, eq } from "drizzle-orm";
 
 /**
  * POST /api/students/import — Import siswa dari CSV
- * Body: FormData dengan field 'file' (CSV)
- * Header CSV: NISN,NIS,NIK,No KK,Nama,Jenis Kelamin (L/P),Kelas,Status,Tanggal Masuk,Ayah,Ibu,Wali,Telepon,Alamat,Tempat Lahir,Tanggal Lahir,Infaq Nominal
  */
 export async function POST(request: Request) {
   try {
@@ -24,17 +24,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "File kosong atau hanya berisi header" }, { status: 400 });
     }
 
-    // Parse CSV (skip header row)
     const rows = lines.slice(1);
     let sukses = 0;
     let gagal = 0;
     let skip = 0;
     const errors: string[] = [];
 
-    // Ambil daftar kelas untuk mapping nama → id
-    const classrooms = await prisma.classroom.findMany({ where: { deletedAt: null } });
+    const classroomList = await db.select({ id: classrooms.id, name: classrooms.name })
+      .from(classrooms).where(isNull(classrooms.deletedAt));
     const classMap: Record<string, number> = {};
-    classrooms.forEach((c) => { classMap[c.name.toLowerCase()] = c.id; });
+    classroomList.forEach((c) => { classMap[c.name.toLowerCase()] = c.id; });
 
     for (let i = 0; i < rows.length; i++) {
       try {
@@ -53,9 +52,11 @@ export async function POST(request: Request) {
           continue;
         }
 
-        // Skip duplicate NISN
         if (nisn && nisn.trim()) {
-          const existing = await prisma.student.findFirst({ where: { nisn: nisn.trim(), deletedAt: null } });
+          const [existing] = await db.select({ id: students.id })
+            .from(students)
+            .where(eq(students.nisn, nisn.trim()))
+            .limit(1);
           if (existing) {
             skip++;
             continue;
@@ -64,27 +65,25 @@ export async function POST(request: Request) {
 
         const classroomId = kelas ? (classMap[kelas.trim().toLowerCase()] || null) : null;
 
-        await prisma.student.create({
-          data: {
-            nisn: nisn?.trim() || "",
-            nis: nis?.trim() || "",
-            nik: nik?.trim() || "",
-            noKk: noKk?.trim() || "",
-            name: nama.trim(),
-            gender: jk?.trim()?.toUpperCase() === "P" ? "P" : "L",
-            classroomId,
-            status: status?.trim() || "aktif",
-            entryDate: tglMasuk?.trim() || "",
-            fatherName: ayah?.trim() || "",
-            motherName: ibu?.trim() || "",
-            guardianName: wali?.trim() || "",
-            phone: telepon?.trim() || "",
-            address: alamat?.trim() || "",
-            birthPlace: tmptLahir?.trim() || "",
-            birthDate: tglLahir?.trim() || "",
-            infaqNominal: infaqStr ? parseFloat(infaqStr) || 0 : 0,
-            unitId: user.unitId || "",
-          },
+        await db.insert(students).values({
+          nisn: nisn?.trim() || "",
+          nis: nis?.trim() || "",
+          nik: nik?.trim() || "",
+          noKk: noKk?.trim() || "",
+          name: nama.trim(),
+          gender: jk?.trim()?.toUpperCase() === "P" ? "P" : "L",
+          classroomId,
+          status: (status?.trim() || "aktif") as any,
+          entryDate: tglMasuk?.trim() || "",
+          fatherName: ayah?.trim() || "",
+          motherName: ibu?.trim() || "",
+          guardianName: wali?.trim() || "",
+          phone: telepon?.trim() || "",
+          address: alamat?.trim() || "",
+          birthPlace: tmptLahir?.trim() || "",
+          birthDate: tglLahir?.trim() || "",
+          infaqNominal: infaqStr ? parseFloat(infaqStr) || 0 : 0,
+          unitId: user.unitId || "",
         });
         sukses++;
       } catch (err) {
@@ -106,29 +105,17 @@ export async function POST(request: Request) {
   }
 }
 
-/**
- * Parse satu baris CSV, handle quoted fields
- */
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = "";
   let inQuotes = false;
-
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (ch === "," && !inQuotes) {
-      result.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
-    }
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === "," && !inQuotes) { result.push(current.trim()); current = ""; }
+    else { current += ch; }
   }
   result.push(current.trim());
   return result;

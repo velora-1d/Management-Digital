@@ -1,36 +1,41 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { generalTransactions, transactionCategories, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { isNull, and, eq, desc } from "drizzle-orm";
 
-/**
- * GET /api/journal/export — Export jurnal ke CSV
- * Query: ?type= (in/out)
- */
 export async function GET(request: Request) {
   try {
     await requireAuth();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
-    const where: any = { deletedAt: null };
-    if (type) where.type = type;
+    const conditions = [isNull(generalTransactions.deletedAt)];
+    if (type) conditions.push(eq(generalTransactions.type, type as any));
 
-    const entries = await prisma.generalTransaction.findMany({
-      where,
-      include: {
-        category: { select: { name: true } },
-        cashAccount: { select: { name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const entries = await db.select({
+      id: generalTransactions.id,
+      date: generalTransactions.date,
+      type: generalTransactions.type,
+      description: generalTransactions.description,
+      amount: generalTransactions.amount,
+      status: generalTransactions.status,
+      categoryName: transactionCategories.name,
+      cashAccountName: cashAccounts.name,
+    })
+    .from(generalTransactions)
+    .leftJoin(transactionCategories, eq(generalTransactions.categoryId, transactionCategories.id))
+    .leftJoin(cashAccounts, eq(generalTransactions.cashAccountId, cashAccounts.id))
+    .where(and(...conditions))
+    .orderBy(desc(generalTransactions.createdAt));
 
     const rows = entries.map((e, i) => ({
       no: i + 1,
       tanggal: e.date || "-",
       tipe: e.type === "in" ? "Pemasukan" : "Pengeluaran",
       keterangan: (e.description || "").replace(/"/g, '""'),
-      kategori: e.category?.name || "-",
-      akun_kas: e.cashAccount?.name || "-",
+      kategori: e.categoryName || "-",
+      akun_kas: e.cashAccountName || "-",
       jumlah: e.amount,
       status: e.status || "valid",
     }));
@@ -45,9 +50,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json({ success: false, message: "Gagal export" }, { status: 500 });
   }
 }

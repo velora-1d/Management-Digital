@@ -1,31 +1,21 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { registrationPayments } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull } from "drizzle-orm";
 
-/**
- * GET /api/ppdb/stats — Rekap penerimaan kas PPDB per jenis
- * Menghitung total nominal yang sudah dibayar per paymentType
- */
 export async function GET() {
   try {
     await requireAuth();
 
-    const payments = await prisma.registrationPayment.findMany({
-      where: {
-        payableType: "ppdb",
-        isPaid: true,
-        deletedAt: null,
-      },
-      select: {
-        paymentType: true,
-        nominal: true,
-      },
-    });
+    const payments = await db.select({ paymentType: registrationPayments.paymentType, nominal: registrationPayments.nominal })
+      .from(registrationPayments)
+      .where(and(eq(registrationPayments.payableType, "ppdb"), eq(registrationPayments.isPaid, true), isNull(registrationPayments.deletedAt)));
 
     const summary: Record<string, { total: number; count: number }> = {};
     let grandTotal = 0;
 
-    payments.forEach((p) => {
+    payments.forEach(p => {
       const type = p.paymentType;
       if (!summary[type]) summary[type] = { total: 0, count: 0 };
       summary[type].total += Number(p.nominal) || 0;
@@ -39,7 +29,6 @@ export async function GET() {
         daftar: summary["daftar"] || { total: 0, count: 0 },
         buku: summary["buku"] || { total: 0, count: 0 },
         seragam: summary["seragam"] || { total: 0, count: 0 },
-        // backward compat: include "formulir" under "daftar" key
         ...(summary["formulir"] ? {
           daftar: {
             total: (summary["daftar"]?.total || 0) + (summary["formulir"]?.total || 0),
@@ -50,9 +39,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json({ success: false, message: "Gagal mengambil stats" }, { status: 500 });
   }
 }

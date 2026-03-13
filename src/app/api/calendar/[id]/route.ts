@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { calendarEvents } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // PUT /api/calendar/[id]
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -7,17 +9,25 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     const body = await req.json();
 
-    const data = await prisma.calendarEvent.update({
-      where: { id: parseInt(id) },
-      data: {
-        ...(body.title !== undefined && { title: body.title }),
-        ...(body.dateStart !== undefined && { dateStart: body.dateStart }),
-        ...(body.dateEnd !== undefined && { dateEnd: body.dateEnd }),
-        ...(body.type !== undefined && { type: body.type }),
-        ...(body.color !== undefined && { color: body.color }),
-        ...(body.academicYearId !== undefined && { academicYearId: body.academicYearId ? parseInt(body.academicYearId) : null }),
-      },
-    });
+    const updateData: any = {};
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.dateStart !== undefined) updateData.dateStart = body.dateStart;
+    if (body.dateEnd !== undefined) updateData.dateEnd = body.dateEnd;
+    if (body.type !== undefined) updateData.type = body.type;
+    if (body.color !== undefined) updateData.color = body.color;
+    if (body.academicYearId !== undefined) updateData.academicYearId = body.academicYearId ? parseInt(body.academicYearId) : null;
+    
+    updateData.updatedAt = new Date();
+
+    const [data] = await db.update(calendarEvents)
+      .set(updateData)
+      .where(eq(calendarEvents.id, parseInt(id)))
+      .returning();
+
+    if (!data) {
+      return NextResponse.json({ error: "Event tidak ditemukan" }, { status: 404 });
+    }
+
     return NextResponse.json(data);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate event";
@@ -29,7 +39,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.calendarEvent.delete({ where: { id: parseInt(id) } });
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, parseInt(id)));
     return NextResponse.json({ message: "Event berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus event";

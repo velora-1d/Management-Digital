@@ -1,31 +1,52 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
+import { db } from "@/db";
+import { curriculums, academicYears, gradeComponents } from "@/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
-    const headersList = await headers();
-
     const { searchParams } = new URL(req.url);
     const academicYearId = searchParams.get("academicYearId");
     const semester = searchParams.get("semester");
 
-    const where: any = {};
-    if (academicYearId) where.academicYearId = Number(academicYearId);
-    if (semester) where.semester = semester;
+    const filters = [];
+    if (academicYearId) filters.push(eq(curriculums.academicYearId, Number(academicYearId)));
+    if (semester) filters.push(eq(curriculums.semester, semester));
 
-    const curriculums = await prisma.curriculum.findMany({
-      where,
-      include: {
-        academicYear: true,
-        gradeComponents: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-    return NextResponse.json(curriculums);
+    const results = await db
+      .select({
+        id: curriculums.id,
+        type: curriculums.type,
+        academicYearId: curriculums.academicYearId,
+        semester: curriculums.semester,
+        isLocked: curriculums.isLocked,
+        createdAt: curriculums.createdAt,
+        academicYear: {
+            id: academicYears.id,
+            year: academicYears.year
+        }
+      })
+      .from(curriculums)
+      .leftJoin(academicYears, eq(curriculums.academicYearId, academicYears.id))
+      .where(whereClause)
+      .orderBy(desc(curriculums.createdAt));
+
+    // Fetch components for each curriculum
+    // Original had include gradeComponents
+    const detailedData = await Promise.all(results.map(async (cur) => {
+        const components = await db
+            .select()
+            .from(gradeComponents)
+            .where(eq(gradeComponents.curriculumId, cur.id));
+        return {
+            ...cur,
+            gradeComponents: components
+        };
+    }));
+
+    return NextResponse.json(detailedData);
   } catch (error) {
     console.error("Error fetching curriculums:", error);
     return NextResponse.json(
@@ -37,8 +58,6 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const headersList = await headers();
-
     const body = await req.json();
     const { type, academicYearId, semester, isLocked } = body;
 
@@ -50,13 +69,17 @@ export async function POST(req: Request) {
     }
 
     // Hindari duplikasi tipe kurikulum per tahun ajaran & semester
-    const existing = await prisma.curriculum.findFirst({
-      where: {
-        type,
-        academicYearId,
-        semester,
-      },
-    });
+    const [existing] = await db
+        .select()
+        .from(curriculums)
+        .where(
+            and(
+                eq(curriculums.type, type),
+                eq(curriculums.academicYearId, academicYearId),
+                eq(curriculums.semester, semester)
+            )
+        )
+        .limit(1);
 
     if (existing) {
       return NextResponse.json(
@@ -65,14 +88,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const curriculum = await prisma.curriculum.create({
-      data: {
-        type,
-        academicYearId,
-        semester,
-        isLocked: isLocked || false,
-      },
-    });
+    const [curriculum] = await db
+        .insert(curriculums)
+        .values({
+            type,
+            academicYearId,
+            semester,
+            isLocked: isLocked || false,
+        })
+        .returning();
 
     return NextResponse.json(curriculum, { status: 201 });
   } catch (error) {

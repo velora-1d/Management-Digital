@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq, and, isNull, asc, not } from "drizzle-orm";
 
 // Fungsi helper simulasi untuk mendapatkan user yang sedang login (mengambil admin pertama)
 async function getMe() {
-  return await prisma.user.findFirst({
-    where: { deletedAt: null },
-    orderBy: { id: "asc" }
-  });
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(isNull(users.deletedAt))
+    .orderBy(asc(users.id))
+    .limit(1);
+  return user;
 }
 
 export async function GET() {
@@ -22,6 +26,7 @@ export async function GET() {
       role: me.role
     });
   } catch (error) {
+    console.error("Profile GET error:", error);
     return NextResponse.json({ error: "Gagal memuat profil" }, { status: 500 });
   }
 }
@@ -38,21 +43,29 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Nama dan username wajib diisi" }, { status: 400 });
     }
 
-    const existing = await prisma.user.findFirst({
-      where: { email: username.toLowerCase(), id: { not: me.id } }
-    });
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(
+          and(
+              eq(users.email, username.toLowerCase()),
+              not(eq(users.id, me.id))
+          )
+      )
+      .limit(1);
 
     if (existing) {
       return NextResponse.json({ error: "Username (email) sudah digunakan" }, { status: 400 });
     }
 
-    await prisma.user.update({
-      where: { id: me.id },
-      data: { name, email: username.toLowerCase() }
-    });
+    await db
+      .update(users)
+      .set({ name, email: username.toLowerCase(), updatedAt: new Date() })
+      .where(eq(users.id, me.id));
 
     return NextResponse.json({ success: true, message: "Profil berhasil diperbarui" });
   } catch (error) {
+    console.error("Profile PUT error:", error);
     return NextResponse.json({ error: "Gagal memperbarui profil" }, { status: 500 });
   }
 }

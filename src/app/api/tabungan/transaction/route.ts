@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { students, studentSavings, generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, and, isNull, asc, sql } from "drizzle-orm";
 
 /**
  * POST /api/tabungan/transaction
- * 
  * Setor atau tarik tabungan siswa.
- * Input: { studentId, type (setor/tarik), amount, date, description }
- * Logic:
- *   1. Validasi siswa aktif
- *   2. Hitung saldo saat ini
- *   3. Jika tarik → validasi saldo cukup
- *   4. Buat StudentSaving record dengan balanceAfter
- *   5. Dalam $transaction
  */
 export async function POST(request: Request) {
   try {
@@ -20,46 +14,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { studentId, type, amount, date, description } = body;
 
-    // Validasi input
     if (!studentId) {
-      return NextResponse.json(
-        { success: false, message: "ID siswa wajib diisi" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "ID siswa wajib diisi" }, { status: 400 });
     }
     if (!type || !["setor", "tarik"].includes(type)) {
-      return NextResponse.json(
-        { success: false, message: "Tipe harus 'setor' atau 'tarik'" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Tipe harus 'setor' atau 'tarik'" }, { status: 400 });
     }
     if (!amount || Number(amount) <= 0) {
-      return NextResponse.json(
-        { success: false, message: "Jumlah harus lebih dari 0" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Jumlah harus lebih dari 0" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // 1. Validasi siswa
-      const student = await tx.student.findUnique({
-        where: { id: Number(studentId) },
-        select: { id: true, name: true, status: true, deletedAt: true },
-      });
+      const [student] = await tx.select({ id: students.id, name: students.name, status: students.status, deletedAt: students.deletedAt })
+        .from(students).where(eq(students.id, Number(studentId))).limit(1);
 
       if (!student || student.deletedAt) throw new Error("Siswa tidak ditemukan");
       if (student.status !== "aktif") throw new Error("Siswa tidak aktif");
 
       // 2. Hitung saldo sekarang
-      const savings = await tx.studentSaving.findMany({
-        where: { studentId: student.id, deletedAt: null, status: "active" },
-      });
+      const [{ totalSetor }] = await tx.select({ totalSetor: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
+        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "setor" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
 
-      let currentBalance = 0;
-      savings.forEach(s => {
-        if (s.type === "setor") currentBalance += s.amount;
-        else if (s.type === "tarik") currentBalance -= s.amount;
-      });
+      const [{ totalTarik }] = await tx.select({ totalTarik: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
+        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "tarik" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+
+      const currentBalance = totalSetor - totalTarik;
 
       // 3. Validasi saldo untuk penarikan
       if (type === "tarik" && currentBalance < Number(amount)) {
@@ -68,64 +48,43 @@ export async function POST(request: Request) {
         );
       }
 
-      // 4. Hitung saldo setelah transaksi
-      const newBalance = type === "setor"
-        ? currentBalance + Number(amount)
-        : currentBalance - Number(amount);
+      const newBalance = type === "setor" ? currentBalance + Number(amount) : currentBalance - Number(amount);
 
       // 5. Buat record tabungan
-      const saving = await tx.studentSaving.create({
-        data: {
-          studentId: student.id,
-          type,
-          amount: Number(amount),
-          balanceAfter: newBalance,
-          date: date || new Date().toISOString().split("T")[0],
-          description: description || "",
-          status: "active",
-          unitId: user.unitId || "",
-        },
-      });
+      const [saving] = await tx.insert(studentSavings).values({
+        studentId: student.id,
+        type: type as any,
+        amount: Number(amount),
+        balanceAfter: newBalance,
+        date: date || new Date().toISOString().split("T")[0],
+        description: description || "",
+        status: "active" as any,
+        unitId: user.unitId || "",
+      }).returning();
 
       // 6. Jurnal otomatis + update saldo kas
-      // Setor: uang masuk ke tabungan siswa → jurnal type "in" (penerimaan titipan)
-      // Tarik: uang keluar dari tabungan siswa → jurnal type "out" (pengembalian titipan)
       const txDate = date || new Date().toISOString().split("T")[0];
-
-      // Cari akun kas default (pertama yang aktif)
-      const defaultCash = await tx.cashAccount.findFirst({
-        where: { deletedAt: null },
-        orderBy: { id: "asc" },
-      });
+      const [defaultCash] = await tx.select().from(cashAccounts).where(isNull(cashAccounts.deletedAt)).orderBy(asc(cashAccounts.id)).limit(1);
 
       if (defaultCash) {
-        await tx.generalTransaction.create({
-          data: {
-            type: type === "setor" ? "in" : "out",
-            amount: Number(amount),
-            cashAccountId: defaultCash.id,
-            description: `Tabungan ${type} - ${student.name}${description ? ` (${description})` : ""}`,
-            date: txDate,
-            status: "valid",
-            referenceType: "student_saving",
-            referenceId: String(saving.id),
-            userId: user.userId,
-            unitId: user.unitId || "",
-          },
+        await tx.insert(generalTransactions).values({
+          type: (type === "setor" ? "in" : "out") as any,
+          amount: Number(amount),
+          cashAccountId: defaultCash.id,
+          description: `Tabungan ${type} - ${student.name}${description ? ` (${description})` : ""}`,
+          date: txDate,
+          status: "valid" as any,
+          referenceType: "student_saving",
+          referenceId: String(saving.id),
+          userId: user.userId,
+          unitId: user.unitId || "",
         });
 
-        // Update saldo kas: setor → uang masuk ke kas, tarik → uang keluar dari kas
-        if (type === "setor") {
-          await tx.cashAccount.update({
-            where: { id: defaultCash.id },
-            data: { balance: { increment: Number(amount) } },
-          });
-        } else {
-          await tx.cashAccount.update({
-            where: { id: defaultCash.id },
-            data: { balance: { decrement: Number(amount) } },
-          });
-        }
+        // Update saldo kas
+        const balanceChange = type === "setor" ? Number(amount) : -Number(amount);
+        await tx.update(cashAccounts)
+          .set({ balance: sql`${cashAccounts.balance} + ${balanceChange}` })
+          .where(eq(cashAccounts.id, defaultCash.id));
       }
 
       return { saving, student, currentBalance, newBalance };

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/db";
+import { schedules, classrooms, subjects, employees, academicYears } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,15 +14,27 @@ export async function GET(
       return NextResponse.json({ success: false, error: "ID tidak valid" }, { status: 400 });
     }
 
-    const schedule = await prisma.schedule.findUnique({
-      where: { id },
-      include: {
-        classroom: { select: { name: true } },
-        subject: { select: { name: true, code: true } },
-        employee: { select: { name: true } },
-        academicYear: { select: { year: true, isActive: true } }
-      }
-    });
+    const [schedule] = await db
+      .select({
+        id: schedules.id,
+        classroomId: schedules.classroomId,
+        subjectId: schedules.subjectId,
+        employeeId: schedules.employeeId,
+        academicYearId: schedules.academicYearId,
+        day: schedules.day,
+        startTime: schedules.startTime,
+        endTime: schedules.endTime,
+        classroom: { name: classrooms.name },
+        subject: { name: subjects.name, code: subjects.code },
+        employee: { name: employees.name },
+        academicYear: { year: academicYears.year, isActive: academicYears.isActive },
+      })
+      .from(schedules)
+      .leftJoin(classrooms, eq(schedules.classroomId, classrooms.id))
+      .leftJoin(subjects, eq(schedules.subjectId, subjects.id))
+      .leftJoin(employees, eq(schedules.employeeId, employees.id))
+      .leftJoin(academicYears, eq(schedules.academicYearId, academicYears.id))
+      .where(eq(schedules.id, id));
 
     if (!schedule) {
       return NextResponse.json({ success: false, error: "Jadwal tidak ditemukan" }, { status: 404 });
@@ -48,42 +60,31 @@ export async function PUT(
     const body = await request.json();
     const { classroomId, subjectId, employeeId, day, startTime, endTime, academicYearId } = body;
 
-    const existingSchedule = await prisma.schedule.findUnique({
-      where: { id },
-    });
-
-    if (!existingSchedule) {
+    const existing = await db.select({ id: schedules.id }).from(schedules).where(eq(schedules.id, id));
+    if (existing.length === 0) {
       return NextResponse.json({ success: false, error: "Jadwal tidak ditemukan" }, { status: 404 });
     }
 
-    // Prepare update data
-    const updateData: any = {};
+    const updateData: Partial<typeof schedules.$inferInsert> = {};
     if (classroomId) updateData.classroomId = parseInt(classroomId);
     if (subjectId) updateData.subjectId = parseInt(subjectId);
     if (employeeId) updateData.employeeId = parseInt(employeeId);
     if (academicYearId) updateData.academicYearId = parseInt(academicYearId);
-    if (day !== undefined) updateData.day = parseInt(day);
+    if (day !== undefined) updateData.day = day;
     if (startTime) updateData.startTime = startTime;
     if (endTime) updateData.endTime = endTime;
+    updateData.updatedAt = new Date();
 
-    const updatedSchedule = await prisma.schedule.update({
-      where: { id },
-      data: updateData,
-      include: {
-        classroom: { select: { name: true } },
-        subject: { select: { name: true } },
-        employee: { select: { name: true } },
-      }
-    });
+    const [updated] = await db.update(schedules).set(updateData).where(eq(schedules.id, id)).returning();
 
-    return NextResponse.json({ success: true, data: updatedSchedule });
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -93,10 +94,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "ID tidak valid" }, { status: 400 });
     }
 
-    // Hard delete since not in schema
-    await prisma.schedule.delete({
-      where: { id }
-    });
+    await db.delete(schedules).where(eq(schedules.id, id));
 
     return NextResponse.json({ success: true, message: "Jadwal berhasil dihapus" });
   } catch (error: any) {

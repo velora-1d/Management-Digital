@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { employees } from "@/db/schema";
+import { eq, and, isNull, asc, ilike, or } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,25 +9,27 @@ export async function GET(request: Request) {
   const search = searchParams.get("q") || "";
 
   try {
-    const where: any = { deletedAt: null };
+    const conditions = [isNull(employees.deletedAt)];
     if (type) {
-      where.type = type;
+      conditions.push(eq(employees.type, type));
     }
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { nip: { contains: search } },
-      ];
+      const searchCondition = or(
+        ilike(employees.name, `%${search}%`),
+        ilike(employees.nip, `%${search}%`)
+      );
+      if (searchCondition) conditions.push(searchCondition);
     }
 
-    const employees = await prisma.employee.findMany({
-      where,
-      orderBy: { name: "asc" },
-    });
+    const data = await db
+      .select()
+      .from(employees)
+      .where(and(...conditions))
+      .orderBy(asc(employees.name));
 
     return NextResponse.json({
       success: true,
-      data: employees,
+      data: data,
     });
   } catch (error) {
     console.error("Employees GET error:", error);

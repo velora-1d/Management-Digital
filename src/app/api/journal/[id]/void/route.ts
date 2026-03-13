@@ -1,70 +1,37 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
+import { eq, sql } from "drizzle-orm";
 
-/**
- * POST /api/journal/[id]/void
- * 
- * Void transaksi jurnal — membatalkan transaksi dan revert saldo kas.
- * Logic: 
- *   1. Update status → 'void'
- *   2. Revert saldo kas (kebalikan dari saat pencatatan)
- *   3. Dalam $transaction
- */
-export async function POST(
-  request: Request,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
     const params = await props.params;
     const txId = Number(params.id);
+    if (isNaN(txId)) return NextResponse.json({ success: false, message: "ID transaksi tidak valid" }, { status: 400 });
 
-    if (isNaN(txId)) {
-      return NextResponse.json(
-        { success: false, message: "ID transaksi tidak valid" },
-        { status: 400 }
-      );
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      const transaction = await tx.generalTransaction.findUnique({
-        where: { id: txId },
-      });
-
+    const result = await db.transaction(async (tx) => {
+      const [transaction] = await tx.select().from(generalTransactions).where(eq(generalTransactions.id, txId)).limit(1);
       if (!transaction) throw new Error("Transaksi tidak ditemukan");
       if (transaction.deletedAt) throw new Error("Transaksi sudah dihapus");
       if (transaction.status === "void") throw new Error("Transaksi sudah di-void sebelumnya");
 
-      // Revert saldo kas (kebalikan)
       if (transaction.cashAccountId) {
-        const revertAmount = transaction.type === "in"
-          ? -transaction.amount  // Pemasukan di-void → kurangi saldo
-          : transaction.amount;  // Pengeluaran di-void → tambah saldo
-
-        await tx.cashAccount.update({
-          where: { id: transaction.cashAccountId },
-          data: { balance: { increment: revertAmount } },
-        });
+        const revertAmount = transaction.type === "in" ? -transaction.amount : transaction.amount;
+        await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${revertAmount}` }).where(eq(cashAccounts.id, transaction.cashAccountId));
       }
 
-      // Update status ke void
-      await tx.generalTransaction.update({
-        where: { id: txId },
-        data: { status: "void" },
-      });
-
+      await tx.update(generalTransactions).set({ status: "void" as any, updatedAt: new Date() }).where(eq(generalTransactions.id, txId));
       return { type: transaction.type, amount: transaction.amount };
     });
 
     return NextResponse.json({
       success: true,
-      message: `Transaksi ${result.type === "in" ? "pemasukan" : "pengeluaran"} Rp ${result.amount.toLocaleString("id-ID")} berhasil di-void. Saldo kas sudah dikembalikan.`,
+      message: `Transaksi ${result.type === "in" ? "pemasukan" : "pengeluaran"} Rp ${result.amount.toLocaleString("id-ID")} berhasil di-void.`,
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
-    }
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     const msg = error instanceof Error ? error.message : "Gagal void transaksi";
     console.error("Void journal error:", error);
     return NextResponse.json({ success: false, message: msg }, { status: 400 });
