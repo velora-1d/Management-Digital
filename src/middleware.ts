@@ -2,18 +2,53 @@ import { NextRequest, NextResponse } from "next/server";
 import { canAccess, isPublicApiPath } from "@/lib/rbac-permissions";
 
 /**
- * Decode JWT payload tanpa verifikasi signature (cukup untuk middleware).
- * Verifikasi signature tetap dilakukan di API route via getAuthUser().
- * 
- * Di Edge Runtime, kita tidak bisa pakai modul `jsonwebtoken` (Node.js only).
- * Middleware hanya perlu membaca payload untuk routing dan RBAC check.
+ * Decode dan verifikasi JWT signature menggunakan Web Crypto API (Edge Runtime compatible).
  */
-function decodeJwtPayload(token: string): { userId: number; name: string; email: string; role: string } | null {
+async function verifyJwtSignature(token: string, secret: string): Promise<boolean> {
   try {
     const parts = token.split(".");
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) return false;
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${parts[0]}.${parts[1]}`);
+    const signature = parts[2];
+
+    const b64 = signature.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4;
+    const paddedB64 = pad ? b64 + "=".repeat(4 - pad) : b64;
+    const sigString = atob(paddedB64);
+
+    const sigBytes = new Uint8Array(sigString.length);
+    for (let i = 0; i < sigString.length; i++) {
+      sigBytes[i] = sigString.charCodeAt(i);
+    }
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    return await crypto.subtle.verify("HMAC", key, sigBytes, data);
+  } catch {
+    return false;
+  }
+}
+
+async function verifyAndDecodeJwt(token: string): Promise<{ userId: number; name: string; email: string; role: string } | null> {
+  try {
+    const secret = process.env.JWT_SECRET || "";
+    if (!secret) return null;
+
+    const isValid = await verifyJwtSignature(token, secret);
+    if (!isValid) return null;
+
+    const parts = token.split(".");
     const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
     if (!payload.userId || !payload.role) return null;
+
     // Cek expiry
     if (payload.exp && payload.exp * 1000 < Date.now()) return null;
     return payload;
@@ -22,7 +57,7 @@ function decodeJwtPayload(token: string): { userId: number; name: string; email:
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get("erp_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -43,8 +78,8 @@ export function middleware(request: NextRequest) {
       );
     }
 
-    // Decode JWT (tanpa signature verify — Edge Runtime compatible)
-    const payload = decodeJwtPayload(token);
+    // Decode JWT (verifikasi signature — Edge Runtime compatible)
+    const payload = await verifyAndDecodeJwt(token);
     if (!payload) {
       return NextResponse.json(
         { success: false, message: "Sesi telah berakhir, silakan login ulang" },
