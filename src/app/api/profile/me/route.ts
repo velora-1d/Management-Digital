@@ -2,21 +2,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, and, isNull, asc, not } from "drizzle-orm";
-
-// Fungsi helper simulasi untuk mendapatkan user yang sedang login (mengambil admin pertama)
-async function getMe() {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(isNull(users.deletedAt))
-    .orderBy(asc(users.id))
-    .limit(1);
-  return user;
-}
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const me = await getMe();
+    const authUser = await getAuthUser();
+    if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const [me] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, authUser.userId), isNull(users.deletedAt)))
+      .limit(1);
+
     if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
     
     return NextResponse.json({
@@ -33,7 +31,15 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const me = await getMe();
+    const authUser = await getAuthUser();
+    if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const [me] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, authUser.userId), isNull(users.deletedAt)))
+      .limit(1);
+
     if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
 
     const body = await req.json();
