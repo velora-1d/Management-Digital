@@ -1,0 +1,3 @@
+## 2024-03-14 - React Component In-body Functions Re-render Bottleneck
+**Learning:** `DashboardCharts.tsx` defines multiple inner components (like `ChartDistribusiSiswa`, `ChartStatusPPDB`, etc.) directly inside the `DashboardCharts` component's body. These inner components are re-created on every render of `DashboardCharts`, breaking React's diffing algorithm for those components and forcing them to re-render completely from scratch (unmount and remount) every time `DashboardCharts` renders. This also applies to `CustomTooltip`.
+**Action:** Move these inner components outside the `DashboardCharts` component definition, or memoize them with `useCallback` or `useMemo` (though moving them out and passing props is much cleaner and strictly prevents recreation).
