@@ -1,0 +1,5 @@
+
+## 2024-05-20 - Authentication Bypass in Profile Endpoints
+**Vulnerability:** The `/api/profile/me` and `/api/profile/me/password` endpoints used a static mock function (`getMe()`) that queried the first admin user (`limit(1)`) from the database instead of retrieving the currently authenticated user from a session or JWT. This created a critical authentication bypass/IDOR vulnerability where any user could view and modify the details (including password) of the first admin account.
+**Learning:** Development mock functions or shortcuts left in production code can lead to severe privilege escalation vulnerabilities. It is crucial to enforce correct user session validation across all endpoints modifying user-specific data.
+**Prevention:** Always use the standard authentication utilities (e.g., `requireAuth()`) and ensure they correctly extract the `userId` from verified credentials rather than hardcoding static database queries. Periodically audit endpoints for placeholder or "mock" authentication mechanisms.
