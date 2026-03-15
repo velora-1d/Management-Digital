@@ -1,22 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq, isNull, asc } from "drizzle-orm";
+import { eq, isNull, asc, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
-
-async function getMe() {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(isNull(users.deletedAt))
-    .orderBy(asc(users.id))
-    .limit(1);
-  return user;
-}
+import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function POST(req: Request) {
   try {
-    const me = await getMe();
+    const authUser = await requireAuth();
+
+    const [me] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, authUser.userId), isNull(users.deletedAt)))
+      .limit(1);
+
     if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
 
     const body = await req.json();
@@ -40,6 +38,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, message: "Password berhasil diubah" });
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    }
     console.error("Profile password POST error:", error);
     return NextResponse.json({ error: "Gagal mengubah password" }, { status: 500 });
   }
