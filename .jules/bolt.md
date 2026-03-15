@@ -1,0 +1,3 @@
+## 2023-11-20 - N+1 Bottleneck in Arrays of Database Rows
+**Learning:** Found a major N+1 query issue in report generation routes where large datasets were fetched via `.map` and `Promise.all` inside nested sub-queries using ORM (Drizzle). Using a single Drizzle `sql` helper allows calculation of aggregates right in the parent SELECT statement, avoiding the N+1 trap completely without memory bloat.
+**Action:** When working on API routes iterating over result sets, inspect for loop-based database calls. Always use Drizzle `sql` to compute subqueries and aggregates locally at the database level where possible.

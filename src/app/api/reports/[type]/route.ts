@@ -29,39 +29,27 @@ export async function GET(
           month: infaqBills.month,
           year: infaqBills.year,
           nominal: infaqBills.nominal,
-          student: {
-            id: students.id,
-            name: students.name
-          }
+          studentName: students.name,
+          paid: sql<number>`COALESCE((SELECT SUM(amount_paid) FROM infaq_payments WHERE bill_id = ${infaqBills.id} AND deleted_at IS NULL), 0)`.mapWith(Number)
         })
         .from(infaqBills)
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
-        const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
-            .from(infaqPayments)
-            .where(
-                and(
-                    eq(infaqPayments.billId, bill.id),
-                    isNull(infaqPayments.deletedAt)
-                )
-            );
-        
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      const result = bills.map((bill) => {
+        const paid = bill.paid;
         const amount = bill.nominal || 0;
         const remaining = amount - paid;
         return {
           id: bill.id,
-          student_name: bill.student?.name || "Anonim",
+          student_name: bill.studentName || "Anonim",
           month: bill.month + " " + bill.year,
           amount,
           paid,
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      }));
+      });
 
       return NextResponse.json({ success: true, data: result });
     }
@@ -76,44 +64,25 @@ export async function GET(
     }
 
     if (type === "tabungan") {
-      const activeStudents = await db
+      const resultData = await db
         .select({
-          id: students.id,
-          name: students.name,
-          classroomName: classrooms.name
+          student_id: students.id,
+          student_name: students.name,
+          classroom: classrooms.name,
+          balance: sql<number>`COALESCE((SELECT SUM(CASE WHEN type = 'setor' THEN amount WHEN type = 'tarik' THEN -amount ELSE 0 END) FROM student_savings WHERE student_id = ${students.id} AND status = 'active' AND deleted_at IS NULL), 0)`.mapWith(Number)
         })
         .from(students)
         .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
         .where(isNull(students.deletedAt));
 
-      const result = [];
-      for (const s of activeStudents) {
-          const savingsData = await db
-            .select({ type: studentSavings.type, amount: studentSavings.amount })
-            .from(studentSavings)
-            .where(
-                and(
-                    eq(studentSavings.studentId, s.id),
-                    eq(studentSavings.status, "active"),
-                    isNull(studentSavings.deletedAt)
-                )
-            );
-          
-          let balance = 0;
-          savingsData.forEach((sv) => {
-            if (sv.type === "setor") balance += sv.amount;
-            else if (sv.type === "tarik") balance -= sv.amount;
-          });
-
-          if (balance !== 0) {
-              result.push({
-                student_id: s.id,
-                student_name: s.name,
-                classroom: s.classroomName || "-",
-                balance,
-              });
-          }
-      }
+      const result = resultData
+        .filter((r) => r.balance !== 0)
+        .map((r) => ({
+          student_id: r.student_id,
+          student_name: r.student_name,
+          classroom: r.classroom || "-",
+          balance: r.balance,
+        }));
 
       return NextResponse.json({ success: true, data: result });
     }
