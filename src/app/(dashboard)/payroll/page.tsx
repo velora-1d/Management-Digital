@@ -147,7 +147,7 @@ export default function PayrollPage() {
         else dedRows += `<tr><td style="padding:6px 12px;border:1px solid #e2e8f0;font-size:13px;">${c.name}</td><td style="padding:6px 12px;border:1px solid #e2e8f0;text-align:right;font-size:13px;">Rp ${c.amount.toLocaleString("id-ID")}</td></tr>`;
       });
       
-      let html = `<div style="text-align:left;font-size:13px;">
+      const html = `<div style="text-align:left;font-size:13px;">
       <div style="text-align:center;margin-bottom:16px;">
         <h3 style="margin:0;font-size:16px;">SLIP GAJI</h3>
         <p style="margin:4px 0 0;color:#64748b;font-size:12px;">Kode: ${slip.code} | ${slip.employee_name}</p>
