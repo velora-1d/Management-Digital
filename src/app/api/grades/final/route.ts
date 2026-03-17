@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { finalGrades, students, curriculums, subjects, gradeComponents, studentGrades } from "@/db/schema";
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { eq, and, asc, inArray, sql } from "drizzle-orm";
 import { hitungNilaiAkhir, hitungPredikat, generateDeskripsi } from "@/lib/grade-engine";
 
 export async function GET(req: Request) {
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     });
 
     // 3. Kalkulasi per siswa
-    const results = [];
+    const valuesToInsert = [];
     for (const [sId, sGrades] of Object.entries(studentGradesMap)) {
       const studentId = Number(sId);
       const studentName = sGrades[0]?.studentName || "Siswa";
@@ -123,49 +123,43 @@ export async function POST(req: Request) {
       const predikat = hitungPredikat(finalScore, cur.type as any);
       const deskripsi = generateDeskripsi(studentName, subject?.name || "", finalScore, predikat, cur.type as any);
 
-      // Upsert manual with Drizzle
-      const [existing] = await db.select().from(finalGrades).where(
-          and(
-              eq(finalGrades.curriculumId, Number(curriculumId)),
-              eq(finalGrades.studentId, studentId),
-              eq(finalGrades.subjectId, Number(subjectId))
-          )
-      ).limit(1);
+      valuesToInsert.push({
+        curriculumId: Number(curriculumId),
+        studentId: studentId,
+        subjectId: Number(subjectId),
+        classroomId: Number(classroomId),
+        nilaiPengetahuan: finalScore,
+        nilaiKeterampilan: finalScore,
+        nilaiAkhir: finalScore,
+        predikat,
+        deskripsi,
+        isLocked: false,
+      });
+    }
 
-      if (existing) {
-          const [updated] = await db
-            .update(finalGrades)
-            .set({
-                classroomId: Number(classroomId),
-                nilaiPengetahuan: finalScore,
-                nilaiKeterampilan: finalScore,
-                nilaiAkhir: finalScore,
-                predikat,
-                deskripsi,
-                isLocked: false,
-                updatedAt: new Date(),
-            })
-            .where(eq(finalGrades.id, existing.id))
-            .returning();
-          results.push(updated);
-      } else {
-          const [created] = await db
-            .insert(finalGrades)
-            .values({
-                curriculumId: Number(curriculumId),
-                studentId: studentId,
-                subjectId: Number(subjectId),
-                classroomId: Number(classroomId),
-                nilaiPengetahuan: finalScore,
-                nilaiKeterampilan: finalScore,
-                nilaiAkhir: finalScore,
-                predikat,
-                deskripsi,
-                isLocked: false,
-            })
-            .returning();
-          results.push(created);
-      }
+    let results: any[] = [];
+    if (valuesToInsert.length > 0) {
+      results = await db
+        .insert(finalGrades)
+        .values(valuesToInsert)
+        .onConflictDoUpdate({
+          target: [
+            finalGrades.curriculumId,
+            finalGrades.studentId,
+            finalGrades.subjectId,
+          ],
+          set: {
+            classroomId: sql`EXCLUDED.classroom_id`,
+            nilaiPengetahuan: sql`EXCLUDED.nilai_pengetahuan`,
+            nilaiKeterampilan: sql`EXCLUDED.nilai_keterampilan`,
+            nilaiAkhir: sql`EXCLUDED.nilai_akhir`,
+            predikat: sql`EXCLUDED.predikat`,
+            deskripsi: sql`EXCLUDED.deskripsi`,
+            isLocked: sql`EXCLUDED.is_locked`,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
     }
 
     return NextResponse.json({ success: true, count: results.length });

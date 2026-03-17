@@ -84,47 +84,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const savedGrades = [];
-    for (const g of grades) {
-        // Upsert manual with Drizzle
-        const [existing] = await db
-            .select()
-            .from(studentGrades)
-            .where(
-                and(
-                    eq(studentGrades.componentId, Number(componentId)),
-                    eq(studentGrades.studentId, Number(g.studentId)),
-                    eq(studentGrades.subjectId, Number(subjectId))
-                )
-            )
-            .limit(1);
-        
-        if (existing) {
-            const [updated] = await db
-                .update(studentGrades)
-                .set({
-                    classroomId: Number(classroomId),
-                    nilaiAngka: Number(g.nilaiAngka),
-                    predikat: g.predikat || "",
-                    updatedAt: new Date(),
-                })
-                .where(eq(studentGrades.id, existing.id))
-                .returning();
-            savedGrades.push(updated);
-        } else {
-            const [created] = await db
-                .insert(studentGrades)
-                .values({
-                    componentId: Number(componentId),
-                    studentId: Number(g.studentId),
-                    subjectId: Number(subjectId),
-                    classroomId: Number(classroomId),
-                    nilaiAngka: Number(g.nilaiAngka),
-                    predikat: g.predikat || "",
-                })
-                .returning();
-            savedGrades.push(created);
-        }
+    const valuesToInsert = grades.map((g: any) => ({
+      componentId: Number(componentId),
+      studentId: Number(g.studentId),
+      subjectId: Number(subjectId),
+      classroomId: Number(classroomId),
+      nilaiAngka: Number(g.nilaiAngka),
+      predikat: g.predikat || "",
+    }));
+
+    let savedGrades: any[] = [];
+    if (valuesToInsert.length > 0) {
+      savedGrades = await db
+        .insert(studentGrades)
+        .values(valuesToInsert)
+        .onConflictDoUpdate({
+          target: [
+            studentGrades.componentId,
+            studentGrades.studentId,
+            studentGrades.subjectId,
+          ],
+          set: {
+            classroomId: sql`EXCLUDED.classroom_id`,
+            nilaiAngka: sql`EXCLUDED.nilai_angka`,
+            predikat: sql`EXCLUDED.predikat`,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
     }
 
     return NextResponse.json({ success: true, count: savedGrades.length }, { status: 201 });
