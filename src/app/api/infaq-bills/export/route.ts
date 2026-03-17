@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     // Get class names
     const classIds = [...new Set(bills.map(b => b.studentClassroomId).filter((id): id is number => id != null))];
-    let classMap: Record<number, string> = {};
+    const classMap: Record<number, string> = {};
     if (classIds.length > 0) {
       const cls = await db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(sql`${classrooms.id} = ANY(${classIds})`);
       cls.forEach(c => { classMap[c.id] = c.name; });

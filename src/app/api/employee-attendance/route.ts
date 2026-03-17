@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     .offset(limit > 0 ? skip : 0);
 
     // Ambil absensi untuk tanggal tertentu
-    let attendanceMap: Record<number, { id: number; status: string; note: string | null }> = {};
+    const attendanceMap: Record<number, { id: number; status: string; note: string | null }> = {};
     if (date && empList.length > 0) {
       const empIds = empList.map(e => e.id);
       const attendances = await db.select()

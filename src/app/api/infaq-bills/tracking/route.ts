@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     // Get payments for these bills
     const billIds = bills.map((b: any) => b.id);
-    let paymentMap: Record<number, number> = {};
+    const paymentMap: Record<number, number> = {};
     if (billIds.length > 0) {
       const paymentSums = await db.select({
         billId: infaqPayments.billId,

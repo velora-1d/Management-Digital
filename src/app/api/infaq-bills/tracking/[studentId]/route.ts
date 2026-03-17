@@ -35,7 +35,7 @@ export async function GET(
 
     // Get payments
     const billIds = bills.map(b => b.id);
-    let paymentsByBill: Record<number, { id: number; amountPaid: number; paymentDate: string | null }[]> = {};
+    const paymentsByBill: Record<number, { id: number; amountPaid: number; paymentDate: string | null }[]> = {};
     if (billIds.length > 0) {
       const payments = await db.select({ id: infaqPayments.id, billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid, paymentDate: infaqPayments.paymentDate })
         .from(infaqPayments)

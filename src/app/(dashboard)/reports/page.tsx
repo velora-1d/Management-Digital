@@ -249,8 +249,8 @@ export default function ReportsPage() {
             </thead>
             <tbody>
               {pendaftaranData.map((d, i) => {
-                let stColor = d.status === 'diterima' ? 'text-emerald-700' : d.status === 'ditolak' ? 'text-rose-700' : 'text-amber-700';
-                let stBg = d.status === 'diterima' ? 'bg-emerald-100' : d.status === 'ditolak' ? 'bg-rose-100' : 'bg-amber-100';
+                const stColor = d.status === 'diterima' ? 'text-emerald-700' : d.status === 'ditolak' ? 'text-rose-700' : 'text-amber-700';
+                const stBg = d.status === 'diterima' ? 'bg-emerald-100' : d.status === 'ditolak' ? 'bg-rose-100' : 'bg-amber-100';
                 return (
                   <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="p-3 text-sm text-slate-400">{i + 1}</td>
