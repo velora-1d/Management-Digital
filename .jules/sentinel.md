@@ -1,0 +1,4 @@
+## 2025-02-14 - [CRITICAL] Fix JWT Signature Bypass in Middleware
+**Vulnerability:** The application's edge middleware in `src/middleware.ts` parsed the JWT payload using `JSON.parse(atob(...))` but did not verify its signature. As a result, an attacker could trivially manipulate the JWT in their browser to grant themselves elevated roles (like `superadmin`) and gain unauthorized access.
+**Learning:** This occurred because `jsonwebtoken` is incompatible with Next.js Edge Runtime, leading a previous developer to skip signature verification entirely in the middleware logic. Many of the API routes also rely entirely on middleware for RBAC checks without re-verifying the JWT themselves, making this a critical vulnerability.
+**Prevention:** Always verify the JWT signature. When standard Node.js libraries like `jsonwebtoken` are unavailable (such as in Edge environments), use native alternatives like the `crypto.subtle` API to ensure secure verification.
