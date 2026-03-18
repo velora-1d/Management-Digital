@@ -36,19 +36,37 @@ export async function GET(request: Request) {
     }
 
     // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
-    );
+    // Ambil semua transaksi 6 bulan terakhir dalam 1 query
+    const startDate = months[0].start;
+    const endDate = months[months.length - 1].end;
+
+    const allTransactions = await db.select({
+      type: generalTransactions.type,
+      amount: generalTransactions.amount,
+      createdAt: generalTransactions.createdAt,
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid" as any),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, startDate),
+      lte(generalTransactions.createdAt, endDate)
+    ));
+
+    const cashflowData = months.map(m => {
+      let income = 0;
+      let expense = 0;
+
+      for (const t of allTransactions) {
+        if (t.createdAt >= m.start && t.createdAt <= m.end) {
+          const amount = Number(t.amount);
+          if (t.type === "in") income += amount;
+          if (t.type === "out") expense += amount;
+        }
+      }
+
+      return { month: m.label, income, expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
