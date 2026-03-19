@@ -52,34 +52,23 @@ export async function POST(req: Request) {
 
     // Bulk assign
     if (extracurricularId && studentIds?.length) {
-      const results = [];
-      for (const studentId of studentIds) {
-        // Upsert manual using Drizzle
-        const [existing] = await db
-            .select()
-            .from(extracurricularMembers)
-            .where(
-                and(
-                    eq(extracurricularMembers.extracurricularId, parseInt(extracurricularId)),
-                    eq(extracurricularMembers.studentId, parseInt(studentId))
-                )
-            )
-            .limit(1);
+      if (studentIds.length > 0) {
+        const valuesToInsert = studentIds.map((studentId: string | number) => ({
+          extracurricularId: parseInt(extracurricularId),
+          studentId: typeof studentId === "string" ? parseInt(studentId) : studentId,
+        }));
 
-        if (!existing) {
-            const [record] = await db
-                .insert(extracurricularMembers)
-                .values({
-                    extracurricularId: parseInt(extracurricularId),
-                    studentId: parseInt(studentId),
-                })
-                .returning();
-            results.push(record);
-        } else {
-            results.push(existing);
-        }
+        await db
+          .insert(extracurricularMembers)
+          .values(valuesToInsert)
+          .onConflictDoNothing({
+            target: [
+              extracurricularMembers.extracurricularId,
+              extracurricularMembers.studentId,
+            ],
+          });
       }
-      return NextResponse.json({ count: results.length });
+      return NextResponse.json({ count: studentIds.length });
     }
 
     // Update nilai/predikat per anggota
