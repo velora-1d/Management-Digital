@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { classTeacherNotes, students, employees } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, sql } from "drizzle-orm";
 
 // GET /api/report-cards/notes?classroomId=X&semester=ganjil
 export async function GET(req: Request) {
@@ -59,45 +59,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const results = [];
-    for (const item of notes) {
-        // Upsert manual with Drizzle
-        const [existing] = await db
-            .select()
-            .from(classTeacherNotes)
-            .where(
-                and(
-                    eq(classTeacherNotes.studentId, parseInt(item.studentId)),
-                    eq(classTeacherNotes.classroomId, parseInt(classroomId)),
-                    eq(classTeacherNotes.semester, semester)
-                )
-            )
-            .limit(1);
+    let results: any[] = [];
+    if (notes.length > 0) {
+      const valuesToInsert = notes.map((item: any) => ({
+        studentId: parseInt(item.studentId),
+        classroomId: parseInt(classroomId),
+        semester,
+        note: item.note || "",
+        inputById: inputById ? parseInt(inputById) : null,
+      }));
 
-        if (existing) {
-            const [updated] = await db
-                .update(classTeacherNotes)
-                .set({
-                    note: item.note || "",
-                    inputById: inputById ? parseInt(inputById) : null,
-                    updatedAt: new Date(),
-                })
-                .where(eq(classTeacherNotes.id, existing.id))
-                .returning();
-            results.push(updated);
-        } else {
-            const [created] = await db
-                .insert(classTeacherNotes)
-                .values({
-                    studentId: parseInt(item.studentId),
-                    classroomId: parseInt(classroomId),
-                    semester,
-                    note: item.note || "",
-                    inputById: inputById ? parseInt(inputById) : null,
-                })
-                .returning();
-            results.push(created);
-        }
+      results = await db
+        .insert(classTeacherNotes)
+        .values(valuesToInsert)
+        .onConflictDoUpdate({
+          target: [
+            classTeacherNotes.studentId,
+            classTeacherNotes.classroomId,
+            classTeacherNotes.semester,
+          ],
+          set: {
+            note: sql`EXCLUDED.note`,
+            inputById: inputById ? parseInt(inputById) : null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
     }
 
     return NextResponse.json({ count: results.length, data: results });
