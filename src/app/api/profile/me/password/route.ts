@@ -1,22 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq, isNull, asc } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
-
-async function getMe() {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(isNull(users.deletedAt))
-    .orderBy(asc(users.id))
-    .limit(1);
-  return user;
-}
+import { getAuthUser } from "@/lib/rbac";
 
 export async function POST(req: Request) {
   try {
-    const me = await getMe();
+    const session = await getAuthUser();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const [me] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, session.userId), isNull(users.deletedAt)))
+      .limit(1);
+
     if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
 
     const body = await req.json();
