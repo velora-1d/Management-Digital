@@ -35,20 +35,39 @@ export async function GET(request: Request) {
       months.push({ label, start: d, end });
     }
 
-    // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
-    );
+    // ⚡ Bolt: Optimize N+1 queries by fetching all valid transactions for the 6-month period
+    // instead of running 12 separate queries (2 for each month).
+    const startDate = months[0].start;
+    const endDate = months[months.length - 1].end;
+
+    const allTransactions = await db.select({
+      type: generalTransactions.type,
+      amount: generalTransactions.amount,
+      createdAt: generalTransactions.createdAt,
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid" as any),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, startDate),
+      lte(generalTransactions.createdAt, endDate)
+    ));
+
+    // Group transactions by month in-memory
+    const cashflowData = months.map((m) => {
+      let income = 0;
+      let expense = 0;
+
+      for (const tx of allTransactions) {
+        if (tx.createdAt >= m.start && tx.createdAt <= m.end) {
+          const amt = Number(tx.amount);
+          if (tx.type === ("in" as any)) income += amt;
+          else if (tx.type === ("out" as any)) expense += amt;
+        }
+      }
+
+      return { month: m.label, income, expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];

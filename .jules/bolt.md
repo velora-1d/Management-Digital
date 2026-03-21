@@ -1,0 +1,3 @@
+## 2024-03-21 - [Date Interval Aggregation Optimization]
+**Learning:** In Drizzle ORM, aggregating data by date intervals (like grouping data for the last 6 months into separate month bins) using `Promise.all` with a map loop results in severe N+1 query bottlenecks. The dashboard charts route originally launched 12 separate database queries (2 for each month) to count incomes and expenses.
+**Action:** Instead of running separate queries per date interval, fetch all required records spanning the entire date range (e.g. using `gte` and `lte`) in a single query. Then, group and aggregate the data in-memory within the application code. This reduces the number of queries to 1 and is significantly faster for database performance.
