@@ -10,7 +10,7 @@ import {
     generalTransactions,
     transactionCategories
 } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, inArray, sql } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -38,18 +38,29 @@ export async function GET(
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
-        const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
-            .from(infaqPayments)
-            .where(
-                and(
-                    eq(infaqPayments.billId, bill.id),
-                    isNull(infaqPayments.deletedAt)
-                )
-            );
-        
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      if (bills.length === 0) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+
+      // Batch fetch payments
+      const billIds = bills.map((b) => b.id);
+      const payments = await db
+        .select({ billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid })
+        .from(infaqPayments)
+        .where(
+            and(
+                inArray(infaqPayments.billId, billIds),
+                isNull(infaqPayments.deletedAt)
+            )
+        );
+
+      const paymentsByBill = payments.reduce((acc, p) => {
+        acc[p.billId!] = (acc[p.billId!] || 0) + p.amountPaid;
+        return acc;
+      }, {} as Record<number, number>);
+
+      const result = bills.map((bill) => {
+        const paid = paymentsByBill[bill.id] || 0;
         const amount = bill.nominal || 0;
         const remaining = amount - paid;
         return {
@@ -61,7 +72,7 @@ export async function GET(
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      }));
+      });
 
       return NextResponse.json({ success: true, data: result });
     }
@@ -86,34 +97,42 @@ export async function GET(
         .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
         .where(isNull(students.deletedAt));
 
-      const result = [];
-      for (const s of activeStudents) {
-          const savingsData = await db
-            .select({ type: studentSavings.type, amount: studentSavings.amount })
-            .from(studentSavings)
-            .where(
-                and(
-                    eq(studentSavings.studentId, s.id),
-                    eq(studentSavings.status, "active"),
-                    isNull(studentSavings.deletedAt)
-                )
-            );
-          
-          let balance = 0;
-          savingsData.forEach((sv) => {
-            if (sv.type === "setor") balance += sv.amount;
-            else if (sv.type === "tarik") balance -= sv.amount;
-          });
-
-          if (balance !== 0) {
-              result.push({
-                student_id: s.id,
-                student_name: s.name,
-                classroom: s.classroomName || "-",
-                balance,
-              });
-          }
+      if (activeStudents.length === 0) {
+        return NextResponse.json({ success: true, data: [] });
       }
+
+      // Batch fetch savings
+      const studentIds = activeStudents.map((s) => s.id);
+      const savingsData = await db
+        .select({ studentId: studentSavings.studentId, type: studentSavings.type, amount: studentSavings.amount })
+        .from(studentSavings)
+        .where(
+            and(
+                inArray(studentSavings.studentId, studentIds),
+                eq(studentSavings.status, "active"),
+                isNull(studentSavings.deletedAt)
+            )
+        );
+
+      const savingsByStudent = savingsData.reduce((acc, sv) => {
+        if (!acc[sv.studentId!]) acc[sv.studentId!] = 0;
+        if (sv.type === "setor") acc[sv.studentId!] += sv.amount;
+        else if (sv.type === "tarik") acc[sv.studentId!] -= sv.amount;
+        return acc;
+      }, {} as Record<number, number>);
+
+      const result = activeStudents.reduce((acc, s) => {
+        const balance = savingsByStudent[s.id] || 0;
+        if (balance !== 0) {
+          acc.push({
+            student_id: s.id,
+            student_name: s.name,
+            classroom: s.classroomName || "-",
+            balance,
+          });
+        }
+        return acc;
+      }, [] as any[]);
 
       return NextResponse.json({ success: true, data: result });
     }
