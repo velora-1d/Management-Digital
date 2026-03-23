@@ -2,22 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, and, isNull, asc, not } from "drizzle-orm";
-
-// Fungsi helper simulasi untuk mendapatkan user yang sedang login (mengambil admin pertama)
-async function getMe() {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(isNull(users.deletedAt))
-    .orderBy(asc(users.id))
-    .limit(1);
-  return user;
-}
+import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET() {
   try {
-    const me = await getMe();
-    if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+    const session = await requireAuth();
+    const [me] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+
+    if (!me || me.deletedAt) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
     
     return NextResponse.json({
       id: me.id,
@@ -26,6 +18,9 @@ export async function GET() {
       role: me.role
     });
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("Profile GET error:", error);
     return NextResponse.json({ error: "Gagal memuat profil" }, { status: 500 });
   }
@@ -33,8 +28,10 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const me = await getMe();
-    if (!me) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+    const session = await requireAuth();
+    const [me] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+
+    if (!me || me.deletedAt) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
 
     const body = await req.json();
     const { name, username } = body;
@@ -65,6 +62,9 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true, message: "Profil berhasil diperbarui" });
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("Profile PUT error:", error);
     return NextResponse.json({ error: "Gagal memperbarui profil" }, { status: 500 });
   }
