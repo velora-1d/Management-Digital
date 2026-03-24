@@ -1,0 +1,4 @@
+## 2024-03-24 - SQL Injection in Database Restore Endpoint via sql.raw
+**Vulnerability:** The `src/app/api/settings/restore/route.ts` endpoint allowed users to upload `.sql` files and executed lines matching `INSERT INTO` directly using Drizzle's `sql.raw(stmt)`. This is a severe SQL Injection and Arbitrary Code Execution vulnerability as an attacker could embed malicious commands within the string.
+**Learning:** `sql.raw()` in Drizzle executes strings exactly as provided without parameterization. Never use it to process unsanitized strings or uploaded file contents, even if the user is an admin.
+**Prevention:** For data export/import routines, prioritize structured formats like JSON. When importing, explicitly map the incoming table names to known Drizzle schema objects (allowlist approach) and use safe, parameterized ORM methods like `db.insert(schema).values(data)` instead of raw string execution.
