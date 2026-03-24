@@ -27,32 +27,7 @@ import {
 import { isNull, sql as drizzleSql } from "drizzle-orm";
 import { requireAuth, requireRole, AuthError } from "@/lib/rbac";
 
-/**
- * Escape nilai untuk SQL string literal PostgreSQL.
- */
-function escapeSQL(value: any): string {
-  if (value === null || value === undefined) return "NULL";
-  if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
-  if (typeof value === "number") return String(value);
-  if (value instanceof Date) return `'${value.toISOString()}'`;
-  const str = String(value).replace(/'/g, "''");
-  return `'${str}'`;
-}
-
-/**
- * Buat INSERT statement dari array data dan kolom yang diketahui.
- */
-function generateInserts(tableName: string, rows: any[]): string {
-  if (!rows || rows.length === 0) return "";
-  const lines: string[] = [];
-  for (const row of rows) {
-    const keys = Object.keys(row);
-    const cols = keys.map((k) => `"${k}"`).join(", ");
-    const vals = keys.map((k) => escapeSQL(row[k])).join(", ");
-    lines.push(`INSERT INTO "${tableName}" (${cols}) VALUES (${vals});`);
-  }
-  return lines.join("\n");
-}
+// Note: export is now JSON to prevent SQL injection during restore.
 
 /**
  * Daftar tabel dan query Drizzle untuk di-backup.
@@ -88,35 +63,30 @@ export async function GET() {
     requireRole(user, ["superadmin"]);
 
     const now = new Date().toISOString();
-    const parts: string[] = [];
-
-    parts.push("-- ============================================================");
-    parts.push(`-- DATABASE BACKUP — ${now}`);
-    parts.push(`-- Exported by user ID: ${user.userId}`);
-    parts.push("-- Format: PostgreSQL INSERT statements");
-    parts.push("-- ============================================================");
-    parts.push("");
-    parts.push("BEGIN;");
-    parts.push("");
+    const data: Record<string, any[]> = {};
 
     for (const entry of TABLE_QUERIES) {
       const rows = await entry.query();
       if (rows.length === 0) continue;
-      parts.push(`-- === ${entry.table} (${rows.length} rows) ===`);
-      parts.push(generateInserts(entry.table, rows));
-      parts.push("");
+      data[entry.table] = rows;
     }
 
-    parts.push("COMMIT;");
-    parts.push("");
+    const backup = {
+      meta: {
+        exportedAt: now,
+        exportedBy: user.userId,
+        version: "1.0",
+      },
+      data,
+    };
 
-    const sql = parts.join("\n");
+    const json = JSON.stringify(backup, null, 2);
     const dateStr = now.split("T")[0];
 
-    return new Response(sql, {
+    return new Response(json, {
       headers: {
-        "Content-Type": "application/sql; charset=utf-8",
-        "Content-Disposition": `attachment; filename="backup_${dateStr}.sql"`,
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": `attachment; filename="backup_${dateStr}.json"`,
       },
     });
   } catch (error) {

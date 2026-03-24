@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
 import { requireAuth, requireRole, AuthError } from "@/lib/rbac";
+import * as schema from "@/db/schema";
 
 /**
  * Daftar tabel yang harus di-wipe sebelum restore.
@@ -36,55 +37,95 @@ export async function POST(req: NextRequest) {
     const user = await requireAuth();
     requireRole(user, ["superadmin"]);
 
-    const sqlContent = await req.text();
-
-    if (!sqlContent.includes("-- DATABASE BACKUP") && !sqlContent.includes("INSERT INTO")) {
+    let backupContent;
+    try {
+      backupContent = await req.json();
+    } catch (err) {
       return NextResponse.json(
-        { success: false, error: "Format file tidak valid. Pastikan file berasal dari fitur Backup (.sql)." },
+        { success: false, error: "Format file tidak valid. Pastikan file adalah JSON backup yang valid." },
         { status: 400 }
       );
     }
 
-    let exportedAt = "Tidak diketahui";
-    const dateMatch = sqlContent.match(/-- DATABASE BACKUP — (.+)/);
-    if (dateMatch) {
-      exportedAt = dateMatch[1].trim();
-    }
-
-    const insertStatements = sqlContent
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("INSERT INTO"));
-
-    if (insertStatements.length === 0) {
+    if (!backupContent.meta || !backupContent.data) {
       return NextResponse.json(
-        { success: false, error: "File SQL tidak mengandung INSERT statement yang valid." },
+        { success: false, error: "Struktur JSON tidak valid. Pastikan file berasal dari fitur Backup (.json)." },
         { status: 400 }
       );
     }
 
+    const { meta, data } = backupContent;
+    const exportedAt = meta.exportedAt || "Tidak diketahui";
     const tableCounts: Record<string, number> = {};
-    for (const stmt of insertStatements) {
-      const match = stmt.match(/INSERT INTO "([^"]+)"/);
-      if (match) {
-        const table = match[1];
-        tableCounts[table] = (tableCounts[table] || 0) + 1;
-      }
-    }
+
+    // Helper to map DB table names to schema objects
+    const tableToSchemaMap: Record<string, any> = {
+      "academic_years": schema.academicYears,
+      "school_settings": schema.schoolSettings,
+      "classrooms": schema.classrooms,
+      "students": schema.students,
+      "employees": schema.employees,
+      "users": schema.users,
+      "cash_accounts": schema.cashAccounts,
+      "transaction_categories": schema.transactionCategories,
+      "salary_components": schema.salaryComponents,
+      "employee_salaries": schema.employeeSalaries,
+      "inventories": schema.inventories,
+      "general_transactions": schema.generalTransactions,
+      "student_savings": schema.studentSavings,
+      "infaq_bills": schema.infaqBills,
+      "infaq_payments": schema.infaqPayments,
+      "ppdb_registrations": schema.ppdbRegistrations,
+      "re_registrations": schema.reRegistrations,
+      "registration_payments": schema.registrationPayments,
+      "payrolls": schema.payrolls,
+      "payroll_details": schema.payrollDetails,
+      "wakaf_donors": schema.wakafDonors,
+      "wakaf_purposes": schema.wakafPurposes,
+    };
+
+    let totalStatements = 0;
 
     await db.transaction(async (tx) => {
+      // 1. Wipe current data securely
       for (const table of WIPE_ORDER) {
         try {
+          // Allowed safe tables defined in WIPE_ORDER
           await tx.execute(sql.raw(`DELETE FROM "${table}"`));
         } catch (e) {
           // Skip if table doesn't exist
         }
       }
 
-      for (const stmt of insertStatements) {
-        await tx.execute(sql.raw(stmt));
+      // 2. Insert new data securely
+      for (const [table, rows] of Object.entries(data)) {
+        if (!Array.isArray(rows) || rows.length === 0) continue;
+        const schemaObj = tableToSchemaMap[table];
+        if (!schemaObj) continue; // Skip unknown tables
+
+        // Ensure dates are converted properly from JSON strings
+        const parsedRows = rows.map((row) => {
+          const newRow: any = { ...row };
+          for (const key of Object.keys(newRow)) {
+            if (typeof newRow[key] === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(newRow[key])) {
+              newRow[key] = new Date(newRow[key]);
+            }
+          }
+          return newRow;
+        });
+
+        // Split into batches to avoid PostgreSQL parameter limits (max 65535)
+        const BATCH_SIZE = 1000;
+        for (let i = 0; i < parsedRows.length; i += BATCH_SIZE) {
+          const batch = parsedRows.slice(i, i + BATCH_SIZE);
+          await tx.insert(schemaObj).values(batch);
+        }
+
+        tableCounts[table] = parsedRows.length;
+        totalStatements += parsedRows.length;
       }
 
+      // 3. Reset sequences
       for (const table of Object.keys(tableCounts)) {
         try {
           await tx.execute(
@@ -102,11 +143,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Data berhasil di-restore dari backup SQL.",
+      message: "Data berhasil di-restore dari backup JSON.",
       restored,
       backupMeta: {
         exportedAt,
-        totalStatements: insertStatements.length,
+        totalStatements,
       },
     });
   } catch (error) {
