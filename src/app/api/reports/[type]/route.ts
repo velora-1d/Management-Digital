@@ -10,7 +10,7 @@ import {
     generalTransactions,
     transactionCategories
 } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, sql, inArray } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -38,19 +38,33 @@ export async function GET(
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
-        const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
-            .from(infaqPayments)
-            .where(
-                and(
-                    eq(infaqPayments.billId, bill.id),
-                    isNull(infaqPayments.deletedAt)
-                )
-            );
+      // ⚡ Bolt Optimization: Batch fetch all payments for the bills to avoid N+1 queries
+      const billIds = bills.map(b => b.id);
+
+      const paymentsMap = new Map<number, number>();
+      if (billIds.length > 0) {
+        const allPayments = await db
+          .select({ billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid })
+          .from(infaqPayments)
+          .where(
+            and(
+              inArray(infaqPayments.billId, billIds),
+              isNull(infaqPayments.deletedAt)
+            )
+          );
         
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
-        const amount = bill.nominal || 0;
+        allPayments.forEach(p => {
+          if (p.billId !== null) {
+            const current = paymentsMap.get(p.billId) || 0;
+            // Ensure amountPaid is cast to Number to prevent string concatenation
+            paymentsMap.set(p.billId, current + Number(p.amountPaid));
+          }
+        });
+      }
+
+      const result = bills.map((bill) => {
+        const paid = paymentsMap.get(bill.id) || 0;
+        const amount = Number(bill.nominal) || 0;
         const remaining = amount - paid;
         return {
           id: bill.id,
@@ -61,7 +75,7 @@ export async function GET(
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      }));
+      });
 
       return NextResponse.json({ success: true, data: result });
     }
@@ -86,24 +100,39 @@ export async function GET(
         .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
         .where(isNull(students.deletedAt));
 
+      // ⚡ Bolt Optimization: Batch fetch all savings data for active students to avoid N+1 queries
+      const studentIds = activeStudents.map(s => s.id);
+
+      const balancesMap = new Map<number, number>();
+      if (studentIds.length > 0) {
+        const allSavingsData = await db
+          .select({ studentId: studentSavings.studentId, type: studentSavings.type, amount: studentSavings.amount })
+          .from(studentSavings)
+          .where(
+            and(
+              inArray(studentSavings.studentId, studentIds),
+              eq(studentSavings.status, "active"),
+              isNull(studentSavings.deletedAt)
+            )
+          );
+
+        allSavingsData.forEach((sv) => {
+          if (sv.studentId !== null) {
+            const current = balancesMap.get(sv.studentId) || 0;
+            // Ensure amount is cast to Number to prevent string concatenation
+            const amount = Number(sv.amount);
+            if (sv.type === "setor") {
+              balancesMap.set(sv.studentId, current + amount);
+            } else if (sv.type === "tarik") {
+              balancesMap.set(sv.studentId, current - amount);
+            }
+          }
+        });
+      }
+
       const result = [];
       for (const s of activeStudents) {
-          const savingsData = await db
-            .select({ type: studentSavings.type, amount: studentSavings.amount })
-            .from(studentSavings)
-            .where(
-                and(
-                    eq(studentSavings.studentId, s.id),
-                    eq(studentSavings.status, "active"),
-                    isNull(studentSavings.deletedAt)
-                )
-            );
-          
-          let balance = 0;
-          savingsData.forEach((sv) => {
-            if (sv.type === "setor") balance += sv.amount;
-            else if (sv.type === "tarik") balance -= sv.amount;
-          });
+          const balance = balancesMap.get(s.id) || 0;
 
           if (balance !== 0) {
               result.push({
