@@ -1,0 +1,9 @@
+▲ Next.js 16.2.1
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 189ms
+⚠ Invalid next.config.ts options detected:
+⚠     Unrecognized key(s) in object: 'turbopack' at "experimental"
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at ignore-listed frames
