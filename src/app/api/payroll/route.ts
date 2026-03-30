@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { payrolls, employees, salaryComponents, employeeSalaries, payrollDetails } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, sql, inArray } from "drizzle-orm";
 
 // GET /api/payroll
 export async function GET(request: Request) {
@@ -100,24 +100,27 @@ export async function POST(request: Request) {
       .from(employeeSalaries)
       .where(isNull(employeeSalaries.deletedAt));
 
-    // 3. Generate slip gaji per pegawai dalam transaction
+    // 3. Ambil data payroll yang sudah ada bulan ini untuk mencegah query N+1
+    const activeEmployeeIds = activeEmployees.map(e => e.id);
+    const existingPayrolls = activeEmployeeIds.length > 0 ? await db
+      .select({ employeeId: payrolls.employeeId })
+      .from(payrolls)
+      .where(
+        and(
+          inArray(payrolls.employeeId, activeEmployeeIds),
+          eq(payrolls.month, month),
+          eq(payrolls.year, year),
+          isNull(payrolls.deletedAt)
+        )
+      ) : [];
+
+    const existingEmployeeIds = new Set(existingPayrolls.map(p => p.employeeId));
+
+    // 4. Generate slip gaji per pegawai dalam transaction
     await db.transaction(async (tx) => {
       for (const emp of activeEmployees) {
-        // Cek apakah sudah digenerate bulan ini
-        const [existing] = await tx
-          .select()
-          .from(payrolls)
-          .where(
-            and(
-              eq(payrolls.employeeId, emp.id),
-              eq(payrolls.month, month),
-              eq(payrolls.year, year),
-              isNull(payrolls.deletedAt)
-            )
-          )
-          .limit(1);
-
-        if (existing) continue;
+        // Cek apakah sudah digenerate bulan ini (O(1) lookup)
+        if (existingEmployeeIds.has(emp.id)) continue;
 
         // Hitung gaji
         let totalEarning = emp.baseSalary || 0;
