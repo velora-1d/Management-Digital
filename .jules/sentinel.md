@@ -1,0 +1,4 @@
+## 2024-05-24 - SQL Injection in Backup Restore endpoint
+**Vulnerability:** The application accepted uploaded SQL files and executed arbitrary SQL commands directly using `sql.raw()`. This could lead to severe SQL Injection or complete database compromise, regardless of the user's role, since the raw SQL is run directly against the database with full privileges.
+**Learning:** `sql.raw()` in Drizzle ORM evaluates string inputs as raw SQL and MUST NEVER be used with unsanitized inputs, such as file uploads. Even if parsed naively, malicious inputs can break out of simple constraints.
+**Prevention:** Avoid executing SQL backup scripts from user uploads in the application layer. Database backup/restore operations should be restricted to database management tools instead of handling file evaluation directly via `sql.raw()`.
