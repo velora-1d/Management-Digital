@@ -1,0 +1,4 @@
+## 2025-02-27 - Drizzle ORM Raw SQL Injection via File Uploads
+**Vulnerability:** The application parsed uploaded `.sql` dump files and executed their contents directly using Drizzle's `sql.raw(stmt)`. This is a critical SQL Injection and Remote Code Execution vulnerability, as an attacker could upload a maliciously crafted `.sql` file to run arbitrary database commands, alter records, or extract sensitive data.
+**Learning:** Never pass unsanitized strings from file uploads or user inputs into `sql.raw()`. The database driver executes raw strings as-is, bypassing all parameterized query protections. Database restore operations should not be implemented inside the application runtime unless strictly sandboxed.
+**Prevention:** Database restorations must be executed externally using proper administrative tools (e.g., `pg_restore`, Neon console). Applications should return a `501 Not Implemented` for legacy restore endpoints instead of executing raw files.
