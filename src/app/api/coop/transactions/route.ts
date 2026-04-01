@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { coopTransactions, students, products, studentCredits } from "@/db/schema";
-import { eq, like, desc, and, sql } from "drizzle-orm";
+import { eq, like, desc, and, sql, inArray } from "drizzle-orm";
 
 // GET /api/coop/transactions?date=YYYY-MM-DD&month=3&year=2026&paymentMethod=tunai
 export async function GET(req: Request) {
@@ -78,9 +78,19 @@ export async function POST(req: Request) {
 
     if (!items?.length) return NextResponse.json({ error: "Item transaksi wajib" }, { status: 400 });
 
-    // Validasi stok
+    // Validasi stok - ⚡ Bolt: Removed N+1 query by batch fetching products
+    const productIds = Array.from(new Set(items.map((i: any) => parseInt(i.productId))));
+
+    let productMap = new Map();
+    if (productIds.length > 0) {
+      const fetchedProducts = await db.select().from(products).where(inArray(products.id, productIds));
+      for (const p of fetchedProducts) {
+        productMap.set(p.id, p);
+      }
+    }
+
     for (const item of items) {
-      const [product] = await db.select().from(products).where(eq(products.id, parseInt(item.productId))).limit(1);
+      const product = productMap.get(parseInt(item.productId));
       if (!product) return NextResponse.json({ error: `Produk ID ${item.productId} tidak ditemukan` }, { status: 400 });
       if (product.stok < parseInt(item.qty)) return NextResponse.json({ error: `Stok ${product.name} tidak cukup (sisa: ${product.stok})` }, { status: 400 });
     }
