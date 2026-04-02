@@ -134,28 +134,36 @@ export default function InventoryPage() {
         html: `
           <div style="text-align:left;display:grid;gap:0.75rem;">
             <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
-            <input id="swal-inv-name" class="swal2-input" value="${item.name || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-name" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
-            <input id="swal-inv-cat" class="swal2-input" value="${item.category || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-cat" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
-            <input id="swal-inv-qty" type="number" class="swal2-input" value="${item.quantity || 1}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-qty" type="number" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
             <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
-              <option value="Baik" ${item.condition === "Baik" ? "selected" : ""}>Baik</option>
-              <option value="Rusak Ringan" ${item.condition === "Rusak Ringan" ? "selected" : ""}>Rusak Ringan</option>
-              <option value="Rusak Berat" ${item.condition === "Rusak Berat" ? "selected" : ""}>Rusak Berat</option>
+              <option value="Baik">Baik</option>
+              <option value="Rusak Ringan">Rusak Ringan</option>
+              <option value="Rusak Berat">Rusak Berat</option>
             </select></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
-            <input id="swal-inv-loc" class="swal2-input" value="${item.location || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-loc" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
 
             <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan</label>
-            <input id="swal-inv-cost" type="number" class="swal2-input" value="${item.acquisitionCost || 0}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-cost" type="number" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
           </div>
         `,
+        didOpen: () => {
+          (document.getElementById("swal-inv-name") as HTMLInputElement).value = item.name || "";
+          (document.getElementById("swal-inv-cat") as HTMLInputElement).value = item.category || "";
+          (document.getElementById("swal-inv-qty") as HTMLInputElement).value = String(item.quantity || 1);
+          (document.getElementById("swal-inv-cond") as HTMLSelectElement).value = item.condition || "Baik";
+          (document.getElementById("swal-inv-loc") as HTMLInputElement).value = item.location || "";
+          (document.getElementById("swal-inv-cost") as HTMLInputElement).value = String(item.acquisitionCost || 0);
+        },
         showCancelButton: true,
         confirmButtonText: "Simpan",
         cancelButtonText: "Batal",
@@ -302,13 +310,13 @@ export default function InventoryPage() {
                 <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
               ) : (
                 data.map((item, i) => {
-                  let badge = "";
+                  let badge = null;
                   if (item.condition === "Baik") {
-                    badge = '<span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>';
+                    badge = <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>;
                   } else if (item.condition === "Rusak Ringan") {
-                    badge = '<span class="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>';
+                    badge = <span className="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>;
                   } else {
-                    badge = '<span class="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>';
+                    badge = <span className="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>;
                   }
 
                   return (
@@ -322,7 +330,7 @@ export default function InventoryPage() {
                         <span style={{ background: "#f1f5f9", color: "#475569", padding: "0.375rem 0.875rem", borderRadius: 9999, fontSize: "0.75rem", fontWeight: 600 }}>{item.category || "-"}</span>
                       </td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontWeight: 700, fontSize: "1rem", color: "#334155", verticalAlign: "middle" }}>{item.quantity || 0}</td>
-                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }} dangerouslySetInnerHTML={{ __html: badge }}></td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }}>{badge}</td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "right", verticalAlign: "middle", position: "relative" }}>
                         <button 
                           onClick={(ev) => { 
