@@ -90,17 +90,25 @@ export default function TransactionCategoriesPage() {
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Kategori</label>
-          <input type="text" id="swal-cat-name" class="swal2-input" value="${cat.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-cat-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
             <select id="swal-cat-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="in" ${cat.type === 'in' ? 'selected' : ''}>Pemasukan (In)</option>
-              <option value="out" ${cat.type === 'out' ? 'selected' : ''}>Pengeluaran (Out)</option>
+              <option value="in">Pemasukan (In)</option>
+              <option value="out">Pengeluaran (Out)</option>
             </select>
           </div>
           <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;">${cat.description || ''}</textarea></div>
+          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;"></textarea></div>
         </div>
       `,
+      didOpen: () => {
+        const nameInput = document.getElementById("swal-cat-name");
+        const typeSelect = document.getElementById("swal-cat-type");
+        const descTextarea = document.getElementById("swal-cat-desc");
+        if (nameInput) nameInput.value = cat.name || '';
+        if (typeSelect) typeSelect.value = cat.type || 'in';
+        if (descTextarea) descTextarea.value = cat.description || '';
+      },
       showCancelButton: true,
       confirmButtonText: "Simpan",
       confirmButtonColor: "#10b981",

@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
 
+const escapeHtml = (str: string) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 interface Schedule {
   id: number;
   classroomId: number;
@@ -152,8 +153,8 @@ export default function SchedulePage() {
     }
 
     const subjectOptions = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
-    const employeeOptions = employees.map(e => `<option value="${e.id}">${e.name}</option>`).join("");
-    const dayOptions = days.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+    const employeeOptions = employees.map(e => `<option value="${e.id}">${escapeHtml(e.name || '')}</option>`).join("");
+    const dayOptions = days.map(d => `<option value="${d.id}">${escapeHtml(d.name || '')}</option>`).join("");
 
     Swal.fire({
       title: "Tambah Jadwal Pelajaran",

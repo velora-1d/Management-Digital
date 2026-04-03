@@ -96,23 +96,34 @@ export default function SubjectsPage() {
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Mapel *</label>
-          <input type="text" id="swal-subject-name" class="swal2-input" value="${sub.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-subject-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Kode / Singkatan</label>
-          <input type="text" id="swal-subject-code" class="swal2-input" value="${sub.code || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-subject-code" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Jenis *</label>
             <select id="swal-subject-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="wajib" ${sub.type === 'wajib' ? 'selected' : ''}>Wajib</option>
-              <option value="mulok" ${sub.type === 'mulok' ? 'selected' : ''}>Muatan Lokal</option>
-              <option value="muatan_khusus" ${sub.type === 'muatan_khusus' ? 'selected' : ''}>Muatan Khusus / Peminatan</option>
+              <option value="wajib">Wajib</option>
+              <option value="mulok">Muatan Lokal</option>
+              <option value="muatan_khusus">Muatan Khusus / Peminatan</option>
             </select>
           </div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Tingkat Kelas</label>
-          <input type="text" id="swal-subject-tingkat" class="swal2-input" value="${sub.tingkatKelas || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-subject-tingkat" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
         </div>
       `,
+      didOpen: () => {
+        const nameInput = document.getElementById("swal-subject-name");
+        const codeInput = document.getElementById("swal-subject-code");
+        const typeSelect = document.getElementById("swal-subject-type");
+        const tingkatInput = document.getElementById("swal-subject-tingkat");
+
+        if (nameInput) nameInput.value = sub.name || '';
+        if (codeInput) codeInput.value = sub.code || '';
+        if (typeSelect) typeSelect.value = sub.type || 'wajib';
+        if (tingkatInput) tingkatInput.value = sub.tingkatKelas || '';
+      },
       showCancelButton: true,
       confirmButtonText: "Simpan",
       confirmButtonColor: "#10b981",

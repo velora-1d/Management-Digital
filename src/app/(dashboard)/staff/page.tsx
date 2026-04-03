@@ -53,7 +53,11 @@ export default function StaffPage() {
   const handleDelete = (s: any) => {
     Swal.fire({
       title: "Hapus Data Staf?",
-      html: `<p style="font-size:0.875rem;color:#475569;">Data <strong>"${s.name}"</strong> akan dihapus.</p>`,
+      html: `<p style="font-size:0.875rem;color:#475569;">Data <strong id="swal-staff-name"></strong> akan dihapus.</p>`,
+      didOpen: () => {
+        const nameEl = document.getElementById("swal-staff-name");
+        if (nameEl) nameEl.textContent = s.name;
+      },
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
