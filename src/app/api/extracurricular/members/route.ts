@@ -52,34 +52,17 @@ export async function POST(req: Request) {
 
     // Bulk assign
     if (extracurricularId && studentIds?.length) {
-      const results = [];
-      for (const studentId of studentIds) {
-        // Upsert manual using Drizzle
-        const [existing] = await db
-            .select()
-            .from(extracurricularMembers)
-            .where(
-                and(
-                    eq(extracurricularMembers.extracurricularId, parseInt(extracurricularId)),
-                    eq(extracurricularMembers.studentId, parseInt(studentId))
-                )
-            )
-            .limit(1);
+      const insertData = studentIds.map((studentId: string | number) => ({
+        extracurricularId: parseInt(extracurricularId),
+        studentId: parseInt(String(studentId)),
+      }));
 
-        if (!existing) {
-            const [record] = await db
-                .insert(extracurricularMembers)
-                .values({
-                    extracurricularId: parseInt(extracurricularId),
-                    studentId: parseInt(studentId),
-                })
-                .returning();
-            results.push(record);
-        } else {
-            results.push(existing);
-        }
+      if (insertData.length > 0) {
+        // Use bulk insert to avoid N+1 queries. We ignore conflicts on unique index (extracurricularId, studentId)
+        await db.insert(extracurricularMembers).values(insertData).onConflictDoNothing();
       }
-      return NextResponse.json({ count: results.length });
+
+      return NextResponse.json({ count: studentIds.length });
     }
 
     // Update nilai/predikat per anggota
