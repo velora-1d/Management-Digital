@@ -8,6 +8,8 @@ import Card from "@/components/ui/Card";
 import { Gift } from "lucide-react";
 
 export default function WakafPage() {
+  const escapeHtml = (str: string) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, donatur, tujuan
   const [data, setData] = useState<any[]>([]);
   const [donors, setDonors] = useState<any[]>([]);

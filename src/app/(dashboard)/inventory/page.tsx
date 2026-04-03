@@ -134,28 +134,43 @@ export default function InventoryPage() {
         html: `
           <div style="text-align:left;display:grid;gap:0.75rem;">
             <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
-            <input id="swal-inv-name" class="swal2-input" value="${item.name || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-name" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
-            <input id="swal-inv-cat" class="swal2-input" value="${item.category || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-cat" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
-            <input id="swal-inv-qty" type="number" class="swal2-input" value="${item.quantity || 1}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-qty" type="number" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
             <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
-              <option value="Baik" ${item.condition === "Baik" ? "selected" : ""}>Baik</option>
-              <option value="Rusak Ringan" ${item.condition === "Rusak Ringan" ? "selected" : ""}>Rusak Ringan</option>
-              <option value="Rusak Berat" ${item.condition === "Rusak Berat" ? "selected" : ""}>Rusak Berat</option>
+              <option value="Baik">Baik</option>
+              <option value="Rusak Ringan">Rusak Ringan</option>
+              <option value="Rusak Berat">Rusak Berat</option>
             </select></div>
             
             <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
-            <input id="swal-inv-loc" class="swal2-input" value="${item.location || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-loc" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
 
             <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan</label>
-            <input id="swal-inv-cost" type="number" class="swal2-input" value="${item.acquisitionCost || 0}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+            <input id="swal-inv-cost" type="number" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
           </div>
         `,
+        didOpen: () => {
+          const nameInput = document.getElementById("swal-inv-name");
+          const catInput = document.getElementById("swal-inv-cat");
+          const qtyInput = document.getElementById("swal-inv-qty");
+          const condSelect = document.getElementById("swal-inv-cond");
+          const locInput = document.getElementById("swal-inv-loc");
+          const costInput = document.getElementById("swal-inv-cost");
+
+          if (nameInput) nameInput.value = item.name || "";
+          if (catInput) catInput.value = item.category || "";
+          if (qtyInput) qtyInput.value = item.quantity || 1;
+          if (condSelect) condSelect.value = item.condition || "Baik";
+          if (locInput) locInput.value = item.location || "";
+          if (costInput) costInput.value = item.acquisitionCost || 0;
+        },
         showCancelButton: true,
         confirmButtonText: "Simpan",
         cancelButtonText: "Batal",

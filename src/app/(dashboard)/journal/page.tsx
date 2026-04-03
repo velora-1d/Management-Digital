@@ -140,7 +140,7 @@ export default function JournalPage() {
           <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
           <div style="display:flex;align-items:center;gap:0;">
             <span style="display:inline-flex;align-items:center;padding:0 0.75rem;height:2.5rem;background:#f1f5f9;border:1.5px solid #e2e8f0;border-right:none;border-radius:0.625rem 0 0 0.625rem;font-size:0.875rem;font-weight:700;color:#6366f1;">Rp</span>
-            <input type="text" id="swal-tx-amount" class="swal2-input" value="${formattedAmount}" style="margin:0;flex:1;height:2.5rem;padding:0.5rem;font-size:0.875rem;font-weight:700;border-radius:0 0.625rem 0.625rem 0;border-left:none;" oninput="this.value=this.value.replace(/\\D/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.')">
+            <input type="text" id="swal-tx-amount" class="swal2-input" value="${formattedAmount}" style="margin:0;flex:1;height:2.5rem;padding:0.5rem;font-size:0.875rem;font-weight:700;border-radius:0 0.625rem 0.625rem 0;border-left:none;" oninput="this.value=this.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')">
           </div></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
             <select id="swal-tx-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
@@ -156,9 +156,13 @@ export default function JournalPage() {
           <div><label style="font-size:0.75rem;font-weight:600;">Tanggal</label>
           <input type="date" id="swal-tx-date" class="swal2-input" value="${tx.date.split('T')[0]}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <input type="text" id="swal-tx-desc" class="swal2-input" value="${tx.description || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-tx-desc" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
         </div>
       `,
+      didOpen: () => {
+        const descInput = document.getElementById("swal-tx-desc");
+        if (descInput) descInput.value = tx.description || '';
+      },
       showCancelButton: true,
       confirmButtonText: "Simpan",
       confirmButtonColor: "#10b981",

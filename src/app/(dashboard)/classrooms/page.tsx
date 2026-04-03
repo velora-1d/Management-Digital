@@ -254,13 +254,19 @@ export default function ClassroomsPage() {
                               html: `
                                 <div style="text-align: left; margin-bottom: 10px;">
                                   <label style="font-size: 14px; font-weight: 600;">Nama Kelas</label>
-                                  <input id="swal-input1" class="swal2-input" value="${c.name || ''}" style="margin-top: 5px;">
+                                  <input id="swal-input1" class="swal2-input" style="margin-top: 5px;">
                                 </div>
                                 <div style="text-align: left;">
                                   <label style="font-size: 14px; font-weight: 600;">Tarif Infaq/SPP (Rp)</label>
-                                  <input id="swal-input2" type="number" class="swal2-input" value="${c.infaq_nominal || c.infaqNominal || 0}" style="margin-top: 5px;">
+                                  <input id="swal-input2" type="number" class="swal2-input" style="margin-top: 5px;">
                                 </div>
                               `,
+                              didOpen: () => {
+                                const input1 = document.getElementById("swal-input1");
+                                const input2 = document.getElementById("swal-input2");
+                                if (input1) input1.value = c.name || '';
+                                if (input2) input2.value = c.infaq_nominal || c.infaqNominal || 0;
+                              },
                               focusConfirm: false,
                               showCancelButton: true,
                               confirmButtonText: "Simpan",

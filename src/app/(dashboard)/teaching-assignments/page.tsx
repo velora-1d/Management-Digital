@@ -104,14 +104,15 @@ export default function TeachingAssignmentsPage() {
     loadData();
   }, [filterYear, filterClass]);
 
+  const escapeHtml = (str: string) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const getEmpOptions = (selectedId?: number) => {
-    return employees.map(e => `<option value="${e.id}" ${selectedId === e.id ? 'selected' : ''}>${e.name}</option>`).join('');
+    return employees.map(e => `<option value="${e.id}" ${selectedId === e.id ? 'selected' : ''}>${escapeHtml(e.name || '')}</option>`).join('');
   };
   const getSubjOptions = (selectedId?: number) => {
-    return subjects.map(s => `<option value="${s.id}" ${selectedId === s.id ? 'selected' : ''}>${s.name} (${s.type})</option>`).join('');
+    return subjects.map(s => `<option value="${s.id}" ${selectedId === s.id ? 'selected' : ''}>${escapeHtml(s.name || '')} (${escapeHtml(s.type || '')})</option>`).join('');
   };
   const getClsOptions = (selectedId?: number) => {
-    return classrooms.map(c => `<option value="${c.id}" ${selectedId === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+    return classrooms.map(c => `<option value="${c.id}" ${selectedId === c.id ? 'selected' : ''}>${escapeHtml(c.name || '')}</option>`).join('');
   };
   const getYrOptions = (selectedId?: number) => {
     return academicYears.map(y => `<option value="${y.id}" ${selectedId === y.id ? 'selected' : ''}>${y.year} - ${y.isActive ? 'Aktif' : 'Tidak Aktif'}</option>`).join('');

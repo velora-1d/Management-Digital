@@ -49,9 +49,13 @@ export default function CoopCreditsPage() {
     const { value } = await Swal.fire({
       title: "Bayar Piutang",
       html: `
-        <p class="text-sm text-gray-600 mb-2">${credit.student?.name} — Sisa: <b>Rp ${sisa.toLocaleString("id-ID")}</b></p>
+        <p class="text-sm text-gray-600 mb-2"><span id="swal-credit-student"></span> — Sisa: <b>Rp ${sisa.toLocaleString("id-ID")}</b></p>
         <input id="swal-input" type="number" class="swal2-input" placeholder="Nominal pembayaran" max="${sisa}" />
       `,
+      didOpen: () => {
+        const studentEl = document.getElementById("swal-credit-student");
+        if (studentEl) studentEl.textContent = credit.student?.name || '';
+      },
       showCancelButton: true,
       confirmButtonText: "Bayar",
       preConfirm: () => {

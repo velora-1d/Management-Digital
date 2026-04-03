@@ -54,7 +54,11 @@ export default function TeachersPage() {
   const handleDelete = (t: any) => {
     Swal.fire({
       title: "Hapus Data Guru?",
-      html: `<p style="font-size:0.875rem;color:#475569;">Data <strong>"${t.name}"</strong> akan dihapus.</p>`,
+      html: `<p style="font-size:0.875rem;color:#475569;">Data <strong id="swal-teacher-name"></strong> akan dihapus.</p>`,
+      didOpen: () => {
+        const nameEl = document.getElementById("swal-teacher-name");
+        if (nameEl) nameEl.textContent = t.name;
+      },
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
