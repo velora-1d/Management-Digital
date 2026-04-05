@@ -1,0 +1,3 @@
+## 2025-02-12 - N+1 Queries with Promise.all in Next.js APIs
+**Learning:** Using `Promise.all(array.map(async (item) => db.select(...)))` or iterating with a `for` loop to fetch related records in Drizzle ORM creates an N+1 query problem, leading to database performance bottlenecks when generating aggregate reports (e.g. infaq and tabungan).
+**Action:** Replace looped individual database queries with a single batch fetch using Drizzle's `inArray()`. Combine this with an in-memory `Map` lookup to aggregate the related records efficiently in O(1) time complexity. Always ensure the array passed to `inArray()` is not empty to avoid SQL syntax errors.
