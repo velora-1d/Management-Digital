@@ -2,13 +2,19 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-const JWT_SECRET: string = process.env.JWT_SECRET || "";
-
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  // Hanya throw error jika bukan dalam fase build Next.js (jika bisa dideteksi) 
-  // atau saat runtime sebenarnya. Untuk kemudahan build, kita beri peringatan.
-  console.warn("WARNING: JWT_SECRET tidak ditemukan. Pastikan sudah di-set di environment variables.");
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("CRITICAL: JWT_SECRET environment variable is missing. Authentication cannot function securely.");
+    }
+    console.warn("WARNING: JWT_SECRET is not set. Using fallback for development only.");
+    return "development-fallback-secret-do-not-use-in-production";
+  }
+  return secret;
 }
+
+const JWT_SECRET = getJwtSecret();
 const TOKEN_NAME = "erp_token";
 const TOKEN_EXPIRY = "7d";
 

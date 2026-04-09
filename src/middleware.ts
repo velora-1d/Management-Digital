@@ -2,27 +2,48 @@ import { NextRequest, NextResponse } from "next/server";
 import { canAccess, isPublicApiPath } from "@/lib/rbac-permissions";
 
 /**
- * Decode JWT payload tanpa verifikasi signature (cukup untuk middleware).
- * Verifikasi signature tetap dilakukan di API route via getAuthUser().
- * 
- * Di Edge Runtime, kita tidak bisa pakai modul `jsonwebtoken` (Node.js only).
- * Middleware hanya perlu membaca payload untuk routing dan RBAC check.
+ * Decode and verify JWT payload using Web Crypto API (Edge Runtime compatible).
+ * Prevents attackers from bypassing RBAC using forged, unsigned tokens.
  */
-function decodeJwtPayload(token: string): { userId: number; name: string; email: string; role: string } | null {
+async function verifyAndDecodeJwt(token: string, secret: string): Promise<{ userId: number; name: string; email: string; role: string } | null> {
+  if (!secret) return null;
+
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+
+    const [header, payloadStr, signature] = parts;
+    const data = new TextEncoder().encode(`${header}.${payloadStr}`);
+
+    const base64 = signature.replace(/-/g, "+").replace(/_/g, "/");
+    const padLen = (4 - (base64.length % 4)) % 4;
+    const paddedBase64 = base64 + "=".repeat(padLen);
+    const signatureBytes = Uint8Array.from(atob(paddedBase64), c => c.charCodeAt(0));
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    const isValid = await crypto.subtle.verify("HMAC", key, signatureBytes, data);
+    if (!isValid) return null;
+
+    const payload = JSON.parse(atob(payloadStr.replace(/-/g, "+").replace(/_/g, "/")));
     if (!payload.userId || !payload.role) return null;
+
     // Cek expiry
     if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+
     return payload;
   } catch {
     return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get("erp_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -43,11 +64,13 @@ export function middleware(request: NextRequest) {
       );
     }
 
-    // Decode JWT (tanpa signature verify — Edge Runtime compatible)
-    const payload = decodeJwtPayload(token);
+    // Decode JWT with signature verification
+    const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "development-fallback-secret-do-not-use-in-production" : "");
+    const payload = await verifyAndDecodeJwt(token, secret);
+
     if (!payload) {
       return NextResponse.json(
-        { success: false, message: "Sesi telah berakhir, silakan login ulang" },
+        { success: false, message: "Sesi telah berakhir atau token tidak valid, silakan login ulang" },
         { status: 401 }
       );
     }
@@ -82,6 +105,22 @@ export function middleware(request: NextRequest) {
   // Sudah login tapi buka /login → redirect ke /dashboard
   if (token && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Jika kita berada di halaman non-publik dan ada token, kita seharusnya juga memverifikasi
+  // token untuk halaman web. Tapi jika terlalu berat, cukup biarkan karena SSR/API route
+  // akan gagal bila token tidak valid. Namun lebih baik verifikasi juga.
+
+  // Untuk halaman non-publik yang ada token, verify token
+  if (token && !isPublicPage) {
+    const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "development-fallback-secret-do-not-use-in-production" : "");
+    const payload = await verifyAndDecodeJwt(token, secret);
+    if (!payload) {
+      // Token tidak valid/forged, redirect ke login
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("erp_token");
+      return response;
+    }
   }
 
   return NextResponse.next();
