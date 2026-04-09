@@ -1,0 +1,3 @@
+## 2024-05-18 - Replacing N+1 queries with bulk fetches in Drizzle ORM
+**Learning:** In Drizzle ORM, aggregating data with iterative database queries within loops (e.g., using `Promise.all` + `map()` or `for...of` loops) causes severe N+1 performance bottlenecks. This is a common anti-pattern when building aggregate reports.
+**Action:** Replace looped individual queries with a single batch fetch using `inArray()` before the loop. Be sure to check `array.length > 0` before querying. Then, process the bulk results into an in-memory `Map` (where keys correspond to the relational ID, e.g., `studentId` or `billId`) for O(1) lookups during the final mapping operation.
