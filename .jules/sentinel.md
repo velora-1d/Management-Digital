@@ -1,0 +1,5 @@
+
+## 2024-05-18 - Prevent SQL Injection during SQL Dump Restoration
+**Vulnerability:** A Severe SQL Injection vulnerability existed in `src/app/api/settings/restore/route.ts` where parsed `INSERT INTO` statements from uploaded `.sql` files were executed directly via `sql.raw(stmt)`. This allowed arbitrary SQL execution (like `DROP TABLE`) if it was included in the dump file values.
+**Learning:** Using `sql.raw` to execute entire DML queries generated outside the application context is inherently dangerous because SQL parsers are complex to mimic. Even if you split by `INSERT INTO`, attackers can hide malicious payloads inside SQL syntax blocks like parens or use multi-statement commands separated by semicolons.
+**Prevention:** If raw query execution of an entire `.sql` dump is required, validate statements using strict constraints. Avoid raw query execution; rely on structured imports/exports using built-in ORM features or dedicated utilities that sanitize content before sending it to the database engine. In this codebase, the mitigation applied strict regex, removed valid strings to check for extraneous semicolons, and validated table names.
