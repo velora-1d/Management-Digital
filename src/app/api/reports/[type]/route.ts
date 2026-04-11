@@ -10,7 +10,7 @@ import {
     generalTransactions,
     transactionCategories
 } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, inArray } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -38,30 +38,40 @@ export async function GET(
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
+      let result: Record<string, unknown>[] = [];
+      if (bills.length > 0) {
+        const billIds = bills.map(b => b.id);
         const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
+            .select({ billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid })
             .from(infaqPayments)
             .where(
                 and(
-                    eq(infaqPayments.billId, bill.id),
+                    inArray(infaqPayments.billId, billIds),
                     isNull(infaqPayments.deletedAt)
                 )
             );
-        
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
-        const amount = bill.nominal || 0;
-        const remaining = amount - paid;
-        return {
-          id: bill.id,
-          student_name: bill.student?.name || "Anonim",
-          month: bill.month + " " + bill.year,
-          amount,
-          paid,
-          remaining: remaining > 0 ? remaining : 0,
-          status: remaining <= 0 ? "paid" : "unpaid",
-        };
-      }));
+
+        const paymentsMap = new Map();
+        for (const payment of payments) {
+            const current = paymentsMap.get(payment.billId) || 0;
+            paymentsMap.set(payment.billId, current + payment.amountPaid);
+        }
+
+        result = bills.map((bill) => {
+            const paid = paymentsMap.get(bill.id) || 0;
+            const amount = bill.nominal || 0;
+            const remaining = amount - paid;
+            return {
+              id: bill.id,
+              student_name: bill.student?.name || "Anonim",
+              month: bill.month + " " + bill.year,
+              amount,
+              paid,
+              remaining: remaining > 0 ? remaining : 0,
+              status: remaining <= 0 ? "paid" : "unpaid",
+            };
+        });
+      }
 
       return NextResponse.json({ success: true, data: result });
     }
@@ -86,32 +96,37 @@ export async function GET(
         .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
         .where(isNull(students.deletedAt));
 
-      const result = [];
-      for (const s of activeStudents) {
+      const result: Record<string, unknown>[] = [];
+      if (activeStudents.length > 0) {
+          const studentIds = activeStudents.map(s => s.id);
           const savingsData = await db
-            .select({ type: studentSavings.type, amount: studentSavings.amount })
-            .from(studentSavings)
-            .where(
-                and(
-                    eq(studentSavings.studentId, s.id),
-                    eq(studentSavings.status, "active"),
-                    isNull(studentSavings.deletedAt)
-                )
-            );
-          
-          let balance = 0;
-          savingsData.forEach((sv) => {
-            if (sv.type === "setor") balance += sv.amount;
-            else if (sv.type === "tarik") balance -= sv.amount;
-          });
+              .select({ studentId: studentSavings.studentId, type: studentSavings.type, amount: studentSavings.amount })
+              .from(studentSavings)
+              .where(
+                  and(
+                      inArray(studentSavings.studentId, studentIds),
+                      eq(studentSavings.status, "active"),
+                      isNull(studentSavings.deletedAt)
+                  )
+              );
 
-          if (balance !== 0) {
-              result.push({
-                student_id: s.id,
-                student_name: s.name,
-                classroom: s.classroomName || "-",
-                balance,
-              });
+          const balancesMap = new Map();
+          for (const sv of savingsData) {
+              const current = balancesMap.get(sv.studentId) || 0;
+              const val = sv.type === "setor" ? sv.amount : (sv.type === "tarik" ? -sv.amount : 0);
+              balancesMap.set(sv.studentId, current + val);
+          }
+          
+          for (const s of activeStudents) {
+              const balance = balancesMap.get(s.id) || 0;
+              if (balance !== 0) {
+                  result.push({
+                      student_id: s.id,
+                      student_name: s.name,
+                      classroom: s.classroomName || "-",
+                      balance,
+                  });
+              }
           }
       }
 
