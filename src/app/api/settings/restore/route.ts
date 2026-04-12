@@ -31,6 +31,8 @@ const WIPE_ORDER = [
   "school_settings",
 ];
 
+const ALLOWED_TABLES = new Set([...WIPE_ORDER, "users"]);
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();
@@ -51,25 +53,48 @@ export async function POST(req: NextRequest) {
       exportedAt = dateMatch[1].trim();
     }
 
-    const insertStatements = sqlContent
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("INSERT INTO"));
+    const insertStatements: string[] = [];
+    const tableCounts: Record<string, number> = {};
+
+    const rawLines = sqlContent.split("\n").map((line) => line.trim());
+    for (const line of rawLines) {
+      if (!line.startsWith("INSERT INTO")) continue;
+
+      // Ensure statement structure
+      const match = line.match(/^INSERT INTO "([a-zA-Z0-9_]+)"/);
+      if (!match) {
+        return NextResponse.json(
+          { success: false, error: "Format INSERT statement tidak valid atau berpotensi berbahaya." },
+          { status: 400 }
+        );
+      }
+
+      const table = match[1];
+      if (!ALLOWED_TABLES.has(table)) {
+        return NextResponse.json(
+          { success: false, error: `Tabel tidak diizinkan untuk di-restore: ${table}` },
+          { status: 400 }
+        );
+      }
+
+      // Check for multi-statement injection
+      const strippedLine = line.replace(/'(?:[^']|'')*'/g, "''");
+      if ((strippedLine.match(/;/g) || []).length > 1 || !strippedLine.endsWith(";")) {
+        return NextResponse.json(
+          { success: false, error: "Terdeteksi potensi SQL Injection (multiple statements)." },
+          { status: 400 }
+        );
+      }
+
+      insertStatements.push(line);
+      tableCounts[table] = (tableCounts[table] || 0) + 1;
+    }
 
     if (insertStatements.length === 0) {
       return NextResponse.json(
         { success: false, error: "File SQL tidak mengandung INSERT statement yang valid." },
         { status: 400 }
       );
-    }
-
-    const tableCounts: Record<string, number> = {};
-    for (const stmt of insertStatements) {
-      const match = stmt.match(/INSERT INTO "([^"]+)"/);
-      if (match) {
-        const table = match[1];
-        tableCounts[table] = (tableCounts[table] || 0) + 1;
-      }
     }
 
     await db.transaction(async (tx) => {
