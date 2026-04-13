@@ -31,6 +31,31 @@ const WIPE_ORDER = [
   "school_settings",
 ];
 
+const ALLOWED_TABLES = [
+  "academic_years",
+  "school_settings",
+  "classrooms",
+  "students",
+  "employees",
+  "users",
+  "cash_accounts",
+  "transaction_categories",
+  "salary_components",
+  "employee_salaries",
+  "inventories",
+  "general_transactions",
+  "student_savings",
+  "infaq_bills",
+  "infaq_payments",
+  "ppdb_registrations",
+  "re_registrations",
+  "registration_payments",
+  "payrolls",
+  "payroll_details",
+  "wakaf_donors",
+  "wakaf_purposes",
+];
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();
@@ -64,12 +89,34 @@ export async function POST(req: NextRequest) {
     }
 
     const tableCounts: Record<string, number> = {};
-    for (const stmt of insertStatements) {
-      const match = stmt.match(/INSERT INTO "([^"]+)"/);
-      if (match) {
-        const table = match[1];
-        tableCounts[table] = (tableCounts[table] || 0) + 1;
+    for (let stmt of insertStatements) {
+      stmt = stmt.trim();
+      const strippedStmt = stmt.replace(/'(''|[^'])*'/g, "''");
+      const semicolonIndex = strippedStmt.indexOf(";");
+      if (semicolonIndex !== -1 && semicolonIndex !== strippedStmt.length - 1) {
+        return NextResponse.json(
+          { success: false, error: "File SQL mengandung statement yang tidak valid (potensi SQL Injection)." },
+          { status: 400 }
+        );
       }
+
+      const strictMatch = strippedStmt.match(/^INSERT INTO "([a-zA-Z0-9_]+)" \([^)]+\) VALUES \([\s\S]+\);?$/);
+      if (!strictMatch) {
+        return NextResponse.json(
+          { success: false, error: "Format INSERT INTO statement tidak valid." },
+          { status: 400 }
+        );
+      }
+
+      const table = strictMatch[1];
+      if (!ALLOWED_TABLES.includes(table)) {
+        return NextResponse.json(
+          { success: false, error: `Tabel "${table}" tidak diizinkan untuk di-restore.` },
+          { status: 400 }
+        );
+      }
+
+      tableCounts[table] = (tableCounts[table] || 0) + 1;
     }
 
     await db.transaction(async (tx) => {
