@@ -31,6 +31,49 @@ const WIPE_ORDER = [
   "school_settings",
 ];
 
+const ALLOWED_TABLES = new Set(WIPE_ORDER);
+
+function isValidInsertStatement(stmt: string): boolean {
+  const trimmed = stmt.trim();
+  const match = trimmed.match(/^INSERT INTO "([^"]+)"/i);
+  if (!match) return false;
+
+  const table = match[1];
+  if (!ALLOWED_TABLES.has(table)) return false;
+
+  if (trimmed.includes("$$") || trimmed.match(/\$[a-zA-Z0-9_]*\$/)) {
+    return false;
+  }
+
+  if (trimmed.match(/\bSELECT\b/i)) {
+    return false;
+  }
+
+  let stripped = "";
+  let inString = false;
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed[i] === "'") {
+      if (inString && i + 1 < trimmed.length && trimmed[i+1] === "'") {
+        i++; // skip escaped quote
+      } else {
+        inString = !inString;
+      }
+    } else if (!inString) {
+      stripped += trimmed[i];
+    }
+  }
+
+  if (stripped.indexOf(";") !== -1 && stripped.indexOf(";") !== stripped.length - 1) {
+    return false;
+  }
+
+  if (stripped.includes("--") || stripped.includes("/*")) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();
@@ -63,6 +106,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const invalidStmt = insertStatements.find(stmt => !isValidInsertStatement(stmt));
+    if (invalidStmt) {
+      return NextResponse.json(
+        { success: false, error: "File SQL mengandung statement yang tidak diizinkan atau berpotensi berbahaya." },
+        { status: 400 }
+      );
+    }
+
     const tableCounts: Record<string, number> = {};
     for (const stmt of insertStatements) {
       const match = stmt.match(/INSERT INTO "([^"]+)"/);
@@ -86,6 +137,7 @@ export async function POST(req: NextRequest) {
       }
 
       for (const table of Object.keys(tableCounts)) {
+        if (!ALLOWED_TABLES.has(table)) continue;
         try {
           await tx.execute(
             sql.raw(`SELECT setval(pg_get_serial_sequence('"${table}"', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1, false)`)
