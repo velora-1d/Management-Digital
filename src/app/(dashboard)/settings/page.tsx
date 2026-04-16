@@ -170,9 +170,9 @@ export default function SettingsPage() {
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <label style="font-size:0.75rem;font-weight:600;">Nama</label>
-          <input id="swal-e-name" class="swal2-input" value="${user.name || ''}" style="margin:0;">
+          <input id="swal-e-name" class="swal2-input" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Username (Email)</label>
-          <input id="swal-e-user" class="swal2-input" value="${user.username || ''}" style="margin:0;">
+          <input id="swal-e-user" class="swal2-input" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Role</label>
           <select id="swal-e-role" class="swal2-select" style="margin:0;">
             <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
@@ -193,6 +193,10 @@ export default function SettingsPage() {
       confirmButtonText: 'Simpan',
       cancelButtonText: 'Batal',
       confirmButtonColor: '#4f46e5',
+      didOpen: () => {
+        (document.getElementById('swal-e-name') as HTMLInputElement).value = user.name || '';
+        (document.getElementById('swal-e-user') as HTMLInputElement).value = user.username || '';
+      },
       preConfirm: () => {
         return {
           name: (document.getElementById('swal-e-name') as HTMLInputElement).value,
@@ -229,12 +233,16 @@ export default function SettingsPage() {
   const resetPassword = (userId: number, userName: string) => {
     Swal.fire({
       title: 'Reset Password?',
-      html: `<p style="font-size:0.875rem;color:#475569;">Password user <strong>"${userName}"</strong> akan di-reset.</p>`,
+      html: `<p style="font-size:0.875rem;color:#475569;">Password user <strong id="reset-user-name">""</strong> akan di-reset.</p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d97706',
       confirmButtonText: 'Ya, Reset',
-      cancelButtonText: 'Batal'
+      cancelButtonText: 'Batal',
+      didOpen: () => {
+        const nameEl = document.getElementById('reset-user-name');
+        if (nameEl) nameEl.textContent = `"${userName}"`;
+      }
     }).then(async (result) => {
       if (result.isConfirmed) {
         Swal.fire({ title: "Memproses...", didOpen: () => Swal.showLoading() });
