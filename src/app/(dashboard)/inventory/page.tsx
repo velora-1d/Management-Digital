@@ -42,7 +42,17 @@ export default function InventoryPage() {
     placeholderData: (prev) => prev,
   });
 
-  const data: any[] = queryResult?.data || [];
+  type InventoryItem = {
+    id: number;
+    name: string;
+    category?: string;
+    quantity?: number;
+    condition?: string;
+    location?: string;
+    acquisitionCost?: number;
+    [key: string]: unknown;
+  };
+  const data: InventoryItem[] = queryResult?.data || [];
   const totalPages = queryResult?.pagination?.totalPages || 1;
   const total = queryResult?.pagination?.total || 0;
 
@@ -274,7 +284,7 @@ export default function InventoryPage() {
                 { header: "Lokasi", key: "location", width: 20 },
                 { header: "Harga Perolehan", key: "acquisitionCost", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
               ],
-              data: data.map((item: any, i: number) => ({
+              data: data.map((item: InventoryItem, i: number) => ({
                 ...item,
                 _no: (page - 1) * limit + i + 1,
                 category: item.category || '-',
@@ -302,13 +312,13 @@ export default function InventoryPage() {
                 <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
               ) : (
                 data.map((item, i) => {
-                  let badge = "";
+                  let badgeNode = null;
                   if (item.condition === "Baik") {
-                    badge = '<span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>';
+                    badgeNode = <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>;
                   } else if (item.condition === "Rusak Ringan") {
-                    badge = '<span class="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>';
+                    badgeNode = <span className="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>;
                   } else {
-                    badge = '<span class="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>';
+                    badgeNode = <span className="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>;
                   }
 
                   return (
@@ -322,13 +332,13 @@ export default function InventoryPage() {
                         <span style={{ background: "#f1f5f9", color: "#475569", padding: "0.375rem 0.875rem", borderRadius: 9999, fontSize: "0.75rem", fontWeight: 600 }}>{item.category || "-"}</span>
                       </td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontWeight: 700, fontSize: "1rem", color: "#334155", verticalAlign: "middle" }}>{item.quantity || 0}</td>
-                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }} dangerouslySetInnerHTML={{ __html: badge }}></td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }}>{badgeNode}</td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "right", verticalAlign: "middle", position: "relative" }}>
                         <button 
                           onClick={(ev) => { 
                             ev.stopPropagation(); 
-                            (ev.nativeEvent as any).stopImmediatePropagation();
-                            setOpenActionId(openActionId === item.id ? null : item.id); 
+                            (ev.nativeEvent as Event).stopImmediatePropagation();
+                            setOpenActionId(openActionId === item.id ? null : item.id as number);
                           }}
                           style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
                           className="hover:bg-slate-100 hover:text-slate-800 transition-colors"
