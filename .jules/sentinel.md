@@ -1,0 +1,4 @@
+## 2026-04-18 - XSS Vulnerability in Inventory Page
+**Vulnerability:** The `src/app/(dashboard)/inventory/page.tsx` file uses `dangerouslySetInnerHTML` to render the condition badge in the table based on the `item.condition` value. While the current implementation checks explicitly for 'Baik' and 'Rusak Ringan' and falls back to a hardcoded badge for 'Rusak Berat', using `dangerouslySetInnerHTML` is generally bad practice and a potential vector for XSS if the logic is modified in the future to interpolate variables directly into the HTML string.
+**Learning:** Avoid using `dangerouslySetInnerHTML` in React components, even when injecting values mapped from conditionally set variables. It's safer to rely on standard JSX elements to represent the required HTML nodes.
+**Prevention:** Replace `dangerouslySetInnerHTML` with standard JSX elements representing the required HTML nodes.
