@@ -84,13 +84,13 @@ export default function TransactionCategoriesPage() {
     });
   };
 
-  const handleEditCat = (cat: any) => {
+  const handleEditCat = (cat: { id: number; name: string; type: string; description: string | null }) => {
     Swal.fire({
       title: "Edit Kategori",
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Kategori</label>
-          <input type="text" id="swal-cat-name" class="swal2-input" value="${cat.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-cat-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
             <select id="swal-cat-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
               <option value="in" ${cat.type === 'in' ? 'selected' : ''}>Pemasukan (In)</option>
@@ -98,9 +98,13 @@ export default function TransactionCategoriesPage() {
             </select>
           </div>
           <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;">${cat.description || ''}</textarea></div>
+          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;"></textarea></div>
         </div>
       `,
+      didOpen: () => {
+        (document.getElementById("swal-cat-name") as HTMLInputElement).value = cat.name;
+        (document.getElementById("swal-cat-desc") as HTMLTextAreaElement).value = cat.description || '';
+      },
       showCancelButton: true,
       confirmButtonText: "Simpan",
       confirmButtonColor: "#10b981",
@@ -232,7 +236,7 @@ export default function TransactionCategoriesPage() {
                 ) : inCats.length === 0 ? (
                   <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pemasukan."}</td></tr>
                 ) : (
-                   inCats.map((c: any, i: number) => (
+                   inCats.map((c: { id: number; name: string; type: string; description: string | null }, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(inPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
@@ -292,7 +296,7 @@ export default function TransactionCategoriesPage() {
                 ) : outCats.length === 0 ? (
                   <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pengeluaran."}</td></tr>
                 ) : (
-                   outCats.map((c: any, i: number) => (
+                   outCats.map((c: { id: number; name: string; type: string; description: string | null }, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(outPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
