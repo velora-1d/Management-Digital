@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { extracurriculars, employees, extracurricularMembers, students } from "@/db/schema";
-import { eq, and, isNull, asc, sql } from "drizzle-orm";
+import { eq, and, isNull, asc, sql, inArray } from "drizzle-orm";
 
 // GET /api/extracurricular
 export async function GET(req: Request) {
@@ -38,17 +38,21 @@ export async function GET(req: Request) {
 
     const total = totalResult[0]?.count || 0;
 
-    // Fetch members for each extracurricular (optional, but original include had it)
-    // To be efficient, we do separate fetch or join
-    // But original logic had nested include, let's just return what we have or do a separate fetch for details
-    
-    // Original had include for members.student too.
-    // For simplicity and efficiency, maybe we fetch members separately if needed
-    // But let's follow original structure where possible
-    const detailedData = await Promise.all(results.map(async (item) => {
-        const members = await db
+    // Fetch members for each extracurricular
+    // ⚡ Bolt: Performance Optimization - Replaced N+1 query inside Promise.all(.map(...))
+    // with a single batched fetch using inArray() and an in-memory Map for O(1) grouping.
+    let detailedData = results.map(item => ({
+        ...item,
+        employee: item.employeeId ? { id: item.employeeId, name: item.employeeName } : null,
+        members: [] as any[]
+    }));
+
+    const resultIds = results.map(r => r.id);
+    if (resultIds.length > 0) {
+        const allMembers = await db
             .select({
                 id: extracurricularMembers.id,
+                extracurricularId: extracurricularMembers.extracurricularId,
                 student: {
                     id: students.id,
                     name: students.name,
@@ -57,14 +61,25 @@ export async function GET(req: Request) {
             })
             .from(extracurricularMembers)
             .leftJoin(students, eq(extracurricularMembers.studentId, students.id))
-            .where(eq(extracurricularMembers.extracurricularId, item.id));
-        
-        return {
+            .where(inArray(extracurricularMembers.extracurricularId, resultIds));
+
+        // Group members by extracurricularId
+        const membersMap = new Map<number, any[]>();
+        for (const member of allMembers) {
+            if (member.extracurricularId !== null) {
+                if (!membersMap.has(member.extracurricularId)) {
+                    membersMap.set(member.extracurricularId, []);
+                }
+                const cleanMember = { id: member.id, student: member.student };
+                membersMap.get(member.extracurricularId)!.push(cleanMember);
+            }
+        }
+
+        detailedData = detailedData.map(item => ({
             ...item,
-            employee: item.employeeId ? { id: item.employeeId, name: item.employeeName } : null,
-            members
-        };
-    }));
+            members: membersMap.get(item.id) || []
+        }));
+    }
 
     return NextResponse.json({
       success: true,
