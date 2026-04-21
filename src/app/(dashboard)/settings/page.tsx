@@ -8,7 +8,7 @@ import { Settings, UserPlus, Save, RefreshCw, Trash2, Database, Download } from 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profil');
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -164,32 +164,38 @@ export default function SettingsPage() {
     });
   };
 
-  const editUser = async (user: any) => {
+  const editUser = async (user: UserData) => {
     Swal.fire({
       title: 'Edit Pengguna',
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <label style="font-size:0.75rem;font-weight:600;">Nama</label>
-          <input id="swal-e-name" class="swal2-input" value="${user.name || ''}" style="margin:0;">
+          <input id="swal-e-name" class="swal2-input" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Username (Email)</label>
-          <input id="swal-e-user" class="swal2-input" value="${user.username || ''}" style="margin:0;">
+          <input id="swal-e-user" class="swal2-input" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Role</label>
           <select id="swal-e-role" class="swal2-select" style="margin:0;">
-            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-            <option value="operator" ${user.role === 'operator' ? 'selected' : ''}>Operator</option>
-            <option value="kepsek" ${user.role === 'kepsek' ? 'selected' : ''}>Kepsek</option>
-            <option value="bendahara" ${user.role === 'bendahara' ? 'selected' : ''}>Bendahara</option>
+            <option value="admin">Admin</option>
+            <option value="operator">Operator</option>
+            <option value="kepsek">Kepsek</option>
+            <option value="bendahara">Bendahara</option>
           </select>
           <label style="font-size:0.75rem;font-weight:600;">Status</label>
           <select id="swal-e-stat" class="swal2-select" style="margin:0;">
-            <option value="aktif" ${user.status === 'aktif' ? 'selected' : ''}>Aktif</option>
-            <option value="nonaktif" ${user.status === 'nonaktif' ? 'selected' : ''}>Nonaktif</option>
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
           </select>
           <label style="font-size:0.75rem;font-weight:600;">Password Baru <span style="color:#94a3b8;">(kosongkan jika tak diubah)</span></label>
           <input id="swal-e-pass" type="password" class="swal2-input" placeholder="••••••" style="margin:0;">
         </div>
       `,
       showCancelButton: true,
+      didOpen: () => {
+        (document.getElementById('swal-e-name') as HTMLInputElement).value = user.name || '';
+        (document.getElementById('swal-e-user') as HTMLInputElement).value = user.username || '';
+        if (user.role) (document.getElementById('swal-e-role') as HTMLSelectElement).value = user.role;
+        if (user.status) (document.getElementById('swal-e-stat') as HTMLSelectElement).value = user.status;
+      },
       confirmButtonText: 'Simpan',
       cancelButtonText: 'Batal',
       confirmButtonColor: '#4f46e5',
@@ -227,9 +233,10 @@ export default function SettingsPage() {
   };
 
   const resetPassword = (userId: number, userName: string) => {
+    const escapedName = userName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     Swal.fire({
       title: 'Reset Password?',
-      html: `<p style="font-size:0.875rem;color:#475569;">Password user <strong>"${userName}"</strong> akan di-reset.</p>`,
+      html: `<p style="font-size:0.875rem;color:#475569;">Password user <strong>"${escapedName}"</strong> akan di-reset.</p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d97706',

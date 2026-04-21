@@ -1,0 +1,4 @@
+## 2024-05-24 - Unsafe DOM interpolation in Swal.fire
+**Vulnerability:** Found Stored/Reflected XSS in `Swal.fire` configurations across the Next.js app. The `html` property was rendering string literals containing database content (like user names or roles), allowing malicious HTML/JS payloads to execute when an admin opened modals (like `editUser` or `resetPassword`).
+**Learning:** SweetAlert2's `html` property renders raw HTML. Directly interpolating database fields or user input into the `html` string literal bypasses standard React protections, introducing critical XSS vulnerabilities.
+**Prevention:** Do not use template literal interpolation for variable data in `Swal.fire`'s `html` string. Use `didOpen` lifecycle hook to safely map data to the rendered DOM elements using standard DOM API like `(document.getElementById('my-input') as HTMLInputElement).value = myData`, or escape data manually if injecting into text nodes.
