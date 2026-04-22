@@ -10,7 +10,7 @@ import {
     generalTransactions,
     transactionCategories
 } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, inArray } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -38,18 +38,31 @@ export async function GET(
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
-        const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
-            .from(infaqPayments)
-            .where(
-                and(
-                    eq(infaqPayments.billId, bill.id),
-                    isNull(infaqPayments.deletedAt)
-                )
-            );
-        
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      // ⚡ Bolt: Fixed N+1 query by batch fetching infaq payments
+      const billIds = bills.map((b) => b.id);
+      let allPayments: { billId: number | null; amountPaid: number }[] = [];
+      if (billIds.length > 0) {
+          allPayments = await db
+              .select({ billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid })
+              .from(infaqPayments)
+              .where(
+                  and(
+                      inArray(infaqPayments.billId, billIds),
+                      isNull(infaqPayments.deletedAt)
+                  )
+              );
+      }
+
+      const paymentsByBill = new Map<number, number>();
+      for (const p of allPayments) {
+          if (p.billId !== null) {
+              const current = paymentsByBill.get(p.billId) || 0;
+              paymentsByBill.set(p.billId, current + p.amountPaid);
+          }
+      }
+
+      const result = bills.map((bill) => {
+        const paid = paymentsByBill.get(bill.id) || 0;
         const amount = bill.nominal || 0;
         const remaining = amount - paid;
         return {
@@ -61,7 +74,7 @@ export async function GET(
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      }));
+      });
 
       return NextResponse.json({ success: true, data: result });
     }
@@ -86,25 +99,38 @@ export async function GET(
         .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
         .where(isNull(students.deletedAt));
 
+      // ⚡ Bolt: Fixed N+1 query by batch fetching student savings
+      const studentIds = activeStudents.map((s) => s.id);
+      let allSavings: { studentId: number | null; type: string; amount: number }[] = [];
+      if (studentIds.length > 0) {
+          allSavings = await db
+              .select({ studentId: studentSavings.studentId, type: studentSavings.type, amount: studentSavings.amount })
+              .from(studentSavings)
+              .where(
+                  and(
+                      inArray(studentSavings.studentId, studentIds),
+                      eq(studentSavings.status, "active"),
+                      isNull(studentSavings.deletedAt)
+                  )
+              );
+      }
+
+      const savingsByStudent = new Map<number, number>();
+      for (const sv of allSavings) {
+          if (sv.studentId !== null) {
+              let current = savingsByStudent.get(sv.studentId) || 0;
+              if (sv.type === "setor") {
+                  current += sv.amount;
+              } else if (sv.type === "tarik") {
+                  current -= sv.amount;
+              }
+              savingsByStudent.set(sv.studentId, current);
+          }
+      }
+
       const result = [];
       for (const s of activeStudents) {
-          const savingsData = await db
-            .select({ type: studentSavings.type, amount: studentSavings.amount })
-            .from(studentSavings)
-            .where(
-                and(
-                    eq(studentSavings.studentId, s.id),
-                    eq(studentSavings.status, "active"),
-                    isNull(studentSavings.deletedAt)
-                )
-            );
-          
-          let balance = 0;
-          savingsData.forEach((sv) => {
-            if (sv.type === "setor") balance += sv.amount;
-            else if (sv.type === "tarik") balance -= sv.amount;
-          });
-
+          const balance = savingsByStudent.get(s.id) || 0;
           if (balance !== 0) {
               result.push({
                 student_id: s.id,
