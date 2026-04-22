@@ -1,0 +1,3 @@
+## 2025-02-23 - Resolving N+1 Database Bottleneck in Report Generation
+**Learning:** Found an aggressive N+1 query vulnerability in `src/app/api/reports/[type]/route.ts` where the `infaq` and `tabungan` reports mapped over lists and used `await db.select()...` sequentially per item. These queries could be extremely destructive at scale given the potentially high number of students/bills.
+**Action:** Always batch related data queries ahead of loops via `inArray()`, placing results in an `O(1)` access time in-memory `Map`. Avoid executing `select()` inside `map` operations or `for...of` loops unless iterating against dynamically shifting structures.
