@@ -1,0 +1,3 @@
+## 2024-05-18 - Avoid N+1 queries in Drizzle loops
+**Learning:** Using `Promise.all` combined with `.map()`, or sequential `for...of` loops, to perform iterative Drizzle ORM database queries are significant performance anti-patterns that create N+1 query bottlenecks.
+**Action:** Replace these loops with a single `inArray()` batch fetch and use an in-memory `Map` lookup for O(1) correlation. Ensure you guard against passing empty arrays to `inArray()` (e.g. `if (ids.length === 0) return []`), as this can cause SQL syntax errors in some dialects. Also ensure that Map keys are explicitly checked for `!== null` rather than truthiness to properly handle zero IDs.
