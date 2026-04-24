@@ -1,0 +1,4 @@
+## 2025-02-14 - Replace dangerouslySetInnerHTML with native JSX components
+**Vulnerability:** A Next.js page component (`src/app/(dashboard)/inventory/page.tsx`) was dynamically assembling raw HTML strings for condition badges and inserting them into the DOM using React's `dangerouslySetInnerHTML`.
+**Learning:** While the strings themselves were hardcoded based on the item condition, establishing a pattern of using `dangerouslySetInnerHTML` for basic layout manipulation is a dangerous anti-pattern. If a developer later modifies the condition to include user input without remembering to sanitize it, an XSS vulnerability would immediately be introduced.
+**Prevention:** Always use standard React JSX to construct and render dynamic UI elements, even when injecting static markup. Avoid `dangerouslySetInnerHTML` entirely unless absolutely necessary to render trusted external rich text, and even then, always sanitize the input.
