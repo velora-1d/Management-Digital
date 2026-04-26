@@ -1,0 +1,5 @@
+
+## 2025-02-14 - Fix dangerouslySetInnerHTML XSS vulnerability in inventory page
+**Vulnerability:** Found `dangerouslySetInnerHTML` being used to render HTML strings for condition badges in the inventory dashboard (`src/app/(dashboard)/inventory/page.tsx`). While currently populated with static values, this pattern is a dangerous anti-pattern that creates a brittle surface area for future XSS vulnerabilities if user data is later incorporated into the badge logic.
+**Learning:** In Next.js/React applications, dynamically constructed HTML strings using string concatenation or template literals are often rendered using `dangerouslySetInnerHTML`. This bypasses React's built-in XSS protections.
+**Prevention:** Always use standard React JSX elements and components instead of HTML strings. Replace string assignments (e.g., `badge = '<span class="...">Baik</span>'`) with functional components or direct element assignments (e.g., `badge = <span className="...">Baik</span>;`) and render them securely (e.g., `{badge}`).
