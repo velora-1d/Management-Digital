@@ -10,7 +10,7 @@ import {
     generalTransactions,
     transactionCategories
 } from "@/db/schema";
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, sql, inArray } from "drizzle-orm";
 import { requireAuth, AuthError } from "@/lib/rbac";
 
 export async function GET(
@@ -38,18 +38,31 @@ export async function GET(
         .leftJoin(students, eq(infaqBills.studentId, students.id))
         .where(isNull(infaqBills.deletedAt));
 
-      const result = await Promise.all(bills.map(async (bill) => {
-        const payments = await db
-            .select({ amountPaid: infaqPayments.amountPaid })
+      const billIds = bills.map(b => b.id);
+
+      let allPayments: { amountPaid: number, billId: number | null }[] = [];
+      if (billIds.length > 0) {
+        allPayments = await db
+            .select({ amountPaid: infaqPayments.amountPaid, billId: infaqPayments.billId })
             .from(infaqPayments)
             .where(
                 and(
-                    eq(infaqPayments.billId, bill.id),
+                    inArray(infaqPayments.billId, billIds),
                     isNull(infaqPayments.deletedAt)
                 )
             );
-        
-        const paid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+      }
+
+      const paymentsMap = new Map<number, number>();
+      for (const p of allPayments) {
+          if (p.billId !== null) {
+              const current = paymentsMap.get(p.billId) || 0;
+              paymentsMap.set(p.billId, current + p.amountPaid);
+          }
+      }
+
+      const result = bills.map((bill) => {
+        const paid = paymentsMap.get(bill.id) || 0;
         const amount = bill.nominal || 0;
         const remaining = amount - paid;
         return {
@@ -61,7 +74,7 @@ export async function GET(
           remaining: remaining > 0 ? remaining : 0,
           status: remaining <= 0 ? "paid" : "unpaid",
         };
-      }));
+      });
 
       return NextResponse.json({ success: true, data: result });
     }
