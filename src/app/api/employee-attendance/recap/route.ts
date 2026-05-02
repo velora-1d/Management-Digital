@@ -36,24 +36,36 @@ export async function GET(req: Request) {
       .from(employeeAttendances)
       .where(like(employeeAttendances.date, `${prefix}%`));
 
+    // ⚡ Bolt: Pre-aggregate employee attendance data in memory for O(1) lookups
+    const attendanceMap = new Map<number, { hadir: number; sakit: number; izin: number; alpha: number; total: number }>();
+    for (const record of attendances) {
+      if (record.employeeId === null) continue;
+
+      if (!attendanceMap.has(record.employeeId)) {
+        attendanceMap.set(record.employeeId, { hadir: 0, sakit: 0, izin: 0, alpha: 0, total: 0 });
+      }
+
+      const counts = attendanceMap.get(record.employeeId)!;
+      counts.total++;
+      if (record.status === "hadir" || record.status === "sakit" || record.status === "izin" || record.status === "alpha") {
+         counts[record.status]++;
+      }
+    }
+
+    // Kalkulasi rekap per karyawan (O(N) instead of O(N * M))
     const recap = empList.map(emp => {
-      const empAttendances = attendances.filter(a => a.employeeId === emp.id);
-      const totalAtt = empAttendances.length;
-      const hadir = empAttendances.filter(a => a.status === "hadir").length;
-      const sakit = empAttendances.filter(a => a.status === "sakit").length;
-      const izin = empAttendances.filter(a => a.status === "izin").length;
-      const alpha = empAttendances.filter(a => a.status === "alpha").length;
-      const persen = totalAtt > 0 ? Math.round((hadir / totalAtt) * 100) : 0;
+      const stats = attendanceMap.get(emp.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0, total: 0 };
+      const persen = stats.total > 0 ? Math.round((stats.hadir / stats.total) * 100) : 0;
 
       return {
         employeeId: emp.id,
         name: emp.name,
         position: emp.position,
-        total: totalAtt,
-        hadir,
-        sakit,
-        izin,
-        alpha,
+        total: stats.total,
+        hadir: stats.hadir,
+        sakit: stats.sakit,
+        izin: stats.izin,
+        alpha: stats.alpha,
         persen,
       };
     });
