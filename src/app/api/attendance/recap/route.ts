@@ -54,19 +54,31 @@ export async function GET(request: Request) {
         )
       );
 
-    // Kalkulasi rekap per murid
+    // ⚡ Bolt: Pre-aggregate attendance data in memory for O(1) lookups
+    const attendanceMap = new Map<number, { hadir: number; sakit: number; izin: number; alpha: number }>();
+    for (const record of attendanceData) {
+      if (record.studentId === null) continue;
+
+      if (!attendanceMap.has(record.studentId)) {
+        attendanceMap.set(record.studentId, { hadir: 0, sakit: 0, izin: 0, alpha: 0 });
+      }
+
+      const counts = attendanceMap.get(record.studentId)!;
+      if (record.status === "hadir" || record.status === "sakit" || record.status === "izin" || record.status === "alpha") {
+         counts[record.status]++;
+      }
+    }
+
+    // Kalkulasi rekap per murid (O(N) instead of O(N * M))
     const recap = paginated.map((student) => {
-      const studentAttendances = attendanceData.filter((a) => a.studentId === student.id);
-      const hadir = studentAttendances.filter((a) => a.status === "hadir").length;
-      const sakit = studentAttendances.filter((a) => a.status === "sakit").length;
-      const izin = studentAttendances.filter((a) => a.status === "izin").length;
-      const alpha = studentAttendances.filter((a) => a.status === "alpha").length;
+      const stats = attendanceMap.get(student.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0 };
+      const total = stats.hadir + stats.sakit + stats.izin + stats.alpha;
 
       return {
         id: student.id,
         nisn: student.nisn,
         name: student.name,
-        stats: { hadir, sakit, izin, alpha, total: hadir + sakit + izin + alpha },
+        stats: { ...stats, total },
       };
     });
 
