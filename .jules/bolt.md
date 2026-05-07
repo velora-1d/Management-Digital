@@ -1,0 +1,3 @@
+## 2026-05-07 - Fix N+1 Query Bottleneck in Next.js API Routes
+**Learning:** When resolving relationships in Drizzle ORM array results, using `Promise.all(results.map(...))` triggers severe N+1 query bottlenecks and database connection strain. Additionally, standard `[] as any[]` is strictly banned by ESLint.
+**Action:** Use Drizzle's `inArray` for batched single-query fetches. Map the results in-memory using an O(n) `Map` keyed by the relation ID. Strictly type the result arrays using Drizzle's inference, e.g., `typeof schema.$inferSelect[]`, and ensure the IDs array is not empty before querying to avoid SQL syntax errors.
