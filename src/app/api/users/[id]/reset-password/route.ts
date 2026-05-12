@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { randomInt } from "node:crypto";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -15,7 +16,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let newPassword = "";
-    for (let i = 0; i < 6; i++) newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < 6; i++) newPassword += chars.charAt(randomInt(chars.length));
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, id));
