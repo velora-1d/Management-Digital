@@ -1,0 +1,3 @@
+## 2025-02-18 - Type Inference Issues with Drizzle Left Joins
+**Learning:** When using `leftJoin` in Drizzle ORM queries, Drizzle strictly infers selected fields from the joined table as nullable (e.g., `number | null` instead of `number`). If you explicitly map the result to a hardcoded array type that assumes non-nullable fields, it causes a TypeScript compilation error (`Type "number | null" is not assignable to type "number"`).
+**Action:** Instead of hardcoding explicit types for intermediate results of joined queries, allow Drizzle to infer the type and assign the result directly (e.g., `let allMembers: typeof fetchedMembers[number][] = []` or just `let allMembers = fetchedMembers`), or ensure that explicit types exactly match the nullability of the joined fields.
