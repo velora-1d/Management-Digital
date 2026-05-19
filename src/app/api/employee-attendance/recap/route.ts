@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
     const [{ total }] = await db.select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(employees)
-      .where(eq(employees.status, "aktif" as any));
+      .where(eq(employees.status, "aktif"));
 
     const empList = await db.select({
       id: employees.id,
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       position: employees.position,
     })
     .from(employees)
-    .where(eq(employees.status, "aktif" as any))
+    .where(eq(employees.status, "aktif"))
     .orderBy(asc(employees.name))
     .limit(limit > 0 ? limit : 1000)
     .offset(limit > 0 ? skip : 0);
@@ -36,13 +36,22 @@ export async function GET(req: Request) {
       .from(employeeAttendances)
       .where(like(employeeAttendances.date, `${prefix}%`));
 
+    const attendanceStats = new Map<number, { hadir: number; sakit: number; izin: number; alpha: number; total: number }>();
+    for (const a of attendances) {
+      if (!attendanceStats.has(a.employeeId)) {
+        attendanceStats.set(a.employeeId, { hadir: 0, sakit: 0, izin: 0, alpha: 0, total: 0 });
+      }
+      const stats = attendanceStats.get(a.employeeId)!;
+      stats.total++;
+      if (a.status === "hadir") stats.hadir++;
+      else if (a.status === "sakit") stats.sakit++;
+      else if (a.status === "izin") stats.izin++;
+      else if (a.status === "alpha") stats.alpha++;
+    }
+
     const recap = empList.map(emp => {
-      const empAttendances = attendances.filter(a => a.employeeId === emp.id);
-      const totalAtt = empAttendances.length;
-      const hadir = empAttendances.filter(a => a.status === "hadir").length;
-      const sakit = empAttendances.filter(a => a.status === "sakit").length;
-      const izin = empAttendances.filter(a => a.status === "izin").length;
-      const alpha = empAttendances.filter(a => a.status === "alpha").length;
+      const stats = attendanceStats.get(emp.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0, total: 0 };
+      const { hadir, sakit, izin, alpha, total: totalAtt } = stats;
       const persen = totalAtt > 0 ? Math.round((hadir / totalAtt) * 100) : 0;
 
       return {
