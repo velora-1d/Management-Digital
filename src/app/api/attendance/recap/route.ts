@@ -54,19 +54,30 @@ export async function GET(request: Request) {
         )
       );
 
+    // Pre-aggregate data into a lookup object
+    const attendanceStats = new Map<number, { hadir: number; sakit: number; izin: number; alpha: number }>();
+    for (const a of attendanceData) {
+      if (!attendanceStats.has(a.studentId)) {
+        attendanceStats.set(a.studentId, { hadir: 0, sakit: 0, izin: 0, alpha: 0 });
+      }
+      const stats = attendanceStats.get(a.studentId)!;
+      if (a.status === "hadir") stats.hadir++;
+      else if (a.status === "sakit") stats.sakit++;
+      else if (a.status === "izin") stats.izin++;
+      else if (a.status === "alpha") stats.alpha++;
+    }
+
     // Kalkulasi rekap per murid
     const recap = paginated.map((student) => {
-      const studentAttendances = attendanceData.filter((a) => a.studentId === student.id);
-      const hadir = studentAttendances.filter((a) => a.status === "hadir").length;
-      const sakit = studentAttendances.filter((a) => a.status === "sakit").length;
-      const izin = studentAttendances.filter((a) => a.status === "izin").length;
-      const alpha = studentAttendances.filter((a) => a.status === "alpha").length;
+      const stats = attendanceStats.get(student.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0 };
+      const { hadir, sakit, izin, alpha } = stats;
+      const total = hadir + sakit + izin + alpha;
 
       return {
         id: student.id,
         nisn: student.nisn,
         name: student.name,
-        stats: { hadir, sakit, izin, alpha, total: hadir + sakit + izin + alpha },
+        stats: { hadir, sakit, izin, alpha, total },
       };
     });
 
@@ -75,7 +86,8 @@ export async function GET(request: Request) {
       data: recap,
       meta: { total: totalStudents, page, limit, totalPages: limit > 0 ? Math.ceil(totalStudents / limit) : 1 },
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Gagal memuat rekap absensi";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
