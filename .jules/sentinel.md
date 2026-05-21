@@ -1,0 +1,4 @@
+## 2024-05-18 - Prevent XSS via dangerouslySetInnerHTML
+**Vulnerability:** The `InventoryPage` component used `dangerouslySetInnerHTML` to render a status badge string composed of HTML tags. This allows Cross-Site Scripting (XSS) if the condition status (or related user inputs) could be manipulated to inject malicious scripts, bypassing React's built-in escaping.
+**Learning:** React provides safe component composition (JSX) to dynamically render styled elements conditionally. Constructing raw HTML strings and bypassing React's escaping mechanism (`dangerouslySetInnerHTML`) is an anti-pattern that creates security vulnerabilities and degrades code maintainability.
+**Prevention:** Instead of using raw HTML strings, conditionally render standard JSX elements or create a safe helper component for UI badges.
