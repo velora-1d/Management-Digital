@@ -3,10 +3,14 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { requireAuth, requireRole } from "@/lib/rbac";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const authUser = await requireAuth();
+    requireRole(authUser, ["superadmin", "admin"]);
+
     const id = parseInt(params.id);
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 

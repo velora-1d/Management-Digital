@@ -3,11 +3,15 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import bcrypt from "bcrypt";
 import { isNull, eq, desc } from "drizzle-orm";
+import { requireAuth, requireRole } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin", "admin"]);
+
     const userList = await db.select({
       id: users.id,
       name: users.name,
@@ -28,6 +32,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin", "admin"]);
+
     const body = await request.json();
     const { name, username, password, role } = body;
 

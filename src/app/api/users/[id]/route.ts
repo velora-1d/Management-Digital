@@ -3,17 +3,21 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import bcrypt from "bcrypt";
 import { eq, and, ne } from "drizzle-orm";
+import { requireAuth, requireRole } from "@/lib/rbac";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin", "admin"]);
+
     const id = parseInt(params.id);
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    if (!user) return NextResponse.json({ error: "Pengguna tidak ditemukan" }, { status: 404 });
+    const [dbUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    if (!dbUser) return NextResponse.json({ error: "Pengguna tidak ditemukan" }, { status: 404 });
 
-    return NextResponse.json({ id: user.id, name: user.name, username: user.email, role: user.role, status: user.status });
+    return NextResponse.json({ id: dbUser.id, name: dbUser.name, username: dbUser.email, role: dbUser.role, status: dbUser.status });
   } catch (error) {
     return NextResponse.json({ error: "Gagal mengambil data pengguna" }, { status: 500 });
   }
@@ -22,6 +26,9 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin", "admin"]);
+
     const id = parseInt(params.id);
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 
