@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { schoolSettings } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 // GET /api/school-profile
 export async function GET() {
@@ -22,14 +22,29 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const entries = Object.entries(body) as [string, string][];
 
+    const keys = entries.map(([key]) => key);
+
     await db.transaction(async (tx) => {
+      if (keys.length === 0) return;
+
+      // ⚡ Bolt: Fix N+1 query by batch fetching existing settings
+      const existingSettings = await tx.select().from(schoolSettings).where(inArray(schoolSettings.key, keys));
+      const existingMap = new Map(existingSettings.map((s) => [s.key, s]));
+
+      const toInsert: { key: string; value: string }[] = [];
+
       for (const [key, value] of entries) {
-        const [existing] = await tx.select().from(schoolSettings).where(eq(schoolSettings.key, key)).limit(1);
+        const existing = existingMap.get(key);
         if (existing) {
           await tx.update(schoolSettings).set({ value: String(value) }).where(eq(schoolSettings.id, existing.id));
         } else {
-          await tx.insert(schoolSettings).values({ key, value: String(value) });
+          toInsert.push({ key, value: String(value) });
         }
+      }
+
+      // ⚡ Bolt: Batch insert new settings
+      if (toInsert.length > 0) {
+        await tx.insert(schoolSettings).values(toInsert);
       }
     });
 
