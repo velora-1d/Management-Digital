@@ -25,30 +25,52 @@ export async function GET(request: Request) {
     }
 
     const now = new Date();
-    const months: { label: string; start: Date; end: Date }[] = [];
+    const months: { label: string; start: Date; end: Date; monthKey: string }[] = [];
 
     // Cashflow 6 bulan terakhir
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
       const label = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" });
-      months.push({ label, start: d, end });
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ label, start: d, end, monthKey });
     }
 
-    // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
+    // Cashflow per bulan - Optimized to single query
+    const startPeriod = months[0].start;
+    const endPeriod = months[months.length - 1].end;
+
+    const rawAggregates = await db.select({
+      type: generalTransactions.type,
+      monthKey: sql<string>`to_char(${generalTransactions.createdAt}, 'YYYY-MM')`,
+      total: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number)
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid" as any),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, startPeriod),
+      lte(generalTransactions.createdAt, endPeriod)
+    ))
+    .groupBy(
+      generalTransactions.type,
+      sql`to_char(${generalTransactions.createdAt}, 'YYYY-MM')`
     );
+
+    const aggMap = new Map<string, { income: number; expense: number }>();
+    for (const row of rawAggregates) {
+      if (!aggMap.has(row.monthKey)) {
+        aggMap.set(row.monthKey, { income: 0, expense: 0 });
+      }
+      const m = aggMap.get(row.monthKey)!;
+      if (row.type === 'in') m.income = row.total;
+      if (row.type === 'out') m.expense = row.total;
+    }
+
+    const cashflowData = months.map(m => {
+      const aggregated = aggMap.get(m.monthKey) || { income: 0, expense: 0 };
+      return { month: m.label, income: aggregated.income, expense: aggregated.expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
