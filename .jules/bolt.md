@@ -1,0 +1,3 @@
+## 2024-05-24 - N+1 Query Anti-Pattern in Reports API
+**Learning:** Found critical N+1 query bottlenecks in `src/app/api/reports/[type]/route.ts`. The codebase frequently loops through retrieved rows and runs individual queries via `Promise.all(arr.map())` or `for...of` (e.g., fetching payments per bill, or savings per student). Drizzle and Postgres scale poorly with this pattern.
+**Action:** Replaced iterative queries with a single batched `inArray()` lookup based on an extracted ID array (ensuring `length > 0` before querying to prevent ORM errors). Then, pre-aggregated the results into an in-memory `Map` keyed by ID for O(1) lookups during the mapping phase.
