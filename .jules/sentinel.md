@@ -1,0 +1,4 @@
+## 2024-05-18 - [Fix XSS Vulnerability in Inventory Table]
+**Vulnerability:** XSS vulnerability via \`dangerouslySetInnerHTML\` rendering dynamic badge content in \`src/app/(dashboard)/inventory/page.tsx\`.
+**Learning:** The codebase previously used raw HTML string interpolation to generate badges based on condition state, which was then injected into the DOM using \`dangerouslySetInnerHTML\`. While the immediate source was hardcoded conditions ("Baik", "Rusak Ringan", "Rusak Berat"), this anti-pattern opens the door for XSS if user-provided content (e.g., dynamic categories or custom states) were ever interpolated into those strings in the future.
+**Prevention:** Always prefer native React JSX component rendering over manual HTML string manipulation. Never use \`dangerouslySetInnerHTML\` unless specifically rendering pre-sanitized, trusted markdown/HTML from a secure source.
