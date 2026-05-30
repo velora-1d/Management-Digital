@@ -54,13 +54,24 @@ export async function GET(request: Request) {
         )
       );
 
-    // Kalkulasi rekap per murid
+    // Pre-aggregate attendance data in $O(N)$
+    const attendanceStats = new Map<number, { hadir: number, sakit: number, izin: number, alpha: number }>();
+    for (const a of attendanceData) {
+      if (a.studentId === null) continue;
+      if (!attendanceStats.has(a.studentId)) {
+        attendanceStats.set(a.studentId, { hadir: 0, sakit: 0, izin: 0, alpha: 0 });
+      }
+      const stats = attendanceStats.get(a.studentId)!;
+      if (a.status === "hadir") stats.hadir++;
+      else if (a.status === "sakit") stats.sakit++;
+      else if (a.status === "izin") stats.izin++;
+      else if (a.status === "alpha") stats.alpha++;
+    }
+
+    // Kalkulasi rekap per murid $O(1)$ lookups
     const recap = paginated.map((student) => {
-      const studentAttendances = attendanceData.filter((a) => a.studentId === student.id);
-      const hadir = studentAttendances.filter((a) => a.status === "hadir").length;
-      const sakit = studentAttendances.filter((a) => a.status === "sakit").length;
-      const izin = studentAttendances.filter((a) => a.status === "izin").length;
-      const alpha = studentAttendances.filter((a) => a.status === "alpha").length;
+      const stats = attendanceStats.get(student.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0 };
+      const { hadir, sakit, izin, alpha } = stats;
 
       return {
         id: student.id,
