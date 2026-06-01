@@ -18,22 +18,25 @@ export default function PageTransition({ children }: { children: ReactNode }) {
   const [displayChildren, setDisplayChildren] = useState(children);
   const [key, setKey] = useState(pathname);
   const [animClass, setAnimClass] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     if (pathname !== key) {
-      // Mulai transisi: fade-out cepat
       setIsTransitioning(true);
       setAnimClass("page-fade-out");
 
-      // Setelah fade-out selesai, ganti konten dan fade-in
       const timer = setTimeout(() => {
         setDisplayChildren(children);
         setKey(pathname);
         setIsTransitioning(false);
         setAnimClass("page-fade-in");
 
-        // Hapus class animasi setelah selesai agar tidak ada
-        // transform/will-change yang merusak position:fixed di modal
         const cleanup = setTimeout(() => setAnimClass(""), 350);
         return () => clearTimeout(cleanup);
       }, 150);
@@ -42,7 +45,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
     } else {
       setDisplayChildren(children);
     }
-  }, [pathname, children, key]);
+  }, [pathname, children, key, isMounted]);
 
   return (
     <>

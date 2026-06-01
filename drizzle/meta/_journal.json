@@ -8,6 +8,34 @@
       "when": 1773363713005,
       "tag": "0000_freezing_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775262610484,
+      "tag": "0001_add_cms_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776308818687,
+      "tag": "0002_supreme_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776474450137,
+      "tag": "0003_closed_reavers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776485349680,
+      "tag": "0004_smooth_invaders",
+      "breakpoints": true
     }
   ]
 }

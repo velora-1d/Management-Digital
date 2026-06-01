@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
     const total = totalResult[0]?.count || 0;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: results,
       pagination: {
@@ -63,6 +63,10 @@ export async function GET(req: Request) {
         totalPages: Math.ceil(total / limit)
       }
     });
+
+    // Cache pendek untuk meredam beban saat guru berpindah-pindah mapel/kelas
+    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10');
+    return response;
   } catch (error) {
     console.error("Error fetching grades:", error);
     return NextResponse.json(
@@ -84,50 +88,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const savedGrades = [];
-    for (const g of grades) {
-        // Upsert manual with Drizzle
-        const [existing] = await db
-            .select()
-            .from(studentGrades)
-            .where(
-                and(
-                    eq(studentGrades.componentId, Number(componentId)),
-                    eq(studentGrades.studentId, Number(g.studentId)),
-                    eq(studentGrades.subjectId, Number(subjectId))
-                )
-            )
-            .limit(1);
-        
-        if (existing) {
-            const [updated] = await db
-                .update(studentGrades)
-                .set({
-                    classroomId: Number(classroomId),
-                    nilaiAngka: Number(g.nilaiAngka),
-                    predikat: g.predikat || "",
-                    updatedAt: new Date(),
-                })
-                .where(eq(studentGrades.id, existing.id))
-                .returning();
-            savedGrades.push(updated);
-        } else {
-            const [created] = await db
-                .insert(studentGrades)
-                .values({
-                    componentId: Number(componentId),
-                    studentId: Number(g.studentId),
-                    subjectId: Number(subjectId),
-                    classroomId: Number(classroomId),
-                    nilaiAngka: Number(g.nilaiAngka),
-                    predikat: g.predikat || "",
-                })
-                .returning();
-            savedGrades.push(created);
-        }
+    // Transformasi data untuk Bulk Upsert
+    const upsertData = grades.map(g => ({
+      componentId: Number(componentId),
+      studentId: Number(g.studentId),
+      subjectId: Number(subjectId),
+      classroomId: Number(classroomId),
+      nilaiAngka: Number(g.nilaiAngka),
+      predikat: g.predikat || "",
+    }));
+
+    if (upsertData.length > 0) {
+      await db
+        .insert(studentGrades)
+        .values(upsertData)
+        .onConflictDoUpdate({
+          target: [studentGrades.componentId, studentGrades.studentId, studentGrades.subjectId],
+          set: {
+            classroomId: sql`excluded.classroom_id`,
+            nilaiAngka: sql`excluded.nilai_angka`,
+            predikat: sql`excluded.predikat`,
+            updatedAt: new Date(),
+          },
+        });
     }
 
-    return NextResponse.json({ success: true, count: savedGrades.length }, { status: 201 });
+    const { revalidateTag } = await import("next/cache");
+    revalidateTag("grades");
+
+    return NextResponse.json({ success: true, count: upsertData.length }, { status: 201 });
   } catch (error) {
     console.error("Error upserting grades:", error);
     return NextResponse.json(

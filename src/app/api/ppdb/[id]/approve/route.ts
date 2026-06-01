@@ -23,7 +23,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       const feeMap: Record<string, number> = {};
       settings.forEach(s => { feeMap[s.key] = Number(s.value) || 0; });
 
-      await tx.update(ppdbRegistrations).set({ status: "diterima" as any, updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+      await tx.update(ppdbRegistrations).set({ status: "diterima", updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
 
       const paymentTypes = [
         { type: "daftar", nominal: feeMap["ppdb_fee_daftar"] || 0 },

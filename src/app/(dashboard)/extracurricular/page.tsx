@@ -1,20 +1,17 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
-import { exportCSV } from "@/lib/csv-export";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
 import { 
   Plus, 
-  Download, 
   Users, 
   UserPlus, 
   Edit, 
   Trash2, 
   ChevronDown, 
-  ChevronUp,
   Trophy
 } from "lucide-react";
 
@@ -63,18 +60,39 @@ export default function ExtracurricularPage() {
 
   useEffect(() => {
     fetchData();
-    fetch("/api/teachers").then(r => r.json()).then(d => setTeachers(Array.isArray(d) ? d.filter((t: { status?: string }) => !t.status || t.status === "aktif") : []));
-    fetch("/api/students").then(r => r.json()).then(d => setStudents(Array.isArray(d) ? d : []));
+    fetch("/api/teachers?limit=1000")
+      .then(r => r.json())
+      .then(d => {
+        const items = d.success ? (d.data || []) : (Array.isArray(d) ? d : []);
+        setTeachers(items.filter((t: { status?: string }) => !t.status || t.status === "aktif"));
+      });
+    fetch("/api/students?limit=1000")
+      .then(r => r.json())
+      .then(d => setStudents(d.success ? (d.data || []) : (Array.isArray(d) ? d : [])));
   }, [fetchData]);
 
   const handleSubmit = async () => {
     if (!form.name) { Swal.fire("Error", "Nama ekskul wajib", "error"); return; }
-    const method = editItem ? "PUT" : "POST";
-    const url = editItem ? `/api/extracurricular/${editItem.id}` : "/api/extracurricular";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setShowModal(false); setEditItem(null); setForm({ name: "", employeeId: "", schedule: "", status: "aktif" });
-    fetchData();
-    Swal.fire("Berhasil", editItem ? "Ekskul diperbarui" : "Ekskul ditambahkan", "success");
+    try {
+      const method = editItem ? "PUT" : "POST";
+      const url = editItem ? `/api/extracurricular/${editItem.id}` : "/api/extracurricular";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        setShowModal(false); setEditItem(null); setForm({ name: "", employeeId: "", schedule: "", status: "aktif" });
+        fetchData();
+        Swal.fire("Berhasil", editItem ? "Ekskul diperbarui" : "Ekskul ditambahkan", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menyimpan data", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -88,9 +106,23 @@ export default function ExtracurricularPage() {
       confirmButtonColor: "#ef4444"
     });
     if (!r.isConfirmed) return;
-    await fetch(`/api/extracurricular/${id}`, { method: "DELETE" });
-    fetchData();
-    Swal.fire("Berhasil", "Ekskul telah dihapus", "success");
+    try {
+      const res = await fetch(`/api/extracurricular/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        fetchData();
+        Swal.fire("Berhasil", "Ekskul telah dihapus", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menghapus", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleEdit = (item: Extracurricular) => {

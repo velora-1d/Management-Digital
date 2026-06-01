@@ -3,6 +3,11 @@ import { db } from "@/db";
 import { salaryComponents, employeeSalaries } from "@/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
 
+interface EmployeeSalaryPayloadItem {
+  component_id: string | number;
+  amount: string | number;
+}
+
 // GET /api/payroll/employees/[id]/salary
 export async function GET(
   request: Request,
@@ -55,13 +60,13 @@ export async function PUT(
       return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = await request.json() as EmployeeSalaryPayloadItem[];
 
     await db.transaction(async (tx) => {
       // Hard delete employee salaries for this employee
       await tx.delete(employeeSalaries).where(eq(employeeSalaries.employeeId, employeeId));
 
-      const dataToInsert = body.map((item: any) => ({
+      const dataToInsert = body.map((item) => ({
         employeeId: employeeId,
         componentId: Number(item.component_id),
         amount: Number(item.amount) || 0,

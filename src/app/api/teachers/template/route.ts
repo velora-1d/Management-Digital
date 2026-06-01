@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 /**
  * GET /api/teachers/template — Download template CSV import guru/staf
  */

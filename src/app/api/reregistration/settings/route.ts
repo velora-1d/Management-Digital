@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { schoolSettings } from "@/db/schema";
+import { requireAuth, AuthError } from "@/lib/rbac";
 import { eq, inArray } from "drizzle-orm";
-
 
 // GET /api/reregistration/settings
 export async function GET() {
   try {
+    // Memeriksa autentikasi untuk keamanan akses biaya
+    await requireAuth();
+
     const keys = ["re_registration_fee", "books_fee", "uniform_fee"];
     const settingsList = await db
       .select({ key: schoolSettings.key, value: schoolSettings.value })
@@ -23,10 +26,14 @@ export async function GET() {
       config[s.key] = Number(s.value) || 0;
     });
 
-    return NextResponse.json(config);
+    return NextResponse.json({
+      success: true,
+      data: config
+    });
   } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json(
-      { error: "Gagal mengambil pengaturan" },
+      { success: false, message: "Gagal mengambil pengaturan" },
       { status: 500 }
     );
   }
@@ -35,6 +42,9 @@ export async function GET() {
 // POST /api/reregistration/settings
 export async function POST(request: Request) {
   try {
+    // Memeriksa autentikasi sebelum mengizinkan perubahan biaya
+    await requireAuth();
+
     const body = await request.json();
     const keys = ["re_registration_fee", "books_fee", "uniform_fee"];
 
@@ -53,18 +63,20 @@ export async function POST(request: Request) {
             .set({ value: body[key].toString(), updatedAt: new Date() })
             .where(eq(schoolSettings.id, existing.id));
         } else {
+          // UnitId dikosongkan sementara atau bisa diambil dari user jika diperlukan
           await db
             .insert(schoolSettings)
-            .values({ key, value: body[key].toString() });
+            .values({ key, value: body[key].toString(), unitId: "" });
         }
       }
     }
 
-    return NextResponse.json({ success: true, message: "Pengaturan berhasil disimpan" });
+    return NextResponse.json({ success: true, message: "Pengaturan biaya berhasil disimpan" });
   } catch (error) {
     console.error("Reregistration Settings POST error:", error);
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json(
-      { error: "Gagal menyimpan pengaturan" },
+      { success: false, message: "Gagal menyimpan pengaturan" },
       { status: 500 }
     );
   }

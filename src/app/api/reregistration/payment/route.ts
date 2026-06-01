@@ -112,7 +112,11 @@ export async function POST(request: Request) {
       }
 
       // === BAYAR: buat jurnal + update saldo ===
-      if (newStatus && isMonetaryField && cashAccountId) {
+      if (newStatus && isMonetaryField) {
+        if (!cashAccountId) {
+           throw new Error("Pilih akun kas terlebih dahulu untuk pembayaran ini.");
+        }
+        
         const payAmount = Number(amount) || Number(payment.nominal) || 0;
         if (payAmount > 0) {
           await tx.insert(generalTransactions).values({
@@ -120,7 +124,7 @@ export async function POST(request: Request) {
             amount: payAmount,
             cashAccountId: Number(cashAccountId),
             description: `Daftar Ulang - ${paymentType} #${payableId}`,
-            date: new Date().toISOString().split("T")[0],
+            transactionDate: new Date().toISOString().split("T")[0],
             status: "valid",
             referenceType: "registration_payment",
             referenceId: String(payment.id),

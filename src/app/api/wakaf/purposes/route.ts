@@ -104,3 +104,39 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: false, message: "Gagal menghapus tujuan" }, { status: 500 });
   }
 }
+
+/**
+ * PUT /api/wakaf/purposes — Update tujuan wakaf
+ */
+export async function PUT(request: Request) {
+  try {
+    await requireAuth();
+    const body = await request.json();
+    const { id, name, description } = body;
+
+    if (!id || !name) {
+      return NextResponse.json({ success: false, message: "ID dan Nama wajib diisi" }, { status: 400 });
+    }
+
+    const [updated] = await db
+      .update(wakafPurposes)
+      .set({
+        name: name.trim(),
+        description: description || "",
+        updatedAt: new Date()
+      })
+      .where(and(eq(wakafPurposes.id, Number(id)), isNull(wakafPurposes.deletedAt)))
+      .returning();
+
+    if (!updated) {
+      return NextResponse.json({ success: false, message: "Program tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: "Program berhasil diperbarui.", data: updated });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    }
+    return NextResponse.json({ success: false, message: "Gagal memperbarui program" }, { status: 500 });
+  }
+}

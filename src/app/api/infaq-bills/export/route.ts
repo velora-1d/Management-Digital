@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { infaqBills, students, classrooms } from "@/db/schema";
+import { infaqBills, students, classrooms, studentEnrollments, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { isNull, and, eq, asc, sql, inArray } from "drizzle-orm";
+import { isNull, and, eq, asc, sql } from "drizzle-orm";
 
 /**
  * GET /api/infaq-bills/export — Export data tagihan sebagai CSV
@@ -14,11 +14,22 @@ export async function GET(request: Request) {
     const month = searchParams.get("month");
     const year = searchParams.get("year");
     const status = searchParams.get("status");
+    const academicYearId = searchParams.get("academicYearId");
 
-    const conditions = [isNull(infaqBills.deletedAt)];
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
+    }
+
+    const conditions = [isNull(infaqBills.deletedAt), isNull(students.deletedAt), isNull(studentEnrollments.deletedAt)];
     if (month) conditions.push(eq(infaqBills.month, month));
     if (year) conditions.push(eq(infaqBills.year, year));
-    if (status) conditions.push(eq(infaqBills.status, status as any));
+    if (status) conditions.push(eq(infaqBills.status, status));
+    if (targetAcademicYearId) conditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
 
     const bills = await db.select({
       id: infaqBills.id,
@@ -28,16 +39,24 @@ export async function GET(request: Request) {
       status: infaqBills.status,
       studentName: students.name,
       studentNisn: students.nisn,
-      studentClassroomId: students.classroomId,
+      studentClassroomId: studentEnrollments.classroomId,
     })
     .from(infaqBills)
     .leftJoin(students, eq(infaqBills.studentId, students.id))
+    .leftJoin(
+      studentEnrollments,
+      and(
+        eq(studentEnrollments.studentId, infaqBills.studentId),
+        eq(studentEnrollments.academicYearId, infaqBills.academicYearId),
+        isNull(studentEnrollments.deletedAt)
+      )
+    )
     .where(and(...conditions))
     .orderBy(asc(infaqBills.month), asc(infaqBills.createdAt));
 
     // Get class names
     const classIds = [...new Set(bills.map(b => b.studentClassroomId).filter((id): id is number => id != null))];
-    let classMap: Record<number, string> = {};
+    const classMap: Record<number, string> = {};
     if (classIds.length > 0) {
       const cls = await db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(sql`${classrooms.id} = ANY(${classIds})`);
       cls.forEach(c => { classMap[c.id] = c.name; });

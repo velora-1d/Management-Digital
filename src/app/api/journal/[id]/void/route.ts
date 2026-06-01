@@ -22,7 +22,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${revertAmount}` }).where(eq(cashAccounts.id, transaction.cashAccountId));
       }
 
-      await tx.update(generalTransactions).set({ status: "void" as any, updatedAt: new Date() }).where(eq(generalTransactions.id, txId));
+      await tx.update(generalTransactions).set({ status: "void", updatedAt: new Date() }).where(eq(generalTransactions.id, txId));
       return { type: transaction.type, amount: transaction.amount };
     });
 

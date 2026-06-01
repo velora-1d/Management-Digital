@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { wakafDonors } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { isNull, asc } from "drizzle-orm";
+import { isNull, asc, eq, and } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -30,5 +30,41 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     return NextResponse.json({ success: false, message: "Gagal menambah donatur" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    await requireAuth();
+    const body = await request.json();
+    const { id, name, phone, address } = body;
+    if (!id || !name) return NextResponse.json({ success: false, message: "ID dan Nama wajib diisi" }, { status: 400 });
+
+    const [updated] = await db.update(wakafDonors).set({
+      name: name.trim(), phone: phone || "", address: address || "", updatedAt: new Date(),
+    }).where(and(eq(wakafDonors.id, Number(id)), isNull(wakafDonors.deletedAt))).returning();
+
+    if (!updated) return NextResponse.json({ success: false, message: "Donatur tidak ditemukan" }, { status: 404 });
+
+    return NextResponse.json({ success: true, message: "Donatur berhasil diperbarui.", data: updated });
+  } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    return NextResponse.json({ success: false, message: "Gagal memperbarui donatur" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    await requireAuth();
+    const body = await request.json();
+    const { id } = body;
+    if (!id) return NextResponse.json({ success: false, message: "ID wajib diisi" }, { status: 400 });
+
+    await db.update(wakafDonors).set({ deletedAt: new Date() }).where(eq(wakafDonors.id, Number(id)));
+
+    return NextResponse.json({ success: true, message: "Donatur berhasil dihapus." });
+  } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    return NextResponse.json({ success: false, message: "Gagal menghapus donatur" }, { status: 500 });
   }
 }

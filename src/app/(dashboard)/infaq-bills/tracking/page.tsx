@@ -2,13 +2,71 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import { ExportButtons, fmtRupiah, type ExportOptions } from "@/lib/export-utils";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 
-const semesterMonths: Record<string, number[]> = {
-  "1": [7, 8, 9, 10, 11, 12],
-  "2": [1, 2, 3, 4, 5, 6],
-  "full": [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6],
-};
+type PaymentMethod = "tunai" | "transfer" | "tabungan";
+type TrackingStatus = "belum_digenerate" | "belum_lunas" | "sebagian" | "lunas" | "void";
+
+interface ClassroomItem {
+  id: number;
+  name: string;
+}
+
+interface CashAccountItem {
+  id: number;
+  name: string;
+}
+
+interface TrackingMonthHeader {
+  month: number;
+  name: string;
+}
+
+interface StudentMonthTracking {
+  month: number;
+  monthName: string;
+  billId: string;
+  nominal: number;
+  totalPaid: number;
+  remaining: number;
+  status: TrackingStatus;
+}
+
+interface StudentTracking {
+  id: number;
+  name: string;
+  nisn?: string | null;
+  totalRemaining: number;
+  months: StudentMonthTracking[];
+}
+
+interface TrackingSummary {
+  totalStudents: number;
+  totalNominal: number;
+  totalPaid: number;
+  totalRemaining: number;
+  allLunas: number;
+  hasArrears: number;
+}
+
+interface TrackingResponse {
+  months: TrackingMonthHeader[];
+  tracking: StudentTracking[];
+  summary: TrackingSummary;
+}
+
+interface PayTarget {
+  studentId: number;
+  studentName: string;
+  billId: string;
+  month: number;
+  nominal: number;
+  remaining: number;
+}
+
+// Removed unused TrackingExportRow interface to satisfy lint
+
+
 const monthNames: Record<number, string> = {
   1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",
   7: "Jul", 8: "Agu", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des",
@@ -16,20 +74,20 @@ const monthNames: Record<number, string> = {
 
 export default function TrackingPerKelasPage() {
   const router = useRouter();
-  const [classrooms, setClassrooms] = useState<any[]>([]);
+  const [classrooms, setClassrooms] = useState<ClassroomItem[]>([]);
   const [classroomId, setClassroomId] = useState("");
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [semester, setSemester] = useState("1");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<TrackingResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
-  const [cashAccounts, setCashAccounts] = useState<any[]>([]);
+  const [cashAccounts, setCashAccounts] = useState<CashAccountItem[]>([]);
 
   // Bayar modal
   const [payModal, setPayModal] = useState(false);
-  const [payTarget, setPayTarget] = useState<any>(null);
+  const [payTarget, setPayTarget] = useState<PayTarget | null>(null);
   const [payAmount, setPayAmount] = useState("");
-  const [payMethod, setPayMethod] = useState("tunai");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("tunai");
   const [payCashId, setPayCashId] = useState("");
   const [payLoading, setPayLoading] = useState(false);
   const [savingBalance, setSavingBalance] = useState<number | null>(null);
@@ -40,7 +98,7 @@ export default function TrackingPerKelasPage() {
   };
 
   useEffect(() => {
-    fetch("/api/classrooms").then(r => r.json()).then(j => { if (j.success) setClassrooms(j.data); });
+    fetch("/api/classrooms?limit=1000").then(r => r.json()).then(j => { if (j.success) setClassrooms(j.data); });
     fetch("/api/cash-accounts").then(r => r.json()).then(j => { if (j.success) setCashAccounts(j.data); });
   }, []);
 
@@ -126,7 +184,7 @@ export default function TrackingPerKelasPage() {
     } catch { showToast("Gagal revert", "error"); }
   }
 
-  async function openPay(student: any, monthData: any) {
+  async function openPay(student: StudentTracking, monthData: StudentMonthTracking) {
     setPayTarget({ studentId: student.id, studentName: student.name, billId: monthData.billId, month: monthData.month, nominal: monthData.nominal, remaining: monthData.remaining });
     setPayAmount(String(monthData.remaining));
     setPayMethod("tunai");
@@ -162,7 +220,7 @@ export default function TrackingPerKelasPage() {
   }
 
   // Badge render
-  const renderBadge = (student: any, m: any) => {
+  const renderBadge = (student: StudentTracking, m: StudentMonthTracking) => {
     if (m.status === "belum_digenerate") {
       return <span style={{ color: "#cbd5e1", fontSize: "0.75rem" }}>—</span>;
     }
@@ -199,7 +257,7 @@ export default function TrackingPerKelasPage() {
             {(m.status === "belum_lunas" || m.status === "sebagian") && (
               <>
                 <button onClick={() => openPay(student, m)} style={dropBtn("#059669")}>Bayar</button>
-                <button onClick={() => handleEditNominal(m.billId, m.nominal, student.name)} style={dropBtn("#6366f1")}>Edit</button>
+                <button onClick={() => handleEditNominal(m.billId, student.name, m.nominal)} style={dropBtn("#6366f1")}>Edit</button>
                 <button onClick={() => handleDelete(m.billId)} style={dropBtn("#64748b")}>Hapus</button>
               </>
             )}
@@ -239,7 +297,7 @@ export default function TrackingPerKelasPage() {
         <select value={classroomId} onChange={e => setClassroomId(e.target.value)}
           style={{ padding: "0.5rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.8125rem", minWidth: 160 }}>
           <option value="">— Pilih Kelas —</option>
-          {classrooms.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={year} onChange={e => setYear(e.target.value)}
           style={{ padding: "0.5rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.8125rem" }}>
@@ -254,21 +312,21 @@ export default function TrackingPerKelasPage() {
       </div>
 
       {/* Tombol Export */}
-      {data?.tracking?.length > 0 && (
+      {data && data.tracking && data.tracking.length > 0 && (
         <div style={{ marginBottom: "1rem" }}>
           <ExportButtons options={{
-            title: `Tracking SPP/Infaq - ${classrooms.find((c: any) => c.id == classroomId)?.name || 'Kelas'}`,
+            title: `Tracking SPP/Infaq - ${classrooms.find((c) => String(c.id) === classroomId)?.name || 'Kelas'}`,
             subtitle: `Tahun ${year} | ${semester === 'full' ? '1 Tahun Penuh' : `Semester ${semester}`}`,
             filename: `tracking_spp_${year}_sem${semester}`,
             orientation: "landscape",
             columns: [
-              { header: "No", key: "_no", width: 8, align: "center" },
+              { header: "No", key: "_no", width: 8, align: "center" as const },
               { header: "Nama Siswa", key: "name", width: 35 },
               { header: "NISN", key: "nisn", width: 20 },
-              ...months.map((m: any) => ({
+              ...months.map((m) => ({
                 header: m.name, key: `m_${m.month}`, width: 14, align: "center" as const,
-                format: (_: any, row: any) => {
-                  const md = row[`m_${m.month}`];
+                format: (_v: unknown, row: Record<string, unknown>) => {
+                  const md = row[`m_${m.month}`] as string | undefined;
                   if (!md || md === '-') return '-';
                   if (md === 'lunas') return '✓';
                   if (md === 'sebagian') return '◐';
@@ -276,16 +334,16 @@ export default function TrackingPerKelasPage() {
                   return '○';
                 }
               })),
-              { header: "Tunggakan", key: "totalRemaining", width: 22, align: "right", format: (v: number) => v > 0 ? fmtRupiah(v) : 'Lunas' },
+              { header: "Tunggakan", key: "totalRemaining", width: 22, align: "right" as const, format: (v: unknown) => (Number(v) > 0 ? fmtRupiah(Number(v)) : 'Lunas') },
             ],
-            data: data.tracking.map((s: any, i: number) => {
-              const row: any = { _no: i + 1, name: s.name, nisn: s.nisn || '-', totalRemaining: s.totalRemaining };
-              s.months.forEach((m: any) => { row[`m_${m.month}`] = m.status === 'belum_digenerate' ? '-' : m.status; });
+            data: (data?.tracking || []).map((s, i: number) => {
+              const row: Record<string, unknown> = { _no: i + 1, name: s.name, nisn: s.nisn || '-', totalRemaining: s.totalRemaining };
+              s.months.forEach((m) => { row[`m_${m.month}`] = m.status === 'belum_digenerate' ? '-' : m.status; });
               return row;
             }),
             summaryRows: [
-              { label: "Total Siswa", value: String(data.summary.totalStudents) },
-              { label: "Total Tunggakan", value: fmtRupiah(data.summary.totalRemaining) },
+              { label: "Total Siswa", value: String(data?.summary?.totalStudents || 0) },
+              { label: "Total Tunggakan", value: fmtRupiah(data?.summary?.totalRemaining || 0) },
             ],
           }} />
         </div>
@@ -325,20 +383,20 @@ export default function TrackingPerKelasPage() {
             <thead>
               <tr style={{ background: "#f8fafc" }}>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", position: "sticky", left: 0, background: "#f8fafc", minWidth: 180 }}>Nama Siswa</th>
-                {months.map((m: any) => (
+                {months.map((m) => (
                   <th key={m.month} style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 50 }}>{m.name}</th>
                 ))}
                 <th style={{ padding: "0.75rem 0.75rem", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 100 }}>Tunggakan</th>
               </tr>
             </thead>
             <tbody>
-              {data.tracking.map((student: any) => (
+              {data.tracking.map((student) => (
                 <tr key={student.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                   <td style={{ padding: "0.625rem 1rem", fontWeight: 500, color: "#1e293b", position: "sticky", left: 0, background: "#fff", borderRight: "1px solid #f1f5f9" }}>
                     <p style={{ margin: 0, fontSize: "0.8125rem", fontWeight: 600 }}>{student.name}</p>
                     <p style={{ margin: 0, fontSize: "0.625rem", color: "#94a3b8" }}>{student.nisn || "-"}</p>
                   </td>
-                  {student.months.map((m: any) => (
+                  {student.months.map((m) => (
                     <td key={m.month} style={{ padding: "0.375rem", textAlign: "center" }}>
                       {renderBadge(student, m)}
                     </td>
@@ -368,7 +426,7 @@ export default function TrackingPerKelasPage() {
               style={{ width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.875rem", marginBottom: "0.75rem", boxSizing: "border-box" }} />
 
             <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "0.25rem" }}>Metode</label>
-            <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
+            <select value={payMethod} onChange={e => setPayMethod(e.target.value as PaymentMethod)}
               style={{ width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.875rem", marginBottom: "0.75rem" }}>
               <option value="tunai">Tunai</option>
               <option value="transfer">Transfer</option>
@@ -393,7 +451,7 @@ export default function TrackingPerKelasPage() {
                 <select value={payCashId} onChange={e => setPayCashId(e.target.value)}
                   style={{ width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.875rem", marginBottom: "1rem" }}>
                   <option value="">— Pilih Akun Kas —</option>
-                  {cashAccounts.map((ca: any) => <option key={ca.id} value={ca.id}>{ca.name}</option>)}
+                  {cashAccounts.map((ca) => <option key={ca.id} value={ca.id}>{ca.name}</option>)}
                 </select>
               </>
             )}

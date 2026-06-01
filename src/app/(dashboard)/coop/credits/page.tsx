@@ -63,12 +63,26 @@ export default function CoopCreditsPage() {
     });
     if (!value) return;
 
-    await fetch(`/api/coop/credits/${credit.id}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paidAmount: parseFloat(value) }),
-    });
-    Swal.fire("Berhasil", "Pembayaran dicatat", "success");
-    fetchData();
+    try {
+      const res = await fetch(`/api/coop/credits/${credit.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paidAmount: parseFloat(value) }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        Swal.fire("Berhasil", "Pembayaran dicatat", "success");
+        fetchData();
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal memproses pembayaran", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const activeCount = data.filter(d => d.status !== "lunas").length;
@@ -110,7 +124,7 @@ export default function CoopCreditsPage() {
 
       {/* Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl shadow-sm p-5 text-white">
+        <div className="bg-linear-to-br from-rose-500 to-rose-600 rounded-2xl shadow-sm p-5 text-white">
           <p className="text-xs opacity-80 uppercase tracking-wider">Total Piutang Aktif</p>
           <p className="text-2xl font-bold mt-1">Rp {totalPiutang.toLocaleString("id-ID")}</p>
         </div>

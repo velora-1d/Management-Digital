@@ -24,7 +24,7 @@ export async function DELETE(
       .where(eq(salaryComponents.id, componentId));
 
     return NextResponse.json({ success: true, message: "Komponen dihapus" });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Gagal menghapus komponen" },
       { status: 500 }

@@ -1,14 +1,24 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Settings, UserPlus, Save, RefreshCw, Trash2, Database, Download } from "lucide-react";
+import { Settings, UserPlus, Save } from "lucide-react";
+import { ensureHttpsUrl } from "@/lib/url";
+
+interface UserItem {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+  status: string;
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profil');
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -29,14 +39,14 @@ export default function SettingsPage() {
           name: data.name || "",
           phone: data.phone || "",
           email: data.email || "",
-          logo: data.logo || "",
+          logo: ensureHttpsUrl(data.logo || ""),
           address: data.address || "",
           headmaster_name: data.headmaster_name || "",
           headmaster_nip: data.headmaster_nip || ""
         });
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -71,8 +81,8 @@ export default function SettingsPage() {
         const errData = await res.json();
         Swal.fire("Gagal", errData.message || "Gagal memuat data pengguna", "error");
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +113,7 @@ export default function SettingsPage() {
       } else {
         Swal.fire("Gagal", data.error || "Gagal memperbarui profil", "error");
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   };
@@ -157,14 +167,14 @@ export default function SettingsPage() {
           } else {
             Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
     });
   };
 
-  const editUser = async (user: any) => {
+  const editUser = async (user: UserItem) => {
     Swal.fire({
       title: 'Edit Pengguna',
       html: `
@@ -219,7 +229,7 @@ export default function SettingsPage() {
           } else {
             Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -247,7 +257,7 @@ export default function SettingsPage() {
           } else {
             Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -330,7 +340,7 @@ export default function SettingsPage() {
       } else {
         Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   };
@@ -408,7 +418,7 @@ export default function SettingsPage() {
         } else {
           Swal.fire('Gagal', json.error || 'Terjadi kesalahan saat restore', 'error');
         }
-      } catch (err) {
+      } catch {
         Swal.fire('Error', 'File SQL tidak valid atau corrupt.', 'error');
       }
     };
@@ -472,7 +482,12 @@ export default function SettingsPage() {
               <div className="shrink-0 flex flex-col items-center gap-2">
                 <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center overflow-hidden relative">
                   {profile.logo ? (
-                    <img src={profile.logo} alt="Logo Madrasah" className="w-full h-full object-contain" />
+                    <Image 
+                      src={ensureHttpsUrl(profile.logo)} 
+                      alt="Logo Madrasah" 
+                      fill
+                      className="object-contain" 
+                    />
                   ) : (
                     <span className="text-slate-400 text-xs font-bold text-center px-2">Belum ada logo</span>
                   )}

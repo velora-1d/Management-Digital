@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { students, classrooms } from "@/db/schema";
+import { students, classrooms, studentEnrollments, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
 import { isNull, and, eq, asc } from "drizzle-orm";
+
+type StudentStatusFilter = typeof students.$inferSelect.status;
 
 /**
  * GET /api/students/export — Export data siswa ke CSV
@@ -13,10 +15,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const classroomId = searchParams.get("classroomId");
     const status = searchParams.get("status");
+    const academicYearId = searchParams.get("academicYearId");
 
-    const conditions = [isNull(students.deletedAt)];
-    if (classroomId) conditions.push(eq(students.classroomId, Number(classroomId)));
-    if (status) conditions.push(eq(students.status, status as any));
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
+    }
+
+    const conditions = [isNull(students.deletedAt), isNull(studentEnrollments.deletedAt)];
+    if (classroomId) conditions.push(eq(studentEnrollments.classroomId, Number(classroomId)));
+    if (status) conditions.push(eq(students.status, status as StudentStatusFilter));
+    if (targetAcademicYearId) conditions.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));
 
     const studentList = await db.select({
       id: students.id,
@@ -35,8 +48,9 @@ export async function GET(request: Request) {
       infaqNominal: students.infaqNominal,
       classroomName: classrooms.name,
     })
-    .from(students)
-    .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
+    .from(studentEnrollments)
+    .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+    .leftJoin(classrooms, eq(studentEnrollments.classroomId, classrooms.id))
     .where(and(...conditions))
     .orderBy(asc(students.name));
 

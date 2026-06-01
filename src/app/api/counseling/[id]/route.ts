@@ -24,10 +24,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       .where(eq(counselingRecords.id, parseInt(id)))
       .returning();
       
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true, message: "Catatan BK berhasil diperbarui", data });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate catatan BK";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
@@ -38,9 +38,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     await db.delete(counselingRecords)
       .where(eq(counselingRecords.id, parseInt(id)));
       
-    return NextResponse.json({ message: "Catatan BK berhasil dihapus" });
+    return NextResponse.json({ success: true, message: "Catatan BK berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus catatan BK";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }

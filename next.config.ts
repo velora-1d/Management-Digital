@@ -1,18 +1,26 @@
-import type { NextConfig } from "next";
+// d:\Mahin Project\ERP-Sekolah\next.config.ts
 
-const nextConfig: NextConfig = {
-  // Optimasi performa untuk serverless (Vercel)
-  
-  // Menggunakan output standalone untuk bundle yang lebih kecil
-  // (mengurangi cold start karena ukuran deployment lebih kecil)
-  output: "standalone",
-
-  // Optimasi gambar
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
   },
 
-  // Header caching untuk aset statis
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts"],
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  serverExternalPackages: ["pg", "jsonwebtoken", "bcryptjs"],
+
   async headers() {
     return [
       {

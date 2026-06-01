@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+.open-next/
 
 # production
 /build
@@ -32,9 +33,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.dev.vars
 
 # vercel
 .vercel
+
+# wrangler local state
+.wrangler/
 
 # typescript
 *.tsbuildinfo
@@ -52,3 +57,13 @@ seed_final.ts
 update-profile.ts
 
 /src/generated/prisma
+
+# SSH Keys
+id_rsa_vps
+id_rsa_vps.pub
+id_ed25519_vps
+id_ed25519_vps.pub
+
+# Logs
+*.log
+

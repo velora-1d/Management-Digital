@@ -14,7 +14,7 @@ export async function GET() {
       .orderBy(desc(salaryComponents.id));
       
     return NextResponse.json(components);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Gagal mengambil data komponen gaji" },
       { status: 500 }

@@ -19,12 +19,12 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={`bg-gradient-to-br ${gradient} rounded-2xl overflow-hidden relative shadow-lg`}
+      className={`bg-linear-to-br ${gradient} rounded-2xl overflow-hidden relative shadow-lg`}
     >
       {/* Dekorasi circles */}
       <div className="absolute -right-5 -top-5 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute right-24 -bottom-10 w-36 h-36 bg-white/5 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute left-1/2 top-0 w-64 h-32 bg-white/[0.03] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute left-1/2 top-0 w-64 h-32 bg-white/3 rounded-full blur-3xl pointer-events-none" />
 
       <div className="p-6 relative z-10">
         <div className="flex flex-wrap items-center justify-between gap-4">

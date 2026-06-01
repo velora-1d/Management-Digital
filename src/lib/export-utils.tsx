@@ -13,15 +13,19 @@ export interface ExportColumn {
   key: string;       // Key dari object data
   width?: number;    // Lebar kolom (untuk PDF, dalam satuan mm)
   align?: "left" | "center" | "right";
-  format?: (value: any, row: any) => string; // Custom format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  format?: (value: any, row: ExportRow) => string; // Custom format
 }
+
+export type ExportRow = Record<string, unknown>;
+type PdfColumnStyle = { halign?: "left" | "center" | "right"; cellWidth?: number };
 
 export interface ExportOptions {
   title: string;           // Judul laporan
   subtitle?: string;       // Subjudul opsional
   filename: string;        // Nama file tanpa ekstensi
   columns: ExportColumn[];
-  data: any[];
+  data: ExportRow[];
   orientation?: "portrait" | "landscape";
   summaryRows?: { label: string; value: string }[]; // Baris ringkasan akhir
 }
@@ -30,7 +34,7 @@ export interface ExportOptions {
 // HELPER INTERNAL
 // ============================================================
 
-function formatCellValue(col: ExportColumn, row: any): string {
+function formatCellValue(col: ExportColumn, row: ExportRow): string {
   const val = row[col.key];
   if (col.format) return col.format(val, row);
   if (val === null || val === undefined) return "-";
@@ -99,7 +103,7 @@ export function exportToPDF(options: ExportOptions): void {
     }
   }
 
-  const colStyles: Record<number, any> = {};
+  const colStyles: Record<number, PdfColumnStyle> = {};
   columns.forEach((col, i) => {
     if (col.align) colStyles[i] = { halign: col.align };
     if (col.width) colStyles[i] = { ...colStyles[i], cellWidth: col.width };

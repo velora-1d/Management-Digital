@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
@@ -13,25 +13,112 @@ const sectionHeaderStyle = (letter: string, label: string, color = "#6366f1") =>
   </h3>
 );
 
-const Field = ({ label, name, type = "text", required = false, span2 = false, placeholder = "", children, formData, onChange }: any) => (
+const OCCUPATION_OPTIONS: [string, string][] = [
+  ["", "-- Pilih Pekerjaan --"],
+  ["ABRI/TNI", "ABRI/TNI"],
+  ["Pedagang", "Pedagang"],
+  ["Karyawan", "Karyawan"],
+  ["Guru", "Guru"],
+  ["Wiraswasta", "Wiraswasta"],
+  ["Buruh", "Buruh"],
+  ["Lainnya", "Lainnya"]
+];
+
+interface StudentFormData {
+  [key: string]: string | number | boolean | null | undefined;
+  name: string;
+  nisn: string;
+  nis: string;
+  nik: string;
+  noKk: string;
+  gender: string;
+  religion: string;
+  birthPlace: string;
+  birthDate: string;
+  familyStatus: string;
+  childPosition: string;
+  siblingCount: string;
+  address: string;
+  village: string;
+  district: string;
+  residenceType: string;
+  transportation: string;
+  previousSchool: string;
+  studentPhone: string;
+  phone: string;
+  height: string;
+  weight: string;
+  distanceToSchool: string;
+  travelTime: string;
+  fatherName: string;
+  fatherNik: string;
+  fatherBirthPlace: string;
+  fatherBirthDate: string;
+  fatherEducation: string;
+  fatherOccupation: string;
+  motherName: string;
+  motherNik: string;
+  motherBirthPlace: string;
+  motherBirthDate: string;
+  motherEducation: string;
+  motherOccupation: string;
+  parentIncome: string;
+  guardianName: string;
+  guardianNik: string;
+  guardianBirthPlace: string;
+  guardianBirthDate: string;
+  guardianEducation: string;
+  guardianOccupation: string;
+  guardianAddress: string;
+  guardianPhone: string;
+  category: string;
+  status: string;
+  classroomId: string | number;
+  infaqStatus: string;
+  infaqNominal: number;
+}
+
+interface FieldProps {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+  span2?: boolean;
+  placeholder?: string;
+  children?: React.ReactNode;
+  formData: StudentFormData;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+}
+
+const Field = ({ label, name, type = "text", required = false, span2 = false, placeholder = "", children, formData, onChange }: FieldProps) => (
   <div style={span2 ? { gridColumn: "span 2" } : {}}>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    {children || <input type={type} name={name} value={(formData as any)[name]} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-indigo-500 transition-colors" />}
+    {children || <input type={type} name={name} value={formData[name] as string} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-indigo-500 transition-colors" />}
   </div>
 );
 
-const Select = ({ label, name, required = false, options, formData, onChange }: { label: string; name: string; required?: boolean; options: [string, string][]; formData: any; onChange: any }) => (
-  <div>
+interface SelectProps {
+  label: string;
+  name: string;
+  required?: boolean;
+  options: [string, string][];
+  formData: StudentFormData;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+const Select = ({ label, name, required = false, options, formData, onChange }: SelectProps) => (
+  <div style={{ width: "100%" }}>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    <select name={name} value={(formData as any)[name]} onChange={onChange} required={required} style={inputStyle} className="focus:border-indigo-500 bg-white">
+    <select name={name} value={formData[name] as string} onChange={onChange} required={required} style={inputStyle} className="focus:border-indigo-500 bg-white">
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>
   </div>
 );
 
-export default function StudentForm({ initialData }: { initialData?: any }) {
+export default function StudentForm({ initialData }: { initialData?: Partial<StudentFormData> & { id?: number } }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [classrooms, setClassrooms] = useState<{id: string | number, name: string}[]>([]);
   const isEdit = !!initialData;
   const d = initialData || {};
 
@@ -42,7 +129,7 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
     birthPlace: d.birthPlace || "", birthDate: d.birthDate?.substring(0, 10) || "",
     familyStatus: d.familyStatus || "", childPosition: d.childPosition || "", siblingCount: d.siblingCount || "",
     address: d.address || "", village: d.village || "", district: d.district || "",
-    residenceType: d.residenceType || "", transportation: d.transportation || "",
+    residenceType: d.residenceType || "", transportation: d.transportation || "", previousSchool: d.previousSchool || "",
     studentPhone: d.studentPhone || "", phone: d.phone || "",
     // B. Periodik
     height: d.height || "", weight: d.weight || "", distanceToSchool: d.distanceToSchool || "", travelTime: d.travelTime || "",
@@ -64,7 +151,17 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
     infaqStatus: d.infaqStatus || "reguler", infaqNominal: d.infaqNominal || 0,
   });
 
-  const handleChange = (e: any) => setF({ ...f, [e.target.name]: e.target.value });
+  useEffect(() => {
+    fetch("/api/classrooms?limit=100")
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setClassrooms(json.data || []);
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => 
+    setF({ ...f, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,13 +173,34 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(f),
       });
+
+      if (!res.ok) {
+         let errorMsg = `HTTP error! status: ${res.status}`;
+         try {
+           const errorData = await res.json();
+           if (errorData.message) errorMsg = errorData.message;
+         } catch {
+           // ignore JSON parse error
+         }
+         throw new Error(errorMsg);
+      }
+
       const json = await res.json();
-      if (json.success) {
-        Swal.fire("Berhasil", json.message, "success").then(() => router.push("/students"));
+      if (json.success !== false) {
+        const title = json.isRestored ? "Data Diaktifkan Kembali" : "Berhasil";
+        Swal.fire({
+          title: title,
+          text: json.message || "Data berhasil disimpan",
+          icon: "success",
+          confirmButtonColor: "#6366f1",
+        }).then(() => router.push("/students"));
       } else {
         Swal.fire("Gagal", json.message || "Error", "error");
       }
-    } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
+    } catch (error: unknown) { 
+      const msg = error instanceof Error ? error.message : "Gagal menghubungi server";
+      Swal.fire("Error", msg, "error"); 
+    }
     finally { setLoading(false); }
   };
 
@@ -127,6 +245,7 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
             <Field label="Kecamatan" name="district" formData={f} onChange={handleChange} />
             <Select label="Tempat Tinggal Siswa" name="residenceType" options={[["", "-- Pilih --"], ["Orang tua", "Bersama Orang Tua"], ["Kerabat", "Bersama Kerabat/Wali"], ["Kos", "Kos / Asrama"], ["Lainnya", "Lainnya"]]} formData={f} onChange={handleChange} />
             <Select label="Alat Transportasi" name="transportation" options={[["", "-- Pilih --"], ["Motor", "Motor"], ["Jalan kaki", "Jalan Kaki"], ["Jemputan Sekolah", "Jemputan Sekolah"], ["Kendaraan Umum", "Angkutan Umum"], ["Lainnya", "Lainnya"]]} formData={f} onChange={handleChange} />
+            <Field label="Asal TK/Sekolah" name="previousSchool" formData={f} onChange={handleChange} />
             <Field label="No. HP Siswa (Jika Ada)" name="studentPhone" formData={f} onChange={handleChange} />
             <Field label="No. HP Kontak Orang Tua" name="phone" formData={f} onChange={handleChange} />
           </div>
@@ -158,7 +277,7 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
                   <Field label="Tgl Lahir" name="fatherBirthDate" type="date" formData={f} onChange={handleChange} />
                 </div>
                 <Field label="Pendidikan" name="fatherEducation" placeholder="SD / SMP / SMA / S1 / S2" formData={f} onChange={handleChange} />
-                <Field label="Pekerjaan" name="fatherOccupation" formData={f} onChange={handleChange} />
+                <Select label="Pekerjaan" name="fatherOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
               </div>
             </div>
             {/* Kolom Ibu */}
@@ -172,7 +291,7 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
                   <Field label="Tgl Lahir" name="motherBirthDate" type="date" formData={f} onChange={handleChange} />
                 </div>
                 <Field label="Pendidikan" name="motherEducation" placeholder="SD / SMP / SMA / S1 / S2" formData={f} onChange={handleChange} />
-                <Field label="Pekerjaan" name="motherOccupation" formData={f} onChange={handleChange} />
+                <Select label="Pekerjaan" name="motherOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
               </div>
             </div>
           </div>
@@ -197,7 +316,7 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
               </div>
             </div>
             <Field label="Pendidikan" name="guardianEducation" formData={f} onChange={handleChange} />
-            <Field label="Pekerjaan" name="guardianOccupation" formData={f} onChange={handleChange} />
+            <Select label="Pekerjaan" name="guardianOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
             <Field label="No. Kontak Wali" name="guardianPhone" formData={f} onChange={handleChange} />
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Alamat Wali</label>
@@ -210,8 +329,15 @@ export default function StudentForm({ initialData }: { initialData?: any }) {
         <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
           {sectionHeaderStyle("E", "Status & Administrasi Internal", "#8b5cf6")}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem" }}>
-            <Select label="Kategori Biaya" name="category" required options={[["reguler", "Reguler (Wajib Bayar)"], ["kurang_mampu", "Kurang Mampu"], ["yatim_piatu", "Yatim / Piatu"]]} formData={f} onChange={handleChange} />
+            <Select label="Kategori Biaya" name="category" required options={[["reguler", "Reguler (Wajib Bayar)"], ["kurang_mampu", "Kurang Mampu"], ["yatim_piatu", "Yatim / Piatu"], ["keluarga_guru", "Keluarga Guru"]]} formData={f} onChange={handleChange} />
             <Select label="Status Siswa" name="status" required options={[["aktif", "Aktif"], ["lulus", "Lulus"], ["pindah", "Pindah"], ["nonaktif", "Nonaktif"]]} formData={f} onChange={handleChange} />
+            <Select 
+              label="Kelas" 
+              name="classroomId" 
+              options={[["", "— Tanpa Kelas —"], ...classrooms.map(c => [String(c.id), c.name] as [string, string])]} 
+              formData={f} 
+              onChange={handleChange} 
+            />
             {f.category !== "reguler" ? (
               <Select label="Skema Infaq/SPP" name="infaqStatus" options={[["bayar_penuh", "Bayar Penuh"], ["potongan", "Potongan (Nominal Custom)"], ["gratis", "Gratis (Rp 0)"]]} formData={f} onChange={handleChange} />
             ) : (

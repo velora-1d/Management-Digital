@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { classrooms, students, infaqBills, infaqPayments } from "@/db/schema";
+import { classrooms, students, infaqBills, infaqPayments, studentEnrollments, academicYears } from "@/db/schema";
 import { eq, and, isNull, inArray, asc, sql } from "drizzle-orm";
+
+type InfaqBillRow = typeof infaqBills.$inferSelect;
 
 /**
  * GET /api/infaq-bills/tracking?classroomId=X&year=Y&semester=1|2|full
@@ -12,6 +14,7 @@ export async function GET(request: Request) {
     const classroomId = Number(searchParams.get("classroomId"));
     const year = searchParams.get("year") || new Date().getFullYear().toString();
     const semester = searchParams.get("semester") || "1";
+    const academicYearId = searchParams.get("academicYearId");
 
     if (!classroomId || isNaN(classroomId)) {
       return NextResponse.json({ success: false, message: "classroomId wajib diisi" }, { status: 400 });
@@ -23,9 +26,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: "Kelas tidak ditemukan" }, { status: 404 });
     }
 
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
+    }
+
     const studentList = await db.select({ id: students.id, name: students.name, nisn: students.nisn, infaqNominal: students.infaqNominal, infaqStatus: students.infaqStatus })
-      .from(students)
-      .where(and(eq(students.classroomId, classroomId), isNull(students.deletedAt)))
+      .from(studentEnrollments)
+      .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+      .where(and(
+        eq(studentEnrollments.classroomId, classroomId),
+        targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
+        isNull(studentEnrollments.deletedAt),
+        isNull(students.deletedAt)
+      ))
       .orderBy(asc(students.name));
 
     let months: number[];
@@ -39,16 +57,21 @@ export async function GET(request: Request) {
     };
 
     const studentIds = studentList.map(s => s.id);
-    let bills: any[] = [];
+    let bills: InfaqBillRow[] = [];
     if (studentIds.length > 0) {
       bills = await db.select()
         .from(infaqBills)
-        .where(and(inArray(infaqBills.studentId, studentIds), eq(infaqBills.year, year), isNull(infaqBills.deletedAt)));
+        .where(and(
+          inArray(infaqBills.studentId, studentIds),
+          eq(infaqBills.year, year),
+          targetAcademicYearId ? eq(infaqBills.academicYearId, targetAcademicYearId) : undefined,
+          isNull(infaqBills.deletedAt)
+        ));
     }
 
     // Get payments for these bills
-    const billIds = bills.map((b: any) => b.id);
-    let paymentMap: Record<number, number> = {};
+    const billIds = bills.map((b) => b.id);
+    const paymentMap: Record<number, number> = {};
     if (billIds.length > 0) {
       const paymentSums = await db.select({
         billId: infaqPayments.billId,
@@ -63,7 +86,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const billMap = new Map<string, any>();
+    const billMap = new Map<string, InfaqBillRow>();
     for (const b of bills) {
       billMap.set(`${b.studentId}-${b.month}`, b);
     }

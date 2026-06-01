@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Swal from "sweetalert2";
 import { useRouter, useSearchParams } from "next/navigation";
 import Pagination from "@/components/Pagination";
 import FilterBar from "@/components/FilterBar";
-import { ExportButtons, fmtRupiah, type ExportOptions } from "@/lib/export-utils";
+import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { Wallet, Settings, RefreshCcw, Trash2 } from "lucide-react";
@@ -12,6 +12,71 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const monthNames: Record<number, string> = {1:'Januari',2:'Februari',3:'Maret',4:'April',5:'Mei',6:'Juni',7:'Juli',8:'Agustus',9:'September',10:'Oktober',11:'November',12:'Desember'};
 const monthShort: Record<number, string> = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'Mei',6:'Jun',7:'Jul',8:'Agu',9:'Sep',10:'Okt',11:'Nov',12:'Des'};
+
+type BillStatus = "belum_lunas" | "sebagian" | "lunas" | "void";
+type PaymentMethod = "tunai" | "transfer" | "tabungan";
+type GeneratePeriod = "bulanan" | "semester" | "tahunan";
+
+interface InfaqBillItem {
+  id: number;
+  student_name?: string | null;
+  nisn?: string | null;
+  classroom?: string | null;
+  month?: string | null;
+  year?: string | number | null;
+  academic_year?: string | null;
+  nominal: number;
+  total_paid?: number | null;
+  status: BillStatus;
+}
+
+interface ClassroomItem {
+  id: number;
+  name: string;
+  academicYearId?: number;
+  infaqNominal?: number | null;
+}
+
+interface AcademicYearItem {
+  id: number;
+  year: string;
+  isActive?: boolean;
+}
+
+interface CashAccountItem {
+  id: number;
+  name?: string;
+  accountName?: string;
+  balance?: number;
+}
+
+interface PaginationInfo {
+  page: number;
+  totalPages: number;
+  total: number;
+  limit: number;
+}
+
+interface InfaqBillsQueryResult {
+  data?: InfaqBillItem[];
+  pagination?: PaginationInfo;
+}
+
+interface GenerateRequestBody {
+  year: string;
+  period: GeneratePeriod;
+  academicYearId?: number;
+  classroomId?: number;
+  semester?: number;
+  months?: string[];
+}
+
+interface ResetRequestBody {
+  year: string;
+  semester?: number;
+  months?: number[];
+  classroomId?: number;
+}
 
 function InfaqBillsContent() {
   const router = useRouter();
@@ -24,7 +89,7 @@ function InfaqBillsContent() {
   // Modal states
   const [showGenerate, setShowGenerate] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<any>(null);
+  const [selectedBill, setSelectedBill] = useState<InfaqBillItem | null>(null);
   const [showReset, setShowReset] = useState(false);
   const [showBulkUpdate, setShowBulkUpdate] = useState(false);
   
@@ -53,7 +118,7 @@ function InfaqBillsContent() {
   const [genAcademicYearId, setGenAcademicYearId] = useState("");
   const [genClassroomId, setGenClassroomId] = useState("");
   const [genLoading, setGenLoading] = useState(false);
-  const [genPeriod, setGenPeriod] = useState<"bulanan" | "semester" | "tahunan">("bulanan");
+  const [genPeriod, setGenPeriod] = useState<GeneratePeriod>("bulanan");
   const [genSemester, setGenSemester] = useState("1");
 
   // Reset form
@@ -63,8 +128,6 @@ function InfaqBillsContent() {
   const [resetMonths, setResetMonths] = useState<number[]>([]);
   const [resetClassId, setResetClassId] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
-  const [classrooms, setClassrooms] = useState<any[]>([]);
-  const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [bulkYearId, setBulkYearId] = useState("");
 
   // Payment form
@@ -72,16 +135,14 @@ function InfaqBillsContent() {
   const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
   const [payNotes, setPayNotes] = useState("");
   const [payLoading, setPayLoading] = useState(false);
-  const [payMethod, setPayMethod] = useState("tunai");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("tunai");
   const [payCashId, setPayCashId] = useState("");
-  const [cashAccounts, setCashAccounts] = useState<any[]>([]);
-
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  const { data: queryResult, isLoading } = useQuery({
+  const { data: queryResult, isLoading } = useQuery<InfaqBillsQueryResult>({
     queryKey: ["infaq-bills", queryString],
     queryFn: async () => {
       const res = await fetch(`/api/infaq-bills?${queryString}`);
@@ -91,16 +152,58 @@ function InfaqBillsContent() {
     placeholderData: (prev) => prev,
   });
 
-  const data: any[] = queryResult?.data || [];
+  const data: InfaqBillItem[] = queryResult?.data || [];
   const pagination = queryResult?.pagination || { page: 1, totalPages: 1, total: 0, limit: 20 };
 
-  const refreshData = () => queryClient.invalidateQueries({ queryKey: ["infaq-bills"] });
+  const { data: statsQuery } = useQuery({
+    queryKey: ["infaq-bills-stats", queryString],
+    queryFn: async () => {
+      const res = await fetch(`/api/infaq-bills/stats?${queryString}`);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  const stats = statsQuery?.data || null;
 
-  useEffect(() => {
-    fetch("/api/cash-accounts").then(r => r.json()).then(j => { if (j.success) setCashAccounts(j.data || []); }).catch(() => {});
-    fetch("/api/classrooms").then(r => r.json()).then(j => { if (j.success) setClassrooms(j.data || []); }).catch(() => {});
-    fetch("/api/academic-years").then(r => r.json()).then(j => { if (j.success) setAcademicYears(j.data || []); }).catch(() => {});
-  }, []);
+  const { data: cashAccountsQuery } = useQuery({
+    queryKey: ["cash-account-options"],
+    queryFn: async () => {
+      const res = await fetch("/api/cash-accounts?options=true");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: classroomsQuery } = useQuery({
+    queryKey: ["filter-options", "classrooms", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/classrooms?options=true&academicYearId=all");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: academicYearsQuery } = useQuery({
+    queryKey: ["filter-options", "academic-years"],
+    queryFn: async () => {
+      const res = await fetch("/api/academic-years?options=true");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 15,
+  });
+
+  const cashAccounts: CashAccountItem[] = (cashAccountsQuery?.success ? cashAccountsQuery.data || [] : []).map((account: CashAccountItem) => ({
+    ...account,
+    name: account.name || account.accountName || "",
+  }));
+  const classrooms: ClassroomItem[] = classroomsQuery?.success ? classroomsQuery.data || [] : [];
+  const academicYears: AcademicYearItem[] = academicYearsQuery?.success ? academicYearsQuery.data || [] : [];
+
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: ["infaq-bills"] });
+    queryClient.invalidateQueries({ queryKey: ["infaq-bills-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["filter-options", "classrooms"] });
+  };
 
   // === Generate Tagihan ===
   async function handleGenerate() {
@@ -145,7 +248,7 @@ function InfaqBillsContent() {
     setGenLoading(true);
     try {
       // Siapkan body request berdasarkan mode periode
-      const reqBody: any = {
+      const reqBody: GenerateRequestBody = {
         year: genYear,
         period: genPeriod,
         academicYearId: genAcademicYearId ? Number(genAcademicYearId) : undefined,
@@ -213,7 +316,7 @@ function InfaqBillsContent() {
   }
 
   // === Edit Nominal Tagihan ===
-  async function handleEditNominal(bill: any) {
+  async function handleEditNominal(bill: InfaqBillItem) {
     const { value: newValStr } = await Swal.fire({
       title: "Edit Nominal",
       input: "number",
@@ -323,7 +426,7 @@ function InfaqBillsContent() {
         setShowBulkUpdate(false);
         setBulkClassIds([]);
         setBulkNominal("");
-        fetch("/api/classrooms").then(r => r.json()).then(j => { if (j.success) setClassrooms(j.data || []); }).catch(() => {});
+        queryClient.invalidateQueries({ queryKey: ["filter-options", "classrooms"] });
       } else {
         showToast(json.message, "error");
       }
@@ -346,7 +449,50 @@ function InfaqBillsContent() {
         </div>
       )}
 
-      <FilterBar />
+      <FilterBar
+        customStatusOptions={[
+          { label: "Lunas", value: "paid" },
+          { label: "Belum Lunas", value: "unpaid" },
+          { label: "Sebagian", value: "partial" },
+        ]}
+      />
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Total Tagihan</p>
+          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalNominal) : "Rp 0"}</h3>
+          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
+            {stats ? stats.totalBills : 0} item tagihan
+          </p>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Terkumpul</p>
+          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalPaid) : "Rp 0"}</h3>
+          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+            {stats ? stats.lunasCount + stats.sebagianCount : 0} tagihan terbayar
+          </p>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-rose-500 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tunggakan</p>
+          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalUnpaid) : "Rp 0"}</h3>
+          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span>
+            {stats ? stats.belumLunasCount : 0} tagihan belum lunas
+          </p>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Collection Rate</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-2xl font-bold text-slate-800">{stats ? stats.collectionRate.toFixed(1) : "0.0"}%</h3>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+            <div className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${stats ? Math.min(100, stats.collectionRate) : 0}%` }}></div>
+          </div>
+        </Card>
+      </div>
 
       {/* Hero Header */}
       <PageHeader
@@ -365,9 +511,9 @@ function InfaqBillsContent() {
             <button
               onClick={async () => {
                 // Cek nominal kelas sebelum buka form generate
-                const zeroClasses = classrooms.filter((c: any) => !c.infaqNominal || c.infaqNominal <= 0);
+                const zeroClasses = classrooms.filter((c) => !c.infaqNominal || c.infaqNominal <= 0);
                 if (zeroClasses.length > 0) {
-                  const classNames = zeroClasses.map((c: any) => c.name).join(", ");
+                  const classNames = zeroClasses.map((c) => c.name).join(", ");
                   const result = await Swal.fire({
                     title: "⚠️ Nominal Belum Diatur!",
                     html: `
@@ -429,10 +575,10 @@ function InfaqBillsContent() {
                 { header: "Siswa", key: "student_name", width: 40 },
                 { header: "Kelas", key: "classroom", width: 20 },
                 { header: "Periode", key: "_periode", width: 25 },
-                { header: "Nominal", key: "nominal", width: 25, align: "right", format: (v: number) => fmtRupiah(v) },
-                { header: "Status", key: "status", width: 20, align: "center", format: (v: string) => v === 'lunas' ? 'Lunas' : v === 'sebagian' ? 'Sebagian' : v === 'void' ? 'Void' : 'Belum Lunas' },
+                { header: "Nominal", key: "nominal", width: 25, align: "right", format: (v: unknown) => fmtRupiah(v as number) },
+                { header: "Status", key: "status", width: 20, align: "center", format: (v: unknown) => v === 'lunas' ? 'Lunas' : v === 'sebagian' ? 'Sebagian' : v === 'void' ? 'Void' : 'Belum Lunas' },
               ],
-              data: data.map((b: any, i: number) => ({
+              data: data.map((b, i: number) => ({
                 ...b,
                 _no: ((pagination.page - 1) * pagination.limit) + i + 1,
                 _periode: `${b.month || '-'} ${b.academic_year || b.year || '-'}`,
@@ -466,7 +612,7 @@ function InfaqBillsContent() {
                     <p style={{ fontSize: "0.8125rem", color: "#94a3b8", marginTop: "0.375rem" }}>Periksa filter Anda atau klik <strong>Generate Tagihan</strong>.</p>
                   </div>
                 </td></tr>
-              ) : data.map((b: any, i: number) => {
+              ) : data.map((b, i: number) => {
                 const idx = ((pagination.page - 1) * pagination.limit) + i + 1;
                 const initial = (b.student_name || "?").charAt(0).toUpperCase();
                 let statusBadge;
@@ -500,7 +646,7 @@ function InfaqBillsContent() {
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          (e.nativeEvent as any).stopImmediatePropagation();
+                          e.nativeEvent.stopImmediatePropagation();
                           setOpenActionId(openActionId === b.id ? null : b.id); 
                         }}
                         style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
@@ -640,7 +786,7 @@ function InfaqBillsContent() {
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Tahun Akademik</label>
               <select value={genAcademicYearId} onChange={e => setGenAcademicYearId(e.target.value)} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                 <option value="">-- Pilih Tahun Akademik --</option>
-                {academicYears.map((ay: any) => <option key={ay.id} value={ay.id}>{ay.year} {ay.isActive ? "(Aktif)" : ""}</option>)}
+                {academicYears.map((ay) => <option key={ay.id} value={ay.id}>{ay.year} {ay.isActive ? "(Aktif)" : ""}</option>)}
               </select>
             </div>
 
@@ -648,7 +794,7 @@ function InfaqBillsContent() {
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Target Kelas</label>
               <select value={genClassroomId} onChange={e => setGenClassroomId(e.target.value)} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                 <option value="">Semua Kelas</option>
-                {classrooms.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
@@ -682,7 +828,7 @@ function InfaqBillsContent() {
             </div>
             <div style={{ marginTop: "1rem" }}>
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Metode Pembayaran</label>
-              <select value={payMethod} onChange={e => setPayMethod(e.target.value)} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
+              <select value={payMethod} onChange={e => setPayMethod(e.target.value as "tunai" | "transfer" | "tabungan")} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                 <option value="tunai">Tunai</option>
                 <option value="transfer">Transfer</option>
                 <option value="tabungan">Potong Tabungan</option>
@@ -693,7 +839,7 @@ function InfaqBillsContent() {
                 <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Akun Kas</label>
                 <select value={payCashId} onChange={e => setPayCashId(e.target.value)} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                   <option value="">— Pilih Akun Kas —</option>
-                  {cashAccounts.map((ca: any) => <option key={ca.id} value={ca.id}>{ca.name} (Rp {Number(ca.balance).toLocaleString("id-ID")})</option>)}
+                  {cashAccounts.map((ca) => <option key={ca.id} value={ca.id}>{ca.name} (Rp {Number(ca.balance).toLocaleString("id-ID")})</option>)}
                 </select>
               </div>
             )}
@@ -758,7 +904,7 @@ function InfaqBillsContent() {
             <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "0.25rem" }}>Kelas (Opsional)</label>
             <select value={resetClassId} onChange={e => setResetClassId(e.target.value)} style={{ width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", fontSize: "0.875rem", marginBottom: "1rem" }}>
               <option value="">Semua Kelas</option>
-              {classrooms.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <div style={{ padding: "0.625rem 0.75rem", borderRadius: "0.5rem", background: "#fef2f2", border: "1px solid #fecaca", marginBottom: "1rem" }}>
               <p style={{ fontSize: "0.75rem", color: "#991b1b", margin: 0, fontWeight: 600 }}>⚠️ Tagihan dan pembayaran terkait akan dihapus secara permanen.</p>
@@ -766,7 +912,7 @@ function InfaqBillsContent() {
             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
               <button onClick={() => setShowReset(false)} style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.5rem", cursor: "pointer" }}>Batal</button>
               <button disabled={resetLoading} onClick={async () => {
-                const reqBody: any = { year: resetYear };
+                const reqBody: ResetRequestBody = { year: resetYear };
                 if (resetMode === "semester") reqBody.semester = Number(resetSemester);
                 else reqBody.months = resetMonths;
                 if (resetClassId) reqBody.classroomId = Number(resetClassId);
@@ -796,7 +942,7 @@ function InfaqBillsContent() {
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Filter Tahun Akademik</label>
               <select value={bulkYearId} onChange={e => { const yId = e.target.value; setBulkYearId(yId); if (yId) { setBulkClassIds(classrooms.filter(c => c.academicYearId === Number(yId)).map(c => c.id)); } else { setBulkClassIds([]); } }} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                 <option value="">-- Semua Tahun Akademik --</option>
-                {academicYears.map((ay: any) => <option key={ay.id} value={ay.id}>{ay.year} {ay.isActive ? "(Aktif)" : ""}</option>)}
+                {academicYears.map((ay) => <option key={ay.id} value={ay.id}>{ay.year} {ay.isActive ? "(Aktif)" : ""}</option>)}
               </select>
             </div>
             <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Pilih Kelas</label>
@@ -804,7 +950,7 @@ function InfaqBillsContent() {
               <button onClick={() => { const tc = bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms; if (bulkClassIds.length === tc.length) setBulkClassIds([]); else setBulkClassIds(tc.map(c => c.id)); }} style={{ gridColumn: "span 3", padding: "0.375rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px dashed #6366f1", background: "#f5f3ff", color: "#4f46e5", cursor: "pointer", marginBottom: "0.25rem" }}>
                 {bulkClassIds.length > 0 && bulkClassIds.length === (bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)).length : classrooms.length) ? "Hapus Semua Pilihan" : "Pilih Semua Kelas Terfilter"}
               </button>
-              {(bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms).map((c: any) => {
+              {(bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms).map((c) => {
                 const isSel = bulkClassIds.includes(c.id);
                 return (<button key={c.id} onClick={() => setBulkClassIds(prev => isSel ? prev.filter(id => id !== c.id) : [...prev, c.id])} style={{ padding: "0.5rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "0.5rem", border: "1.5px solid", borderColor: isSel ? "#6366f1" : "#e2e8f0", background: isSel ? "#eef2ff" : "#fff", color: isSel ? "#4f46e5" : "#64748b", cursor: "pointer" }}>{c.name}</button>);
               })}

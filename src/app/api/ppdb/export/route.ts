@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
 
     const conditions = [isNull(ppdbRegistrations.deletedAt)];
-    if (status) conditions.push(eq(ppdbRegistrations.status, status as any));
+    if (status) conditions.push(eq(ppdbRegistrations.status, status));
 
     const list = await db.select().from(ppdbRegistrations).where(and(...conditions)).orderBy(desc(ppdbRegistrations.createdAt));
 

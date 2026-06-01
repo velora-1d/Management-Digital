@@ -6,7 +6,6 @@ import {
   doublePrecision,
   integer,
   timestamp,
-  unique,
   index,
   uniqueIndex,
   jsonb,
@@ -43,6 +42,7 @@ export const academicYears = pgTable('academic_years', {
 export const classrooms = pgTable('classrooms', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
+  level: integer('level').notNull().default(1),
   academicYearId: integer('academic_year_id'),
   waliKelasId: integer('wali_kelas_id'),
   infaqNominal: doublePrecision('infaq_nominal').notNull().default(0),
@@ -54,10 +54,10 @@ export const classrooms = pgTable('classrooms', {
 // ─── STUDENTS ──────────────────────────────────────────────────────────────
 export const students = pgTable('students', {
   id: serial('id').primaryKey(),
-  nisn: text('nisn').notNull().default(''),
-  nis: text('nis').notNull().default(''),
-  nik: text('nik').notNull().default(''),
-  noKk: text('no_kk').notNull().default(''),
+  nisn: text('nisn'),
+  nis: text('nis'),
+  nik: text('nik'),
+  noKk: text('no_kk'),
   name: text('name').notNull(),
   gender: text('gender').notNull().default('L'),
   category: text('category').notNull().default('reguler'),
@@ -79,6 +79,7 @@ export const students = pgTable('students', {
   district: text('district').notNull().default(''),
   residenceType: text('residence_type').notNull().default(''),
   transportation: text('transportation').notNull().default(''),
+  previousSchool: text('previous_school').notNull().default(''),
   studentPhone: text('student_phone').notNull().default(''),
   height: integer('height'),
   weight: integer('weight'),
@@ -113,6 +114,9 @@ export const students = pgTable('students', {
   index('students_deleted_at_idx').on(t.deletedAt),
   index('students_status_idx').on(t.status),
   index('students_nisn_idx').on(t.nisn),
+  uniqueIndex('students_nisn_unique_idx').on(t.nisn),
+  uniqueIndex('students_nis_unique_idx').on(t.nis),
+  uniqueIndex('students_nik_unique_idx').on(t.nik),
 ]);
 
 // ─── PPDB REGISTRATIONS ────────────────────────────────────────────────────
@@ -226,7 +230,10 @@ export const transactionCategories = pgTable('transaction_categories', {
 export const cashAccounts = pgTable('cash_accounts', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
+  bankName: text('bank_name'),
+  accountNumber: text('account_number'),
   balance: doublePrecision('balance').notNull().default(0),
+  status: text('status').notNull().default('active'),
   unitId: text('unit_id').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -308,6 +315,7 @@ export const wakafPurposes = pgTable('wakaf_purposes', {
   description: text('description').notNull().default(''),
   targetAmount: doublePrecision('target_amount').notNull().default(0),
   collectedAmount: doublePrecision('collected_amount').notNull().default(0),
+  spentAmount: doublePrecision('spent_amount').notNull().default(0),
   unitId: text('unit_id').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -317,13 +325,13 @@ export const wakafPurposes = pgTable('wakaf_purposes', {
 // ─── GENERAL TRANSACTIONS ──────────────────────────────────────────────────
 export const generalTransactions = pgTable('general_transactions', {
   id: serial('id').primaryKey(),
-  categoryId: integer('transaction_category_id'),
+  transactionCategoryId: integer('transaction_category_id'),
   cashAccountId: integer('cash_account_id'),
   userId: integer('user_id'),
   type: text('type').notNull().default('in'),
   amount: doublePrecision('amount').notNull().default(0),
   description: text('description').notNull().default(''),
-  date: text('transaction_date').notNull().default(''),
+  transactionDate: text('transaction_date').notNull().default(''),
   status: text('status').notNull().default('valid'),
   referenceType: text('reference_type').notNull().default(''),
   referenceId: text('reference_id').notNull().default(''),
@@ -335,8 +343,8 @@ export const generalTransactions = pgTable('general_transactions', {
   deletedAt: timestamp('deleted_at'),
 }, (t) => [
   index('gen_tx_type_deleted_idx').on(t.type, t.deletedAt),
-  index('gen_tx_date_idx').on(t.date),
-  index('gen_tx_category_idx').on(t.categoryId),
+  index('gen_tx_date_idx').on(t.transactionDate),
+  index('gen_tx_category_idx').on(t.transactionCategoryId),
   index('gen_tx_deleted_at_idx').on(t.deletedAt),
 ]);
 
@@ -357,9 +365,13 @@ export const employees = pgTable('employees', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
   userId: integer('user_id').unique(),
+  photoUrl: text('photo_url'),
+  bio: text('bio'),
+  order: integer('order').default(1),
 }, (t) => [
   index('employees_type_deleted_idx').on(t.type, t.deletedAt),
   index('employees_status_idx').on(t.status),
+  uniqueIndex('employees_nip_unique_idx').on(t.nip),
 ]);
 
 // ─── SALARY COMPONENTS ─────────────────────────────────────────────────────
@@ -436,7 +448,9 @@ export const inventories = pgTable('inventories', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
-});
+}, (t) => [
+  uniqueIndex('inventories_code_unique_idx').on(t.code),
+]);
 
 // ─── INVENTORY LOGS ────────────────────────────────────────────────────────
 export const inventoryLogs = pgTable('inventory_logs', {
@@ -462,7 +476,13 @@ export const studentEnrollments = pgTable('student_enrollments', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
-});
+}, (t) => [
+  // Index untuk mempercepat query per siswa & per tahun ajaran
+  index('student_enrollments_student_id_idx').on(t.studentId),
+  index('student_enrollments_academic_year_idx').on(t.academicYearId),
+  index('student_enrollments_student_year_idx').on(t.studentId, t.academicYearId),
+  index('student_enrollments_deleted_at_idx').on(t.deletedAt),
+]);
 
 // ─── SCHOOL SETTINGS ───────────────────────────────────────────────────────
 export const schoolSettings = pgTable('school_settings', {
@@ -501,6 +521,7 @@ export const subjects = pgTable('subjects', {
 }, (t) => [
   index('subjects_type_idx').on(t.type),
   index('subjects_status_deleted_idx').on(t.status, t.deletedAt),
+  uniqueIndex('subjects_code_unique_idx').on(t.code),
 ]);
 
 // ─── TEACHING ASSIGNMENTS ──────────────────────────────────────────────────
@@ -543,9 +564,11 @@ export const attendances = pgTable('attendances', {
   id: serial('id').primaryKey(),
   studentId: integer('student_id'),
   classroomId: integer('classroom_id'),
+  academicYearId: integer('academic_year_id'),
   date: text('date').notNull().default(''),
   status: text('status').notNull().default('hadir'),
   note: text('note').notNull().default(''),
+  isNotified: boolean('is_notified').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
@@ -712,8 +735,11 @@ export const reportCards = pgTable('report_cards', {
   totalSiswa: integer('total_siswa'),
   catatanWali: text('catatan_wali'),
   attendanceAtititude: jsonb('attendance_atititude'),
+  snapshotData: jsonb('snapshot_data'), // For Phase 4 snapshot locking
+  publishedAt: timestamp('published_at'), // For Phase 4 marking
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+
 }, (t) => [
   uniqueIndex('unique_report_card').on(t.studentId, t.curriculumId, t.semester),
 ]);
@@ -756,11 +782,18 @@ export const letters = pgTable('letters', {
   date: text('date').notNull().default(''),
   status: text('status').notNull().default('belum_disposisi'),
   fileUrl: text('file_url').notNull().default(''),
+  academicYearId: integer('academic_year_id'),
+  semester: text('semester'),
+  month: text('month'),
   unitId: text('unit_id').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('letters_type_idx').on(t.type),
+  index('letters_academic_year_idx').on(t.academicYearId),
+  index('letters_semester_idx').on(t.semester),
+  index('letters_month_idx').on(t.month),
+  uniqueIndex('letters_number_unique_idx').on(t.number),
 ]);
 
 // ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
@@ -816,11 +849,14 @@ export const coopTransactions = pgTable('coop_transactions', {
   total: doublePrecision('total').notNull().default(0),
   paymentMethod: text('payment_method').notNull().default('tunai'),
   date: text('date').notNull().default(''),
+  status: text('status').notNull().default('valid'),
   unitId: text('unit_id').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
 }, (t) => [
   index('coop_transactions_date_idx').on(t.date),
+  index('coop_transactions_status_idx').on(t.status),
 ]);
 
 // ─── STUDENT CREDITS ───────────────────────────────────────────────────────
@@ -834,9 +870,122 @@ export const studentCredits = pgTable('student_credits', {
   dueDate: text('due_date').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
 }, (t) => [
   index('student_credits_student_id_status_idx').on(t.studentId, t.status),
 ]);
+
+// ─── WEB CMS TABLES ────────────────────────────────────────────────────────
+
+export const webHeroes = pgTable('cms_web_heroes', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  subtitle: text('subtitle'),
+  mediaType: text('media_type').notNull().default('image'), // 'image' | 'video'
+  mediaUrl: text('media_url').notNull(),
+  ctaText: text('cta_text'),
+  ctaUrl: text('cta_url'),
+  order: integer('order').notNull().default(0),
+  status: text('status').notNull().default('aktif'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webPosts = pgTable('cms_web_posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  excerpt: text('excerpt'),
+  content: text('content').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  category: text('category').notNull().default('berita'), // 'berita' | 'artikel' | 'info'
+  status: text('status').notNull().default('draft'), // 'draft' | 'published'
+  publishedAt: timestamp('published_at'),
+  metaTitle: text('meta_title'),
+  metaDescription: text('meta_description'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+  index('web_posts_slug_idx').on(t.slug),
+  index('web_posts_status_idx').on(t.status),
+]);
+
+export const webFacilities = pgTable('cms_web_facilities', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  iconSvg: text('icon_svg'),
+  order: integer('order').notNull().default(0),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webAchievements = pgTable('cms_web_achievements', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  studentName: text('student_name'),
+  competitionName: text('competition_name'),
+  level: text('level').notNull().default('kabupaten'), // 'kecamatan' | 'kabupaten' | 'provinsi' | 'nasional'
+  year: integer('year').notNull(),
+  imageUrl: text('image_url'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webTeachers = pgTable('cms_web_teachers', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  position: text('position'),
+  bio: text('bio'),
+  photoUrl: text('photo_url'),
+  order: integer('order').notNull().default(0),
+  status: text('status').notNull().default('aktif'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webSettings = pgTable('cms_web_settings', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  value: text('value').notNull(),
+  group: text('group').notNull().default('umum'), // 'umum' | 'kontak' | 'sosmed' | 'ppdb'
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webPrograms = pgTable('cms_web_programs', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  iconName: text('icon_name').notNull().default('BookOpen'),
+  color: text('color').notNull().default('from-emerald-500 to-teal-600'),
+  order: integer('order').notNull().default(0),
+  status: text('status').notNull().default('aktif'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const webStats = pgTable('cms_web_stats', {
+  id: serial('id').primaryKey(),
+  label: text('label').notNull(),
+  value: integer('value').notNull().default(0),
+  suffix: text('suffix').notNull().default('+'),
+  iconName: text('icon_name').notNull().default('Trophy'),
+  color: text('color').notNull().default('from-amber-500 to-orange-600'),
+  order: integer('order').notNull().default(0),
+  status: text('status').notNull().default('aktif'),
+  unitId: text('unit_id').notNull().default(''),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RELATIONS
@@ -921,7 +1070,7 @@ export const infaqPaymentsRelations = relations(infaqPayments, ({ one }) => ({
 
 export const generalTransactionsRelations = relations(generalTransactions, ({ one }) => ({
   cashAccount: one(cashAccounts, { fields: [generalTransactions.cashAccountId], references: [cashAccounts.id] }),
-  category: one(transactionCategories, { fields: [generalTransactions.categoryId], references: [transactionCategories.id] }),
+  category: one(transactionCategories, { fields: [generalTransactions.transactionCategoryId], references: [transactionCategories.id] }),
   user: one(users, { fields: [generalTransactions.userId], references: [users.id] }),
   wakafDonor: one(wakafDonors, { fields: [generalTransactions.wakafDonorId], references: [wakafDonors.id] }),
   wakafPurpose: one(wakafPurposes, { fields: [generalTransactions.wakafPurposeId], references: [wakafPurposes.id] }),

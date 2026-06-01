@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { employees, employeeAttendances } from "@/db/schema";
 import { eq, asc, sql, like } from "drizzle-orm";
 
+type EmployeeStatus = typeof employees.$inferSelect.status;
+
 // GET /api/employee-attendance/recap?month=3&year=2026
 export async function GET(req: Request) {
   try {
@@ -18,7 +20,7 @@ export async function GET(req: Request) {
 
     const [{ total }] = await db.select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(employees)
-      .where(eq(employees.status, "aktif" as any));
+      .where(eq(employees.status, "aktif" as EmployeeStatus));
 
     const empList = await db.select({
       id: employees.id,
@@ -26,7 +28,7 @@ export async function GET(req: Request) {
       position: employees.position,
     })
     .from(employees)
-    .where(eq(employees.status, "aktif" as any))
+    .where(eq(employees.status, "aktif" as EmployeeStatus))
     .orderBy(asc(employees.name))
     .limit(limit > 0 ? limit : 1000)
     .offset(limit > 0 ? skip : 0);

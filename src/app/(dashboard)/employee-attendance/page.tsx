@@ -1,12 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Swal from "sweetalert2";
-import { exportCSV } from "@/lib/csv-export";
-import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Calendar, Download, Save, Users, Clock, History, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Users, History, Save } from "lucide-react";
 import Pagination from "@/components/Pagination";
+import { ExportButtons } from "@/lib/export-utils";
 
 interface Employee { id: number; name: string; position: string; status: string; }
 interface AttendanceRecord { id: number; employeeId: number; date: string; status: string; note: string; employee: Employee; }
@@ -15,7 +14,6 @@ interface RecapItem { employeeId: number; name: string; position: string; total:
 export default function EmployeeAttendancePage() {
   const [tab, setTab] = useState<"input" | "rekap">("input");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<{ employeeId: number; status: string; note: string }[]>([]);
   const [existingRecords, setExistingRecords] = useState<AttendanceRecord[]>([]);
   const [saving, setSaving] = useState(false);
@@ -42,8 +40,7 @@ export default function EmployeeAttendancePage() {
         setExistingRecords(result.data || []);
         setInputMeta(result.pagination);
 
-        // Map records
-        const recs = result.data.map((item: any) => ({
+        const recs = result.data.map((item: AttendanceRecord) => ({
           employeeId: item.employeeId,
           status: item.status || "hadir",
           note: item.note || ""
@@ -55,8 +52,13 @@ export default function EmployeeAttendancePage() {
   }, [selectedDate, inputMeta.limit]);
 
   useEffect(() => {
-    loadAttendance(1);
-  }, [loadAttendance]);
+    if (tab === "input") {
+      const fetchInitial = async () => {
+        await loadAttendance(1);
+      };
+      fetchInitial();
+    }
+  }, [tab, selectedDate, loadAttendance]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -91,7 +93,14 @@ export default function EmployeeAttendancePage() {
     setLoadingRecap(false);
   }, [recapMonth, recapYear, recapMeta.limit]);
 
-  useEffect(() => { if (tab === "rekap") loadRecap(1); }, [tab, loadRecap]);
+  useEffect(() => { 
+    if (tab === "rekap") {
+      const fetchInitialRecap = async () => {
+        await loadRecap(1);
+      };
+      fetchInitialRecap();
+    }
+  }, [tab, recapMonth, recapYear, loadRecap]);
 
   const updateRecord = (empId: number, field: "status" | "note", value: string) => {
     setRecords(prev => prev.map(r => r.employeeId === empId ? { ...r, [field]: value } : r));
@@ -105,7 +114,7 @@ export default function EmployeeAttendancePage() {
       <PageHeader
         title="Absensi Pegawai"
         subtitle="Kelola kehadiran guru dan staf secara harian dan rekap kehadiran bulanan."
-        icon={<Clock className="w-8 h-8 text-indigo-600" />}
+        icon={<div className="w-8 h-8 rounded-full bg-linear-to-tr from-indigo-500 to-violet-500" />}
         actions={
           <div className="flex bg-white rounded-lg border border-slate-200 p-1">
             <button 
@@ -139,9 +148,6 @@ export default function EmployeeAttendancePage() {
                   className="pl-9 pr-4 py-2 w-full sm:w-auto border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
                 />
               </div>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 hidden sm:inline-flex">
-                {existingRecords.length > 0 ? `${existingRecords.length} data tersimpan` : "Belum ada data"}
-              </span>
             </div>
             
             <button 
@@ -163,13 +169,13 @@ export default function EmployeeAttendancePage() {
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600/20 border-t-indigo-600 mb-4"></div>
               <p className="text-sm text-slate-500 font-medium">Memuat data pegawai...</p>
             </div>
-          ) : employees.length === 0 ? (
+          ) : existingRecords.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                 <Users className="w-8 h-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">Tidak ada pegawai aktif</h3>
-              <p className="text-slate-500 text-sm max-w-sm text-center">Belum ada data pegawai yang aktif untuk dilakukan pendataan presensi.</p>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">Tidak ada data</h3>
+              <p className="text-slate-500 text-sm max-w-sm text-center">Belum ada data presensi untuk tanggal ini.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -217,7 +223,7 @@ export default function EmployeeAttendancePage() {
                           <input 
                             value={rec?.note || ""} 
                             onChange={e => updateRecord(emp.id, "note", e.target.value)} 
-                            placeholder="Tambahkan catatan jika ada..."
+                            placeholder="Tambahkan catatan..."
                             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
                           />
                         </td>
@@ -276,7 +282,7 @@ export default function EmployeeAttendancePage() {
                   { header: "Sakit", key: "sakit", width: 15, align: "center" },
                   { header: "Izin", key: "izin", width: 15, align: "center" },
                   { header: "Alpha", key: "alpha", width: 15, align: "center" },
-                  { header: "Persen", key: "persen", width: 15, align: "center", format: (v) => `${v}%` },
+                  { header: "Persen", key: "persen", width: 15, align: "center", format: (v: number | string) => `${v}%` },
                 ],
                 data: recap.map((r, i) => ({
                   ...r,
@@ -297,7 +303,7 @@ export default function EmployeeAttendancePage() {
                 <History className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-semibold text-slate-800 mb-2">Belum ada rekapitulasi</h3>
-              <p className="text-slate-500 text-sm max-w-sm text-center">Data absensi belum tersedia untuk bulan dan tahun yang diplih.</p>
+              <p className="text-slate-500 text-sm max-w-sm text-center">Data absensi belum tersedia untuk bulan dan tahun yang dipilih.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -321,28 +327,28 @@ export default function EmployeeAttendancePage() {
                       <td className="py-3 px-4 text-sm font-medium text-slate-800">{r.name}</td>
                       <td className="py-3 px-4 text-sm text-slate-500">{r.position}</td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center min-w-[2rem] px-1.5 py-0.5 rounded text-xs font-semibold ${r.hadir > 0 ? "bg-emerald-50 text-emerald-700" : "text-slate-400"}`}>
+                        <span className={`inline-flex items-center justify-center min-w-8 px-1.5 py-0.5 rounded text-xs font-semibold ${r.hadir > 0 ? "bg-emerald-50 text-emerald-700" : "text-slate-400"}`}>
                           {r.hadir}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center min-w-[2rem] px-1.5 py-0.5 rounded text-xs font-semibold ${r.sakit > 0 ? "bg-amber-50 text-amber-700" : "text-slate-400"}`}>
+                        <span className={`inline-flex items-center justify-center min-w-8 px-1.5 py-0.5 rounded text-xs font-semibold ${r.sakit > 0 ? "bg-amber-50 text-amber-700" : "text-slate-400"}`}>
                           {r.sakit}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center min-w-[2rem] px-1.5 py-0.5 rounded text-xs font-semibold ${r.izin > 0 ? "bg-sky-50 text-sky-700" : "text-slate-400"}`}>
+                        <span className={`inline-flex items-center justify-center min-w-8 px-1.5 py-0.5 rounded text-xs font-semibold ${r.izin > 0 ? "bg-sky-50 text-sky-700" : "text-slate-400"}`}>
                           {r.izin}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center min-w-[2rem] px-1.5 py-0.5 rounded text-xs font-semibold ${r.alpha > 0 ? "bg-rose-50 text-rose-700" : "text-slate-400"}`}>
+                        <span className={`inline-flex items-center justify-center min-w-8 px-1.5 py-0.5 rounded text-xs font-semibold ${r.alpha > 0 ? "bg-rose-50 text-rose-700" : "text-slate-400"}`}>
                           {r.alpha}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3 justify-center">
-                          <div className="w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
+                          <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200 min-w-8">
                             <div 
                               className={`h-full rounded-full transition-all duration-500 ${r.persen >= 80 ? "bg-emerald-500" : r.persen >= 60 ? "bg-amber-400" : "bg-rose-500"}`} 
                               style={{ width: `${r.persen}%` }}

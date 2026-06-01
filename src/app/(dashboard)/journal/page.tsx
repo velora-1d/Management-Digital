@@ -1,11 +1,40 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Swal from "sweetalert2";
+import { useSearchParams } from "next/navigation";
+
 import Pagination from "@/components/Pagination";
+import FilterBar from "@/components/FilterBar";
+
 import { ExportButtons, fmtRupiah as fmtRupiahExport } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { BookOpen } from "lucide-react";
+
+type JournalEntryType = "in" | "out";
+type JournalEntryStatus = "active" | "void";
+
+interface JournalCategory {
+  id: number;
+  name: string;
+}
+
+interface JournalEntry {
+  id: number;
+  type: JournalEntryType;
+  amount: number;
+  categoryId: number | null;
+  category_name?: string | null;
+  date: string;
+  description?: string | null;
+  status: JournalEntryStatus;
+}
+
+interface JournalKpi {
+  totalBalance: number;
+  thisMonthIn: number;
+  thisMonthOut: number;
+}
 
 // Fungsi format angka ke format rupiah (titik pemisah ribuan)
 function formatRupiah(value: string): string {
@@ -20,9 +49,18 @@ function parseRupiah(value: string): number {
 }
 
 export default function JournalPage() {
-  const [data, setData] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [kpi, setKpi] = useState({ totalBalance: 0, thisMonthIn: 0, thisMonthOut: 0 });
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <JournalContent />
+    </Suspense>
+  );
+}
+
+function JournalContent() {
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<JournalEntry[]>([]);
+  const [categories, setCategories] = useState<JournalCategory[]>([]);
+  const [kpi, setKpi] = useState<JournalKpi>({ totalBalance: 0, thisMonthIn: 0, thisMonthOut: 0 });
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -58,7 +96,9 @@ export default function JournalPage() {
   const loadData = useCallback(async (filter = typeFilter) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/journal?type=${filter}`);
+      const queryString = searchParams.toString();
+      const res = await fetch(`/api/journal?type=${filter}&${queryString}`);
+
       const json = await res.json();
       if (json.success) {
         setData(json.entries || []);
@@ -67,9 +107,9 @@ export default function JournalPage() {
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [typeFilter]);
+  }, [typeFilter, searchParams]);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [loadData]);
 
   // Handler format Rp untuk input nominal
   const handleAmountChange = (val: string) => {
@@ -127,7 +167,7 @@ export default function JournalPage() {
   }
 
   // === Edit Transaksi ===
-  const handleEdit = (tx: any) => {
+  const handleEdit = (tx: JournalEntry) => {
     let catOptions = '<option value="">-- Tanpa Kategori --</option>';
     categories.forEach(c => { catOptions += `<option value="${c.id}" ${tx.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`; });
 
@@ -230,6 +270,9 @@ export default function JournalPage() {
         }
       />
 
+      <FilterBar />
+
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
@@ -270,7 +313,7 @@ export default function JournalPage() {
                 { header: "Jumlah", key: "amount", width: 20, align: "right", format: (v: number) => fmtRupiahExport(v) },
                 { header: "Status", key: "_status", width: 10, align: "center" },
               ],
-              data: data.map((e: any, i: number) => ({
+              data: data.map((e, i: number) => ({
                 ...e,
                 _no: i + 1,
                 _date: e.date ? new Date(e.date).toLocaleDateString("id-ID") : '-',
@@ -306,7 +349,7 @@ export default function JournalPage() {
                     <p style={{ fontSize: "0.875rem", color: "#64748b", fontWeight: 500, margin: 0 }}>Belum ada riwayat jurnal.</p>
                   </div>
                 </td></tr>
-              ) : data.slice((page - 1) * limit, page * limit).map((entry: any, i: number) => {
+              ) : data.slice((page - 1) * limit, page * limit).map((entry, i: number) => {
                 const date = entry.date ? new Date(entry.date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "-";
                 const isIn = entry.type === "in";
                 const isVoid = entry.status === "void";
@@ -334,7 +377,7 @@ export default function JournalPage() {
                           <button 
                             onClick={(ev) => { 
                               ev.stopPropagation(); 
-                              (ev.nativeEvent as any).stopImmediatePropagation();
+                              ev.nativeEvent.stopImmediatePropagation();
                               setOpenActionId(openActionId === entry.id ? null : entry.id); 
                             }}
                             style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
@@ -409,7 +452,7 @@ export default function JournalPage() {
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Kategori</label>
               <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
                 <option value="">— Tanpa Kategori —</option>
-                {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 

@@ -69,7 +69,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, category, quantity, condition, location, acquisitionCost } = body;
+    const { name, code, category, quantity, condition, location, acquisitionCost } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -78,8 +78,20 @@ export async function POST(request: Request) {
       );
     }
 
+    // Cek duplikasi kode barang
+    if (code) {
+      const existing = await db.select().from(inventories)
+        .where(and(eq(inventories.code, code.trim()), isNull(inventories.deletedAt)))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        return NextResponse.json({ success: false, message: `Aset dengan kode ${code} sudah terdaftar.` }, { status: 400 });
+      }
+    }
+
     const [inventory] = await db.insert(inventories).values({
       name,
+      code: code || "",
       category: category || "",
       location: location || "",
       quantity: Number(quantity) || 1,

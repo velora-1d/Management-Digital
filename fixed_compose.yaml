@@ -1,0 +1,84 @@
+services:
+    ygrptpha1cr1l6e30srym1d9-154645457008:
+        image: 'ygrptpha1cr1l6e30srym1d9:835f92a5a7b39f6f8a494ee99823085b27520f13'
+        container_name: ygrptpha1cr1l6e30srym1d9-154645457008
+        restart: unless-stopped
+        expose:
+            - '3000'
+        networks:
+            coolify:
+                aliases:
+                    - ygrptpha1cr1l6e30srym1d9-154645457008
+        mem_limit: '0'
+        memswap_limit: '0'
+        mem_swappiness: 60
+        mem_reservation: '0'
+        cpus: 0.0
+        cpu_shares: 1024
+        env_file:
+            - .env
+        labels:
+            - traefik.enable=true
+            - traefik.http.middlewares.gzip.compress=true
+            - traefik.http.middlewares.http-2-ygrptpha1cr1l6e30srym1d9-stripprefix.stripprefix.prefixes=assaodah.santrix.my.id
+            - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+            - traefik.http.routers.http-0-ygrptpha1cr1l6e30srym1d9.entryPoints=http
+            - traefik.http.routers.http-0-ygrptpha1cr1l6e30srym1d9.middlewares=gzip
+            - 'traefik.http.routers.http-0-ygrptpha1cr1l6e30srym1d9.rule=Host(`ygrptpha1cr1l6e30srym1d9.43.129.50.214.sslip.io`) && PathPrefix(`/`)'
+            - traefik.http.routers.http-0-ygrptpha1cr1l6e30srym1d9.service=http-0-ygrptpha1cr1l6e30srym1d9
+            - traefik.http.routers.http-1-ygrptpha1cr1l6e30srym1d9.entryPoints=http
+            - traefik.http.routers.http-1-ygrptpha1cr1l6e30srym1d9.middlewares=redirect-to-https
+            - 'traefik.http.routers.http-1-ygrptpha1cr1l6e30srym1d9.rule=Host(`erp-sekolah.santrix.my.id`) && PathPrefix(`/`)'
+            - traefik.http.routers.http-1-ygrptpha1cr1l6e30srym1d9.service=http-1-ygrptpha1cr1l6e30srym1d9
+            - traefik.http.routers.http-2-ygrptpha1cr1l6e30srym1d9.entryPoints=http
+            - 'traefik.http.routers.http-2-ygrptpha1cr1l6e30srym1d9.middlewares=http-2-ygrptpha1cr1l6e30srym1d9-stripprefix,gzip'
+            - 'traefik.http.routers.http-2-ygrptpha1cr1l6e30srym1d9.rule=Host(`assaodah.santrix.my.id`) && PathPrefix(`/`)'
+            - traefik.http.routers.http-2-ygrptpha1cr1l6e30srym1d9.service=http-2-ygrptpha1cr1l6e30srym1d9
+            - traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.entryPoints=https
+            - traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.middlewares=gzip
+            - 'traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.rule=Host(`erp-sekolah.santrix.my.id`) && PathPrefix(`/`)'
+            - 'traefik.http.routers.https-2-ygrptpha1cr1l6e30srym1d9.rule=Host(`assaodah.santrix.my.id`) && PathPrefix(`/`)'
+            - traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.service=https-1-ygrptpha1cr1l6e30srym1d9
+            - traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.tls.certresolver=letsencrypt
+            - traefik.http.routers.https-1-ygrptpha1cr1l6e30srym1d9.tls=true
+            - traefik.http.routers.https-2-ygrptpha1cr1l6e30srym1d9.service=http-2-ygrptpha1cr1l6e30srym1d9
+            - traefik.http.routers.https-2-ygrptpha1cr1l6e30srym1d9.tls.certresolver=letsencrypt
+            - traefik.http.routers.https-2-ygrptpha1cr1l6e30srym1d9.tls=true
+            - traefik.http.services.http-0-ygrptpha1cr1l6e30srym1d9.loadbalancer.server.port=3000
+            - traefik.http.services.http-1-ygrptpha1cr1l6e30srym1d9.loadbalancer.server.port=3000
+            - traefik.http.services.http-2-ygrptpha1cr1l6e30srym1d9.loadbalancer.server.port=3000
+            - traefik.http.services.https-1-ygrptpha1cr1l6e30srym1d9.loadbalancer.server.port=3000
+            - 'caddy_0.encode=zstd gzip'
+            - 'caddy_0.handle_path.0_reverse_proxy={{upstreams 3000}}'
+            - 'caddy_0.handle_path=/*'
+            - caddy_0.header=-Server
+            - 'caddy_0.try_files={path} /index.html /index.php'
+            - 'caddy_0=http://ygrptpha1cr1l6e30srym1d9.43.129.50.214.sslip.io'
+            - 'caddy_1.encode=zstd gzip'
+            - 'caddy_1.handle_path.1_reverse_proxy={{upstreams 3000}}'
+            - 'caddy_1.handle_path=/*'
+            - caddy_1.header=-Server
+            - 'caddy_1.try_files={path} /index.html /index.php'
+            - 'caddy_1=https://erp-sekolah.santrix.my.id'
+            - 'caddy_2.encode=zstd gzip'
+            - 'caddy_2.handle_path.2_reverse_proxy={{upstreams 3000}}'
+            - 'caddy_2.handle_path=assaodah.santrix.my.id*'
+            - caddy_2.header=-Server
+            - 'caddy_2.try_files={path} /index.html /index.php'
+            - 'caddy_2=https://assaodah.santrix.my.id'
+            - caddy_ingress_network=coolify
+            - coolify.managed=true
+            - coolify.version=4.0.0-beta.473
+            - coolify.applicationId=2
+            - coolify.type=application
+            - coolify.name=ygrptpha1cr1l6e30srym1d9
+            - coolify.resourceName=erp-assaodah
+            - coolify.projectName=my-first-project
+            - coolify.serviceName=erp-assaodah
+            - coolify.environmentName=production
+            - coolify.pullRequestId=0
+networks:
+    coolify:
+        external: true
+        name: coolify
+        attachable: true

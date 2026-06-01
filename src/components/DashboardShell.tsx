@@ -16,10 +16,11 @@ import HelpFAB from "@/components/HelpFAB";
 export default function DashboardShell({ user, children }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Persist collapsed state
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved === "true") setCollapsed(true);
+    if (saved !== null) {
+      setCollapsed(saved === "true");
+    }
   }, []);
 
   function handleToggle() {
@@ -34,10 +35,10 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
     <HelpProvider>
       <div className="flex h-screen w-full overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
         <Sidebar user={user} collapsed={collapsed} onToggle={handleToggle} />
-        <main className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "#f8fafc" }}>
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
           <Header user={user} />
-          <div className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+          <div className="flex-1 overflow-auto custom-scrollbar">
+            <div className="p-8 max-w-[1600px] mx-auto space-y-8 min-h-[calc(100vh-64px)]">
               <PageTransition>
                 {children}
               </PageTransition>

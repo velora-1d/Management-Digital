@@ -97,7 +97,7 @@ export default function Header({ user }: HeaderProps) {
   const initial = (user.name || "A").charAt(0).toUpperCase();
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl z-30 relative">
+    <header className="h-16 flex items-center justify-between px-6 shrink-0 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl z-30 relative">
       {/* Left: Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-sm min-w-0">
         <Link href="/dashboard" className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
@@ -163,7 +163,7 @@ export default function Header({ user }: HeaderProps) {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+            <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
               {initial}
             </div>
             <div className="hidden sm:block text-left">

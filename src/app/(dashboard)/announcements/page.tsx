@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -17,7 +17,6 @@ import {
   Clock, 
   Calendar, 
   Send,
-  MoreVertical,
   ChevronDown,
   LayoutGrid
 } from "lucide-react";
@@ -138,7 +137,7 @@ export default function AnnouncementsPage() {
         timer: 1500,
         showConfirmButton: false
       });
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Gagal menyimpan pengumuman", "error");
     }
   };
@@ -166,7 +165,7 @@ export default function AnnouncementsPage() {
           timer: 1500,
           showConfirmButton: false
         });
-      } catch (error) {
+      } catch {
         Swal.fire("Error", "Gagal menghapus pengumuman", "error");
       }
     }
@@ -327,7 +326,7 @@ export default function AnnouncementsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
           <Card className="relative w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">

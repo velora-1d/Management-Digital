@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { payrolls, employees, payrollDetails, salaryComponents } from "@/db/schema";
+import { payrolls, employees, payrollDetails } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
 import { eq, and, isNull } from "drizzle-orm";
 

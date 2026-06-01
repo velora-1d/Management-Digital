@@ -23,6 +23,9 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/api/users": ["superadmin", "admin"],
   "/api/seed": ["superadmin"],
 
+  // === WEB CMS (superadmin + admin) ===
+  "/api/admin/cms": ["superadmin", "admin"],
+
   // === KEUANGAN (superadmin + admin + bendahara) ===
   "/api/payroll": ["superadmin", "admin", "bendahara"],
   "/api/infaq-bills": ["superadmin", "admin", "bendahara"],
@@ -32,6 +35,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/api/journal": ["superadmin", "admin", "bendahara"],
   "/api/transaction-categories": ["superadmin", "admin", "bendahara"],
   "/api/reports": ["superadmin", "admin", "bendahara"],
+  "/api/cash-accounts": ["superadmin", "admin", "bendahara"],
 
   // === DATA MASTER ===
   // (Guru perlu akses read-only ke data ini untuk dropdown nilai & absen)
@@ -48,7 +52,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/api/schedules": ["superadmin", "admin", "operator", "siswa", "guru"],
   "/api/attendance": ["superadmin", "admin", "operator", "guru"],
   "/api/grades": ["superadmin", "admin", "guru"],
-  "/api/curriculum": ["superadmin", "admin"],
+  "/api/curriculum": ["superadmin", "admin", "operator"],
   "/api/report-cards": ["superadmin", "admin", "operator"],
   "/api/extracurricular": ["superadmin", "admin", "operator"],
   "/api/counseling": ["superadmin", "admin", "guru"],
@@ -78,6 +82,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
 export const PUBLIC_API_PATHS = [
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/web", // Public Web API
 ];
 
 /**
@@ -91,7 +96,10 @@ export function isPublicApiPath(pathname: string): boolean {
  * Cek apakah role tertentu boleh mengakses path API
  */
 export function canAccess(role: string, pathname: string): boolean {
-  if (role === "superadmin") return true;
+  if (!role) return false;
+  const normalizedRole = role.toLowerCase().replace(/\s+/g, "");
+
+  if (normalizedRole === "superadmin") return true;
 
   let matchedRoles: Role[] | null = null;
   let matchLength = 0;
@@ -104,7 +112,7 @@ export function canAccess(role: string, pathname: string): boolean {
   }
 
   if (matchedRoles === null) return true;
-  return matchedRoles.includes(role as Role);
+  return matchedRoles.includes(normalizedRole as Role);
 }
 
 /**
@@ -129,7 +137,7 @@ export const SIDEBAR_PERMISSIONS: Record<string, Role[]> = {
   "/teaching-assignments": ["superadmin", "admin", "operator"],
   "/schedules": ["superadmin", "admin", "operator", "siswa", "guru"],
   "/attendance": ["superadmin", "admin", "operator", "guru"],
-  "/curriculum": ["superadmin", "admin"],
+  "/curriculum": ["superadmin", "admin", "operator"],
   "/grades": ["superadmin", "admin", "guru"],
   "/report-cards": ["superadmin", "admin", "operator"],
   "/extracurricular": ["superadmin", "admin", "operator"],
@@ -142,6 +150,7 @@ export const SIDEBAR_PERMISSIONS: Record<string, Role[]> = {
   "/wakaf": ["superadmin", "admin", "bendahara"],
   "/journal": ["superadmin", "admin", "bendahara"],
   "/reports": ["superadmin", "admin", "bendahara"],
+  "/cash-accounts": ["superadmin", "admin", "bendahara"],
   
   // SDM
   "/teachers": ["superadmin", "admin", "operator"],
@@ -159,6 +168,9 @@ export const SIDEBAR_PERMISSIONS: Record<string, Role[]> = {
   "/letters": ["superadmin", "admin", "operator"],
   "/announcements": ["superadmin", "admin", "operator"],
   "/school-profile": ["superadmin", "admin"],
+  
+  // Website CMS
+  "/admin/cms": ["superadmin", "admin"],
   
   // Sistem
   "/settings": ["superadmin", "admin"],

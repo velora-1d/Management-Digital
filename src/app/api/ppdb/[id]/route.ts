@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { ppdbRegistrations, registrationPayments } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, and, isNull, sql, asc } from "drizzle-orm";
+import { eq, and, or, isNull, sql, asc } from "drizzle-orm";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
@@ -44,7 +44,11 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     }
 
     await db.transaction(async (tx) => {
-      await tx.update(ppdbRegistrations).set({ deletedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+      await tx.update(ppdbRegistrations).set({ 
+        deletedAt: new Date(),
+        status: 'dihapus'
+      }).where(eq(ppdbRegistrations.id, regId));
+      
       await tx.update(registrationPayments).set({ deletedAt: new Date() })
         .where(and(eq(registrationPayments.payableType, "ppdb"), eq(registrationPayments.payableId, regId), isNull(registrationPayments.deletedAt)));
     });
@@ -68,6 +72,31 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 
     const body = await request.json();
     const data = { ...body };
+
+    // 1. Duplicate Check jika NIK/NISN diubah
+    const nik = data.nik || "";
+    const nisn = data.nisn || "";
+    if (nik || nisn) {
+      const existing = await db.select().from(ppdbRegistrations)
+        .where(
+          and(
+            isNull(ppdbRegistrations.deletedAt),
+            sql`${ppdbRegistrations.id} != ${regId}`,
+            or(
+              nik ? eq(ppdbRegistrations.nik, nik) : undefined,
+              nisn ? eq(ppdbRegistrations.nisn, nisn) : undefined
+            )
+          )
+        ).limit(1);
+
+      if (existing.length > 0) {
+        return NextResponse.json({ 
+          success: false, 
+          message: `NIK/NISN tersebut sudah digunakan oleh pendaftar lain (${existing[0].formNo})` 
+        }, { status: 400 });
+      }
+    }
+
     if (data.height) data.height = Number(data.height);
     if (data.weight) data.weight = Number(data.weight);
     if (data.siblingCount) data.siblingCount = Number(data.siblingCount);

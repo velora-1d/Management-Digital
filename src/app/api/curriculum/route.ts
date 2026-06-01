@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { curriculums, academicYears, gradeComponents } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -46,7 +46,9 @@ export async function GET(req: Request) {
         };
     }));
 
-    return NextResponse.json(detailedData);
+    return NextResponse.json(detailedData, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     console.error("Error fetching curriculums:", error);
     return NextResponse.json(

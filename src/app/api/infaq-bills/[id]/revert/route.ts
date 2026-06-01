@@ -27,7 +27,7 @@ export async function POST(
       if (bill.deletedAt) throw new Error("Tagihan sudah dihapus");
       if (bill.status !== "lunas") throw new Error("Hanya tagihan berstatus LUNAS yang bisa di-revert.");
 
-      await tx.update(infaqBills).set({ status: "belum_lunas" as any, updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
+      await tx.update(infaqBills).set({ status: "belum_lunas", updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
     });
 
     return NextResponse.json({ success: true, message: "Status tagihan berhasil dikembalikan ke Belum Lunas." });

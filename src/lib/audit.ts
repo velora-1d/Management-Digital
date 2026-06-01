@@ -23,8 +23,8 @@ interface AuditLogInput {
   action: string;           // "create" | "update" | "delete" | "void" | "approve" | "reject" | "convert" | "toggle"
   modelType: string;        // "Student" | "InfaqBill" | "GeneralTransaction" | etc
   modelId: string;          // ID entitas yang di-audit
-  oldValues?: Record<string, any> | null;
-  newValues?: Record<string, any> | null;
+  oldValues?: Record<string, unknown> | null;
+  newValues?: Record<string, unknown> | null;
 }
 
 export async function writeAuditLog(input: AuditLogInput): Promise<void> {
@@ -48,13 +48,13 @@ export async function writeAuditLog(input: AuditLogInput): Promise<void> {
  * Shorthand: audit untuk operasi CRUD umum
  */
 export const audit = {
-  create: (userId: number | null, modelType: string, modelId: string, newValues?: Record<string, any>) =>
+  create: (userId: number | null, modelType: string, modelId: string, newValues?: Record<string, unknown>) =>
     writeAuditLog({ userId, action: "create", modelType, modelId, newValues }),
 
-  update: (userId: number | null, modelType: string, modelId: string, oldValues?: Record<string, any>, newValues?: Record<string, any>) =>
+  update: (userId: number | null, modelType: string, modelId: string, oldValues?: Record<string, unknown>, newValues?: Record<string, unknown>) =>
     writeAuditLog({ userId, action: "update", modelType, modelId, oldValues, newValues }),
 
-  delete: (userId: number | null, modelType: string, modelId: string, oldValues?: Record<string, any>) =>
+  delete: (userId: number | null, modelType: string, modelId: string, oldValues?: Record<string, unknown>) =>
     writeAuditLog({ userId, action: "delete", modelType, modelId, oldValues }),
 
   void: (userId: number | null, modelType: string, modelId: string) =>

@@ -9,7 +9,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     const body = await req.json();
     
-    const updateData: any = {};
+    const updateData: Partial<typeof announcements.$inferInsert> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.target !== undefined) updateData.target = body.target;

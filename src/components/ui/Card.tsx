@@ -25,12 +25,12 @@ export default function Card({
     >
       {(title || actions) && (
         <div 
-          className={`${compact ? 'px-4 py-2' : 'px-6 py-4'} border-bottom border-slate-100 flex items-center justify-between gap-4 flex-wrap`} 
+          className={`${compact ? 'px-4 py-2' : 'px-8 py-5'} border-bottom border-slate-100 flex items-center justify-between gap-4 flex-wrap`} 
           style={{ borderBottom: "1px solid #f1f5f9" }}
         >
           <div className="flex items-center gap-2">
             {icon && (
-              <div className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500" />
+              <div className="w-2 h-2 rounded-full bg-linear-to-br from-indigo-500 to-violet-500" />
             )}
             {title && (
               <h4 className="font-heading font-bold text-sm text-slate-800 m-0">
@@ -43,7 +43,7 @@ export default function Card({
           )}
         </div>
       )}
-      <div className={noPadding ? "" : "p-6"}>
+      <div className={noPadding ? "" : "p-8"}>
         {children}
       </div>
     </div>

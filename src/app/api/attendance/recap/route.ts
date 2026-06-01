@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { attendances, students } from "@/db/schema";
-import { and, eq, gte, isNull, lte, asc } from "drizzle-orm";
+import { attendances, students, studentEnrollments, academicYears } from "@/db/schema";
+import { and, eq, gte, isNull, lte, asc, sql } from "drizzle-orm";
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Terjadi kesalahan server";
+}
 
 // GET: Rekapitulasi absensi siswa per periode per kelas
 export async function GET(request: Request) {
@@ -10,6 +14,7 @@ export async function GET(request: Request) {
     const classroomId = searchParams.get("classroomId");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const academicYearId = searchParams.get("academicYearId");
 
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
@@ -23,59 +28,88 @@ export async function GET(request: Request) {
     }
 
     const cId = parseInt(classroomId);
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
 
-    // Ambil semua murid aktif di kelas ini
-    const allStudents = await db
-      .select({ id: students.id, name: students.name, nisn: students.nisn })
-      .from(students)
-      .where(and(eq(students.classroomId, cId), isNull(students.deletedAt)))
-      .orderBy(asc(students.name));
-
-    const totalStudents = allStudents.length;
-    const paginated = limit > 0 ? allStudents.slice(offset, offset + limit) : allStudents;
-
-    if (paginated.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: { total: totalStudents, page, limit, totalPages: limit > 0 ? Math.ceil(totalStudents / limit) : 1 },
-      });
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
     }
 
-    // Ambil absensi dalam range tanggal untuk kelas ini
-    const attendanceData = await db
-      .select()
-      .from(attendances)
-      .where(
+    // 1. Hitung total murid aktif di kelas ini (untuk pagination)
+    const countRes = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(studentEnrollments)
+      .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+      .where(and(
+        eq(studentEnrollments.classroomId, cId),
+        targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
+        isNull(studentEnrollments.deletedAt),
+        isNull(students.deletedAt)
+      ));
+    
+    const totalStudents = countRes[0].count;
+
+    // 2. Ambil Rekap menggunakan SQL Aggregation (Grouping per Student)
+    // Ini jauh lebih cepat daripada mengambil ribuah data lalu mem-filter di JS
+    const recap = await db
+      .select({
+        id: students.id,
+        nisn: students.nisn,
+        name: students.name,
+        hadir: sql<number>`count(case when ${attendances.status} = 'hadir' then 1 end)`.mapWith(Number),
+        sakit: sql<number>`count(case when ${attendances.status} = 'sakit' then 1 end)`.mapWith(Number),
+        izin: sql<number>`count(case when ${attendances.status} = 'izin' then 1 end)`.mapWith(Number),
+        alpha: sql<number>`count(case when ${attendances.status} = 'alpha' then 1 end)`.mapWith(Number),
+        total: sql<number>`count(${attendances.status})`.mapWith(Number),
+      })
+      .from(studentEnrollments)
+      .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+      .leftJoin(
+        attendances,
         and(
-          eq(attendances.classroomId, cId),
+          eq(students.id, attendances.studentId),
           gte(attendances.date, startDate),
-          lte(attendances.date, endDate)
+          lte(attendances.date, endDate),
+          eq(attendances.classroomId, cId),
+          targetAcademicYearId ? eq(attendances.academicYearId, targetAcademicYearId) : undefined
         )
-      );
+      )
+      .where(and(
+        eq(studentEnrollments.classroomId, cId),
+        targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
+        isNull(studentEnrollments.deletedAt),
+        isNull(students.deletedAt)
+      ))
+      .groupBy(students.id)
+      .orderBy(asc(students.name))
+      .limit(limit)
+      .offset(offset);
 
-    // Kalkulasi rekap per murid
-    const recap = paginated.map((student) => {
-      const studentAttendances = attendanceData.filter((a) => a.studentId === student.id);
-      const hadir = studentAttendances.filter((a) => a.status === "hadir").length;
-      const sakit = studentAttendances.filter((a) => a.status === "sakit").length;
-      const izin = studentAttendances.filter((a) => a.status === "izin").length;
-      const alpha = studentAttendances.filter((a) => a.status === "alpha").length;
+    const formattedData = recap.map(r => ({
+      id: r.id,
+      nisn: r.nisn,
+      name: r.name,
+      stats: {
+        hadir: r.hadir,
+        sakit: r.sakit,
+        izin: r.izin,
+        alpha: r.alpha,
+        total: r.total,
+      }
+    }));
 
-      return {
-        id: student.id,
-        nisn: student.nisn,
-        name: student.name,
-        stats: { hadir, sakit, izin, alpha, total: hadir + sakit + izin + alpha },
-      };
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      data: recap,
-      meta: { total: totalStudents, page, limit, totalPages: limit > 0 ? Math.ceil(totalStudents / limit) : 1 },
+      data: formattedData,
+      meta: { total: totalStudents, page, limit, totalPages: Math.ceil(totalStudents / limit) },
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }

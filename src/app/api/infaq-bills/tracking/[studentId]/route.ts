@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { students, infaqBills, infaqPayments } from "@/db/schema";
-import { eq, and, isNull, inArray, asc, sql } from "drizzle-orm";
+import { eq, and, isNull, inArray, asc } from "drizzle-orm";
 
 /**
  * GET /api/infaq-bills/tracking/[studentId]
@@ -35,7 +35,7 @@ export async function GET(
 
     // Get payments
     const billIds = bills.map(b => b.id);
-    let paymentsByBill: Record<number, { id: number; amountPaid: number; paymentDate: string | null }[]> = {};
+    const paymentsByBill: Record<number, { id: number; amountPaid: number; paymentDate: string | null }[]> = {};
     if (billIds.length > 0) {
       const payments = await db.select({ id: infaqPayments.id, billId: infaqPayments.billId, amountPaid: infaqPayments.amountPaid, paymentDate: infaqPayments.paymentDate })
         .from(infaqPayments)

@@ -8,13 +8,32 @@ import Swal from "sweetalert2";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
+interface AcademicYear {
+  id: number;
+  year: string;
+  isActive: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: AcademicYear[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function AcademicYearsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [limit] = useState(10);
 
-  const { data: result, isLoading } = useQuery({
+  const { data: result, isLoading } = useQuery<ApiResponse>({
     queryKey: ["academic-years", page, search],
     queryFn: async () => {
       const res = await fetch(`/api/academic-years?page=${page}&limit=${limit}&q=${search}`);
@@ -45,11 +64,10 @@ export default function AcademicYearsPage() {
                 filename: `data_tahun_ajaran_${new Date().toISOString().split("T")[0]}`,
                 columns: [
                   { header: "No", key: "_no", width: 8, align: "center" },
-                  { header: "Tahun", key: "name", width: 25 },
-                  { header: "Semester", key: "semester", width: 15, format: (v: string) => (v || 'ganjil').charAt(0).toUpperCase() + (v || 'ganjil').slice(1) },
-                  { header: "Status", key: "is_active", width: 12, align: "center", format: (v: boolean) => v ? 'Aktif' : 'Nonaktif' },
+                  { header: "Tahun", key: "year", width: 25 },
+                  { header: "Status", key: "isActive", width: 12, align: "center", format: (v: boolean) => v ? 'Aktif' : 'Nonaktif' },
                 ],
-                data: data.map((y: any, i: number) => ({
+                data: data.map((y: AcademicYear, i: number) => ({
                   ...y,
                   _no: (page - 1) * limit + i + 1,
                 })),
@@ -64,13 +82,6 @@ export default function AcademicYearsPage() {
                       <label style="font-size: 14px; font-weight: 600;">Tahun (Contoh: 2023/2024)</label>
                       <input id="swal-input1" class="swal2-input" placeholder="2023/2024" style="margin-top: 5px;">
                     </div>
-                    <div style="text-align: left;">
-                      <label style="font-size: 14px; font-weight: 600;">Semester</label>
-                      <select id="swal-input2" class="swal2-input" style="margin-top: 5px; width: 100%;">
-                        <option value="ganjil">Ganjil</option>
-                        <option value="genap">Genap</option>
-                      </select>
-                    </div>
                   `,
                   focusConfirm: false,
                   showCancelButton: true,
@@ -78,17 +89,15 @@ export default function AcademicYearsPage() {
                   cancelButtonText: "Batal",
                   preConfirm: () => {
                     const input1 = document.getElementById('swal-input1') as HTMLInputElement;
-                    const input2 = document.getElementById('swal-input2') as HTMLSelectElement;
                     return {
-                      name: input1 ? input1.value : '',
-                      semester: input2 ? input2.value : 'ganjil'
+                      year: input1 ? input1.value : '',
                     }
                   }
                 });
 
                 if (!result.isConfirmed) return;
-                const { name, semester } = result.value || {};
-                if (!name) {
+                const { year } = result.value || {};
+                if (!year) {
                   Swal.fire("Error", "Tahun ajaran tidak boleh kosong", "error");
                   return;
                 }
@@ -96,8 +105,12 @@ export default function AcademicYearsPage() {
                 try {
                   const res = await fetch("/api/academic-years", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, semester }),
+                    body: JSON.stringify({ year }),
                   });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || "Gagal menghubungi server");
+                  }
                   const json = await res.json();
                   if (json.success) { 
                     Swal.fire("Berhasil", "Tahun ajaran berhasil ditambahkan", "success"); 
@@ -105,8 +118,9 @@ export default function AcademicYearsPage() {
                   } else {
                     Swal.fire("Gagal", json.message, "error");
                   }
-                } catch { 
-                  Swal.fire("Error", "Gagal menghubungi server", "error"); 
+                } catch (error: unknown) { 
+                  const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+                  Swal.fire("Error", msg, "error"); 
                 }
               }}
               className="inline-flex items-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-xs font-bold border border-sky-400 shadow-lg shadow-sky-900/20 transition-all uppercase tracking-wider"
@@ -145,7 +159,7 @@ export default function AcademicYearsPage() {
             <thead>
               <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0", width: 50 }}>No</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Tahun & Semester</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Tahun</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Status</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Aksi</th>
               </tr>
@@ -169,8 +183,8 @@ export default function AcademicYearsPage() {
                   </div>
                 </td></tr>
               ) : (
-                data.map((y: any, i: number) => {
-                  const statusBadge = y.is_active
+                data.map((y: AcademicYear, i: number) => {
+                  const statusBadge = y.isActive
                     ? <span style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}><span style={{ width: 6, height: 6, background: "#059669", borderRadius: "50%" }} className="animate-pulse"></span>Aktif</span>
                     : <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6b7280", background: "#e5e7eb", borderRadius: 999 }}>Nonaktif</span>;
 
@@ -183,8 +197,7 @@ export default function AcademicYearsPage() {
                             <svg style={{ width: "1.125rem", height: "1.125rem", color: "#0284c7" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                           </div>
                           <div>
-                            <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>{y.name || "-"}</p>
-                            <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>Semester {(y.semester || "ganjil").charAt(0).toUpperCase() + (y.semester || "ganjil").slice(1)}</p>
+                            <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>{y.year || "-"}</p>
                           </div>
                         </div>
                       </td>
@@ -195,19 +208,32 @@ export default function AcademicYearsPage() {
                             onClick={async () => {
                               const result = await Swal.fire({
                                 title: "Update Status?",
-                                text: `Ubah status tahun ajaran ${y.name} menjadi ${y.is_active ? 'Nonaktif' : 'Aktif'}?`,
+                                text: `Ubah status tahun ajaran ${y.year} menjadi ${y.isActive ? 'Nonaktif' : 'Aktif'}?`,
                                 icon: "question",
                                 showCancelButton: true,
                                 confirmButtonText: "Ya, Ubah",
                               });
                               if (!result.isConfirmed) return;
                               try {
-                                await fetch(`/api/academic-years/${y.id}`, {
+                                const res = await fetch(`/api/academic-years/${y.id}`, {
                                   method: "PUT", headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ is_active: !y.is_active }),
+                                  body: JSON.stringify({ isActive: !y.isActive }),
                                 });
-                                refreshData();
-                              } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
+                                if (!res.ok) {
+                                  const err = await res.json().catch(() => ({}));
+                                  throw new Error(err.message || "Gagal menghubungi server");
+                                }
+                                const json = await res.json();
+                                if (json.success) {
+                                  Swal.fire("Berhasil", "Status tahun ajaran berhasi diperbarui", "success");
+                                  refreshData();
+                                } else {
+                                  Swal.fire("Gagal", json.message || "Gagal memperbarui status", "error");
+                                }
+                              } catch (error: unknown) { 
+                                const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+                                Swal.fire("Error", msg, "error"); 
+                              }
                             }}
                             style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}
                           >
@@ -217,7 +243,7 @@ export default function AcademicYearsPage() {
                             onClick={async () => {
                               const result = await Swal.fire({
                                 title: "Hapus Tahun Ajaran?",
-                                text: `Hapus periode ${y.name}?`,
+                                text: `Hapus periode ${y.year}?`,
                                 icon: "warning",
                                 showCancelButton: true,
                                 confirmButtonColor: "#e11d48",
@@ -226,10 +252,21 @@ export default function AcademicYearsPage() {
                               if (!result.isConfirmed) return;
                               try {
                                 const res = await fetch(`/api/academic-years/${y.id}`, { method: "DELETE" });
+                                if (!res.ok) {
+                                  const err = await res.json().catch(() => ({}));
+                                  throw new Error(err.message || "Gagal menghubungi server");
+                                }
                                 const json = await res.json();
-                                if (json.success) refreshData();
-                                else Swal.fire("Gagal", json.message, "error");
-                              } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
+                                if (json.success) {
+                                  Swal.fire("Berhasil", "Tahun ajaran berhasil dihapus", "success");
+                                  refreshData();
+                                } else {
+                                  Swal.fire("Gagal", json.message || "Gagal menghapus tahun ajaran", "error");
+                                }
+                              } catch (error: unknown) { 
+                                const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+                                Swal.fire("Error", msg, "error"); 
+                              }
                             }}
                             style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}
                           >

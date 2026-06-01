@@ -26,10 +26,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${diff}` }).where(eq(cashAccounts.id, txEntry.cashAccountId));
       }
 
-      const updateData: Record<string, any> = { updatedAt: new Date() };
+      const updateData: Partial<typeof generalTransactions.$inferInsert> = { updatedAt: new Date() };
       if (amount !== undefined) updateData.amount = Number(amount);
       if (description !== undefined) updateData.description = description;
-      if (date !== undefined) updateData.date = date;
+      if (date !== undefined) updateData.transactionDate = date;
       if (wakafDonorId !== undefined) updateData.wakafDonorId = wakafDonorId ? Number(wakafDonorId) : null;
       if (wakafPurposeId !== undefined) updateData.wakafPurposeId = wakafPurposeId ? Number(wakafPurposeId) : null;
 
@@ -56,7 +56,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
       if (!entry || entry.deletedAt) throw new Error("Transaksi tidak ditemukan");
       if (entry.status === "void") throw new Error("Transaksi sudah void");
 
-      await tx.update(generalTransactions).set({ status: "void" as any, deletedAt: new Date() }).where(eq(generalTransactions.id, id));
+      await tx.update(generalTransactions).set({ status: "void", deletedAt: new Date() }).where(eq(generalTransactions.id, id));
       if (entry.cashAccountId) {
         const revertAmount = entry.type === "in" ? -entry.amount : entry.amount;
         await tx.update(cashAccounts).set({ balance: sql`${cashAccounts.balance} + ${revertAmount}` }).where(eq(cashAccounts.id, entry.cashAccountId));

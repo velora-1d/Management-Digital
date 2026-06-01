@@ -10,6 +10,9 @@ import { UserPlus } from "lucide-react";
 const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "0.625rem 0.875rem", border: "1.5px solid #e2e8f0", borderRadius: "0.5rem", fontSize: "0.8125rem", outline: "none" };
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.375rem" };
 
+type PpdbFieldEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type PpdbFormData = Record<string, string>;
+
 const SectionHeader = ({ letter, label, color = "#0ea5e9" }: { letter: string; label: string; color?: string }) => (
   <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.875rem", fontWeight: 700, color, margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
     <span style={{ width: "1.5rem", height: "1.5rem", background: "#e0f2fe", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", color: "#0284c7", fontWeight: 800 }}>{letter}</span>
@@ -17,21 +20,53 @@ const SectionHeader = ({ letter, label, color = "#0ea5e9" }: { letter: string; l
   </h3>
 );
 
-const Field = ({ label, name, type = "text", required = false, span2 = false, placeholder = "", children, formData, onChange }: any) => (
+interface FieldProps {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+  span2?: boolean;
+  placeholder?: string;
+  children?: React.ReactNode;
+  formData: PpdbFormData;
+  onChange: (e: PpdbFieldEvent) => void;
+}
+
+const Field = ({ label, name, type = "text", required = false, span2 = false, placeholder = "", children, formData, onChange }: FieldProps) => (
   <div style={span2 ? { gridColumn: "span 2" } : {}}>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    {children || <input type={type} name={name} value={(formData as any)[name] || ""} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-sky-500 transition-colors bg-white text-slate-800" />}
+    {children || <input type={type} name={name} value={formData[name] || ""} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-sky-500 transition-colors bg-white text-slate-800" />}
   </div>
 );
 
-const Select = ({ label, name, required = false, options, formData, onChange }: { label: string; name: string; required?: boolean; options: [string, string][]; formData: any; onChange: any }) => (
+interface SelectProps {
+  label: string;
+  name: string;
+  required?: boolean;
+  options: [string, string][];
+  formData: PpdbFormData;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+const Select = ({ label, name, required = false, options, formData, onChange }: SelectProps) => (
   <div>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    <select name={name} value={(formData as any)[name] || ""} onChange={onChange} required={required} style={inputStyle} className="focus:border-sky-500 bg-white text-slate-800">
+    <select name={name} value={formData[name] || ""} onChange={onChange} required={required} style={inputStyle} className="focus:border-sky-500 bg-white text-slate-800">
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>
   </div>
 );
+
+const OCCUPATION_OPTIONS: [string, string][] = [
+  ["", "-- Pilih Pekerjaan --"],
+  ["ABRI/TNI", "ABRI/TNI"],
+  ["Pedagang", "Pedagang"],
+  ["Karyawan", "Karyawan"],
+  ["Guru", "Guru"],
+  ["Wiraswasta", "Wiraswasta"],
+  ["Buruh", "Buruh"],
+  ["Lainnya", "Lainnya"]
+];
 
 export default function PpdbEditPage(props: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -73,7 +108,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
       .finally(() => setInitLoading(false));
   }, [regId]);
 
-  const handleChange = (e: any) => setF({ ...f, [e.target.name]: e.target.value });
+  const handleChange = (e: PpdbFieldEvent) => setF({ ...f, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +207,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
                   <Field label="Tgl Lahir" name="fatherBirthDate" type="date" formData={f} onChange={handleChange} />
                 </div>
                 <Field label="Pendidikan" name="fatherEducation" placeholder="SD / SMP / SMA / S1 / S2" formData={f} onChange={handleChange} />
-                <Field label="Pekerjaan" name="fatherOccupation" formData={f} onChange={handleChange} />
+                <Select label="Pekerjaan" name="fatherOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
               </div>
             </div>
             {/* Kolom Ibu */}
@@ -186,7 +221,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
                   <Field label="Tgl Lahir" name="motherBirthDate" type="date" formData={f} onChange={handleChange} />
                 </div>
                 <Field label="Pendidikan" name="motherEducation" placeholder="SD / SMP / SMA / S1 / S2" formData={f} onChange={handleChange} />
-                <Field label="Pekerjaan" name="motherOccupation" formData={f} onChange={handleChange} />
+                <Select label="Pekerjaan" name="motherOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
               </div>
             </div>
           </div>
@@ -213,7 +248,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
               </div>
             </div>
             <Field label="Pendidikan" name="guardianEducation" formData={f} onChange={handleChange} />
-            <Field label="Pekerjaan" name="guardianOccupation" formData={f} onChange={handleChange} />
+            <Select label="Pekerjaan" name="guardianOccupation" options={OCCUPATION_OPTIONS} formData={f} onChange={handleChange} />
             <Field label="No. Kontak Wali" name="guardianPhone" formData={f} onChange={handleChange} />
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Alamat Wali</label>

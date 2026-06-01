@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { students, classrooms } from "@/db/schema";
+import { students, classrooms, studentEnrollments, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { isNull, eq } from "drizzle-orm";
+import { isNull, eq, and } from "drizzle-orm";
 
 /**
  * POST /api/students/import — Import siswa dari CSV
@@ -35,6 +35,20 @@ export async function POST(request: Request) {
     const classMap: Record<string, number> = {};
     classroomList.forEach((c) => { classMap[c.name.toLowerCase()] = c.id; });
 
+    // Cari tahun ajaran aktif untuk enrollment
+    const activeYearRes = await db.select({ id: academicYears.id })
+      .from(academicYears)
+      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .limit(1);
+    
+    if (activeYearRes.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Tidak ada tahun ajaran aktif. Silakan aktifkan tahun ajaran terlebih dahulu." 
+      }, { status: 400 });
+    }
+    const yearId = activeYearRes[0].id;
+
     for (let i = 0; i < rows.length; i++) {
       try {
         const cols = parseCSVLine(rows[i]);
@@ -65,25 +79,34 @@ export async function POST(request: Request) {
 
         const classroomId = kelas ? (classMap[kelas.trim().toLowerCase()] || null) : null;
 
-        await db.insert(students).values({
-          nisn: nisn?.trim() || "",
-          nis: nis?.trim() || "",
-          nik: nik?.trim() || "",
-          noKk: noKk?.trim() || "",
-          name: nama.trim(),
-          gender: jk?.trim()?.toUpperCase() === "P" ? "P" : "L",
-          classroomId,
-          status: (status?.trim() || "aktif") as any,
-          entryDate: tglMasuk?.trim() || "",
-          fatherName: ayah?.trim() || "",
-          motherName: ibu?.trim() || "",
-          guardianName: wali?.trim() || "",
-          phone: telepon?.trim() || "",
-          address: alamat?.trim() || "",
-          birthPlace: tmptLahir?.trim() || "",
-          birthDate: tglLahir?.trim() || "",
-          infaqNominal: infaqStr ? parseFloat(infaqStr) || 0 : 0,
-          unitId: user.unitId || "",
+        await db.transaction(async (tx) => {
+          const [newStudent] = await tx.insert(students).values({
+            nisn: nisn?.trim() || "",
+            nis: nis?.trim() || "",
+            nik: nik?.trim() || "",
+            noKk: noKk?.trim() || "",
+            name: nama.trim(),
+            gender: jk?.trim()?.toUpperCase() === "P" ? "P" : "L",
+            classroomId,
+            status: (status?.trim() || "aktif") as "aktif" | "lulus" | "pindah" | "nonaktif",
+            entryDate: tglMasuk?.trim() || "",
+            fatherName: ayah?.trim() || "",
+            motherName: ibu?.trim() || "",
+            guardianName: wali?.trim() || "",
+            phone: telepon?.trim() || "",
+            address: alamat?.trim() || "",
+            birthPlace: tmptLahir?.trim() || "",
+            birthDate: tglLahir?.trim() || "",
+            infaqNominal: infaqStr ? parseFloat(infaqStr) || 0 : 0,
+            unitId: user.unitId || "",
+          }).returning();
+
+          await tx.insert(studentEnrollments).values({
+            studentId: newStudent.id,
+            classroomId,
+            academicYearId: yearId,
+            enrollmentType: "baru",
+          });
         });
         sukses++;
       } catch (err) {

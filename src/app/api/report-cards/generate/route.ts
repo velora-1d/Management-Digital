@@ -15,7 +15,7 @@ import {
     classTeacherNotes,
     reportCards
 } from "@/db/schema";
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 // POST /api/report-cards/generate — Generate data rapor lengkap per siswa
 export async function POST(req: Request) {

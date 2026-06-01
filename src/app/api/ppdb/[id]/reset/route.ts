@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { ppdbRegistrations, registrationPayments } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       await tx.delete(registrationPayments)
         .where(and(eq(registrationPayments.payableType, "ppdb"), eq(registrationPayments.payableId, regId), eq(registrationPayments.isPaid, false)));
 
-      await tx.update(ppdbRegistrations).set({ status: "menunggu" as any, updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+      await tx.update(ppdbRegistrations).set({ status: "menunggu", updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
     });
 
     return NextResponse.json({ success: true, message: `${reg.name} direset ke status menunggu.` });

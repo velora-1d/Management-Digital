@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { infaqBills, students, academicYears, classrooms, infaqPayments } from "@/db/schema";
-import { isNull, and, eq, ilike, asc, desc, sql, inArray } from "drizzle-orm";
+import { infaqBills, students, academicYears, classrooms, infaqPayments, studentEnrollments } from "@/db/schema";
+import { isNull, and, eq, ilike, desc, sql, inArray } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,26 +10,30 @@ export async function GET(request: Request) {
   const semester = searchParams.get("semester") || "";
   const academicYearId = searchParams.get("academicYearId") || "";
   const classroomId = searchParams.get("classroomId") || "";
+  const gender = searchParams.get("gender") || "";
   const statusFilter = searchParams.get("status") || "";
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 25));
 
   try {
     // 1. Tentukan Tahun Ajaran Target
-    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
-    if (!targetAcademicYearId) {
-      const [activeYear] = await db.select({ id: academicYears.id })
-        .from(academicYears)
-        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
-        .limit(1);
-      targetAcademicYearId = activeYear?.id || null;
+    let targetAcademicYearId: number | null = null;
+    if (academicYearId !== "all") {
+      targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+      if (!targetAcademicYearId) {
+        const [activeYear] = await db.select({ id: academicYears.id })
+          .from(academicYears)
+          .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+          .limit(1);
+        targetAcademicYearId = activeYear?.id || null;
+      }
     }
 
     // 2. Build where clause
-    const conditions = [isNull(infaqBills.deletedAt)];
+    const conditions = [isNull(infaqBills.deletedAt), isNull(students.deletedAt), isNull(studentEnrollments.deletedAt)];
     if (targetAcademicYearId) conditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
     if (month) conditions.push(eq(infaqBills.month, month));
-    if (statusFilter) conditions.push(eq(infaqBills.status, statusFilter as any));
+    if (statusFilter) conditions.push(eq(infaqBills.status, statusFilter));
 
     // Filter Semester
     if (semester) {
@@ -41,7 +45,8 @@ export async function GET(request: Request) {
 
     // Filter Relasi Siswa
     if (search) conditions.push(ilike(students.name, `%${search}%`));
-    if (classroomId) conditions.push(eq(students.classroomId, Number(classroomId)));
+    if (classroomId) conditions.push(eq(studentEnrollments.classroomId, Number(classroomId)));
+    if (gender) conditions.push(eq(students.gender, gender));
 
     const whereClause = and(...conditions);
 
@@ -57,11 +62,19 @@ export async function GET(request: Request) {
         studentName: students.name,
         studentNisn: students.nisn,
         studentGender: students.gender,
-        studentClassroomId: students.classroomId,
+        studentClassroomId: studentEnrollments.classroomId,
         academicYearName: academicYears.year,
       })
       .from(infaqBills)
       .leftJoin(students, eq(infaqBills.studentId, students.id))
+      .leftJoin(
+        studentEnrollments,
+        and(
+          eq(studentEnrollments.studentId, infaqBills.studentId),
+          eq(studentEnrollments.academicYearId, infaqBills.academicYearId),
+          isNull(studentEnrollments.deletedAt)
+        )
+      )
       .leftJoin(academicYears, eq(infaqBills.academicYearId, academicYears.id))
       .where(whereClause)
       .orderBy(desc(infaqBills.createdAt))
@@ -71,12 +84,20 @@ export async function GET(request: Request) {
       db.select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(infaqBills)
       .leftJoin(students, eq(infaqBills.studentId, students.id))
-      .where(whereClause)
+      .leftJoin(
+        studentEnrollments,
+        and(
+          eq(studentEnrollments.studentId, infaqBills.studentId),
+          eq(studentEnrollments.academicYearId, infaqBills.academicYearId),
+          isNull(studentEnrollments.deletedAt)
+        )
+      )
+      .where(whereClause),
     ]);
 
     // Ambil total pembayaran per bill
     const billIds = rawBills.map(b => b.id);
-    let paymentMap: Record<number, number> = {};
+    const paymentMap: Record<number, number> = {};
     if (billIds.length > 0) {
       const paymentSums = await db.select({
         billId: infaqPayments.billId,
@@ -95,7 +116,7 @@ export async function GET(request: Request) {
 
     // Ambil nama kelas
     const classIds = [...new Set(rawBills.map(b => b.studentClassroomId).filter((id): id is number => id != null))];
-    let classMap: Record<number, string> = {};
+    const classMap: Record<number, string> = {};
     if (classIds.length > 0) {
       const cls = await db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(inArray(classrooms.id, classIds));
       cls.forEach(c => { classMap[c.id] = c.name; });
@@ -120,11 +141,15 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: formattedBills,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
+
+    response.headers.set('Cache-Control', 'no-store');
+
+    return response;
   } catch (error) {
     console.error("Infaq bills GET error:", error);
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });

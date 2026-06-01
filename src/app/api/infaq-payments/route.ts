@@ -76,11 +76,11 @@ export async function POST(request: Request) {
       if (method === "tabungan" && bill.studentId) {
         const [{ savingsIn }] = await tx.select({
           savingsIn: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number)
-        }).from(studentSavings).where(and(eq(studentSavings.studentId, bill.studentId), eq(studentSavings.type, "setor" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+        }).from(studentSavings).where(and(eq(studentSavings.studentId, bill.studentId), eq(studentSavings.type, "setor"), eq(studentSavings.status, "active"), isNull(studentSavings.deletedAt)));
 
         const [{ savingsOut }] = await tx.select({
           savingsOut: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number)
-        }).from(studentSavings).where(and(eq(studentSavings.studentId, bill.studentId), eq(studentSavings.type, "tarik" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+        }).from(studentSavings).where(and(eq(studentSavings.studentId, bill.studentId), eq(studentSavings.type, "tarik"), eq(studentSavings.status, "active"), isNull(studentSavings.deletedAt)));
 
         const balance = savingsIn - savingsOut;
 
@@ -92,11 +92,11 @@ export async function POST(request: Request) {
 
         await tx.insert(studentSavings).values({
           studentId: bill.studentId,
-          type: "tarik" as any,
+          type: "tarik",
           amount: amount,
           date: paymentDate || new Date().toISOString().split("T")[0],
           description: `Potong Tabungan untuk bayar Infaq bulan ${bill.month}`,
-          status: "active" as any,
+          status: "active",
           unitId: user.unitId || "",
         });
       }
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       // 4. Buat payment record
       const [payment] = await tx.insert(infaqPayments).values({
         billId: bill.id,
-        paymentMethod: method as any,
+        paymentMethod: method,
         amountPaid: amount,
         paymentDate: paymentDate || new Date().toISOString().split("T")[0],
         notes: notes || "",
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       const newTotalPaid = totalPaidBefore + amount;
       const newStatus = newTotalPaid >= bill.nominal ? "lunas" : "sebagian";
       await tx.update(infaqBills)
-        .set({ status: newStatus as any, updatedAt: new Date() })
+        .set({ status: newStatus, updatedAt: new Date() })
         .where(eq(infaqBills.id, bill.id));
 
       // 6. Buat jurnal + update saldo
@@ -130,14 +130,15 @@ export async function POST(request: Request) {
         const bulan = monthNames[bill.month] || bill.month;
 
         await tx.insert(generalTransactions).values({
-          date: paymentDate || new Date().toISOString().split("T")[0],
+          transactionDate: paymentDate || new Date().toISOString().split("T")[0],
           description: `Pembayaran Infaq/SPP ${studentName} bulan ${bulan} (${method})`,
           amount: amount,
-          type: "in" as any,
+          type: "in",
           referenceType: "infaq_payment",
           referenceId: String(payment.id),
           cashAccountId: Number(cashAccountId),
           unitId: user.unitId || "",
+          userId: user.userId,
         });
 
         await tx.update(cashAccounts)

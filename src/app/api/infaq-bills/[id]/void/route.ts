@@ -36,7 +36,7 @@ export async function POST(
         throw new Error("Tagihan ini memiliki riwayat pembayaran. Hapus pembayaran terlebih dahulu sebelum me-void tagihan.");
       }
 
-      await tx.update(infaqBills).set({ status: "void" as any, updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
+      await tx.update(infaqBills).set({ status: "void", updatedAt: new Date() }).where(eq(infaqBills.id, bill.id));
     });
 
     return NextResponse.json({ success: true, message: "Tagihan berhasil dibatalkan (void)." });

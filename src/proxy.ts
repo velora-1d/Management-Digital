@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { canAccess, isPublicApiPath } from "@/lib/rbac-permissions";
 
 /**
- * Decode JWT payload tanpa verifikasi signature (cukup untuk middleware).
+ * Decode JWT payload tanpa verifikasi signature (cukup untuk proxy).
  * Verifikasi signature tetap dilakukan di API route via getAuthUser().
- * 
+ *
  * Di Edge Runtime, kita tidak bisa pakai modul `jsonwebtoken` (Node.js only).
- * Middleware hanya perlu membaca payload untuk routing dan RBAC check.
+ * Proxy hanya perlu membaca payload untuk routing dan RBAC check.
  */
 function decodeJwtPayload(token: string): { userId: number; name: string; email: string; role: string } | null {
   try {
@@ -22,7 +22,7 @@ function decodeJwtPayload(token: string): { userId: number; name: string; email:
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get("erp_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -37,27 +37,18 @@ export function middleware(request: NextRequest) {
 
     // Cek token
     if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Anda harus login terlebih dahulu" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Anda harus login terlebih dahulu" }, { status: 401 });
     }
 
     // Decode JWT (tanpa signature verify — Edge Runtime compatible)
     const payload = decodeJwtPayload(token);
     if (!payload) {
-      return NextResponse.json(
-        { success: false, message: "Sesi telah berakhir, silakan login ulang" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Sesi telah berakhir, silakan login ulang" }, { status: 401 });
     }
 
     // Cek permission berdasarkan role
     if (!canAccess(payload.role, pathname)) {
-      return NextResponse.json(
-        { success: false, message: "Anda tidak memiliki akses untuk fitur ini" },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, message: "Anda tidak memiliki akses untuk fitur ini" }, { status: 403 });
     }
 
     // Inject user info ke header (bisa dipakai API route)
@@ -71,16 +62,15 @@ export function middleware(request: NextRequest) {
   // =============================================
   // 2. Halaman — redirect ke login jika belum auth
   // =============================================
-  const publicPages = ["/login"];
-  const isPublicPage = publicPages.some((p) => pathname.startsWith(p));
+  const isLoginPage = pathname === "/login";
 
   // Belum login → redirect ke /login
-  if (!token && !isPublicPage) {
+  if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Sudah login tapi buka /login → redirect ke /dashboard
-  if (token && pathname === "/login") {
+  if (token && isLoginPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -88,5 +78,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)" ],
+  matcher: [
+    "/",
+    "/login",
+    "/api/:path*",
+    "/(academic-years|admin|announcements|attendance|calendar|classrooms|coop|counseling|curriculum|dashboard|employee-attendance|extracurricular|grades|infaq-bills|inventory|journal|letters|mutations|payroll|ppdb|profile|re-registration|report-cards|reports|schedules|school-profile|settings|staff|students|subjects|tabungan|teachers|teaching-assignments|transaction-categories|wakaf)/:path*",
+  ],
 };

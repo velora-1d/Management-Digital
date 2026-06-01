@@ -25,10 +25,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       .where(eq(products.id, parseInt(id)))
       .returning();
       
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true, message: "Produk berhasil diperbarui", data });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate produk";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
@@ -40,9 +40,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       .set({ deletedAt: new Date() })
       .where(eq(products.id, parseInt(id)));
       
-    return NextResponse.json({ message: "Produk dihapus" });
+    return NextResponse.json({ success: true, message: "Produk berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus produk";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }

@@ -12,7 +12,10 @@ export default function HelpDrawer() {
   const prevPathRef = useRef(pathname);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Tutup drawer HANYA kalau user berpindah halaman (bukan saat mount pertama)
@@ -50,19 +53,19 @@ export default function HelpDrawer() {
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[1000] transition-opacity duration-300"
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-1000 transition-opacity duration-300"
           onClick={closeHelp}
         />
       )}
 
       {/* Drawer */}
       <div 
-        className={`fixed top-0 right-0 h-full w-full max-w-[400px] bg-white shadow-2xl z-[1001] transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-0 right-0 h-full w-full max-w-[400px] bg-white shadow-2xl z-1001 transform transition-transform duration-300 ease-in-out flex flex-col ${
+          isOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
       >
         {/* Header */}
-        <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +92,7 @@ export default function HelpDrawer() {
           {content ? (
             <div className="space-y-8">
               {/* Title & Desc */}
-              <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100/50 shadow-sm relative overflow-hidden">
+              <div className="bg-linear-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100/50 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-4 -mt-4"></div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2 relative z-10">{content.title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed relative z-10">{content.description}</p>
@@ -108,7 +111,7 @@ export default function HelpDrawer() {
                 {content.features.map((feat, idx) => (
                   <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow group">
                     <h5 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                       <div className="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                       <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm text-white">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
@@ -162,7 +165,7 @@ export default function HelpDrawer() {
         </div>
 
         {/* Footer: Contacts */}
-        <div className="flex-shrink-0 p-5 bg-white border-t border-slate-100 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+        <div className="shrink-0 p-5 bg-white border-t border-slate-100 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
           <div className="flex gap-3">
             <a 
               href="https://wa.me/6285117776596" 

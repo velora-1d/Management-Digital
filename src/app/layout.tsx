@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -22,7 +21,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           {children}
         </Providers>
-        <Analytics />
       </body>
     </html>
   );

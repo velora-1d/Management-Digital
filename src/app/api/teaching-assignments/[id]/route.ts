@@ -42,8 +42,9 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: assignment });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error("GET Teaching Assignment Error:", error);
+    return NextResponse.json({ success: false, error: "Gagal mengambil data penugasan" }, { status: 500 });
   }
 }
 
@@ -78,7 +79,7 @@ export async function PUT(
       const aId = academicYearId ? parseInt(academicYearId) : existing.academicYearId;
 
       const duplicates = await db
-        .select({ id: teachingAssignments.id })
+        .select({ id: teachingAssignments.id, deletedAt: teachingAssignments.deletedAt })
         .from(teachingAssignments)
         .where(
           and(
@@ -86,15 +87,17 @@ export async function PUT(
             eq(teachingAssignments.employeeId, eId!),
             eq(teachingAssignments.subjectId, sId!),
             eq(teachingAssignments.classroomId, cId!),
-            eq(teachingAssignments.academicYearId, aId!),
-            isNull(teachingAssignments.deletedAt)
+            eq(teachingAssignments.academicYearId, aId!)
           )
         );
 
       if (duplicates.length > 0) {
+        const isSoftDeleted = duplicates[0].deletedAt !== null;
         return NextResponse.json({
           success: false,
-          error: "Penugasan untuk guru, mapel, kelas, dan tahun ajaran tersebut sudah ada",
+          error: isSoftDeleted 
+            ? "Data serupa ditemukan di arsip (terhapus). Silakan gunakan menu tambah untuk mengaktifkannya kembali."
+            : "Penugasan untuk guru, mapel, kelas, dan tahun ajaran tersebut sudah aktif ada",
         }, { status: 400 });
       }
     }
@@ -112,8 +115,13 @@ export async function PUT(
       .returning();
 
     return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error("PUT Teaching Assignment Error:", error);
+    const message = error instanceof Error ? error.message : "";
+    const errorMessage = message.toLowerCase().includes("unique") 
+      ? "Kombinasi data ini sudah ada di database" 
+      : "Gagal memperbarui data penugasan";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -144,7 +152,8 @@ export async function DELETE(
       .where(eq(teachingAssignments.id, id));
 
     return NextResponse.json({ success: true, message: "Penugasan berhasil dihapus" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error("DELETE Teaching Assignment Error:", error);
+    return NextResponse.json({ success: false, error: "Gagal menghapus data penugasan" }, { status: 500 });
   }
 }

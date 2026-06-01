@@ -14,593 +14,1077 @@ export type HelpContent = {
 export const HELP_CONTENTS: Record<string, HelpContent> = {
   "/dashboard": {
     title: "Dashboard",
-    description: "Halaman utama pertama kali Anda login. Menampilkan grafik ringkasan aktivitas dan metrik kunci sekolah secara visual.",
+    description: "Halaman utama (Beranda) setelah Anda berhasil login. Berfungsi sebagai pusat komando yang memberikan ikhtisar (overview) menyeluruh terhadap semua kegiatan sekolah mulai dari kependidikan hingga aliran keuangan (bagi yang memiliki hak akses relevan).",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Menu & Alur Standard (User Flow)",
         steps: [
-          "Login ke dalam sistem menggunakan email & password.",
-          "Secara otomatis diarahkan ke halaman Dashboard.",
-          "Widget statistik akan menampilkan data real-time (jumlah siswa, kas, dsb)."
+          "Setiap pengguna (Admin, Guru, Kepala Sekolah) masuk melalui form login.",
+          "Setelah autentikasi sukses, Anda diarahkan kemari.",
+          "Sistem memproses widget-widget secara real-time berdasarkan kewenangan peran Anda (Role Based Access Control).",
+          "Jika layar tidak menampilkan angka, sistem mungkin sedang menghitung kalkulasi data yang sedang berjalan."
+        ]
+      },
+      {
+        title: "Cara Penggunaan Fitur Widget Statistik",
+        steps: [
+          "Lihat kartu-kartu angka di atas untuk ringkasan padat (Misal: Jumlah Siswa, Kas Masuk bulan ini).",
+          "Widget tidak bisa di-klik untuk mengedit data; namun menyajikan agregasi mutlak dari ribuan entri di database.",
+          "Bila ada kejanggalan pada metrik, periksalah pada Menu Data Master atau Laporan."
+        ]
+      },
+      {
+        title: "Cara Membaca Grafik",
+        steps: [
+          "Terdapat chart / grafik yang membandingkan pendapatan (Infaq) terhadap pengeluaran harian/bulanan.",
+          "Arahkan (hover) kursor tetikus Anda pada lengkungan garis atau batang (bar) untuk melihat selisih riil pendapatan pada tanggal tertentu."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Menguji hak akses (RBAC). Jika login sebagai Guru, widget finansial akan disembunyikan. Jika login sebagai Admin, widget finansial akan tampil penuh."
+      "Catatan Keamanan: Modul Keuangan pada Dashboard dikunci (hidden) terhadap akun tipe Guru/Staf biasa.",
+      "QA Validasi: Jika Anda berpindah Role dari Staf ke Admin via sistem, tekan tombol muat ulang (refresh) browser Anda agar statistik rekap ulang."
     ]
   },
+
   "/ppdb": {
     title: "Penerimaan PPDB",
-    description: "Fitur untuk mendata calon murid baru, merekam dokumen mereka, hingga menentukan kelulusan.",
+    description: "Modul khusus Penerimaan Peserta Didik Baru (PPDB). Memfasilitasi sekolah dalam menampung formulir pendaftar, seleksi administrasi, hingga peresmian menjadi Siswa Aktif saat ajaran baru masuk.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan & Flow Penerimaan Masuk",
         steps: [
-          "Buka Penerimaan > Penerimaan PPDB, klik Tambah Pendaftar.",
-          "Isi formulir pendaftar termasuk NIK Anak.",
-          "Simpan data. Data akan masuk ke tabel dengan status Pending.",
-          "Admin memverifikasi dengan klik Edit lalu ubah status menjadi Lulus/Diterima."
+          "Pendaftaran dapat dilakukan oleh calon murid dari luar, atau didaftarkan manual oleh panitia PPDB dari dalam panel ini.",
+          "Lalu formulir tersimpan dalam status 'Pending'.",
+          "Panitia wajib meneliti validitas berkas (Ijazah, Akta, dll).",
+          "Jika berkas valid, Kepala Sekolah / Ketua Panitia mengganti status menjadi 'Lulus'.",
+          "Siswa 'Lulus' ini otomatis dikonversi ke dalam Database Siswa Induk (Data Master)."
+        ]
+      },
+      {
+        title: "Cara Tambah Pendaftar",
+        steps: [
+          "Klik tombol 'Tambah Pendaftar' di kanan atas layar.",
+          "Ketikan Nomor Induk Kependudukan (NIK - 16 Digit).",
+          "Isi formulir isian Biodata, Jalur Penerimaan, dan Orang Tua.",
+          "Lalu tekan 'Simpan'."
+        ]
+      },
+      {
+        title: "Cara Validasi & Penerimaan",
+        steps: [
+          "Cari nama anak yang akan diseleksi pada grid tabel.",
+          "Buka formulir edit (ikon Pensil).",
+          "Ubah field status dari 'Pending' menjadi 'Lulus/Diterima'.",
+          "Sistem menkonfirmasi untuk migrasi profil, klik 'OK/Simpan' memproses."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: NIK bersifat wajib dan UNIQUE. Jika NIK kosong, form error. Jika NIK ganda/duplikat, sistem akan menampilkan Error NIK sudah terpakai."
+      "QA Validasi: Data NIK wajib hukumnya dan tak boleh ada 2 NIK sama yang didaftarkan. Penginputan pendaftar dengan NIK ganda langsung di-reject.",
+      "Konversi Data Aktif: Murid di tabel ini belum bertindak sebagai murid aktif. Jangan heran jika tidak muncul di absen; karena untuk masuk absen harus 'Lulus' lalu dimasukkan dalam Mapping Kelas oleh admin."
     ]
   },
+
   "/re-registration": {
     title: "Daftar Ulang",
-    description: "Mencatat konfirmasi ulang pembayaran siswa baru atau siswa lama yang naik jenjang kelas.",
+    description: "Menu pembayaran dan konfirmasi penempatan ulang pasca penerimaan atau pasca kenaikan jenjang. Fungsi utamanya adalah validasi ikatan kewajiban bayar dimuka.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan & Alur Form Daftar Ulang",
         steps: [
-          "Buka Penerimaan > Daftar Ulang.",
-          "Klik tombol Daftar Ulang pada baris siswa tujuan.",
-          "Masukkan nominal pembayaran lalu simpan.",
-          "Status siswa akan luntur/berubah menjadi Lunas Daftar Ulang."
+          "List ini menampilkan siapa saja murid yang 'Lulus PPDB' tapi belum membayar Daftar Ulang.",
+          "Setiap pendaftar akan diberi kewajiban biaya rincian daftar ulang (misal: Seragam, Buku).",
+          "Ketika orangtua transfer, panitia mencatat pelunasan lewat sini.",
+          "Setelah dilunasi, baris siswa ini berpindah status menjadi Hijau (Selesai)."
+        ]
+      },
+      {
+        title: "Cara Merekam Pembayaran Daftar Ulang",
+        steps: [
+          "Lihat deretan baris siswa, cari nama yang dituju.",
+          "Tekan tombol aksi berwarna (Bayar/Daftar Ulang).",
+          "Isi nominal setor uang tunai / transfer bank yang diterima kasir.",
+          "Selesaikan verifikasi transaksi dengan menekan tombol Lunas."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Input nominal divalidasi sebagai Numeric/Angka. Jika diketik huruf, sistem menolak. Pembaruan status akan sinkron ke profil siswa."
+      "Integrasi Ledger Keuangan: Ketika panitia menekan 'Lunas' di layar ini, nominal pembayaran tersebut mutlak dicatat otomatis ke Jurnal Umum bagian Pemasukan (Kategori: Daftar Ulang)."
     ]
   },
+
   "/students": {
-    title: "Data Siswa",
-    description: "Pusat database profil seluruh siswa aktif yang belajar di sekolah.",
+    title: "Data Master Siswa",
+    description: "Database pusat (The Single Source of Truth) untuk seluruh riwayat, personalia, akademis, dan histori catatan Siswa aktif sekolah berjalan.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Alur Data Induk Siswa",
         steps: [
-          "Buka Data Master > Data Siswa.",
-          "Pencarian bisa dilakukan via kotak Search.",
-          "Untuk input baru: klik Tambah Siswa, isi NIS, Nama, TTL, dll lalu Simpan.",
-          "Untuk update: klik icon Edit/Pensil di baris tabel siswa."
+          "Siswa masuk entah lewat PPDB Terintegrasi, atau diketik manual oleh Staff TU (Tata Usaha).",
+          "Profil siswa memiliki Nomer Induk Siswa (NIS) lokal dan NISN (Nasional).",
+          "Selama anak ini Aktif, namanya akan selalu menempel pada raport dan presensi.",
+          "Apabila ia Lulus atau Pindah pindah sekolah, kita WAJIB menggunakan menu 'Mutasi & Kenaikan' agar dia raib dari daftar, demi kerapihan data."
+        ]
+      },
+      {
+        title: "Cara Entri Siswa Manual",
+        steps: [
+          "Pada pojok kanan form, klik 'Tambah Siswa'.",
+          "Jawab pertanyaan isian dari Tab Identitas Pribadi, Alamat tinggal, sampai Wali Orang Tua.",
+          "Input field NIS sebagai id absolut anak di lembaga kita.",
+          "Simpan. Jika data benar, row baru akan mengembang di tabel indeks."
+        ]
+      },
+      {
+        title: "Cara Mengedit Profil atau Koreksi Salah Ketik",
+        steps: [
+          "Bilik pencarian di atas (Kaca pembesar) dapat digunakan mencari NIS / Nama.",
+          "Temukan siswa, klik lambang Edit (biasanya bergerigi/pensil hijau).",
+          "Edit form huruf Ejaan yang keliru. Setelah beres, update tekan Simpan.",
+          "Semua raport dan kartu absen yang belum dicetak hari ini akan secara instan berubah nama aslinya sesuai ejaan perbaikan Anda."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Sama seperti NIK, NIS adalah Unique. Jika Admin menginput NIS yang sudah dimiliki siswa lain, database akan mengembalikan Error duplicate."
+      "QA Validasi Unikitas: Memasukkan NIS (cth: 1234) yang sudah dihuni oleh anak lain tidak ditolerir. Sistem membatalkan perintah Update anda.",
+      "Klausa Deletion: Mendelete data master siswa sangat tidak dianjurkan. Praktik standar adalah Me-Mutasi / merubah statusnya NonAktif supaya historikal rapotnya tidak patah."
     ]
   },
+
   "/mutations": {
-    title: "Mutasi & Kenaikan",
-    description: "Mencatat arsip murid yang berpindah sekolah, dikeluarkan, atau telah lulus.",
+    title: "Sistem Mutasi & Angkat Kelas",
+    description: "Akan selalu ada masa dimana murid pindah dari sekolah kita, diberhentikan (drop out), ataupun sudah saat kelulusan akhir. Panel ini adalah tombol saklarnya.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Logika Mutasi",
         steps: [
-          "Buka Data Master > Mutasi & Kenaikan.",
-          "Klik Tambah Mutasi, cari dropdown nama anak.",
-          "Pilih Status mutasi (Keluar/Lulus) dan Tanggal.",
-          "Simpan untuk memutasi secara permanen dari kelas reguler."
+          "Kondisi Mutasi Permanen: Seorang siswa dipindah sekolah.",
+          "Kondisi Mutasi Selesai (Lulusan): Sekumpulan kelas diwisuda.",
+          "Setelah form Mutasi ini diketuk palu, seluruh rekaman atas siswa tersebut resmi Dihentikan.",
+          "Berarti besok harinya, nama dia musnah / gaib dari Presensi (absen) maupun Rapor sekolah hari ini."
+        ]
+      },
+      {
+        title: "Cara Mengeluarkan / Meluluskan Anak",
+        steps: [
+          "Muka halaman ini menampilkan form pencarian siswa.",
+          "Cari by Nama atau NIS.",
+          "Pilih tombol 'Mutasikan/Keluarkan'.",
+          "Beri 'Status' keluarnya: Lulus, Pindah Sekolah, Berhenti, Dikeluarkan, Wafat.",
+          "Isi baris 'Alasan spesifik' / Catatan (Cth: Pindah ke surabaya ikut bapak dinas).",
+          "Kirim perintah (Submit). Proses mutasi ditandatangani final oleh sistem."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Anak yang telah disubmit mutasinya harus otomatis hilang (ter-filter non-aktif) dari deretan tabel Siswa Aktif berjalan."
+      "Tidak Bisa Undo Mutasi: Harap berhati-hati. Selevel Anda meluluskan siswa, anak itu sudah bukan domain Master Siswa Aktif lagi. Butuh campur tangan IT Admin mengubah di Database Raw untuk merestore kesalahan kelalaian mutasi masif."
     ]
   },
+
   "/classrooms": {
-    title: "Kelas",
-    description: "Mendefinisikan ruangan atau rombongan belajar (misal: Kelas VII-A).",
+    title: "Master Data Kelas",
+    description: "Indeks daftar kamar belajar atau rombongan belajar (Rombel) yang ada di naungan institusi.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Relasi Rombel",
         steps: [
-          "Buka Data Master > Kelas.",
-          "Klik Tambah Kelas dan input nama Rombel.",
-          "Pilih dropdown Wali Kelas (mengambil dari master guru).",
+          "Kelas ibarat cangkang kosong (Misal 'VII-A').",
+          "Cangkang ini kelak akan diisi oleh Siswa-siswi ketika staff Anda melakukan plotting.",
+          "Setiap Kelas wajib punya penanggung jawab (Wali Kelas) yang posisinya menjamin keamanan rapot di akhir semester."
+        ]
+      },
+      {
+        title: "Cara Membuka Kelas Baru",
+        steps: [
+          "Pastikan di 'Data Guru / SDM' para tenaga pendidik sudah di-input dahulu.",
+          "Lalu klik Tambah Kelas di modul ini.",
+          "Tulis Nama Rombel, misal 'Kelas 7 Reguler B'.",
+          "Pilih Wali Kelas dari kumpulan Dropdown yang muncul (Menyepuhkan master Guru tadi).",
           "Simpan."
         ]
+      },
+      {
+        title: "Cara Mengganti Wali Kelas Tiap Semester",
+        steps: [
+          "Buka list kelas, lalu klik simbol Edit (Pena).",
+          "Di Dropdown list Guru, ubah dengan figur guru baru yang mendampingi tahun ini.",
+          "Simpan. Rapor baru kelak akan mencetak nama wali kelas perampingan ini."
+        ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Daftar opsi dropdown Wali Kelas di-fetch langsung dari Database Guru. Jika sistem belum ada input Guru sama sekali, dropdown akan kosong."
+      "QA Validasi Integritas: Menghapus sebuah kelas ketika di dalam tabel kelas ini sudah terdaftar riwayat Penugasan atau Ujian berisiko meledakkan error yatim piatu di sisi log jadwal dan rapor. Ubah nama Rombelnya saja, ketimbang di-Delete permanen bila masih dipakai."
     ]
   },
+
   "/academic-years": {
-    title: "Tahun Ajaran",
-    description: "Pengaturan kurun waktu semester berjalan. Ini adalah penentu global state sistem akademik.",
+    title: "Kalender Induk / Tahun Ajaran",
+    description: "Jantung dari operasional (Heartbeat) sistem sekolah. Seluruh Rapor, Transaksi SPP, Daftar Hadir akan berpijak dan menanyakan Tahun Ajaran Mana yg sedang On?",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Rotasi Tahun",
         steps: [
-          "Buka Data Master > Tahun Ajaran.",
-          "Klik Tambah, masukkan nama Tahun Ajaran (misal 2024 Genap).",
-          "Cari di tabel, lalu klik tombol 'Set Aktif' pada TA tersebut."
+          "Ketika setahun edukasi berjalan telah tuntas, Staf Tata Usaha wajib menetapkan tahun ajaran (Sem. Ganjil / Genap).",
+          "Begitu di-switch, sistem mereset papan absen menjadi bersih karena siklus baru.",
+          "Hanya diperkenankan satu batang tahun kalender saja yang bercap (Aktif = TRUE)."
+        ]
+      },
+      {
+        title: "Cara Pembuatan Tahun Baru",
+        steps: [
+          "Tekan 'Tambah'. Beri format deskriptif (2024/2025).",
+          "Tentukan semester Ganjil atau Genap di dropdown.",
+          "Simpan."
+        ]
+      },
+      {
+        title: "Cara Switch / Setel Mengaktifkan Tahun Berjalan",
+        steps: [
+          "Cari nama Tahun tersebut di daftar Grid UI.",
+          "Perhatikan ada baris aksi 'Jadikan Tahun Aktif' / 'Switch'.",
+          "Klik. Sistem akan melumpur / menidurkan (Non-aktifkan) tahun kemaren lama Anda, dan menumpuk semua beban logic ke entitas baru ini."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Sistem aturan Strict: Hanya boleh ada 1(Satu) tahun ajaran aktif. Jika TA baru di-set Aktif, TA yang lama otomatis tercabut status Aktifnya."
+      "Konsekuensi Massif Switch: Ketika Anda berpindah Tahun Ajaran dan Semester, rapor guru-guru yang belum di cetak di semestar kemarin tidak akan bisa lagi dibuka oleh akun wali secara visual reguler."
     ]
   },
+
   "/transaction-categories": {
-    title: "Kategori Keuangan",
-    description: "Label referensi untuk membedakan jenis transaksi pada Jurnal Umum Pemasukan dan Pengeluaran.",
+    title: "Kategori Transaksi (Chart of Accounts)",
+    description: "Tempat me-label dompet uang (Kas masuk) dan Beban belanja (Kas Keluar) Yayasan. Disebut juga Buku Besar Akun Kode Perkiraan Keuangan.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Pengenalan Jurnal Finansial",
         steps: [
-          "Buka Data Master > Kategori Keuangan.",
-          "Klik Tambah Kategori.",
-          "Pilih Tipe dan Namai kategori (cth: Biaya Rapat Bulanan)."
+          "Setiap Pemasukan (Debit) atau Uang keluar Belanja (Kredit) pastilah takkan bermakna apa-apa jika tak ada pos tag-nya.",
+          "Menu ini membantu Bendahara mendaftarkan nama map belanja, misalnya 'Uang Kebersihan', 'Biaya Ekstrakulikuler', 'Honor Tak Terduga'."
+        ]
+      },
+      {
+        title: "Cara Membuat Label Kategori Belanja & Pendapatan",
+        steps: [
+          "Klik 'Tambah Kategori'.",
+          "Beri identifikasi Nama Kategori (cth: Honor Ekstrakulikuler).",
+          "Tetapkan Tipenya (Pilih Pengeluaran untuk hal di atas).",
+          "Klik Simpan dan kategori ini auto-tersedia di modul pengisian Jurnal Kas."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Skenario Restriksi Penghapusan: Apabila label kategori 'Biaya Rapat' ini sudah pernah dipakai di form Jurnal Umum, label ini tidak akan bisa dihapus demi menjaga Integritas Data pembukuan."
+      "QA Kunci Integritas: Apabila di dalam Jurnal ada transaksi yang sudah dibubuhkan label 'Honor Ekstrakulikuler', maka secara absolut Label tersebut tidak akan dapat Di-Hapus / di-Delete. Bendahara hanya mampu menonaktifkannya saja jika ingin tak ditampilkan di list inputan lain kali."
     ]
   },
+
   "/subjects": {
-    title: "Mata Pelajaran",
-    description: "Indeks penamaan ilmu pengetahuan yang diajarkan di Sekolah.",
+    title: "Mata Pelajaran (Muatan Lokal / Nasional)",
+    description: "Pengorganisasian database daftar bidang studi kurikulum yang disediakan oleh entitas perguruan.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Maksud Penamaan Pelajaran",
         steps: [
-          "Buka Akademik > Mata Pelajaran.",
-          "Klik Tambah Mata Pelajaran.",
-          "Isi Kode (BI-01) dan Nama Pelajaran secara lengkap."
+          "Agar nilai ulangan bisa dientri, sekolah terlebih dulu membikin daftar List-nya disini.",
+          "Daftar mata pelajaran biasanya konsisten mulai Mapel Inti (Agama, PKn, Matematika) hingga Mapel Spesifik/Tambahan (Tahfidz, Desain).",
+          "Nama mata pelajaran ini mutlak akan tersemat seutuhnya di Lembar Raport anak."
+        ]
+      },
+      {
+        title: "Cara Bikin / Tambah Mata Pelajaran",
+        steps: [
+          "Tekan 'Tambah Mapel'.",
+          "Isikan Kode referensi internal (Mis: MTK).",
+          "Isi baris Nama Pelajaran Resmi yg panjang (Mis: Matematika Lanjut Terpadu).",
+          "Tentukan apakah tipe mapel Akademik biasa, atau Muatan Lokal khusus (Khusus sinkronisasi Kurikulum jika ada).",
+          "Submit untuk menyimpan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Kode Mapel adalah mandatori (Wajib). Form tak bisa disubmit bila Kode Mapel dibiarkan kosong."
+      "QA Validasi Form: Diwajibkan menset Kode unikum. Apabila kode (Pendidikan Jasmani) dengan PJOK sudah teregistrasi, penginputan Kode PJOK oleh guru kedua kalinya tidak bisa masuk server base."
     ]
   },
+
   "/teaching-assignments": {
-    title: "Penugasan Guru",
-    description: "Menu esensial untuk menghubungkan seorang Guru, ruang Kelas, dan Mata Pelajaran yang diembannya.",
+    title: "Penugasan Mengajar Guru",
+    description: "Panel strategis terpenting untuk peramu jadwal. Fitur inilah yang menghubungkan tiga ujung benang: (1) Siapa Gurunya? (2) Mapel Apa yang dibawakan? (3) Kelas Manakah ajarannya bertempat?",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Konsep Plotting Guru",
         steps: [
-          "Buka Akademik > Penugasan Guru.",
-          "Klik Tambah Tugas.",
-          "Pilih Guru pencarian, Pilih Kelas, lalu Centang Mapelnya. Submit."
+          "Perihal guru tak bisa menginput ulangan ke rapor Kelas 9 karena beliau tidak terdeteksi sistem, hal ini 100% dipicu admin belum memberi 'Penugasan' pada panel inilah.",
+          "Tanpa Relasi di Penugasan Guru, aplikasi menolak mengakui Guru tersebut sebagai pengajar sah di ruangan kelas bersangkutan."
+        ]
+      },
+      {
+        title: "Cara Setting Pemberian Tugas",
+        steps: [
+          "Akses 'Tambah Penugasan'.",
+          "Cari nama Individu (Cth: Bapak Joko).",
+          "Tentukan ruangan lokasinya (Cth: Dropdown Kelas VII A).",
+          "Centang atau pilih kotak Pelajaran yg Bapak Joko ajarkan di sana (Bisa lebih dari 1 pelajaran lho, misal: PKn & Sosiologi).",
+          "Simpan / Rekam Tugas."
+        ]
+      },
+      {
+        title: "Cara Evaluasi & Perombakan Mengajar",
+        steps: [
+          "Jika Bapak Joko cuti melahirkan/izin, cari baris tugasan di Grid ini.",
+          "Gunakan aksi Hapus Tugas / Ganti Guru agar hak input rapor berpindah ke Pendidik lain untuk semester depan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Sebagai batas Logika Aplikasi, jika tahap mapping/penugasan ini dilangkahi, maka Guru yang bersangkutan tidak akan pernah bisa melihat/menemukan Kelas/Mapel itu di layar Input Nilainya ketika IA login."
+      "QA Validasi Logis: Di dalam satu Kelas 7A, pada pelajaran IPA, dilarang (mustahil) mendaulat 2 guru yang sama bertugas mencetak angka rapor IPA secara independen. Sistem akan menolak Duplikasi jika menugaskan orang berbeda menimpa Mapel spesifik ruang yg sama."
     ]
   },
+
   "/schedules": {
-    title: "Jadwal Pelajaran",
-    description: "Roster agenda belajar harian spesifik dengan range waktu.",
+    title: "Jadwal Pelajaran Kelas",
+    description: "Jadwal kalender roster mingguan tempat jam mata pelajaran ditempel spesifik pada papan white board Senin s.d Jumat.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Roster Terjadwal",
         steps: [
-          "Buka Akademik > Jadwal Pelajaran.",
-          "Filter Kelas dan pilih Tab Hari (misal: Senin).",
-          "Tambah Slot jam (07:00-08:00) lalu posisikan mapping guru yang sudah dibuat."
+          "Sebelum bisa menempatkan nama guru disini, panitia Roster *WAJIB* menyelesaikan hal di menu Penugasan Guru tadi.",
+          "Jadwal ini dipakai untuk keperluan print absen, notifikasi ngajar, dll."
+        ]
+      },
+      {
+        title: "Cara Peng-input-an Jam Mengajar",
+        steps: [
+          "Filter by Kelas di tabungan UI tabel (misal pilih Kelas 9).",
+          "Pilih tombol 'Buat Jam Mengajar'.",
+          "Berpindah hari lalu masukan blok waktu (cth: Jam 07:00 s.d 08:30).",
+          "Pilih dari selectbox Mapel dan Gurunya.",
+          "Sistem menampung dan menampilkan deretan kotak timetable roster."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Uji Konflik Interval: Jika Administrator salah meng-assign Guru A di jam 07:00 Senin untuk Kelas VII-B padahal Guru A sudah ada jadwal di VII-A, AI/Server akan menahan (Blocking) proses penyimpanan."
+      "QA Kesalahan Bentrok (Collision Detection): Saat Kurikulum tanpa sadar menugaskan Guru BK mengajar pada Senin Jam 08:00 di Rombel 'A' dan rombel 'B' bersamaan letaknya, Mesin kita tidak akan bodoh. Aplikasi langsung Melempar Kesalahan 'Bentrok Jadwal Guru yang Sama!'."
     ]
   },
+
   "/attendance": {
-    title: "Absensi Siswa",
-    description: "Log daftar hadir dan ketidakhadiran harian per kelas.",
+    title: "Absensi Presensi Siswa",
+    description: "Buku kehadiran jurnal list nama murid tiap tanggal. Guru mapel maupun wali kelas bisa absen kelakuan kehadiran dengan sentuhan jari disini.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Alur Eksekusi Log Presensi Cepat",
         steps: [
-          "Guru login, masuk ke Akademik > Absensi Siswa.",
-          "Ganti filter ke Kelas yang diajarnya dan Tanggal hari ini.",
-          "Sistem menampilkan seluruh nama anak (Defaultnya Hadir).",
-          "Ubah dropdown status murni anak yang tidak hadir saja.",
-          "Wajib menggulir ke bawah lalu tekan tombol 'Simpan Semua Absen'."
+          "Idealnya presensi dioperasikan lewat gawai tab/handphone saat guru bersiap tatap muka di kelas.",
+          "Pilih rombongan kelas.",
+          "Sistem menampilkan set list tabel panjang siswa. Keadaan Defaultnya adalah bercentang 'Hadir' (H) semua dari server.",
+          "Guru hanya perlu menekan toogle/radio tombol untuk anak yg tidak datang saja (Bolos (A), Sakit (S), atau Izin (I))."
+        ]
+      },
+      {
+        title: "Cara Finalisasi Absen (Kunci Raport harian)",
+        steps: [
+          "Bila sudah beres mencentang siswa bermasalah tsb.",
+          "Guru / Tenaga Pengajar WAJIB SCROLL ke area dasar ujung tabel webisite.",
+          "Tekan tombol final 'Submit / Rekam Kehadiran ke Sistem'.",
+          "Bila berhasil, pita status warna biru notif sukses tampak. Data pun mengalir otomatis disedot masuk ke cetakan Rapor anak akhir semester."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Mutasi persisten: setelah disubmit, bila kita refresh ulang halaman dan filter dipasang pada tanggal tersebut, status list absensi siswa tak akan hilang dan tetap berubah di database system."
+      "Autentikasi Hak Guru: Pak Guru A dari luar kelas takkan bisa usil membuka dan mengedit lembaran absensi Kelas B bila ia bukan Wali kelas atau bukan pengajar yang terdaftar ditugaskan kesana."
     ]
   },
+
   "/curriculum": {
-    title: "Manajemen Kurikulum",
-    description: "Penetapan blueprint standar kelulusan KKM atau Kriteria Capaian.",
+    title: "Manajemen Kurikulum & KKM",
+    description: "Settingan pedoman cetak biru pendidikan formal kenegaraan, contoh K13 (Kurikulum 2013), KTSP, atau Kurikulum Merdeka (Kurmer). Dan penentuan Bobot.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Esensi Pembobotan",
         steps: [
-          "Buka Akademik > Manajemen Kurikulum.",
-          "Tetapkan default nilai batas bawah KKM. Simpan."
+          "Sebuah Nilai ulangan anak tidak dinilai angka mati murni, selalu dikali dengan perbandingan bobot (Contoh presentase 70% Sumatif, 30% Formatif).",
+          "Juga menentukan KKM (Kriteria Ketuntasan Minimal). Angka terendah syarat murid Lulus tidak remedial."
+        ]
+      },
+      {
+        title: "Cara Kalibrasi Format Kurikulum Nasional",
+        steps: [
+          "Buka pengaturan.",
+          "Setel Nama Kurikulumnya.",
+          "Isi baris angka batasan KKM Global Sekolah (Misalnya 75 atau 78).",
+          "Atur porsi Formatif Vs Akhir Semester. Simpan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Berakibat hilir pada fitur Nilai Rapor: Bila hasil ujian siswa dibawah rasio KKM (misal 74 < 75), angka di cetak rapor akan diberikan indikator merah."
+      "Sinkronisasi Cetak Raport: Konfigurasi nama kurikulum ini akan dicetak langsung besar besar ke Lembaran Sampul Raport PDF."
     ]
   },
+
   "/grades": {
-    title: "Input Nilai Siswa",
-    description: "Tempat guru menyetor angka hasil ujian ulangan formatif maupun ujian sumatif siswa.",
+    title: "Input Nilai Belajar",
+    description: "Kanvas Penilaian. Tabel cell-sheet bagi guru mata pelajaran guna mengisi skor ujian angka, atau predikat muridnya per kompetensi ulangan harian maupun ulangan semesteran.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Alur Input Masif Grid Cerdas",
         steps: [
-          "Guru membuka Akademik > Input Nilai.",
-          "Set Filter Kelas, Mapel, dan Jenis Evaluasi.",
-          "Muncul layar cell grid, guru mengetik beban nilai ke kolom grid siswa.",
-          "Klik Simpan Nilai Semua."
+          "Guru (Berdasarkan jadwal yg di-plotting Tata Usaha) masuk ke akun pribadinya, melaju ke fitur ini.",
+          "Filter / Pilih Kelas (7B) dan Pilih Pelajaran beliau (Prakarya).",
+          "Terbuka sebuah list 30-40 anak memanjang ke bawah layaknya MS. Excel.",
+          "Silakan isi manual angkanya '89', '80', '77', dan ketikan catatannya."
+        ]
+      },
+      {
+        title: "Cara Eksekusi Penyimpanan Angka Masal",
+        steps: [
+          "Guru yang bijak mengetik 40 anak hingga kelar di akhir barisan.",
+          "Penting! Jangan pindah URL (Ganti Tab Halaman) sebelum anda meng-klik tombol SAVE biru di paling mentok laman tabel ke bawah.",
+          "Status Tersimpan ditandai adanya pop-up Notif dari sistem pusat."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Validasi Tipe Data Input: Coba Input bobot '-8' (minus) atau text abjad 'Kosong', server dan Input Type HTML akan me-reject isian tersebut menjadi invalid batasan nilai 0 - 100."
+      "QA Auto-Validasi Skala Batas Error: Jika pak guru khilaf kepencet keyboar angka '788' bukannya '78'. Grid cell Nilai menolak keras angka melampauai batas konstan 100 dengan pesan peringatan UI Merah."
     ]
   },
+
   "/report-cards": {
-    title: "Rapor Digital",
-    description: "Generator final penarikan nilai, absen, dll menjadi 1 form raport berformat PDF.",
+    title: "Rapor Digital / E-Rapor (Enterprise Edition)",
+    description: "Pusat Terminal Pelaporan Akhir Semester. Sistem cerdas yang mengintegrasikan AI, Verifikasi Digital QR, dan Snaphot Data untuk menjamin kemudahan Guru dan keamanan data raport siswa.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Penjelasan Menu & Alur Kerja (User Flow)",
         steps: [
-          "Buka Akademik > Rapor Digital.",
-          "Di deretan siswa, tekan tombol kuning 'Cetak PDF Rapor'.",
-          "Mesin merekap kompilasi, mendownload file."
+          "Wali Kelas masuk ke menu Rapor Digital untuk asuhan kelasnya.",
+          "Sistem otomatis melakukan audit kelengkapan nilai (Cek Kelengkapan) di Step 1.",
+          "Jika ada nilai bolong, guru mapel bersangkutan harus mengisi nilai di menu 'Nilai Belajar' terlebih dahulu.",
+          "Wali Kelas mengisi Catatan Wali Kelas (Deskripsi Perkembangan) di Step 2.",
+          "Finalisasi data, Preview hasil cetak, dan Publikasi Digital di Step 3."
+        ]
+      },
+      {
+        title: "Panduan Fitur: AI Note Assistant (Smart Engine)",
+        steps: [
+          "Di Step 2 (Catatan), klik tombol simbol 'Sparkles / AI' pada baris siswa.",
+          "Sistem AI akan menganalisis tren nilai akademis dan data kehadiran (Alpha/Izin) siswa.",
+          "AI menyarankan narasi profesional (Cth: 'Ananda memiliki fokus luar biasa di eksakta...') yang dapat diedit manual.",
+          "Membantu guru menghemat waktu 80% dalam menyusun narasi rapor yang berkualitas."
+        ]
+      },
+      {
+        title: "Panduan Fitur: Real-time PDF Preview",
+        steps: [
+          "Di Step 3, klik ikon 'Mata' (Preview) untuk melihat draf PDF asli.",
+          "Mencegah kesalahan cetak atau margin yang bergeser sebelum melakukan download massal.",
+          "Preview akan menampilkan Watermark 'DRAFT' jika rapor belum dipublikasikan/dikunci."
+        ]
+      },
+      {
+        title: "Panduan Fitur: Publikasi & Snapshot Data (Lock System)",
+        steps: [
+          "Klik tombol 'Cloud Upload' untuk mempublikasikan rapor ke Portal Digital Siswa.",
+          "Saat di-klik, sistem melakukan 'Snapshot' (Mengunci data saat ini) ke database permanen.",
+          "Sekalipun nilai siswa di Menu Master diubah di kemudian hari, nilai di Rapor yang sudah 'PUBLISHED' tetap konsisten/terkunci.",
+          "Ini menjamin integritas data historis sekolah (Anti-fraud/Anti-manipulasi)."
+        ]
+      },
+      {
+        title: "Panduan Fitur: Verifikasi QR Code (Secure Document)",
+        steps: [
+          "Setiap PDF Rapor yang diunduh kini memiliki QR Code unik di footer halaman.",
+          "Orang tua atau instansi luar dapat memindai QR tersebut untuk validasi keaslian.",
+          "Pindaian akan mengarah ke URL Verifikasi Resmi Velora yang menampilkan data asli dari database pusat."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Pengujian Null Fallback: Jika seorang murid bolos dan sama sekali kelupaan dientri nilai Matematikanya, mesin Rapor TIDAK BOLEH error, namun harus merender kolom kosong bernilai stip (-)."
+      "Integritas Data: Rapor yang sudah berstatus 'TERKUNCI' tidak bisa diedit datanya tanpa bantuan Super Admin.",
+      "Aesthetics: Template PDF menggunakan font premium dengan pengaturan margin otomatis untuk 10-15 mata pelajaran.",
+      "QA Note: Jika QR Code tidak muncul, pastikan koneksi internet stabil saat proses Generate PDF sedang berlangsung."
     ]
   },
+
   "/extracurricular": {
-    title: "Ekstrakurikuler",
-    description: "Pelekatan label keanggotaan ekskul siswa beserta scoring-nya.",
+    title: "Keanggotaan Ekstrakurikuler (Pengembangan Diri)",
+    description: "Pusat aktivitas di luar jam mengajar. PMR, Paskibraka, Pramuka, KIR, dsb. Sekaligus penempelan skor predikat siswanya.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Pendaftaran Basis Murid",
         steps: [
-          "Buka Akademik > Ekstrakurikuler.",
-          "Klik Pendaftaran Siswa Baru ekskul, cari nama murid, pilih Kelompok (mis: Pramuka).",
-          "Berikan Predikat hurufnya (A/B/C) lalu save."
+          "Akses panel menu Akademik > Ekstra.",
+          "Pertama tama, bikin Jenis Ekskulnya dahulu dari tombol panel kanan (Cth: Marching Band).",
+          "Masuk Ke sub-katalog 'Daftarkan Anggota Siswa'."
+        ]
+      },
+      {
+        title: "Cara Entri Penilaian & Predikat",
+        steps: [
+          "Disusul pilih List nama anak bersangkutan, tempel dirinya pada slot Marching Band.",
+          "Setiap persemester diatur predikat kecakapannya. (A - Sangat Aktif, atau B - Rapi).",
+          "Catat atau Submit kelar."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Hasil input parameter ekstrakurikuler wajib ikut ter-fetch secara real time ke deret bawah Lembaran Rapor Anak pada saat dicetak PDF oleh Wali Kelas."
+      "Sinkronisasi Hulu-ke-Hilir: Entri kelakuan si anak di field Marching Band ini dikompresi sedemikian rupa sehingga bila Bapaknya (Wali Kelas) menyedot PDF Raport si anak besoknya, kotak tabel Ekstrakulikuernya otomatis terisi barisan Marching band beserta Predikat 'A Sangat Aktif' tadi, tanpa harus copy paste data apa apa."
     ]
   },
+
   "/counseling": {
-    title: "Bimbingan Konseling",
-    description: "Catatan histori disipliner, perolehan poin penegakan tatib negatif/positif oleh BK.",
+    title: "Bimbingan & Konseling (Pelanggaran Sikap)",
+    description: "Modul tatib (Tata Tertib) yang mendulang point reward & punishment atas polah tingkah kelakuan santri/siswanya.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Perekaman Histori",
         steps: [
-          "Buka Akademik > BK.",
-          "Tambah Catatan Kasus, pilih terpidana/siswa, pilih Jenis Pelanggaran.",
-          "Tulis keterangan dan Submit."
+          "Guru BK (Bimbingan konseling) mendapati anak cabut / lompat pagar.",
+          "Buka Akademik > Bimbingan Konseling.",
+          "Cari nama anak mabal tersebut."
+        ]
+      },
+      {
+        title: "Cara Penilaian Sosiologis (Pemberian Point / Kasus)",
+        steps: [
+          "Klik tambah Tragedi Kasus.",
+          "Ketik jenis kasus di form (Lompat dinding), tentukan apakah ini berdampak positif (prestasi) atau negatif (pelanggaran).",
+          "Berikan insentif poin (Misal Minus 30 Poin).",
+          "Sertakan catatan tambahan.",
+          "Submit untuk dicatat di BAP digital anak."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Mesin Kalkulasi Agregat QA: Jika anak membuat 2 pelanggaran yang masing-masing hukumannya bernilai 20 poin minus, Layar Profil Rekap Siswa akan mengkalkulasi secara instan 'Poin Anak Ini = -40'. Perhitungan mutlak."
+      "QA Kalkulasi Kinerja Realtime: Kalau anak A pada selasa cabut (-30) poin, lalu sabtu dia juara futsal (+40 poin). Dashboard BK ketika memvisualkan riwayat anak bersangkutan akan merangkum 'Skor Anak A sekarang adalah = POSITIF +10'. Menghindrai human error salah hitung akumulatif sanksi."
     ]
   },
+
   "/calendar": {
-    title: "Kalender Akademik",
-    description: "Mading agenda tahurnan dan liburan nasional untuk sekolah.",
+    title: "Kalender Akademik Event & Libur",
+    description: "Kalender visualisasi event hari raya, tanggal ujian sekolah, hingga pembagian rapot.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Visualisasi Alur & Penilaian Mading",
         steps: [
-          "Operator Akademik membuka menu.",
-          "Arahkan ke tgl pada calendar view, insert Event 'Cuti Bersama' warna Hijau."
+          "Semua personil dari ortu hingga guru mendambakan info kapan libur Nasional/Idul Fitri di aplikasi portal sekolahnya.",
+          "Modul ini mensimulasikan full-grid Monthly View layaknya Apple Calendar."
+        ]
+      },
+      {
+        title: "Cara Input Hari Penting Baru",
+        steps: [
+          "Staff yang berkewajiban meriset Hari Besar mengetuk menu Kalender.",
+          "Klik hari (misal 15 Juni). Muncul modal.",
+          "Ketik Event Title: 'Peringatan Isra Miraj'.",
+          "Tentukan rentang harinya (Mulai 15-selesai 16 Juni).",
+          "Pilih Warna Tagging Label merah, lalu simpan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Bila seorang Siswa mengakses jadwal ini, ia hanya boleh menatap secara Read-Only (view restricted access). Tak ada tombol edit di level user tsb."
+      "Pameran Berantai Ke End User: Siswa juga akan dipertontonkan warna blok kalendarium bulan ini ketika buka portalnya. Admin sekolah bertanggungjawab atas keaktualan data ini agar siswa tak mis-informer ke ortunya."
     ]
   },
+
   "/infaq-bills": {
-    title: "Infaq / SPP",
-    description: "Papan pembayaran bulanan SPP per anak secara transaksional bulanan.",
+    title: "Tagihan Infaq & SPP Bulanan",
+    description: "Sentra lalu lintas pembayaran konstan murid SPP/Syahriah perbulan. Modul yang didesain agar kasir TU bisa cepat memangkas tagihan SPP bulanan.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Siklus Bulanan Keuangan Flow",
         steps: [
-          "Buka Keuangan > Infaq/SPP. Filter pencarian atas Nama/NIS Anak.",
-          "Sistem memperlihatkan grid kotak bulan.",
-          "Klik Bayar di boks bulan berjalan (misal Oktober).",
-          "Isi Pop-up nominal dan cara pembayaran, lalu Submit Lanjutkan."
+          "Saat tanggal satu, semua blok nama bulan di deret pembayaran siswa akan beralih merona merah (Belum bayar).",
+          "Tata Usaha bisa menelurusi riwayat siapa yang rajin, siapa murid yg telat SPP tahunan dan total nominal hutang."
+        ]
+      },
+      {
+        title: "Cara Input Kasir (Ceklist Lunas)",
+        steps: [
+          "Anak datang bawa uang tunai di loby TU.",
+          "TU di layar PC Keuangan > Tagihan Infaq, cari nama anak.",
+          "Di deret Bar bulan tsb (Agustus), Klik Bayar Agustus.",
+          "Sistem menembakkan Popup harga regulasi per bulan SPP.",
+          "Masukkan nominal tunai riil anak (Bila ia pas, biarkan 150rb). Set pembayaran via TUNAI.",
+          "Sahkan klik simpan Lunas Transaksi."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Keuangan ACID: Ketika pembayaran selesai, bukan hanya balok bulan Oktober lunas, melainkan Database Ledger Jurnal Umum Yayasan mutlak langsung menerima debet kas uang masuk agar tak terjadi penginputan ganda oleh staff."
+      "QA Relasional Ledger Database Kritis! Sistem menjamin perpaduan integrasi Keuangan Double Entry. Uang tunai murid diatas TAK SAJA meng-hijau-kan tagihannya (Lunas bulan ini dicentong). Namun Mutlak secara di balik layar (Backstage Process) menciptakan sebiji Baris 'Pemasukan Kas Tunai SPP Budi 150rb' meluncur tektok otomatis pada Buku Ledger JURNAL UMUM Utama sekolah tanpa TU capek mengetik laporan lagi dobel pusingnya."
     ]
   },
+
   "/tabungan": {
-    title: "Tabungan Siswa",
-    description: "Titipan saldo uang siswa.",
+    title: "Tabungan Rekening Siswa Lepas",
+    description: "Sebuah program rekening giro dompet mini milik sekolahan. Bertindak sebagai pemutar celengan siswa yang tiap rehat anak bisa jajan ditarik.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Bisnis Flow Penyimpanan Buku Tabungan",
         steps: [
-          "Akses Keuangan > Tabungan Siswa.",
-          "Terdapat 2 aksi: Setor dan Tarik.",
-          "Untuk penarikan tunai, pilih Tarik dan input beban tarik. Simpan."
+          "Kaya program tabungan bank.",
+          "Admin akan melihat sisa Saldo bocah tiap harinya."
+        ]
+      },
+      {
+        title: "Cara Mencatat Setor Masuk Tabungan",
+        steps: [
+          "Masuk module Keuangan > Tabungan.",
+          "Ada 2 kapabilitas 'Tarik' / 'Setor'.",
+          "Cari nama anak (Contoh: Rafathar). Klik Setor Rupiah.",
+          "Isi barisan teks lembaran tunai yg disetor anak misal ketik: 80,000.",
+          "Submisi Simpan Data Ke rekening Database dia."
+        ]
+      },
+      {
+        title: "Cara Menarik Penarikan Oleh Anak",
+        steps: [
+          "Sebaliknya Anak mau minta uang keluar.",
+          "Tabungan > Tombol Tarik cash. Input 40,000.",
+          "Klik Cairkan, maka saldo akun anak ini melemah susut dan uang kas TU dipotong."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Limit Eksekusi QA: Bila saldo bocah tsb realnya 10rb, lalu kasir menarik 50k rupiah, sistem Wajib mendeteksi insufisiensi dan membatalkan proses database penarikan itu secara mutlak."
+      "Insufisiensi Keamanan Dana QA Test: Jika anda iseng ngawur mau narik 1 Juta cash padahal celengan anak cuma mentok 2 Ribu Perak. Server AI meng-handle kebodohan ini. Sistem Menolak dengan pesona (Error Validation Insufficient Dana Tabungan) demi menjaga logika balance akunting kas."
     ]
   },
+
   "/wakaf": {
-    title: "Wakaf & Donasi",
-    description: "Buku rekening terpisah untuk program sosial & sumbangan lepas.",
+    title: "Dana Wakaf, Donasi Eksternal",
+    description: "Pusat penerimaan instrumen pembiayaan sedekah infak temporer, iuran dana bangunan yang di donasikan oleh muhsinin di luar SPP wajib rutin.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Arus Perekaman Inflow ZIS",
         steps: [
-          "Buka Keuangan > Wakaf & Donasi.",
-          "Masukkan nama instansi Donatur, niatan program, dan sumbangan nominalnya."
+          "Tidak terkait sama perbulan-siswa.",
+          "Penyumbang / Donatur lepas menyetor via Panitia Masjid / Sarpras / TU.",
+          "Mencatat data riwayatnya dengan detil nama & program agar uangnya nanti dialokasikan secara halal dan wajar."
+        ]
+      },
+      {
+        title: "Cara Input Transaksi Pendapatan Hibah Wakaf",
+        steps: [
+          "Keuangan > Wakaf & Donasi.",
+          "Klik Tambah Kwitansi Baru / Item Wakaf.",
+          "Isikan nama spesifik Hamba Allah / Tuan A.",
+          "Deskripsikan peruntukannya (Spesifik renovasi kamar mandi pria Lt 2).",
+          "Nominal Donasinya. Simpanlah."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Dana tersebut akan terkompilasi menyatu dalam Jurnal Saldo debit sekolah jika skemanya adalah Sentralisasi Kas Institusi."
+      "Pelaporan Laba Transparan: Duit wakaf ini, sesuai syariat dan aturan tata kelola ERP kita, pada saat malam closing pelaporan bulanan oleh kepsek, duit ini mutlak menyemplung tersatukan meramaikan bursa Saldo total Kas Utama yayasan di bagian 'Laporan Rugi/Laba'."
     ]
   },
+
   "/journal": {
-    title: "Jurnal Umum",
-    description: "Ledger utama kasir yayasan. Seluruh transaksi kas bendahara dan arus uang bulanan anak berkumpul disini.",
+    title: "Jurnal Umum Pembukuan (Buku Besar)",
+    description: "Kawasan ter sakti bidang keadministrasian Finansial Sekolah. Semacam buku ledger utama yayasan. Entah itu bayar listrik, denda telat angsur, beli spidol, semua berjejak di pualam transaksi row demi row kronologis waktu disini.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Logika Penyerap Ledger Arus Uang",
         steps: [
+          "Seperti disinggung sebelumnya, baris transaksi dari 'Kantin Koperasi', 'Uang SPP', dan 'Donatur' tadi mengakar secara ghaib menjadi Record Baris panjang yang numpuk terkumpul di modul ini setiap letik jari bergetar di menu-menu sebelah.",
+          "Jadi fitur utama panel ini adalah untuk Melihat / Review Kas Yayasan secara utuh murni transparan."
+        ]
+      },
+      {
+        title: "Cara Input Beban Biaya (Manual Expense) Catat Pengeluaran",
+        steps: [
+          "Lalu jika TU disuruh Bu Kepsek beli Galon Aqua / Listrik. Bayarnya input dimana?",
           "Buka Keuangan > Jurnal Umum.",
-          "Klik Catat Tangan/Manual. Pilih Jenis Pengeluaran.",
-          "Isi parameter form (Misal uang bayar internet indihome 400k). Simpan."
+          "Bongkar tombol 'Catat Transaksi Manual'.",
+          "Pilih arus 'Pengeluaran/Belanja' (Debit ke rekening Kas/Kredit di sistem anda).",
+          "Pilih dropdown Kategori Biaya yang diatur di menu awal (Kategori Transaksi). (Cth: Utilitas Internet/Listrik).",
+          "Hajar ketik angkanya 500,000, tulis Deskripsi beli tokens. Rekam Data!"
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Transaksi SPP Lunas bulanan siswa TIDAK DAPAT diedit apalagi ditimpa lepas melalui Jurnal Umum. Harus ada kunci (Lock Mutation for Internal Derived Rows)."
+      "QA Keamanan Derivatif Audit Anti Korupsi: Bendahara mungkin terbayang untuk usil merubah 'Uang SPP Bayaran Si Ucup' dari 100k diubah jadi 0 k untuk dikorupsi diam-diam lewat menu JURNAL UMUM INI. TIDAK BISA. Fitur aplikasi mem-block aksi pengubahan (Hard Edit Record) mutasi yg disuplay oleh komponen otomatis dari modul Infaq atau Koperasi. Pembukuan hanya dapat DIBATALKAN dari modul Asalnya, BUKAN dari Jurnal Umum demi melacak kronologitas Fraud di laporan jejak (Audit log)."
     ]
   },
+
   "/reports": {
-    title: "Laporan",
-    description: "Pengekstrakan dokumen rekap kalkulasi Laba Rugi kas berdasar seleksi jarak penanggalan.",
+    title: "Rekap Laporan Komprehensif Arus",
+    description: "Pusat eksport dan rekap neraca. Penghitung kalkulasi laba selisih total pemasukan - pengeluaran lembaga untuk di print dalam Rapat Pimpinan (Rapim).",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Flow Analisa Keuangan Filter Dinamik",
         steps: [
-          "Ke Keuangan > Laporan. Tentukan Tipe report Laporan Arus Kas.",
-          "Isi custom date range Tanggal Mulai dan Tanggal Usai.",
-          "Tekan Generate/Download XLS/PDF."
+          "Aplikasi memiliki mesin kalkulus untuk mensurvey data periode Custom (Rentang Bebas).",
+          "Anda dibebaskan menarik Laporan untuk skala perhari, skala semester ganjil (Juni-Desember), skala tahuan akademik full (Agustus-Juli depan)."
+        ]
+      },
+      {
+        title: "Cara Mem-build / Generate Report Angka",
+        steps: [
+          "Keuangan > Laporan Arus Kas.",
+          "Sebutkan tipe klasifikasi parameter laporanya jika disediakan.",
+          "Setting Tanggal Dari Mulai (01 Jan) dan Tanggal Batas Akhir (30 Jan).",
+          "Render tekan Apply. Komputer seketika mentabulasi summary angka kas masuk (Income total) direduksi kas keluar (Expense total).",
+          "Tembakan data lalu disuntikkan ke plugin Download PDF atau Excel bagi user untuk diprint fisik ke Meja yayasan direksi."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Filter Validation Rules: Tanggal Berakhir diisi bln Feb, Mulai diisi Mar. Tanggal mundur ini harus dilarang oleh library Date Picker atau Middleware API validasi."
+      "Bug Validation Tercover QA: Bila user memaksakan mengisi Tgl. Berakhir berada menukik di posisi temporal lebih awal lampau (Backward Time) melangkahi Tgl. Mulai. Program ini akan melempar status BadRequest karena mustahil dan mengembalikan error kalender tidak logis di form filter tanpa mencrash server."
     ]
   },
+
   "/teachers": {
-    title: "Data Guru",
-    description: "Database pokok spesialis tenaga kependidikan pns/honorer sekolah.",
+    title: "Data Master Guru",
+    description: "Arsip database profil kepegawaian ekslusif bagi Tenaga Pendidik (Ustadz/Asatidzah/PNS) instansi bersangkutan. Data nama Guru yang lahir disini bakal bersirkulasi di penugasan plotting Rapor kelak.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Sistem Data Induk Keprofesian Pegawai",
         steps: [
-          "Ke SDM > Data Guru. Tambah Profil baru NIP bersangkutan.",
-          "Pastikan mengisi nominal Rate Gaji Pokok bagi individu di input form agar Payroll berjalan nanti."
+          "Sebelum bikin kelas atau jadwal, menu Guru harus rampung disusun terlebih dulu.",
+          "Setiap Individu di dalam sini bakal menjadi entitas utama dalam sub-sistem 'Penilaian & Payroll Gaji'."
+        ]
+      },
+      {
+        title: "Cara Perekrutan Profil Baru (Tambah Pegawai Guru)",
+        steps: [
+          "Kepegawaian > Data Master Guru.",
+          "Klik tombol Entri Baru profil.",
+          "Formulir mengangkangi data Personal (Gelar, Nama Lengkap), Data Instansi (NIP, Tanggal Bergabung, Jabatan Struktural jika ada).",
+          "Masukkan parameter krusial untuk Komponen GAJI POKOK dan Tarif HONOR jam ngajar di tab Form khusus gaji.",
+          "Simpankan identitasnya kedalam Database Guru aktif institusi."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: NIP itu Bersifat unik per profil. Guru di tabel ini akan terekspos datanya ditarik menuju Modul 'Data Penugasan'."
+      "QA Keunikan Pegawai Intansi: Serupa halnya NIK & NISN. Nomor Induk Pegawai (NIP/NIK Yayasan) diikat validasi Unik di tataran Server Database ORM (Drizzle). Kalau terjadi double NIP ketik error manusai, server menahan pelampiasan profil simpan ke storage dan menolak form tu."
     ]
   },
+
   "/staff": {
-    title: "Data Staf",
-    description: "Tenaga SDM non mengajar (Tata usaha, Sarpras, Keamanan).",
+    title: "Data Master Staf (Tata Usaha/Karyawan Non-Ajar)",
+    description: "Pengarsipan database karyawan bagian backoffice pendukung / suporter diluar korps guru ngajar (Security, Kebersihan, Keuangan, Koperasi).",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Filosofi Pemisahan Data Jabatan",
         steps: [
-          "Ke SDM > Data Staf. Tambah Profil Staf. (Format flow serupa dengan Entri Guru)."
+          "Dibikin terpisah dari Guru agar ketika ada form dropdown penentuan 'Wali Kelas' oleh panitia akademik, nama-nama Satpam Security ini otomatis terlewat / tidak dimuat di list dropdown karena berbeda nature databasenya."
+        ]
+      },
+      {
+        title: "Cara Entri Data Staf Baru",
+        steps: [
+          "Mirip dan senada percis irama nya dengan penambahan Guru.",
+          "Kepegawaian > Data Master Staf.",
+          "Isi Identitas form diri beserta struktur gajinya dan simpan rekapan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Staf kebersihan tidak boleh muncul ke dalam list dropdown 'Pemilihan Wali Kelas' di Akademik. (Role Segmentation Testing)."
+      "Batasan Validasi (Segregation of Entity): Akurasi data Staff terjaga dari pusing campur aduk dengan Akademisi. Kepegawaian dipisahkan secara modul fungsional sehingga kalkulasi presensi / absent kerja mereka tetap aman terisolasi pada saat pengupahan Payroll nanti."
     ]
   },
+
   "/payroll": {
-    title: "Payroll",
-    description: "Kalkulator massal honorarium bulanan PNS dan Guru berdasar checklok/potongan.",
+    title: "Mesin Kalkulasi Pengupahan (Payroll Gaji Bulanan)",
+    description: "Sistem Komputasi Honorarium Massal. Otomator yang meracik komponen Gaji Pokok, Tunjangan fungsional struktural dilumuri Pemotongan Alpa / Absensi menjadi 1 bundel Slip nominal Gaji.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Pola Dasar Komputasional Penggajian Mesin",
         steps: [
-          "Buka SDM > Payroll. Set Bulan. Klik Tombol Generate Kalkulasi Gaji.",
-          "Lakukan Verifikasi dan Edit Ekstra bilamana ada penambahan lembur manual.",
-          "Bila fix, Klik Approve Slip per nama guru."
+          "Data Inputnya adalah: Parameter dasar perindividu dari Master Guru, diramu dengan Jumlah hari Bolos di (Modul Absensi).",
+          "Ketika tombol kalkulasi ditekan, aplikasi server memforsir perhitungan kompleks ke ratusan nama guru dan satpam serentak demi mempercepat kerja staf keuangan dalam hitung manual yang rewel."
+        ]
+      },
+      {
+        title: "Cara Mengeksekusi / Menggenenrate Siklus Payroll Bulanan",
+        steps: [
+          "HR/Keuangan buka Modul > Payroll Gaji.",
+          "Pilih rentang batch / Setel Bulannya (Misal Generate Penggajian Akhir September 2025).",
+          "Klik Execute Generate Gaji / Hitung.",
+          "Mesin berpikir merender, dan sesaat memunculkan deretan Draft nama pegawai disandingkan kolom Angka Kalkulasi siap cair."
+        ]
+      },
+      {
+        title: "Cara Finalisasi Verifikasi & Penggembokan Pencairan",
+        steps: [
+          "Klik satu per satu Baris guru tsb buat melihat bedah kompoenen slipnya bila dirasa tak wajar sebelum dicetak.",
+          "Bisa juga mengedit paksa manual penambahan insetif (Cth ketik lembur nginep acara 100k di textbox Tambahan) dan klik Update Angka.",
+          "Tahap krusial: Tekan 'Approve & Tandai Cair Lunas'.",
+          "Slip Gaji otomatis diproteksi Read-Only (Dikunci), lalu saldonya menginfek potong Kas Jurnal Yayasan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: State Freeze: Slip gaji honor atas nama Bapak X bila sudah terstatus 'Approved Liquid', tombol Hapus (Delete) / Rekayasa angka menjadi terkunci total untuk menjaga history."
+      "Stabilitas QA State App: Saat sebuah slip gaji Bapak Ahmad sudah dilabeli bendahara sbagai Status 'Approved Paid/Lunas Pencairan', Segala bentuk fitur 'Ubah' atau 'Delete' baris gaji Pak Ahmad seketika dibuang UI-nya (Frozen Record Safeguard) guna menangkal staff bandel yang mencoba mendistorsi angka uang keluar lapor akuntan."
     ]
   },
+
   "/inventory": {
-    title: "Inventaris",
-    description: "Manajemen siklus status alat material lembaga.",
+    title: "Manajer Inventaris Sarana Prasarana (Aset)",
+    description: "Buku mutasi Logistik. Menampung data aktifa fisik entitas hardware segenap alat peraga sekolahan, proyektor, bangku, ac dlsb. Sampai pada tahapan siklus depresiasi/rusaknya material tadi.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Sirkulasi Riwayat Asset Manajemen Flow",
         steps: [
-          "Ke SDM > Inventaris. Klik Tambah Barang (Cth: Proyektor). Setting Barang Baru = Status BAIK, QTY = 1 pcs."
+          "Barang bertambah ketika yayasan membelinya (Aset In), dan diletakkan dalam ruangan.",
+          "Admin inventaris melakukan tag update status kelangsungan usianya di kala barang itu butuh di lem biru, hilang, dicuri. Sehingga Laporan Aset di penghujung laporan tahunan berbunyi rasional."
+        ]
+      },
+      {
+        title: "Cara Mengentri Barang Keluar/Masuk Baru",
+        steps: [
+          "Buka Kepegawaian & Logistik > Inventaris Barang.",
+          "Pilih Tambah Item Fisik Aset Baru.",
+          "Buatkan Identifikasinya (Nama: AC Panasonic Ruang 7A).",
+          "Beri Kode Papan Barcode nya kalau ada, tentukan Kondisinya perdana hari ini (Sangat Baik / Berfungsi).",
+          "Ketikan QTY, dan harganya, Simpan."
+        ]
+      },
+      {
+        title: "Cara Penilaian Siklus Depresiasi/Kerusakan",
+        steps: [
+          "Anggap AC tadi jebol.",
+          "Operator Sarpras buka menu Inventaris tadi, sortasi pakai search cari namanya 'AC Panasonic Bawah'.",
+          "Klik 'Edit / Pembaruan Status Aset'.",
+          "Turunkan grade statusnya dari 'BAIK' menyala menjadi dropdown level 'RUSAK (Diservis/Afkir/Lelang)'.",
+          "Berikan narasi log history, dan Submit Perubahan Aset. Sistem mencatat jejak."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Siklus Live status: Nanti saat hilang/rusak, Admin meng-update barisnya jadi status RUSAK. Jejak audit akan melengkapi laporan Asset tahunan."
+      "Audit Pencacatan Cermat QA: Mengalihkan parameter kuantitas sebuah Proyektor yang dari 5 (lima) menjadi sisal tinggal 3 di tengah proses pemakaian sistem yang sudah menempuh satu semester penuh adalah wujud dari mis-management kontrol DB Stock. Anda disarankan membikin Jurnal 'Rusak 2' biar sisa live stocknya jadi 3 pcs."
     ]
   },
+
   "/coop/products": {
-    title: "Produk Koperasi",
-    description: "Etalase Rak master setting harga beli dan jual dagangan retail.",
+    title: "Koperasi Unit Sekolah - Daftar SKU Produk",
+    description: "Buku rak etalase Gudang logistik kulakan stok warung atau kantin operasi unit yayasan yang diperdagangkan ke publik sekolah.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Bisnis Retail SKU Produk Inti Stok",
         steps: [
-          "Petugas mambuka Koperasi > Produk. Klik Tambah Item SKU",
-          "Set Modal Beli Kaos Kaki = 8rb. Set Jual = 10rb. Tentukan QTY Stok awal = 50. Simpan."
+          "Ini bukan tempat kulakan jajan untuk donatur, ini buat anak anak / guru berbelanja ecer warung internal berdagang.",
+          "Tanpa di-isi etalase produk pada raknya di menu ini, Aplikasi kasir (POS Transaksi) akan memunculkan layar nge-blank/kosong belaka menenggelamkan konter niaga anda."
+        ]
+      },
+      {
+        title: "Cara Memasukan Stok Dasar Barang Pemasok Ke Gudang Kita",
+        steps: [
+          "Staff Pengoprasian Unit Niaga membuka Laci Koperasi > Produk Item SKU.",
+          "Klik Aksi 'Entri Tambah Barang Ecer Modal Baru'.",
+          "Input nama produk spesifik (Mis: Buku Gambar A3 Tebal Sinar Dunia).",
+          "Tetapkan Modal dasar HPP per satuan harga beli. (Sebut 3ribu perak).",
+          "Tentukan profit taking Margin/Harga Edar Jual buat siswa. (Sebut 6ribu rupiah grosirnya).",
+          "Ketik ketersediaan QTY kuantiti stok awal (Misal ada berdus dus kita totlah = 350 piece).",
+          "Simpan Database Perdagangan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Peringatan Margin Loss: Jika Harga Modal dibeli = 15rb namun Harga Dijual kembali = 10rb. Alert UI perlu menampilkan teguran 'Harga eceran di bawah standar modal'."
+      "Validasi Alert Rugi Cermin QA: Algoritme proteksi perniagaan disuntikan disni. Dimana jikalau Staff keliru tak waspada mensetel harga Jual-Ke-Anak sebesar 'Rp 10.000', Sementara harga HPP dari Produsen Pabrik Kulakannya pas didata terisi 'Rp 16.000' (Nombok boncoz modal). Komputer akan mencelat menjabarkan warning box merah 'Loss Margin Trade! Angka Harga Ecer Jual terlampau jatuh ketimbang Harga Beli Dasar, perbaiki form anda lantas Save lagi."
     ]
   },
+
   "/coop/transactions": {
-    title: "Transaksi / Kasir",
-    description: "Mesin konter Point of Sales untuk perputaran barang terjual.",
+    title: "Kasir Pembayaran POS Koperasi",
+    description: "Aplikasi mesin telan kasir ritel gaya minimarket modern. Layar transaksional eksekutor tempat dagang berdenyut yang mereduksi jumlah stok dan menyedot cuan real-time.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Alur Transaksi Pertukaran Barang Dengan Uang",
         steps: [
-          "Buka Transaksi Kasir. Muncul display keranjang.",
-          "Tekan produk, tagihan otomatis tampil. Ubah jenis Pembayaran Tunai.",
-          "Klik Bayar dan Cetak Struk."
+          "Konter / Teller duduk manis didepan form grid POS (Point of satış) Keranjang keranjang ini.",
+          "Di deret kolom kiri, adalah Katalog List barang yang sudah dimasukkin di menu SKU Tadi.",
+          "Ketika klik tombol / kartu barang di sisi Kiri, Keranjang bayar Virtual list sisi Kanan beranak merangkum item."
+        ]
+      },
+      {
+        title: "Cara Menjual dan Memfinalisasikan Pemotongan Keranjang Posisi TUNAI",
+        steps: [
+          "Murid (Budi) meletakkan seplastik chiki ke kasir anda.",
+          "Kasir meng-klik kotak Chiki 1x. Keranjang sisi kanan menampilkan Struk Chiki x 1 Pcs = 2000 perak.",
+          "Kasir menset tombol Metoda Pembayaran Tunai.",
+          "Tekan tombol BAYAR SEKARANG atau Checkout Cetak Struk. (Printer mencetak karcis, Laci Uang berbunyi Ting).",
+          "Selesai! Sistem detik itu juga mutlak langsung memotong Stok Chiki Induk - 1 Pcs, dan Meraup Jurnal Kasir Pemasukan Uang di Koperasi + 2000 perak."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Trigger Inventory Mutasi: Segera sesudah Lunas, Stok Barang yang awalnya 50 mutlak teriris 1 pcs menjadi 49 unit tanpa delay."
+      "QA Sinkronisasi Kuat Cerdas State Management: Baris item Chiki yang kuantitasnya nyosot ke level kritis, atau habis, maka kartu barang belanja di rak Kasir UI POS ini akan terkunci (Disabled Tombol Klik). Mencegah staff memencet benda gaib (Over-Selling kasir fiktif) dan membikin stok gudang Database menjadi Minus yang merupakan haram hukum nya di kancah perakuntansian."
     ]
   },
+
   "/coop/credits": {
-    title: "Piutang Siswa",
-    description: "Faktur list hutang/bon siswa yang menahan pembayaran pada saat belanja.",
+    title: "Piutang Koperasi Santri / Siswa (Kasbon)",
+    description: "Buku lecek utang / kas bon santri yang tak membawa duit di warung dan disuruh nyetelin catat tagihan hutang ke depan (ngutang di kantin).",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Flow Kasbon Lahir Merajut Asalannya",
         steps: [
-          "Petugas Kasir di Transaksi POS mengatur tipe pembayaran 'Kredit Piutang'. Setel nama Murid.",
-          "Admin buka tab Koperasi > Piutang. Nama Siswa tersebut auto-terdampar di list ini sbagai defisit bayar."
+          "Di Transaksi Transaksi diatas, ketika ada Murid bernama Budi jajan Chiki tapi ngutang, Kasir TIDAK MENGEKLIK tombol Tunai, Tapi tombol Tipe Kas KREDIT.",
+          "Alhasil, tagihan tersebut tidak mendamparkan laba harian uang masuk kas, tapi masuk ke deretan List panel Piutang ini sebagai Tunggakan."
+        ]
+      },
+      {
+        title: "Cara Penagihan Mematikan Baris Piutang Ketika Dilunasi Ortu/Anak",
+        steps: [
+          "Suatu sore, Bapaknya Budi dateng untuk menyetor pelunasan hutang sembako si Chiki Budi.",
+          "Pegawai buka Module Koperasi Khusus > 'Daftar Piutang'.",
+          "Disana nama BUDI tertulis status Merah 'Tertunggak Kredit 10rb'.",
+          "Tekan tombol 'Aksi Lunaskan/Bayar Utang' pada baris milik Budi ini.",
+          "Sistem meletuskan modal peringatan Konfirmasi Penulasan kasir.",
+          "Simpan. Nama si Budi luntur dari Grid Hutang Piutang tsb, dan uang tunai yg dibayar Bapak si Budi kini terangkum di Pemasukan KOperasi Hari ini secara realita."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Sewaktu Piutang dilunasi, Ledger Piutang tertutup (berubah status) dan uang cash menyetor kembali ke total Jurnal Pemasukan Koperasi pada penutupan sesi itu."
+      "Audit Pencatatan Double Loop QA Validated: Ingat, ketika si Budi Ngutang, walau uang koperasi ga nambah, tapi Benda fisiknya si Chiki udah dikonsumsi anak. Makannya Stok Gudang Chiki tetap di irisis terpotong dikurangi 1 tanpa peduli metode pembayaran Credit / Tunai. Keutuhan Stock Control mutlak dipisahkan dari Flow Financial Credit/Debet di mesin sistem ERP."
     ]
   },
+
   "/employee-attendance": {
-    title: "Absensi Pegawai",
-    description: "Jurnal finger/ketidakhadiran kerja guru/staff yang berkonsekuensi pada potong gaji payroll.",
+    title: "Presensi Absensi Kepegawaian",
+    description: "Jurnal papan tulis virtual tanda kehadiran atau ketidah hadiran, izin staf TU maupun Guru didik ngajar sebagai paramter vital pengurangan potongan gaji bila bermasalah indispliner.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Flow Relasional Indispliner Parameter Gaji",
         steps: [
-          "Masuk Tata Usaha > Absen Pegawai. Pilih Date Today.",
-          "Ubah status NIP bermasalah (misal telat). Simpan Mutasi presensi."
+          "Setiap hari, TU pencatat atau fingerprint manual harus direkam untuk diunggah catattannya sini.",
+          "Daftar Alfa dan Cuti para pendidik dikomputerisasi sebulan penuh, menumpuk dan disaring di siklus hari Payroll Slip gaji tgl 25 / Akhir bulanan tiba."
+        ]
+      },
+      {
+        title: "Cara Menandai Alfa Guru & Staf Absen Harian",
+        steps: [
+          "Operator memfokuskan kursor ke layar Administratife > Kepegawaian > List Absen Pegawai.",
+          "Disuguhkan barbel tangal kalender absen (Pilih tanggal berapakah sekarang mau absen).",
+          "List memanjang seluruh guru-staff tergelar, kondisinya disetel netral hijau (Hadir/Present) serentak oleh program.",
+          "Cari nama Guru yg alfa mangkir itu hari. Dan toogle saklar tombol sebelahnya menjadi dropdown 'Sakit / Izin / Alfa (Tanpa Keterangan)'.",
+          "Ketik notes medisnya kalau disodor surat.",
+          "Lalu bergulir menyebur ke kedalaman page terbawah: 'SIMPAN MASAL ABSEN PEGAWAI HARIAN'."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Integrasi Payroll: Status Alfa di hari ini akan tersedot rumusnya kelak pas akhir bulan saat Sistem merumuskan slip gaji."
+      "QA Mesin Waktu Transaksi Immutable Presensi (Read-Only After Generate): Pada saat slip gaji seorang Guru bernama 'Pak Cecep' TAHUN ITU di BULAN MARET telah dieksekusi Finalisasi pencairanya di menu Payroll oleh bos, maka Absen kehadiran Pak Cecep sejagat rentang Maret Kemaren itu tak dapat lagi dirubah rubah riwayat kehadirannya karena telah disedot dan dipatenkan pada cetak faktur Gaji resminya."
     ]
   },
+
   "/letters": {
-    title: "Manajemen Surat",
-    description: "e-Arsip disposisi agendaris nomer surat fisik baik external maupun internal dinas.",
+    title: "Agenda Persuratan Elektronik (Buku Ekspedisi Fisik)",
+    description: "Buku register agendaris mencakup pendataan nomer antrian surat, resi fisik kedatangan pos kurir (Masuk), dan rekod surat yg menjejaki alamat eksternal (Keluar) pada lemari siber birokrat sekolah.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Pemecahan Domain Registrasi",
         steps: [
-          "Buka TU > Manajemen Surat. Upload Surat Keluar.",
-          "Input Perihal, Nomer Induk Dokumen, Instansi dituju lalu Unggah softcopy scanned PDF."
+          "Arsip Surat menyurat terpecah dari segi asalnya: Entah Berasal (Masuk) diteken dari luar kantor masuk kedalam, Ataukah diketik dilepas disetujui internal lari meluncur Keluar Pos dinas lainnya."
+        ]
+      },
+      {
+        title: "Cara Mengarsipkan Masalah Dokumen Agenda Masuk TU",
+        steps: [
+          "Langkah operatif TU mencatat surat undangan Rapat Dinas Diknas Kabupaten.",
+          "TU buka Surat & Administratif > Persuratan. Klik Register Agenda Surat Baru.",
+          "Berikan tipe form (Pilih Surat IN/Masuk).",
+          "Masukkan No Identifikasi Resi Fisik Dokumen / Kop Nomor berkas dari pengirim sana di isian Form.",
+          "Sebutkan tanggal titimangda (Hari Pengiriman dari cap surat fisik tsb).",
+          "Input Perihal tujuan: (Sebutkan rapat pembahasan UN). Uraikan Isi Ringkas di Text Box besar bawahnya.",
+          "Terakhir dan Paling Penting! Arahkan ke Form Lampiran PDF, File Explorer tergelar, silakan pilih hasil fotokopian Scan Softcopy Scan Printer Anda tersebut (PDF doc), dan Upload Simpan."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Limit Ekstensi Form Upload: Pengujian QA menyuntik File `Aplikasi.exe`. Endpoint sistem Wajib memblokir (hanya menerima PDF/Gambar min. Size limit)."
+      "Validasi Pertahanan File Payload QA Limit: File extension upload filter dipasang ganda oleh MiddleWare API NextJS. Memasrahkan script .exe, .sh, .bat atau file raksasa over 5MB kepada server agenda surat tidak akan dimengerti oleh form. Sistem melontarkan amunisi 422 Invalid Media / Format Size Too Big Overload Error membebaskan keamanan bucket simpanan dokumen Cloud aplikasi."
     ]
   },
+
   "/announcements": {
-    title: "Pengumuman",
-    description: "Toa / mading lonceng Broadcast pop up peringatan ke end-user.",
+    title: "Corong Pengumuman Digital System",
+    description: "Selembar mading broadcast Toa informasi yang melecutkan notifikasi siaran (Pop Up atau Papan banner) menyala pada layar di seluruh dashboard pangkalan akun login stakeholder murid, wali, atau para gurunya.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Sifat Targeting Audiens Logikanya Bebas Berjejaring Selektywnya",
         steps: [
-          "Buka TU > Pengumuman. Tekan Buat Pengumuman.",
-          "Setel Targeting Level/Role: Misal Centang GURU saja. Disimpan ke publik."
+          "Pengumuman Tak Perlu Diteriakkan keseluruh lorong internet pangkalan jika hanya dibutuhkan spesifik. Contoh Pengumuman 'Harap kumpul soal RPP' kan CUMA diperuntukkan User GURU BUKAN ANAK MURID.",
+          "Karenanya, Pengumuman Punya fitur 'Target Bidikan Level'."
+        ]
+      },
+      {
+        title: "Cara Menyiarkan Broadcast Terfokus",
+        steps: [
+          "Buka Panel Informasi > Modul Rilis Pengumuman.",
+          "Tekan Buat Entri Siaran Baru.",
+          "Ketik subjek Judul Pengerah Perhatian (Contoh 'Libur Darurat Musim Banjir Besok').",
+          "Tulisan narasinya diluaskan di textbox besar penggabung bawah.",
+          "Pilih Dropdown Check mark Target Groupnya: Pilihan Centang (GURU), Centang (MURID), Centang (STAF). Biarkan Kosong Murid kalo ini spesifik Staf/Guru doang.",
+          "Tetapkan Tanggal Publish Live / Mulai Siaran dan Kapan tanggal Berdengungnya Berakhir / Kering Kadaluarsa dihilangkan robot sistem nantinya.",
+          "Tindis tombol Publish Pengumuman. Bertebaranlah sudah pop up kabar baru."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Broadcast Segregation Logic: User murid yang online di tab browsernya, inbox notifnya tetap senyap. Pesan hanya meletus secara presisi kepada User akun Level Guru."
+      "Targeting Isolation QA Firewall Check: Apabila Staf Mempublikasikan berita internal Honorarium Bonus yang tercentang hanya untuk GURU dan STAFF saja. Apabila ada seorang User Anak bernama Anton Log-in melalui HP / Desktop, sistem Dashboard Anton sama sekali tak dapat mendeteksi, melihat, merasai, apalagi menemukan URL API Get id Announcement artikel tsb (Segregated Authentication Wall)."
     ]
   },
+
   "/school-profile": {
-    title: "Profil Sekolah",
-    description: "Indikator Master Identitas Kop Sekolah dan stempel instansi digital.",
+    title: "Panel Profil Identitas Sekolah Resmi",
+    description: "Ini bukan semacam Biodata User, ini form inti global pilar pondasi nama lembaga pendidikan, alamat geologis kenegaraan sekolah dan gambar Logo instansi kop yayasan utama kita didalam semesta ERP aplikasi.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Arus Sentral Variabel Instansional Dinamik",
         steps: [
-          "Ke profil lembaga, admin memasukkan Text Nama: 'SDN 1 Jakarta', NPSN, Logo PNG.",
-          "Simpan setelan konstan."
+          "Tulisan text yang mengendap pada form data sekolah ini (seperti SDN 99 Cikarang) akan senantiasa di ekstrak (Sedot Variable Parsing Render) pada ratusan lembar nota, kwitansi koperasi, lapor PDF Arus Kas, apalagi Kop Raport E-Rapor Digital yang dicetak semua guru tiap semesternya."
+        ]
+      },
+      {
+        title: "Cara Menetapkan Atribut Logo & Identitas Lembaga Induk Server Utama",
+        steps: [
+          "Admin (Hanya Hak Akses Root yg diperkenankan) menyelinap masuk ke Panel Konfigurasi Global > Profil Instansi Sekolah",
+          "Input nama lembaga formal nan sah di kotak 'Nama Sekolah'. Input nomer statistik sekolahan NPSN dlsb.",
+          "Untuk Pasang Logo Sekolah, Drop atau unggah berkas Gambar icon (.PNG, transparan minimal).",
+          "Ketik deskripsi alamat instansi yang jelas demi akurasi Header Template Struk Struk pembayaran kasir.",
+          "Setel identitas Kepala Sekolah per tahun menjabat.",
+          "Tekan tombol Menyimpan Perubahan Sistem (Save Setting)."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Relasi Variabel Global: Template seperti 'Cetak Raport' harus memparsing kop teks SDN 1 Jakarta ini secara dinamik."
+      "Cache Propagation Behavior Validation & State Rapor Engine: Saat anda mengubah Logo Instansi di pengaturan pagi ini, maka Ratusan Rapor Guru yg mendadak mendownload dan merender file PDF siang itu Langsung Berubah Seketika logonya termutasi merujuk pada Gambar Baru anda yang di save td tanpa butuh reset server backend / nunggu besok lagi (Seamless state). Terkecuali, wali kelas sudah mendiktekan di Panel Khusus KOP RAPORT spesifik mereka file gambar upload baru di menu Rapor, disitulah sistem Logo Sekolah akan Terkalahkan prioritasnya ter-override mendahulukan KOP Khusus Rapor dibanding Kop Sekolah ini."
     ]
   },
+
   "/settings": {
-    title: "Pengaturan",
-    description: "Jantung kontrol root Superadmin Role terhadap parameter Security Credentials sistem.",
+    title: "Preferensi Konfigurasi Akar (Root Settings)",
+    description: "Ruang gawat darurat dan saklar otoritas paling menohok di kendalikan penuh pengembang / administrator sistem. Kontrol akses Role, resetan masif kredensial sandi pegawai, cadangan Backup file master seluruh skema database ERP semua tumpah ruah terkelola dipanel jantung server ini.",
     features: [
       {
-        title: "Alur Standard (User Flow)",
+        title: "Batas Demarkasi Red-Line Server Perilaku Peringatan Kritis",
         steps: [
-          "Hanya Login Akun SUPERADMIN. Masuk ke panel Sistem > Pengaturan.",
-          "Masuk Master Hak Akses & Users. Edit Profile staf dan 'Reset Password default'."
+          "Apapun yg Anda sikut / centang / ubah / reset / hapus format parameter dari konfigurasi tab tab tab yang bermunculan di page /settings ini dapat menelurkan efek tewas (fatal data loss) berjenjang jika diklik sembarangan tanpa literasi pengetahuan yg diampu seorang Admin TI."
+        ]
+      },
+      {
+        title: "Cara Megontrol User Akun Kredensial & Mereset Paksa Sandi Pihak Pengguna",
+        steps: [
+          "Sekiranya Ibu Dian (Wali 7A) kelalaian lupa kata sandi miliknya padahal sore mesti setor raport. Ibu Dian Lapor Admin TI.",
+          "Admin merayap masuk ke panel Pengaturan (Settings) > Pilih Subtab Manage Otoritas Users.",
+          "Cari di field data search 'Nama: Dian / Role: Guru'.",
+          "Tekan Opsi Titik Tiga (Aksi), dan pilih Ganti/Paksa Reset Kata Sandi. (Setel ulang password baru seperti: dian123Aman).",
+          "Bisa juga mengunci / Mematikan pernafasana User tsb Banned status agar disable tidak dibolehin Akses login bila Guru itu terbukti dipecat."
+        ]
+      },
+      {
+        title: "Cara Menarik Master Backup Cadangan Keamanan Data Internal",
+        steps: [
+          "Sebagai tindakan preventif musibah. Admin menyusuri tab 'Master Utilities DB Backup'.",
+          "Tekan Download Ekstraks Database SQL File.",
+          "Sistem me re-kompres ribuan data mulai Pendaftaran, List Murid Mutasi dan Transaksi Kas Uang Jurnal jadi bongkahan File aman yang bisa disimpan ke Hard Drive Flashdisk Eksternal Fisik anda dilaci laci kamar aman anda."
         ]
       }
     ],
     extraInfo: [
-      "QA Validasi: Middleware Routing Test (Hack Protection): Bila seorang Guru tanpa hak akses memaksa via URL bar: /settings, sistem akan me-redirect Guru itu dengan HTTP 403 Access Denied."
+      "QA Keamanan Otentifikasi Tingkat Dewa dan Akses Bypass Testing Terisolir Mutlak (Role Privilege Intrusion Exploit Rejection): Andaikankah Staf TU 'Pintar' yg mempunyai akses ringan biasa secara iseng isengan iseng Mengetik nama link URL paksaan di Address Bar Komputernya nulis rute tujuan URL domainnya : www.webssekolahanda.com/settings lantas mendobrak enter!, Middleware Aplikasi Server kita secara kokoh menolak paksaan peretas tersebut mementalkanya jauh jauh membikinnya Terlempar redirect ke halaman 403 Access Denied Tidak Ada Akses Otorisasi! Karena levelnya bukan si SUPER Admin Root Developer. Fitur yang paling terkontrol seumur instansi terjamin kerahasiaanya."
     ]
   }
+
 };
 
 export function getHelpContentByPath(pathname: string): HelpContent | null {

@@ -14,11 +14,15 @@ const WIPE_ORDER = [
   "ppdb_registrations",
   "infaq_payments",
   "infaq_bills",
+  "student_credits",
+  "coop_transactions",
+  "products",
   "student_savings",
   "general_transactions",
   "employee_salaries",
   "inventories",
   "salary_components",
+  "organization_positions",
   "student_enrollments",
   "students",
   "employees",
@@ -29,6 +33,14 @@ const WIPE_ORDER = [
   "academic_years",
   "cash_accounts",
   "school_settings",
+  "cms_web_posts",
+  "cms_web_heroes",
+  "cms_web_facilities",
+  "cms_web_achievements",
+  "cms_web_teachers",
+  "cms_web_settings",
+  "cms_web_programs",
+  "cms_web_stats",
 ];
 
 export async function POST(req: NextRequest) {
@@ -76,7 +88,7 @@ export async function POST(req: NextRequest) {
       for (const table of WIPE_ORDER) {
         try {
           await tx.execute(sql.raw(`DELETE FROM "${table}"`));
-        } catch (e) {
+        } catch {
           // Skip if table doesn't exist
         }
       }
@@ -90,7 +102,7 @@ export async function POST(req: NextRequest) {
           await tx.execute(
             sql.raw(`SELECT setval(pg_get_serial_sequence('"${table}"', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1, false)`)
           );
-        } catch (e) {
+        } catch {
           // Skip
         }
       }

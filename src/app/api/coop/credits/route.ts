@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { studentCredits, students, coopTransactions } from "@/db/schema";
-import { eq, and, ne, desc, sql } from "drizzle-orm";
+import { eq, and, ne, desc, sql, isNull } from "drizzle-orm";
 
 // GET /api/coop/credits?status=belum_lunas
 export async function GET(req: Request) {
@@ -12,13 +12,16 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const conditions = [];
+    const conditions = [isNull(studentCredits.deletedAt)];
     if (status) conditions.push(eq(studentCredits.status, status));
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = and(...conditions);
     
     // Create where clause specifically for the "not lunas" query
-    const notLunasConditions = [ne(studentCredits.status, "lunas")];
+    const notLunasConditions = [
+      isNull(studentCredits.deletedAt),
+      ne(studentCredits.status, "lunas")
+    ];
     if (status) notLunasConditions.push(eq(studentCredits.status, status));
     const notLunasWhereClause = and(...notLunasConditions);
 
@@ -42,6 +45,7 @@ export async function GET(req: Request) {
           id: coopTransactions.id,
           date: coopTransactions.date,
           total: coopTransactions.total,
+          status: coopTransactions.status,
         }
       })
       .from(studentCredits)

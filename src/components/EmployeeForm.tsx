@@ -7,7 +7,21 @@ import Swal from "sweetalert2";
 const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "0.625rem 0.875rem", border: "1.5px solid #e2e8f0", borderRadius: "0.5rem", fontSize: "0.8125rem", outline: "none" };
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.375rem" };
 
-export default function EmployeeForm({ initialData, employeeType = "guru" }: { initialData?: any; employeeType?: "guru" | "staf" }) {
+interface EmployeeFormData {
+  id?: number;
+  name?: string;
+  nip?: string;
+  position?: string;
+  status?: "aktif" | "nonaktif";
+  phone?: string;
+  address?: string;
+  joinDate?: string;
+  baseSalary?: number;
+}
+
+type FormFieldEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+
+export default function EmployeeForm({ initialData, employeeType = "guru" }: { initialData?: EmployeeFormData; employeeType?: "guru" | "staf" }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const isEdit = !!initialData;
@@ -27,7 +41,7 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
     baseSalary: d.baseSalary || 0,
   });
 
-  const handleChange = (e: any) => setF({ ...f, [e.target.name]: e.target.value });
+  const handleChange = (e: FormFieldEvent) => setF({ ...f, [e.target.name]: e.target.value });
 
   const formatRp = (val: string) => {
     const num = val.replace(/\D/g, "");
@@ -45,13 +59,26 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...f, type: employeeType }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
       const json = await res.json();
       if (json.success) {
-        Swal.fire("Berhasil", json.message, "success").then(() => router.push(backUrl));
+        const title = json.isRestored ? "Data Diaktifkan Kembali" : "Berhasil";
+        Swal.fire({
+          title: title,
+          text: json.message,
+          icon: "success",
+          confirmButtonColor: "#6366f1",
+        }).then(() => router.push(backUrl));
       } else {
         Swal.fire("Gagal", json.message || "Error", "error");
       }
-    } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
+    } catch (error: unknown) { 
+      const msg = error instanceof Error ? error.message : "Gagal menghubungi server";
+      Swal.fire("Error", msg, "error"); 
+    }
     finally { setLoading(false); }
   };
 

@@ -20,20 +20,23 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       if (reg.deletedAt) throw new Error("Data sudah dihapus");
       if (reg.status !== "diterima") throw new Error("Status harus 'diterima' untuk dikonversi ke siswa");
 
+      // Cek duplikasi NISN (hanya jika diisi)
       if (reg.nisn) {
         const [existing] = await tx.select({ id: students.id, name: students.name })
           .from(students).where(and(eq(students.nisn, reg.nisn), isNull(students.deletedAt))).limit(1);
         if (existing) throw new Error(`Siswa dengan NISN ${reg.nisn} sudah ada: ${existing.name}`);
       }
 
+      // Insert ke tabel students dengan NIS/NISN/NIK NULL jika kosong
       const [student] = await tx.insert(students).values({
-        nisn: reg.nisn || "",
-        nik: reg.nik || "",
-        noKk: reg.noKk || "",
+        nisn: reg.nisn || null,
+        nis: null, // NIS dikosongkan (NULL) saat konversi awal agar tidak bentrok
+        nik: reg.nik || null,
+        noKk: reg.noKk || null,
         name: reg.name,
         gender: reg.gender || "L",
         classroomId: classroomId ? Number(classroomId) : null,
-        status: "aktif" as any,
+        status: "aktif",
         entryDate: new Date().toISOString().split("T")[0],
         unitId: user.unitId || "",
         fatherName: reg.fatherName || "",
@@ -46,11 +49,17 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         infaqNominal: infaqNominal || 0,
       }).returning();
 
-      await tx.update(ppdbRegistrations).set({ status: "converted" as any, updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+      // Update status PPDB
+      await tx.update(ppdbRegistrations).set({ status: "converted", updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+      
       return { student };
     });
 
-    return NextResponse.json({ success: true, message: `${result.student.name} berhasil dikonversi ke siswa aktif.`, data: { studentId: result.student.id } });
+    return NextResponse.json({ 
+      success: true, 
+      message: `${result.student.name} berhasil dikonversi ke siswa aktif.`, 
+      data: { studentId: result.student.id } 
+    });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     const msg = error instanceof Error ? error.message : "Gagal konversi ke siswa";

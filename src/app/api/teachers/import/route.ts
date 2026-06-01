@@ -66,9 +66,9 @@ export async function POST(request: Request) {
         await db.insert(employees).values({
           nip: nip?.trim() || "",
           name: nama.trim(),
-          type: (tipe?.trim()?.toLowerCase() || "guru") as any,
+          type: tipe?.trim()?.toLowerCase() || "guru",
           position: jabatan?.trim() || "",
-          status: (status?.trim()?.toLowerCase() || "aktif") as any,
+          status: status?.trim()?.toLowerCase() || "aktif",
           phone: telepon?.trim() || "",
           address: alamat?.trim() || "",
           joinDate: tglMasuk?.trim() || "",

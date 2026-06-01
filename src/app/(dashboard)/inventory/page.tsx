@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
@@ -7,6 +7,24 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { Package } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface InventoryItem {
+  id: number;
+  name: string;
+  category?: string | null;
+  quantity: number;
+  condition: "Baik" | "Rusak Ringan" | "Rusak Berat";
+  location?: string | null;
+  acquisitionCost: number;
+}
+
+interface InventoryQueryResult {
+  data?: InventoryItem[];
+  pagination?: {
+    totalPages: number;
+    total: number;
+  };
+}
 
 export default function InventoryPage() {
   const queryClient = useQueryClient();
@@ -29,7 +47,7 @@ export default function InventoryPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [openActionId]);
 
-  const { data: queryResult, isLoading } = useQuery({
+  const { data: queryResult, isLoading } = useQuery<InventoryQueryResult>({
     queryKey: ["inventory", search, conditionFilter, page, limit],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -42,7 +60,7 @@ export default function InventoryPage() {
     placeholderData: (prev) => prev,
   });
 
-  const data: any[] = queryResult?.data || [];
+  const data: InventoryItem[] = queryResult?.data || [];
   const totalPages = queryResult?.pagination?.totalPages || 1;
   const total = queryResult?.pagination?.total || 0;
 
@@ -110,7 +128,7 @@ export default function InventoryPage() {
           } else {
             Swal.fire("Gagal", data.error || "Gagal menyimpan aset", "error");
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -185,12 +203,12 @@ export default function InventoryPage() {
             } else {
               Swal.fire("Gagal", dataUpdate.error || "Gagal update aset", "error");
             }
-          } catch (e) {
+          } catch {
             Swal.fire("Error", "Gagal menghubungi server", "error");
           }
         }
       });
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal memuat detail aset", "error");
     }
   };
@@ -215,7 +233,7 @@ export default function InventoryPage() {
           } else {
             Swal.fire("Gagal", json.error || "Error", "error");
           }
-        } catch (error) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -274,7 +292,7 @@ export default function InventoryPage() {
                 { header: "Lokasi", key: "location", width: 20 },
                 { header: "Harga Perolehan", key: "acquisitionCost", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
               ],
-              data: data.map((item: any, i: number) => ({
+              data: data.map((item, i: number) => ({
                 ...item,
                 _no: (page - 1) * limit + i + 1,
                 category: item.category || '-',
@@ -327,7 +345,7 @@ export default function InventoryPage() {
                         <button 
                           onClick={(ev) => { 
                             ev.stopPropagation(); 
-                            (ev.nativeEvent as any).stopImmediatePropagation();
+                            ev.nativeEvent.stopImmediatePropagation();
                             setOpenActionId(openActionId === item.id ? null : item.id); 
                           }}
                           style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
@@ -358,6 +376,18 @@ export default function InventoryPage() {
                     </tr>
                   )
                 })
+              )}
+              {!isLoading && data.length > 0 && data.length < limit && (
+                Array.from({ length: limit - data.length }).map((_, i) => (
+                  <tr key={`filler-${i}`} style={{ height: "73px" }} className="bg-white border-b border-slate-100">
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1.25rem 1.5rem" }}>&nbsp;</td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

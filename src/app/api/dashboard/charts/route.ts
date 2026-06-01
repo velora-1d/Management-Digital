@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { academicYears, classrooms, studentEnrollments, generalTransactions, infaqBills } from "@/db/schema";
+import { academicYears, classrooms, studentEnrollments, generalTransactions, infaqBills, students } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
 import { eq, and, isNull, gte, lte, asc, sql } from "drizzle-orm";
 
@@ -41,10 +41,10 @@ export async function GET(request: Request) {
         const [[{ income }], [{ expense }]] = await Promise.all([
           db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
             .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
+            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
           db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
             .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out" as any), eq(generalTransactions.status, "valid" as any), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
+            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
         ]);
         return { month: m.label, income, expense };
       })
@@ -56,12 +56,18 @@ export async function GET(request: Request) {
 
     const classDistribution = await db.select({
       name: classrooms.name,
-      students: sql<number>`count(distinct ${studentEnrollments.id})`.mapWith(Number),
+      students: sql<number>`count(distinct ${students.id})`.mapWith(Number),
     })
     .from(classrooms)
     .leftJoin(studentEnrollments, and(
       eq(classrooms.id, studentEnrollments.classroomId),
+      targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
       isNull(studentEnrollments.deletedAt)
+    ))
+    .leftJoin(students, and(
+      eq(studentEnrollments.studentId, students.id),
+      isNull(students.deletedAt),
+      eq(students.status, "aktif")
     ))
     .where(and(...classroomConditions))
     .groupBy(classrooms.id, classrooms.name)
@@ -78,7 +84,7 @@ export async function GET(request: Request) {
         .where(and(...billBaseConditions, eq(infaqBills.month, currentMonthStr))),
       db.select({ sppLunas: sql<number>`count(*)`.mapWith(Number) })
         .from(infaqBills)
-        .where(and(...billBaseConditions, eq(infaqBills.month, currentMonthStr), eq(infaqBills.status, "lunas" as any))),
+        .where(and(...billBaseConditions, eq(infaqBills.month, currentMonthStr), eq(infaqBills.status, "lunas"))),
     ]);
 
     return NextResponse.json({

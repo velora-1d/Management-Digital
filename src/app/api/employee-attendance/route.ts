@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { employees, employeeAttendances } from "@/db/schema";
 import { isNull, and, eq, asc, sql } from "drizzle-orm";
 
+type EmployeeStatus = typeof employees.$inferSelect.status;
+
 // GET /api/employee-attendance?date=YYYY-MM-DD
 export async function GET(req: Request) {
   try {
@@ -13,7 +15,7 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const empWhere = and(eq(employees.status, "aktif" as any), isNull(employees.deletedAt));
+    const empWhere = and(eq(employees.status, "aktif" as EmployeeStatus), isNull(employees.deletedAt));
 
     const [{ total }] = await db.select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(employees).where(empWhere);
@@ -31,7 +33,7 @@ export async function GET(req: Request) {
     .offset(limit > 0 ? skip : 0);
 
     // Ambil absensi untuk tanggal tertentu
-    let attendanceMap: Record<number, { id: number; status: string; note: string | null }> = {};
+    const attendanceMap: Record<number, { id: number; status: string; note: string | null }> = {};
     if (date && empList.length > 0) {
       const empIds = empList.map(e => e.id);
       const attendances = await db.select()

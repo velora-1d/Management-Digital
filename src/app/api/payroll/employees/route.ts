@@ -20,7 +20,7 @@ export async function GET() {
       .orderBy(asc(employees.name));
       
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Gagal mengambil data pegawai" },
       { status: 500 }

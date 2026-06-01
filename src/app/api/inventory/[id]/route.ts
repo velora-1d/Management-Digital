@@ -19,14 +19,14 @@ export async function GET(
       return NextResponse.json({ error: "Data tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json(inventory);
-  } catch (error) {
+    return NextResponse.json({ success: true, data: inventory });
+  } catch {
     return NextResponse.json({ error: "Gagal mengambil detail inventaris" }, { status: 500 });
   }
 }
 
-// PUT /api/inventory/[id]
-export async function PUT(
+// PATCH /api/inventory/[id]
+export async function PATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -42,10 +42,10 @@ export async function PUT(
       .set({
         name,
         category,
-        quantity: Number(quantity),
+        quantity: quantity !== undefined ? Number(quantity) : undefined,
         condition,
         location,
-        acquisitionCost: Number(acquisitionCost) || 0,
+        acquisitionCost: acquisitionCost !== undefined ? Number(acquisitionCost) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(inventories.id, id))
@@ -53,6 +53,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, message: "Data berhasil diperbarui", data: inventory });
   } catch (error) {
+    console.error("Inventory PATCH error:", error);
     return NextResponse.json({ error: "Gagal memperbarui data inventaris" }, { status: 500 });
   }
 }
@@ -68,11 +69,14 @@ export async function DELETE(
     if (isNaN(id)) return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
 
     await db.update(inventories)
-      .set({ deletedAt: new Date() })
+      .set({ 
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      })
       .where(eq(inventories.id, id));
 
     return NextResponse.json({ success: true, message: "Data berhasil dihapus" });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Gagal menghapus data inventaris" }, { status: 500 });
   }
 }

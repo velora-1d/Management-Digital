@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { extracurricularMembers, students, classrooms, extracurriculars } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { extracurricularMembers, students, classrooms, extracurriculars, studentEnrollments, academicYears } from "@/db/schema";
+import { eq, and, asc, isNull } from "drizzle-orm";
 
 // GET /api/extracurricular/members?extracurricularId=X
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const extracurricularId = searchParams.get("extracurricularId");
+    const academicYearId = searchParams.get("academicYearId");
+
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
+    }
 
     let whereClause = undefined;
     if (extracurricularId) whereClause = eq(extracurricularMembers.extracurricularId, parseInt(extracurricularId));
@@ -21,7 +31,7 @@ export async function GET(req: Request) {
           id: students.id,
           name: students.name,
           nisn: students.nisn,
-          classroomId: students.classroomId,
+          classroomId: studentEnrollments.classroomId,
           classroomName: classrooms.name
         },
         extracurricular: {
@@ -31,7 +41,15 @@ export async function GET(req: Request) {
       })
       .from(extracurricularMembers)
       .leftJoin(students, eq(extracurricularMembers.studentId, students.id))
-      .leftJoin(classrooms, eq(students.classroomId, classrooms.id))
+      .leftJoin(
+        studentEnrollments,
+        and(
+          eq(studentEnrollments.studentId, students.id),
+          targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
+          isNull(studentEnrollments.deletedAt)
+        )
+      )
+      .leftJoin(classrooms, eq(studentEnrollments.classroomId, classrooms.id))
       .leftJoin(extracurriculars, eq(extracurricularMembers.extracurricularId, extracurriculars.id))
       .where(whereClause)
       .orderBy(asc(students.name));

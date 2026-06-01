@@ -19,16 +19,29 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
         ...(body.status !== undefined && { status: body.status }),
         ...(body.number !== undefined && { number: body.number }),
         ...(body.fileUrl !== undefined && { fileUrl: body.fileUrl }),
+        ...(body.academicYearId !== undefined && { academicYearId: body.academicYearId ? parseInt(String(body.academicYearId)) : null }),
+        ...(body.semester !== undefined && { semester: body.semester }),
+        ...(body.month !== undefined && { month: body.month }),
         updatedAt: new Date(),
       })
       .where(eq(letters.id, parseInt(id)))
       .returning();
 
-    return NextResponse.json(data);
+    if (!data) {
+      return NextResponse.json({ success: false, message: "Surat tidak ditemukan" }, { status: 404 });
+    }
+
+    const responseData = {
+      ...data,
+      createdAt: data.createdAt.toISOString(),
+      updatedAt: data.updatedAt.toISOString(),
+    };
+
+    return NextResponse.json({ success: true, data: responseData });
   } catch (error: unknown) {
     console.error("Letters PUT error:", error);
     const msg = error instanceof Error ? error.message : "Gagal mengupdate surat";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 

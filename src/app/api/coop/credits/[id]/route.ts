@@ -12,7 +12,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const [credit] = await db.select().from(studentCredits).where(eq(studentCredits.id, parseInt(id))).limit(1);
     
-    if (!credit) return NextResponse.json({ error: "Piutang tidak ditemukan" }, { status: 404 });
+    if (!credit) return NextResponse.json({ success: false, message: "Piutang tidak ditemukan" }, { status: 404 });
 
     const newPaid = credit.paidAmount + parseFloat(paidAmount);
     const isLunas = newPaid >= credit.amount;
@@ -26,9 +26,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       .where(eq(studentCredits.id, parseInt(id)))
       .returning();
       
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true, message: "Pembayaran berhasil dicatat", data: updated });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal memproses pembayaran";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }

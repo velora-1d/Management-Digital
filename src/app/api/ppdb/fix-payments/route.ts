@@ -10,7 +10,7 @@ export async function POST() {
 
     const accepted = await db.select({ id: ppdbRegistrations.id, name: ppdbRegistrations.name })
       .from(ppdbRegistrations)
-      .where(and(eq(ppdbRegistrations.status, "diterima" as any), isNull(ppdbRegistrations.deletedAt)));
+      .where(and(eq(ppdbRegistrations.status, "diterima"), isNull(ppdbRegistrations.deletedAt)));
 
     if (accepted.length === 0) {
       return NextResponse.json({ success: true, message: "Tidak ada pendaftar yang perlu diperbaiki.", fixed: 0 });

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const user = await requireAuth();
     const body = await request.json();
-    const { studentId, type, amount, date, description } = body;
+    const { studentId, type, amount, date, description, cashAccountId, transactionCategoryId } = body;
 
     if (!studentId) {
       return NextResponse.json({ success: false, message: "ID siswa wajib diisi" }, { status: 400 });
@@ -32,12 +32,12 @@ export async function POST(request: Request) {
       if (!student || student.deletedAt) throw new Error("Siswa tidak ditemukan");
       if (student.status !== "aktif") throw new Error("Siswa tidak aktif");
 
-      // 2. Hitung saldo sekarang
+      // 2. Hitung saldo sekarang (ACID: Sum inside transaction)
       const [{ totalSetor }] = await tx.select({ totalSetor: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
-        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "setor" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "setor"), eq(studentSavings.status, "active"), isNull(studentSavings.deletedAt)));
 
       const [{ totalTarik }] = await tx.select({ totalTarik: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
-        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "tarik" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+        .from(studentSavings).where(and(eq(studentSavings.studentId, student.id), eq(studentSavings.type, "tarik"), eq(studentSavings.status, "active"), isNull(studentSavings.deletedAt)));
 
       const currentBalance = totalSetor - totalTarik;
 
@@ -53,27 +53,34 @@ export async function POST(request: Request) {
       // 5. Buat record tabungan
       const [saving] = await tx.insert(studentSavings).values({
         studentId: student.id,
-        type: type as any,
+        type,
         amount: Number(amount),
         balanceAfter: newBalance,
         date: date || new Date().toISOString().split("T")[0],
         description: description || "",
-        status: "active" as any,
+        status: "active",
         unitId: user.unitId || "",
       }).returning();
 
       // 6. Jurnal otomatis + update saldo kas
       const txDate = date || new Date().toISOString().split("T")[0];
-      const [defaultCash] = await tx.select().from(cashAccounts).where(isNull(cashAccounts.deletedAt)).orderBy(asc(cashAccounts.id)).limit(1);
+      
+      // Pilih Kas (Input atau Default)
+      let selectedCashId = cashAccountId ? Number(cashAccountId) : null;
+      if (!selectedCashId) {
+        const [defaultCash] = await tx.select().from(cashAccounts).where(isNull(cashAccounts.deletedAt)).orderBy(asc(cashAccounts.id)).limit(1);
+        selectedCashId = defaultCash?.id;
+      }
 
-      if (defaultCash) {
+      if (selectedCashId) {
         await tx.insert(generalTransactions).values({
-          type: (type === "setor" ? "in" : "out") as any,
+          type: type === "setor" ? "in" : "out",
           amount: Number(amount),
-          cashAccountId: defaultCash.id,
+          cashAccountId: selectedCashId,
+          transactionCategoryId: transactionCategoryId ? Number(transactionCategoryId) : null,
           description: `Tabungan ${type} - ${student.name}${description ? ` (${description})` : ""}`,
-          date: txDate,
-          status: "valid" as any,
+          transactionDate: txDate, // FIXED MAPPING
+          status: "valid",
           referenceType: "student_saving",
           referenceId: String(saving.id),
           userId: user.userId,
@@ -84,7 +91,7 @@ export async function POST(request: Request) {
         const balanceChange = type === "setor" ? Number(amount) : -Number(amount);
         await tx.update(cashAccounts)
           .set({ balance: sql`${cashAccounts.balance} + ${balanceChange}` })
-          .where(eq(cashAccounts.id, defaultCash.id));
+          .where(eq(cashAccounts.id, selectedCashId));
       }
 
       return { saving, student, currentBalance, newBalance };

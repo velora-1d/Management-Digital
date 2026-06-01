@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
-import { exportCSV } from "@/lib/csv-export";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -47,20 +46,49 @@ export default function CoopProductsPage() {
 
   const handleSubmit = async () => {
     if (!form.name) { Swal.fire("Error", "Nama produk wajib", "error"); return; }
-    const method = editItem ? "PUT" : "POST";
-    const url = editItem ? `/api/coop/products/${editItem.id}` : "/api/coop/products";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setShowModal(false); setEditItem(null);
-    setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" });
-    fetchData();
-    Swal.fire("Berhasil", editItem ? "Produk diperbarui" : "Produk ditambahkan", "success");
+    try {
+      const method = editItem ? "PUT" : "POST";
+      const url = editItem ? `/api/coop/products/${editItem.id}` : "/api/coop/products";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        setShowModal(false); setEditItem(null);
+        setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" });
+        fetchData();
+        Swal.fire("Berhasil", editItem ? "Produk diperbarui" : "Produk ditambahkan", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menyimpan data", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleDelete = async (id: number) => {
-    const r = await Swal.fire({ title: "Hapus produk?", icon: "warning", showCancelButton: true, confirmButtonText: "Ya, Hapus" });
+    const r = await Swal.fire({ title: "Hapus produk?", icon: "warning", showCancelButton: true, confirmButtonText: "Ya, Hapus", confirmButtonColor: "#ef4444" });
     if (!r.isConfirmed) return;
-    await fetch(`/api/coop/products/${id}`, { method: "DELETE" });
-    fetchData();
+    try {
+      const res = await fetch(`/api/coop/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        fetchData();
+        Swal.fire("Berhasil", "Produk berhasil dihapus", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menghapus", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleEdit = (item: Product) => {
@@ -137,7 +165,7 @@ export default function CoopProductsPage() {
                   <th className="py-3 px-4">Produk</th><th className="py-3 px-4">Kategori</th><th className="py-3 px-4 text-right">H. Beli</th><th className="py-3 px-4 text-right">H. Jual</th><th className="py-3 px-4 text-center">Stok</th><th className="py-3 px-4"></th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filtered.map((item, idx) => {
+                  {filtered.map((item) => {
                     const isLow = item.stok <= item.minStok && item.stok > 0;
                     const isOut = item.stok === 0;
                     return (

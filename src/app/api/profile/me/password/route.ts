@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, isNull, asc } from "drizzle-orm";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 async function getMe() {
   const [user] = await db
@@ -26,12 +26,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Data password tidak lengkap" }, { status: 400 });
     }
 
-    const isValid = await bcrypt.compare(current_password, me.password);
+    const isValid = bcrypt.compareSync(current_password, me.password);
     if (!isValid) {
       return NextResponse.json({ error: "Password lama salah" }, { status: 400 });
     }
 
-    const hashed = await bcrypt.hash(new_password, 10);
+    const hashed = bcrypt.hashSync(new_password, 10);
     
     await db
       .update(users)

@@ -36,7 +36,7 @@ export async function GET(
       .where(and(
         eq(studentSavings.studentId, student.id),
         isNull(studentSavings.deletedAt),
-        eq(studentSavings.status, "active" as any)
+        eq(studentSavings.status, "active")
       ))
       .orderBy(desc(studentSavings.createdAt));
 

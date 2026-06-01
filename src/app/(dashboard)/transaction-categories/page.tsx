@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,13 @@ import { Search, Tag, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { ExportButtons } from "@/lib/export-utils";
 import Card from "@/components/ui/Card";
+
+interface TransactionCategory {
+  id: number;
+  name: string;
+  type: "in" | "out";
+  description?: string;
+}
 
 export default function TransactionCategoriesPage() {
   const queryClient = useQueryClient();
@@ -73,18 +80,25 @@ export default function TransactionCategoriesPage() {
       if (r.isConfirmed) {
         try {
           const res = await fetch("/api/transaction-categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Gagal menghubungi server");
+          }
           const json = await res.json();
-          if (res.ok && json.success) { 
+          if (json.success) { 
             Swal.fire("Berhasil", "Kategori ditambahkan", "success"); 
             refreshData(r.value.type); 
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch { Swal.fire("Error", "Server error", "error"); }
+        } catch (error: unknown) { 
+          const msg = error instanceof Error ? error.message : "Server error";
+          Swal.fire("Error", msg, "error"); 
+        }
       }
     });
   };
 
-  const handleEditCat = (cat: any) => {
+  const handleEditCat = (cat: TransactionCategory) => {
     Swal.fire({
       title: "Edit Kategori",
       html: `
@@ -113,13 +127,20 @@ export default function TransactionCategoriesPage() {
       if (r.isConfirmed) {
         try {
           const res = await fetch(`/api/transaction-categories?id=${cat.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Gagal menghubungi server");
+          }
           const json = await res.json();
-          if (res.ok && json.success) { 
+          if (json.success) { 
             Swal.fire("Berhasil", "Kategori diperbarui", "success"); 
             refreshData(); 
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch { Swal.fire("Error", "Server error", "error"); }
+        } catch (error: unknown) { 
+          const msg = error instanceof Error ? error.message : "Server error";
+          Swal.fire("Error", msg, "error"); 
+        }
       }
     });
   };
@@ -136,13 +157,20 @@ export default function TransactionCategoriesPage() {
       if (r.isConfirmed) {
         try {
           const res = await fetch(`/api/transaction-categories?id=${id}`, { method: "DELETE" });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Gagal menghubungi server");
+          }
           const json = await res.json();
-          if (res.ok && json.success) { 
+          if (json.success) { 
             Swal.fire("Berhasil", "Dihapus", "success"); 
             refreshData(type); 
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch { Swal.fire("Error", "Server error", "error"); }
+        } catch (error: unknown) { 
+          const msg = error instanceof Error ? error.message : "Server error";
+          Swal.fire("Error", msg, "error"); 
+        }
       }
     });
   };
@@ -232,7 +260,8 @@ export default function TransactionCategoriesPage() {
                 ) : inCats.length === 0 ? (
                   <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pemasukan."}</td></tr>
                 ) : (
-                   inCats.map((c: any, i: number) => (
+                  <>
+                   {inCats.map((c: TransactionCategory, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(inPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
@@ -244,7 +273,13 @@ export default function TransactionCategoriesPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  ))}
+                  {Array.from({ length: Math.max(0, limit - inCats.length) }).map((_, i) => (
+                    <tr key={`empty-in-${i}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td colSpan={4} style={{ padding: "0.875rem 1.5rem" }}>&nbsp;</td>
+                    </tr>
+                  ))}
+                 </>
                 )}
               </tbody>
             </table>
@@ -292,7 +327,8 @@ export default function TransactionCategoriesPage() {
                 ) : outCats.length === 0 ? (
                   <tr><td colSpan={4} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>{search ? "Hasil tidak ditemukan." : "Belum ada kategori pengeluaran."}</td></tr>
                 ) : (
-                   outCats.map((c: any, i: number) => (
+                  <>
+                   {outCats.map((c: TransactionCategory, i: number) => (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(outPage - 1) * limit + i + 1}</td>
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", fontWeight: 600, color: "#1e293b" }}>{c.name}</td>
@@ -304,7 +340,13 @@ export default function TransactionCategoriesPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  ))}
+                  {Array.from({ length: Math.max(0, limit - outCats.length) }).map((_, i) => (
+                    <tr key={`empty-out-${i}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td colSpan={4} style={{ padding: "0.875rem 1.5rem" }}>&nbsp;</td>
+                    </tr>
+                  ))}
+                 </>
                 )}
               </tbody>
             </table>

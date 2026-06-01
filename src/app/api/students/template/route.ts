@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 /**
  * GET /api/students/template — Download template CSV import siswa
  */

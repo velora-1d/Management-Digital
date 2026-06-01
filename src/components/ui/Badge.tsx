@@ -1,9 +1,9 @@
 "use client";
 import type { ReactNode } from "react";
 
-type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
+export type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
 
-interface BadgeProps {
+export interface BadgeProps {
   variant?: BadgeVariant;
   children: ReactNode;
   dot?: boolean;

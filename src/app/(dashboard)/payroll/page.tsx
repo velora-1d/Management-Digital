@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
@@ -7,21 +7,65 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { Banknote } from "lucide-react";
 
+type PayrollComponentType = "earning" | "deduction";
+type EmployeeType = "guru" | "staff";
+
+interface PayrollItem {
+  id: number;
+  code: string;
+  created_at: string;
+  employee_name: string;
+  net_salary: number;
+}
+
+interface EmployeeItem {
+  id: number;
+  name: string;
+  type: EmployeeType;
+  position?: string | null;
+}
+
+interface SalaryComponent {
+  id: number;
+  name: string;
+  type: PayrollComponentType;
+  amount: number;
+}
+
+interface SalaryAssignmentPayload {
+  component_id: number;
+  amount: number;
+}
+
+interface PayrollSlip extends PayrollItem {
+  month: number;
+  year: number;
+  base_salary: number;
+  total_earning: number;
+  total_deduction: number;
+  components: SalaryComponent[];
+  error?: string;
+}
+
+interface SalaryDetailResponse {
+  components?: SalaryComponent[];
+}
+
 export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, atur-gaji, komponen
 
   // States for Riwayat
-  const [payrolls, setPayrolls] = useState<any[]>([]);
+  const [payrolls, setPayrolls] = useState<PayrollItem[]>([]);
   const [genMonth, setGenMonth] = useState((new Date().getMonth() + 1).toString());
   const [genYear, setGenYear] = useState(new Date().getFullYear().toString());
   
   // States for Atur Gaji
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
   
   // States for Komponen
-  const [components, setComponents] = useState<any[]>([]);
+  const [components, setComponents] = useState<SalaryComponent[]>([]);
   const [compName, setCompName] = useState("");
-  const [compType, setCompType] = useState("earning");
+  const [compType, setCompType] = useState<PayrollComponentType>("earning");
 
   const [loading, setLoading] = useState(false);
   const [payPage, setPayPage] = useState(1);
@@ -44,14 +88,8 @@ export default function PayrollPage() {
   }, [openActionId]);
 
   // --- Load Data ---
-  useEffect(() => {
-    if (activeTab === "riwayat") loadPayrolls();
-    if (activeTab === "atur-gaji") loadEmployees();
-    if (activeTab === "komponen") loadComponents();
-  }, [activeTab]);
-
   // RIWAYAT
-  const loadPayrolls = async (p = payPage) => {
+  const loadPayrolls = useCallback(async (p = payPage) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/payroll?page=${p}&limit=${payLimit}`);
@@ -65,11 +103,11 @@ export default function PayrollPage() {
       } else {
         setPayrolls(json || []);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
-  };
+  }, [payLimit, payPage]);
 
   const generatePayroll = async () => {
     Swal.fire({
@@ -96,7 +134,7 @@ export default function PayrollPage() {
           } else {
             Swal.fire("Gagal", data.error || "Terjadi kesalahan", "error");
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -122,7 +160,7 @@ export default function PayrollPage() {
           } else {
             Swal.fire("Gagal", data.error || "Error", "error");
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -133,7 +171,7 @@ export default function PayrollPage() {
     Swal.fire({title: "Memuat slip...", allowOutsideClick: false, didOpen: () => Swal.showLoading()});
     try {
       const res = await fetch(`/api/payroll/${id}`);
-      const slip = await res.json();
+      const slip: PayrollSlip = await res.json();
       Swal.close();
       if (slip.error) {
         Swal.fire("Error", slip.error, "error");
@@ -142,12 +180,12 @@ export default function PayrollPage() {
       
       let earnRows = "";
       let dedRows = "";
-      slip.components.forEach((c: any) => {
+      slip.components.forEach((c) => {
         if (c.type === "earning") earnRows += `<tr><td style="padding:6px 12px;border:1px solid #e2e8f0;font-size:13px;">${c.name}</td><td style="padding:6px 12px;border:1px solid #e2e8f0;text-align:right;font-size:13px;">Rp ${c.amount.toLocaleString("id-ID")}</td></tr>`;
         else dedRows += `<tr><td style="padding:6px 12px;border:1px solid #e2e8f0;font-size:13px;">${c.name}</td><td style="padding:6px 12px;border:1px solid #e2e8f0;text-align:right;font-size:13px;">Rp ${c.amount.toLocaleString("id-ID")}</td></tr>`;
       });
       
-      let html = `<div style="text-align:left;font-size:13px;">
+      const html = `<div style="text-align:left;font-size:13px;">
       <div style="text-align:center;margin-bottom:16px;">
         <h3 style="margin:0;font-size:16px;">SLIP GAJI</h3>
         <p style="margin:4px 0 0;color:#64748b;font-size:12px;">Kode: ${slip.code} | ${slip.employee_name}</p>
@@ -188,36 +226,54 @@ export default function PayrollPage() {
         }
       });
 
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   }
 
   // ATUR GAJI
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/payroll/employees");
       const data = await res.json();
       setEmployees(data || []);
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const loadComponents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/payroll/components");
+      const data = await res.json();
+      setComponents(data || []);
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "riwayat") loadPayrolls();
+    if (activeTab === "atur-gaji") loadEmployees();
+    if (activeTab === "komponen") loadComponents();
+  }, [activeTab, loadComponents, loadEmployees, loadPayrolls]);
 
   const setupSalary = async (empId: number, empName: string) => {
     Swal.fire({title: "Memuat...", allowOutsideClick: false, didOpen: () => Swal.showLoading()});
     try {
       const res = await fetch(`/api/payroll/employees/${empId}/salary`);
-      const detail = await res.json();
+      const detail: SalaryDetailResponse = await res.json();
       Swal.close();
 
       const comps = detail.components || [];
       let formHtml = '<div style="text-align:left;display:grid;gap:0.75rem;max-height:350px;overflow-y:auto;">';
       if (comps.length === 0) formHtml += '<p style="color:#94a3b8;font-size:0.8125rem;">Belum ada komponen gaji.</p>';
       
-      comps.forEach((c: any, i: number) => {
+      comps.forEach((c: SalaryComponent, i: number) => {
         const color = c.type === 'earning' ? '#059669' : '#e11d48';
         const prefix = c.type === 'earning' ? '+' : '−';
         formHtml += `<div><label style="font-size:0.75rem;font-weight:600;color:${color};">${prefix} ${c.name}</label><input id="swal-sal-${i}" type="number" class="swal2-input" value="${c.amount || 0}" data-comp-id="${c.id}" style="margin:0; height: 2.5rem; padding: 0.5rem; display:block; width:100%; font-size: 0.875rem; border:1px solid #e2e8f0; border-radius:0.5rem; outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'"></div>`;
@@ -232,8 +288,8 @@ export default function PayrollPage() {
         cancelButtonText: 'Batal',
         confirmButtonColor: '#3b82f6',
         preConfirm: () => {
-          const result: any[] = [];
-          comps.forEach((c: any, i: number) => {
+          const result: SalaryAssignmentPayload[] = [];
+          comps.forEach((c: SalaryComponent, i: number) => {
             const el = document.getElementById('swal-sal-' + i) as HTMLInputElement;
             result.push({ component_id: c.id, amount: Number(el?.value) || 0 });
           });
@@ -253,28 +309,15 @@ export default function PayrollPage() {
             } else {
               Swal.fire("Gagal", saveData.error, "error");
             }
-          } catch(e) {
+          } catch {
             Swal.fire("Error", "Gagal menyimpan", "error");
           }
         }
       });
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   }
-
-  // KOMPONEN
-  const loadComponents = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/payroll/components");
-      const data = await res.json();
-      setComponents(data || []);
-    } catch (error) {
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const addComponent = async () => {
     if (!compName) {
@@ -295,7 +338,7 @@ export default function PayrollPage() {
         const data = await res.json();
         Swal.fire("Gagal", data.error, "error");
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menyimpan", "error");
     }
   };
@@ -318,7 +361,7 @@ export default function PayrollPage() {
           } else {
             Swal.fire("Gagal", data.error, "error");
           }
-        } catch (e) {
+        } catch {
           Swal.fire("Error", "Gagal menghubungi server", "error");
         }
       }
@@ -353,7 +396,7 @@ export default function PayrollPage() {
         <div className="space-y-6 animate-fade-in">
           <Card>
             <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-linear-to-br from-sky-500 to-blue-500"></div>
               <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Terbitkan Slip Gaji Bulanan</h4>
             </div>
             <div className="p-6 flex flex-wrap gap-4 items-end">
@@ -370,7 +413,7 @@ export default function PayrollPage() {
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Tahun</label>
                 <input type="number" value={genYear} onChange={(e) => setGenYear(e.target.value)} className="px-4 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-blue-500 w-24 bg-white text-slate-700" />
               </div>
-              <button onClick={generatePayroll} className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 rounded-xl shadow-sm hover:shadow transition-all">
+              <button onClick={generatePayroll} className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 rounded-xl shadow-sm hover:shadow transition-all">
                 Generate Semua Slip
               </button>
             </div>
@@ -393,7 +436,7 @@ export default function PayrollPage() {
                     { header: "Pegawai", key: "employee_name", width: 30 },
                     { header: "Gaji Bersih", key: "net_salary", width: 20, align: "right", format: (v: number) => fmtRupiah(v) },
                   ],
-                  data: payrolls.map((p: any, i: number) => ({
+                  data: payrolls.map((p, i: number) => ({
                     ...p,
                     _no: i + 1,
                     _date: new Date(p.created_at).toLocaleDateString("id-ID"),
@@ -429,7 +472,7 @@ export default function PayrollPage() {
                           <button 
                             onClick={(ev) => { 
                               ev.stopPropagation(); 
-                              (ev.nativeEvent as any).stopImmediatePropagation();
+                              ev.nativeEvent.stopImmediatePropagation();
                               setOpenActionId(openActionId === p.id ? null : p.id); 
                             }}
                             style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
@@ -457,6 +500,16 @@ export default function PayrollPage() {
                             </div>
                           )}
                         </td>
+                      </tr>
+                    ))
+                  )}
+                  {!loading && payrolls.length > 0 && payrolls.length < payLimit && (
+                    Array.from({ length: payLimit - payrolls.length }).map((_, i) => (
+                      <tr key={`filler-pay-${i}`} style={{ height: "57px" }} className="bg-white border-b border-slate-100">
+                        <td className="px-6 py-3">&nbsp;</td>
+                        <td className="px-6 py-3">&nbsp;</td>
+                        <td className="px-6 py-3">&nbsp;</td>
+                        <td className="px-6 py-3 text-right">&nbsp;</td>
                       </tr>
                     ))
                   )}
@@ -494,7 +547,7 @@ export default function PayrollPage() {
                       <button 
                         onClick={(ev) => { 
                           ev.stopPropagation(); 
-                          (ev.nativeEvent as any).stopImmediatePropagation();
+                          ev.nativeEvent.stopImmediatePropagation();
                           setOpenActionId(openActionId === e.id ? null : e.id); 
                         }}
                         style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
@@ -530,7 +583,7 @@ export default function PayrollPage() {
         <div className="grid md:grid-cols-3 gap-6 animate-fade-in items-start">
           <Card>
              <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-sky-500 to-blue-500"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-linear-to-br from-sky-500 to-blue-500"></div>
               <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Tambah Komponen</h4>
             </div>
             <div className="p-6 space-y-4">
@@ -540,12 +593,12 @@ export default function PayrollPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Jenis/Sifat</label>
-                <select value={compType} onChange={(e) => setCompType(e.target.value)} className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-blue-500 bg-white">
+                <select value={compType} onChange={(e) => setCompType(e.target.value as PayrollComponentType)} className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-blue-500 bg-white">
                   <option value="earning">Pendapatan (+)</option>
                   <option value="deduction">Potongan (-)</option>
                 </select>
               </div>
-              <button onClick={addComponent} className="w-full py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 rounded-xl shadow-sm transition-all mt-2">
+              <button onClick={addComponent} className="w-full py-2.5 text-sm font-semibold text-white bg-linear-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 rounded-xl shadow-sm transition-all mt-2">
                 Simpan Komponen
               </button>
             </div>

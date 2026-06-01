@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { generalTransactions, cashAccounts } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, isNull, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * POST /api/journal/create
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     const result = await db.transaction(async (tx) => {
-      let cashAccount: any = null;
+      let cashAccount: typeof cashAccounts.$inferSelect | null = null;
       let newBalance: number | null = null;
 
       if (cashAccountId) {
@@ -34,13 +34,13 @@ export async function POST(request: Request) {
       }
 
       const [transaction] = await tx.insert(generalTransactions).values({
-        type: type as any,
+        type,
         amount: Number(amount),
         cashAccountId: cashAccountId ? Number(cashAccountId) : null,
-        categoryId: categoryId ? Number(categoryId) : null,
-        date: date || new Date().toISOString().split("T")[0],
+        transactionCategoryId: categoryId ? Number(categoryId) : null,
+        transactionDate: date || new Date().toISOString().split("T")[0],
         description: description || "",
-        status: "valid" as any,
+        status: "valid",
         userId: user.userId,
         unitId: user.unitId || "",
       }).returning();

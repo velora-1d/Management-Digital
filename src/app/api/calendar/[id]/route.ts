@@ -9,7 +9,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     const body = await req.json();
 
-    const updateData: any = {};
+    const updateData: Partial<typeof calendarEvents.$inferInsert> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.dateStart !== undefined) updateData.dateStart = body.dateStart;
     if (body.dateEnd !== undefined) updateData.dateEnd = body.dateEnd;

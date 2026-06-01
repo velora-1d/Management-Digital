@@ -14,11 +14,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
+    "bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
   secondary:
     "bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow",
   danger:
-    "bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-200/50 hover:shadow-lg hover:shadow-rose-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
+    "bg-linear-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-200/50 hover:shadow-lg hover:shadow-rose-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
   ghost:
     "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800 border-0",
   outline:
@@ -57,7 +57,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variantStyles[variant],
           sizeStyles[size],
           fullWidth ? "w-full" : "",
-          isDisabled ? "opacity-50 cursor-not-allowed !translate-y-0 !shadow-none" : "",
+          isDisabled ? "opacity-50 cursor-not-allowed translate-y-0! shadow-none!" : "",
           className,
         ]
           .filter(Boolean)

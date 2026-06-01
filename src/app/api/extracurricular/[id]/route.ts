@@ -23,10 +23,10 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
       .where(eq(extracurriculars.id, parseInt(id)))
       .returning();
 
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true, message: "Ekskul berhasil diperbarui", data });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal mengupdate ekskul";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
@@ -40,9 +40,9 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
       .set({ deletedAt: new Date() })
       .where(eq(extracurriculars.id, parseInt(id)));
 
-    return NextResponse.json({ message: "Ekskul berhasil dihapus" });
+    return NextResponse.json({ success: true, message: "Ekskul berhasil dihapus" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Gagal menghapus ekskul";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }

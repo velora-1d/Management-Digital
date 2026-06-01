@@ -1,68 +1,85 @@
 "use client";
+import React, { useState, useEffect } from "react";
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   RadialBarChart, RadialBar,
 } from "recharts";
 
+// --- CONSTANTS & TYPES ---
+
 const COLORS_GENDER = ["#6366f1", "#f59e0b"];
 const COLORS_PPDB = ["#f59e0b", "#10b981", "#f43f5e", "#6366f1"];
 const COLORS_SDM = ["#8b5cf6", "#0ea5e9"];
+
+export interface DashboardMetrics {
+  totalSiswa: number;
+  totalSiswaPa: number;
+  totalSiswaPi: number;
+  totalGuru: number;
+  totalStaff: number;
+  totalKelas: number;
+  ppdbPending: number;
+  ppdbDiterima: number;
+  pemasukanBulanIni: number;
+  pengeluaranBulanIni: number;
+  pemasukanPeriode: number;
+  pengeluaranPeriode: number;
+  saldoTabungan: number;
+  wakafIn: number;
+  wakafOut: number;
+  wakafNet: number;
+  tunggakanTotal: number;
+  tunggakanTotalNominal: number;
+  tunggakanPa: number;
+  tunggakanPi: number;
+  complianceRate: number;
+  coopTotal: number;
+  coopCount: number;
+  piutangKoperasi: number;
+  counselingCount: number;
+  announcementsCount: number;
+  lettersCount: number;
+}
+
+interface ChartProps {
+  data: DashboardMetrics;
+}
+
+interface TooltipItem {
+  name?: string;
+  value?: number | string;
+}
 
 function fmtRp(n: number) {
   return "Rp " + (n || 0).toLocaleString("id-ID");
 }
 
-export default function DashboardCharts({ data, tab = "overview" }: { data: any; tab?: string }) {
+const cardStyle: React.CSSProperties = { background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem", overflow: "hidden" };
+const titleStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" };
+
+// --- SUB-COMPONENTS (DECLARED OUTSIDE RENDER) ---
+
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipItem[]; label?: string }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "#1e293b", color: "#fff", padding: "0.5rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+      <p style={{ margin: 0, fontWeight: 700 }}>{payload[0].name || label}</p>
+      <p style={{ margin: "2px 0 0", color: "#94a3b8" }}>
+        {typeof payload[0].value === "number" && payload[0].value > 999
+          ? fmtRp(payload[0].value)
+          : payload[0].value}
+      </p>
+    </div>
+  );
+};
+
+const ChartDistribusiSiswa = ({ data }: ChartProps) => {
   const genderData = [
     { name: "Putra", value: data.totalSiswaPa },
     { name: "Putri", value: data.totalSiswaPi },
   ];
-
-  const ppdbData = [
-    { name: "Pending", value: data.ppdbPending },
-    { name: "Diterima", value: data.ppdbDiterima },
-  ];
-
-  const kasData = [
-    { name: "Pemasukan", masuk: data.pemasukanBulanIni, keluar: 0 },
-    { name: "Pengeluaran", masuk: 0, keluar: data.pengeluaranBulanIni },
-  ];
-
-  const sdmData = [
-    { name: "Guru", value: data.totalGuru },
-    { name: "Staff", value: data.totalStaff },
-  ];
-
-  const complianceData = [
-    { name: "Lunas", value: data.complianceRate, fill: data.complianceRate >= 80 ? "#10b981" : data.complianceRate >= 50 ? "#f59e0b" : "#f43f5e" },
-  ];
-
-  const tunggakanData = [
-    { name: "Putra", value: data.tunggakanPa },
-    { name: "Putri", value: data.tunggakanPi },
-  ];
-
-  const danaData = [
-    { name: "Tabungan", value: data.saldoTabungan },
-    { name: "Wakaf", value: data.totalWakaf },
-  ];
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={{ background: "#1e293b", color: "#fff", padding: "0.5rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-        <p style={{ margin: 0, fontWeight: 700 }}>{payload[0].name || label}</p>
-        <p style={{ margin: "2px 0 0", color: "#94a3b8" }}>{typeof payload[0].value === "number" && payload[0].value > 999 ? fmtRp(payload[0].value) : payload[0].value}</p>
-      </div>
-    );
-  };
-
-  const cardStyle: React.CSSProperties = { background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem", overflow: "hidden" };
-  const titleStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" };
-
-  // Grafik 1: Distribusi Siswa
-  const ChartDistribusiSiswa = () => (
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Distribusi Siswa</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -76,9 +93,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </ResponsiveContainer>
     </div>
   );
+};
 
-  // Grafik 2: Status PPDB
-  const ChartStatusPPDB = () => (
+const ChartStatusPPDB = ({ data }: ChartProps) => {
+  const ppdbData = [
+    { name: "Pending", value: data.ppdbPending },
+    { name: "Diterima", value: data.ppdbDiterima },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Status PPDB</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -94,9 +116,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </ResponsiveContainer>
     </div>
   );
+};
 
-  // Grafik 3: Arus Kas
-  const ChartArusKas = () => (
+const ChartArusKas = ({ data }: ChartProps) => {
+  const kasData = [
+    { name: "Pemasukan", masuk: data.pemasukanBulanIni, keluar: 0 },
+    { name: "Pengeluaran", masuk: 0, keluar: data.pengeluaranBulanIni },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Arus Kas Bulan Ini</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -114,9 +141,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </div>
     </div>
   );
+};
 
-  // Grafik 4: Komposisi SDM
-  const ChartKomposisiSDM = () => (
+const ChartKomposisiSDM = ({ data }: ChartProps) => {
+  const sdmData = [
+    { name: "Guru", value: data.totalGuru },
+    { name: "Staff", value: data.totalStaff },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Komposisi SDM</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -130,9 +162,13 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </ResponsiveContainer>
     </div>
   );
+};
 
-  // Grafik 5: Kepatuhan SPP
-  const ChartKepatuhanSPP = () => (
+const ChartKepatuhanSPP = ({ data }: ChartProps) => {
+  const complianceData = [
+    { name: "Lunas", value: data.complianceRate, fill: data.complianceRate >= 80 ? "#10b981" : data.complianceRate >= 50 ? "#f59e0b" : "#f43f5e" },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Kepatuhan SPP</p>
       <div style={{ position: "relative" }}>
@@ -148,9 +184,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </div>
     </div>
   );
+};
 
-  // Grafik 6: Distribusi Tunggakan
-  const ChartDistribusiTunggakan = () => (
+const ChartDistribusiTunggakan = ({ data }: ChartProps) => {
+  const tunggakanData = [
+    { name: "Putra", value: data.tunggakanPa },
+    { name: "Putri", value: data.tunggakanPi },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Distribusi Tunggakan</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -169,9 +210,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </div>
     </div>
   );
+};
 
-  // Grafik 7: Tabungan vs Wakaf
-  const ChartTabunganWakaf = () => (
+const ChartTabunganWakaf = ({ data }: ChartProps) => {
+  const danaData = [
+    { name: "Tabungan", value: data.saldoTabungan },
+    { name: "Wakaf", value: data.wakafNet },
+  ];
+  return (
     <div style={cardStyle}>
       <p style={titleStyle}>Tabungan vs Wakaf</p>
       <ResponsiveContainer width="100%" height={180}>
@@ -187,9 +233,10 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </ResponsiveContainer>
     </div>
   );
+};
 
-  // Grafik 8: Ringkasan Keuangan
-  const ChartRingkasanKeuangan = () => (
+const ChartRingkasanKeuangan = ({ data }: ChartProps) => {
+  return (
     <div style={{ background: "linear-gradient(135deg,#312e81,#1e1b4b)", borderRadius: "1rem", padding: "1.25rem", color: "#fff", display: "flex", flexDirection: "column", height: "100%" }}>
       <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Ringkasan Keuangan</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", flex: 1, justifyContent: "center" }}>
@@ -205,7 +252,7 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
         <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
         {[
           { label: "Tabungan", value: fmtRp(data.saldoTabungan), color: "#67e8f9" },
-          { label: "Wakaf", value: fmtRp(data.totalWakaf), color: "#fcd34d" },
+          { label: "Wakaf", value: fmtRp(data.wakafNet), color: "#fcd34d" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)" }}>{item.label}</span>
@@ -222,27 +269,42 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
       </div>
     </div>
   );
+};
+
+// --- MAIN COMPONENT ---
+
+export default function DashboardCharts({ data, tab = "overview" }: { data: DashboardMetrics; tab?: string }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Hydration fix for Recharts
+  if (!isMounted) {
+    return <div className="h-64 bg-slate-50/50 rounded-xl animate-pulse" />;
+  }
 
   return (
     <>
       {tab === "overview" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ChartDistribusiSiswa />
-          <ChartStatusPPDB />
-          <ChartArusKas />
-          <ChartKomposisiSDM />
+          <ChartDistribusiSiswa data={data} />
+          <ChartStatusPPDB data={data} />
+          <ChartArusKas data={data} />
+          <ChartKomposisiSDM data={data} />
         </div>
       )}
 
       {tab === "finance" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ChartArusKas />
-          <ChartKepatuhanSPP />
-          <ChartDistribusiTunggakan />
-          <ChartRingkasanKeuangan />
+          <ChartArusKas data={data} />
+          <ChartKepatuhanSPP data={data} />
+          <ChartDistribusiTunggakan data={data} />
+          <ChartRingkasanKeuangan data={data} />
           <div className="md:col-span-2 lg:col-span-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <ChartTabunganWakaf />
+                <ChartTabunganWakaf data={data} />
             </div>
           </div>
         </div>
@@ -250,14 +312,14 @@ export default function DashboardCharts({ data, tab = "overview" }: { data: any;
 
       {tab === "academic" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ChartDistribusiSiswa />
-          <ChartStatusPPDB />
+          <ChartDistribusiSiswa data={data} />
+          <ChartStatusPPDB data={data} />
         </div>
       )}
 
       {tab === "hr" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ChartKomposisiSDM />
+          <ChartKomposisiSDM data={data} />
         </div>
       )}
     </>

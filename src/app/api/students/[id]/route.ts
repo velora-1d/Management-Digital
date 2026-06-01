@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { students, classrooms, infaqBills, studentSavings, studentEnrollments } from "@/db/schema";
+import { students, classrooms, infaqBills, studentSavings, studentEnrollments, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, sql, ne, or } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { auditLogs } from "@/db/schema";
+
+export const dynamic = "force-dynamic";
+
+type StudentSavingsStatus = "active";
+type StudentSavingsType = "setor" | "tarik";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -31,7 +38,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     // Get savings
     const savings = await db.select().from(studentSavings)
-      .where(and(eq(studentSavings.studentId, id), isNull(studentSavings.deletedAt), eq(studentSavings.status, "active" as any)))
+      .where(and(eq(studentSavings.studentId, id), isNull(studentSavings.deletedAt), eq(studentSavings.status, "active" as StudentSavingsStatus)))
       .orderBy(desc(studentSavings.createdAt))
       .limit(10);
 
@@ -49,9 +56,9 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     // Hitung saldo tabungan
     const [{ totalSetor }] = await db.select({ totalSetor: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
-      .from(studentSavings).where(and(eq(studentSavings.studentId, id), eq(studentSavings.type, "setor" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+      .from(studentSavings).where(and(eq(studentSavings.studentId, id), eq(studentSavings.type, "setor" as StudentSavingsType), eq(studentSavings.status, "active" as StudentSavingsStatus), isNull(studentSavings.deletedAt)));
     const [{ totalTarik }] = await db.select({ totalTarik: sql<number>`coalesce(sum(${studentSavings.amount}), 0)`.mapWith(Number) })
-      .from(studentSavings).where(and(eq(studentSavings.studentId, id), eq(studentSavings.type, "tarik" as any), eq(studentSavings.status, "active" as any), isNull(studentSavings.deletedAt)));
+      .from(studentSavings).where(and(eq(studentSavings.studentId, id), eq(studentSavings.type, "tarik" as StudentSavingsType), eq(studentSavings.status, "active" as StudentSavingsStatus), isNull(studentSavings.deletedAt)));
 
     const savingsBalance = totalSetor - totalTarik;
     const tunggakan = bills.filter(b => b.status === "belum_lunas").length;
@@ -60,11 +67,12 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       success: true,
       data: { ...student, classroom, infaqBills: bills, savings, enrollments: enrollmentList, savingsBalance, tunggakanCount: tunggakan }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AuthError) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
     }
-    return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Terjadi kesalahan pada server";
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
@@ -72,76 +80,168 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   try {
     const body = await request.json();
+    const studentId = parseInt(params.id);
 
-    const [student] = await db.update(students).set({
-      name: body.name,
-      nisn: body.nisn || "",
-      nis: body.nis || "",
-      nik: body.nik || "",
-      noKk: body.noKk || body.no_kk || "",
-      gender: body.gender || "L",
-      religion: body.religion || "Islam",
-      category: body.category || "reguler",
-      status: body.status || "aktif",
-      birthPlace: body.birthPlace || body.place_of_birth || "",
-      birthDate: body.birthDate || body.date_of_birth || "",
-      address: body.address || "",
-      phone: body.phone || body.parent_phone || "",
-      classroomId: (body.classroomId || body.classroom) ? Number(body.classroomId || body.classroom) : null,
-      familyStatus: body.familyStatus || "",
-      siblingCount: body.siblingCount ? Number(body.siblingCount) : null,
-      childPosition: body.childPosition ? Number(body.childPosition) : null,
-      village: body.village || "",
-      district: body.district || "",
-      residenceType: body.residenceType || "",
-      transportation: body.transportation || "",
-      studentPhone: body.studentPhone || "",
-      height: body.height ? Number(body.height) : null,
-      weight: body.weight ? Number(body.weight) : null,
-      distanceToSchool: body.distanceToSchool || "",
-      travelTime: body.travelTime ? Number(body.travelTime) : null,
-      fatherName: body.fatherName || body.father_name || "",
-      fatherNik: body.fatherNik || "",
-      fatherBirthPlace: body.fatherBirthPlace || "",
-      fatherBirthDate: body.fatherBirthDate || "",
-      fatherEducation: body.fatherEducation || "",
-      fatherOccupation: body.fatherOccupation || "",
-      motherName: body.motherName || body.mother_name || "",
-      motherNik: body.motherNik || "",
-      motherBirthPlace: body.motherBirthPlace || "",
-      motherBirthDate: body.motherBirthDate || "",
-      motherEducation: body.motherEducation || "",
-      motherOccupation: body.motherOccupation || "",
-      parentIncome: body.parentIncome || "",
-      guardianName: body.guardianName || "",
-      guardianNik: body.guardianNik || "",
-      guardianBirthPlace: body.guardianBirthPlace || "",
-      guardianBirthDate: body.guardianBirthDate || "",
-      guardianEducation: body.guardianEducation || "",
-      guardianOccupation: body.guardianOccupation || "",
-      guardianAddress: body.guardianAddress || "",
-      guardianPhone: body.guardianPhone || "",
-      infaqStatus: body.infaqStatus || "reguler",
-      infaqNominal: body.infaqNominal ? Number(body.infaqNominal) : 0,
-      updatedAt: new Date(),
-    }).where(eq(students.id, parseInt(params.id))).returning();
+    // 1. Ambil data lama
+    const [existing] = await db
+      .select()
+      .from(students)
+      .where(and(eq(students.id, studentId), isNull(students.deletedAt)))
+      .limit(1);
 
-    return NextResponse.json({ success: true, message: "Data siswa berhasil diupdate", data: student });
-  } catch (error: any) {
-    if (error.code === '23505') {
-      return NextResponse.json({ success: false, message: "NISN sudah dipakai" }, { status: 400 });
+    if (!existing) {
+      return NextResponse.json({ success: false, message: "Siswa tidak ditemukan" }, { status: 404 });
     }
+
+    // 2. Pengecekan Duplikasi (jika NISN atau NIK diubah)
+    const { nisn, nik } = body;
+    if ((nisn && nisn !== existing.nisn) || (nik && nik !== existing.nik)) {
+      const [duplicate] = await db.select()
+        .from(students)
+        .where(
+          and(
+            ne(students.id, studentId),
+            isNull(students.deletedAt),
+            or(
+              nisn ? eq(students.nisn, nisn.trim()) : undefined,
+              nik ? eq(students.nik, nik.trim()) : undefined
+            )
+          )
+        )
+        .limit(1);
+
+      if (duplicate) {
+        const field = duplicate.nisn === nisn?.trim() ? "NISN" : "NIK";
+        return NextResponse.json({ 
+          success: false, 
+          message: `${field} "${field === 'NISN' ? nisn : nik}" sudah terdaftar pada siswa lain.` 
+        }, { status: 400 });
+      }
+    }
+
+    const updateData: Partial<typeof students.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+    const mutableUpdateData = updateData as Partial<typeof students.$inferInsert> & Record<string, unknown>;
+
+    const keys = [
+      "name", "nisn", "nis", "nik", "noKk", "gender", "religion", "category",
+      "status", "birthPlace", "birthDate", "address", "phone", "classroomId",
+      "familyStatus", "siblingCount", "childPosition", "village", "district",
+      "residenceType", "transportation", "previousSchool", "studentPhone", "height", "weight",
+      "distanceToSchool", "travelTime", "fatherName", "fatherNik",
+      "fatherBirthPlace", "fatherBirthDate", "fatherEducation",
+      "fatherOccupation", "motherName", "motherNik", "motherBirthPlace",
+      "motherBirthDate", "motherEducation", "motherOccupation", "parentIncome",
+      "guardianName", "guardianNik", "guardianBirthPlace", "guardianBirthDate",
+      "guardianEducation", "guardianOccupation", "guardianAddress",
+      "guardianPhone", "infaqStatus", "infaqNominal"
+    ];
+
+    if (body.no_kk !== undefined && body.noKk === undefined) updateData.noKk = body.no_kk;
+    if (body.place_of_birth !== undefined && body.birthPlace === undefined) updateData.birthPlace = body.place_of_birth;
+    if (body.date_of_birth !== undefined && body.birthDate === undefined) updateData.birthDate = body.date_of_birth;
+    if (body.parent_phone !== undefined && body.phone === undefined) updateData.phone = body.parent_phone;
+    if (body.classroom !== undefined && body.classroomId === undefined) updateData.classroomId = body.classroom ? Number(body.classroom) : null;
+    if (body.father_name !== undefined && body.fatherName === undefined) updateData.fatherName = body.father_name;
+    if (body.mother_name !== undefined && body.motherName === undefined) updateData.motherName = body.mother_name;
+
+    for (const key of keys) {
+      if (body[key] !== undefined) {
+        if (["siblingCount", "childPosition", "height", "weight", "travelTime"].includes(key)) {
+           mutableUpdateData[key] = body[key] ? Number(body[key]) : null;
+        } else if (["classroomId", "infaqNominal"].includes(key)) {
+           mutableUpdateData[key] = body[key] ? Number(body[key]) : (key === "infaqNominal" ? 0 : null);
+        } else {
+           mutableUpdateData[key] = typeof body[key] === 'string' ? body[key].trim() : body[key];
+        }
+      }
+    }
+
+    const [student] = await db.transaction(async (tx) => {
+      const [updatedStudent] = await tx.update(students).set(updateData).where(eq(students.id, studentId)).returning();
+
+      // Sinkronisasi Enrollment ke Tahun Ajaran Aktif
+      const activeYearRes = await tx.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      
+      if (activeYearRes.length > 0) {
+        const yearId = activeYearRes[0].id;
+        const currentClassId = updateData.classroomId !== undefined ? updateData.classroomId : updatedStudent.classroomId;
+
+        const existingEnrollment = await tx.select()
+          .from(studentEnrollments)
+          .where(and(
+            eq(studentEnrollments.studentId, studentId), 
+            eq(studentEnrollments.academicYearId, yearId),
+            isNull(studentEnrollments.deletedAt)
+          ))
+          .limit(1);
+        
+        if (existingEnrollment.length > 0) {
+          await tx.update(studentEnrollments)
+            .set({ classroomId: currentClassId, updatedAt: new Date() })
+            .where(eq(studentEnrollments.id, existingEnrollment[0].id));
+        } else {
+          await tx.insert(studentEnrollments).values({
+            studentId,
+            classroomId: currentClassId,
+            academicYearId: yearId,
+            enrollmentType: "umum",
+          });
+        }
+      }
+
+      // 4. Audit Log
+      await tx.insert(auditLogs).values({
+        userId: existing.id, // atau user ID dari session jika ada
+        action: "UPDATE_STUDENT",
+        modelType: "students",
+        modelId: studentId.toString(),
+        oldValues: JSON.stringify(existing),
+        newValues: JSON.stringify(updatedStudent),
+      });
+
+      return [updatedStudent];
+    });
+
+    revalidatePath("/students");
+    revalidatePath("/classrooms");
+    revalidatePath("/infaq-bills");
+
+    return NextResponse.json({ success: true, message: "Data siswa berhasil diperbarui", data: student });
+  } catch (error: unknown) {
     console.error("Error updating student:", error);
-    return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
+    const err = error as { code?: string; message?: string };
+    if (err.code === '23505') {
+      return NextResponse.json({ success: false, message: "NISN atau NIK sudah dipakai siswa lain" }, { status: 400 });
+    }
+    const msg = error instanceof Error ? error.message : "Gagal memperbarui data siswa";
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await db.update(students).set({ deletedAt: new Date() }).where(eq(students.id, parseInt(params.id)));
-    return NextResponse.json({ success: true, message: "Data dihapus" });
-  } catch (error) {
-    return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
+    await db.update(students)
+      .set({ 
+        deletedAt: new Date(),
+        status: "dihapus",
+        updatedAt: new Date()
+      })
+      .where(eq(students.id, parseInt(params.id)));
+      
+    revalidatePath("/students");
+
+    return NextResponse.json({ success: true, message: "Data siswa berhasil dihapus" });
+  } catch (error: unknown) {
+    console.error("Error deleting student:", error);
+    const msg = error instanceof Error ? error.message : "Gagal menghapus data siswa";
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
+
+export const PATCH = PUT;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { extracurriculars, employees, extracurricularMembers, students } from "@/db/schema";
-import { eq, and, isNull, asc, sql } from "drizzle-orm";
+import { eq, isNull, asc, sql } from "drizzle-orm";
 
 // GET /api/extracurricular
 export async function GET(req: Request) {

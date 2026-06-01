@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { payrolls, employees, salaryComponents, employeeSalaries, payrollDetails } from "@/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 
+type PayrollDetailInsert = typeof payrollDetails.$inferInsert;
+
 // GET /api/payroll
 export async function GET(request: Request) {
   try {
@@ -12,9 +14,10 @@ export async function GET(request: Request) {
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 20));
 
-    let whereClause = isNull(payrolls.deletedAt);
-    if (month) whereClause = and(whereClause, eq(payrolls.month, month)) as any;
-    if (year) whereClause = and(whereClause, eq(payrolls.year, year)) as any;
+    const conditions = [isNull(payrolls.deletedAt)];
+    if (month) conditions.push(eq(payrolls.month, month));
+    if (year) conditions.push(eq(payrolls.year, year));
+    const whereClause = and(...conditions);
 
     const [results, totalResult] = await Promise.all([
       db
@@ -122,7 +125,7 @@ export async function POST(request: Request) {
         // Hitung gaji
         let totalEarning = emp.baseSalary || 0;
         let totalDeduction = 0;
-        const detailsData: any[] = [];
+        const detailsData: PayrollDetailInsert[] = [];
 
         // Masukkan base salary sebagai komponen detail jika > 0
         if (emp.baseSalary > 0) {

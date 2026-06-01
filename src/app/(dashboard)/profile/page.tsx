@@ -17,24 +17,24 @@ export default function ProfilePage() {
     confirm_password: ""
   });
 
-  const loadProfile = async () => {
-    try {
-      const res = await fetch("/api/profile/me");
-      if (res.ok) {
-        const data = await res.json();
-        setProfile({
-          name: data.name || "",
-          username: data.username || "",
-          role: data.role || ""
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    loadProfile();
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/profile/me");
+        if (res.ok) {
+          const data = await res.json();
+          setProfile({
+            name: data.name || "",
+            username: data.username || "",
+            role: data.role || ""
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    
+    fetchProfile();
   }, []);
 
   const saveProfile = async () => {
@@ -57,7 +57,7 @@ export default function ProfilePage() {
       } else {
         Swal.fire("Gagal", data.error || "Gagal memperbarui profil", "error");
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   };
@@ -93,7 +93,7 @@ export default function ProfilePage() {
       } else {
         Swal.fire("Gagal", data.error || "Password lama salah atau terjadi kesalahan.", "error");
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Error", "Gagal menghubungi server", "error");
     }
   };
@@ -151,7 +151,7 @@ export default function ProfilePage() {
             <div className="pt-2">
               <button 
                 onClick={saveProfile} 
-                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-linear-to-r from-indigo-600 to-indigo-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
                 Simpan Profil
@@ -205,7 +205,7 @@ export default function ProfilePage() {
             <div className="pt-2">
               <button 
                 onClick={changePassword} 
-                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-linear-to-r from-amber-500 to-orange-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 Ubah Password
               </button>

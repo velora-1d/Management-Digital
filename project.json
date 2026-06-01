@@ -1,0 +1,40 @@
+{
+  "name": "erp-sekolah-management-digital",
+  "description": "Enterprise Resource Planning for Schools - Management Digital Node",
+  "version": "1.0.0",
+  "lastUpdated": "2026-06-01",
+
+  "stack": {
+    "frontend": "next.js-15",
+    "backend": "next.js-15",
+    "database": "postgresql",
+    "orm": "drizzle",
+    "auth": "custom-jwt",
+    "realtime": null,
+    "mobile": null
+  },
+
+  "mode": "fullstack",
+  "platform": ["web"],
+  "multiTenant": true,
+  "tenantStrategy": "single-db",
+
+  "scale": "medium",
+  "team": "solo",
+
+  "hosting": {
+    "development": "local",
+    "staging": null,
+    "production": "vercel"
+  },
+
+  "infraBudget": "free-tier",
+
+  "activeRules": [
+    "nextjs-fullstack",
+    "postgresql",
+    "drizzle-orm"
+  ],
+
+  "notes": "Synchronized development node sharing erp_sekolah_db database locally."
+}

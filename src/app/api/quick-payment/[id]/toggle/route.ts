@@ -58,7 +58,7 @@ export async function POST(
             amount: payAmount,
             cashAccountId: Number(cashAccountId),
             description: `Pembayaran ${payment.paymentType} - ${payment.payableType} #${payment.payableId}`,
-            date: new Date().toISOString().split("T")[0],
+            transactionDate: new Date().toISOString().split("T")[0],
             status: "valid",
             referenceType: "registration_payment",
             referenceId: String(paymentId),

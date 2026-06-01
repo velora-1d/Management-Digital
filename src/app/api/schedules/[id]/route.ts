@@ -3,6 +3,10 @@ import { db } from "@/db";
 import { schedules, classrooms, subjects, employees, academicYears } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Terjadi kesalahan server";
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -41,8 +45,8 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: schedule });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -78,8 +82,8 @@ export async function PUT(
     const [updated] = await db.update(schedules).set(updateData).where(eq(schedules.id, id)).returning();
 
     return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -97,7 +101,7 @@ export async function DELETE(
     await db.delete(schedules).where(eq(schedules.id, id));
 
     return NextResponse.json({ success: true, message: "Jadwal berhasil dihapus" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }

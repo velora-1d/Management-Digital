@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { finalGrades, students, curriculums, subjects, gradeComponents, studentGrades } from "@/db/schema";
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { eq, and, asc, inArray, sql } from "drizzle-orm";
 import { hitungNilaiAkhir, hitungPredikat, generateDeskripsi } from "@/lib/grade-engine";
+import { revalidateTag } from "next/cache";
+import type { CurriculumType, NilaiKomponen } from "@/lib/grade-engine";
+
+interface GradeInputRow {
+  id: number;
+  studentId: number | null;
+  nilaiAngka: number;
+  componentId: number | null;
+  componentCode: string | null;
+  studentName: string | null;
+}
 
 export async function GET(req: Request) {
   try {
@@ -101,74 +112,66 @@ export async function POST(req: Request) {
       );
 
     // Kelompokkan berdasarkan studentId
-    const studentGradesMap: Record<number, any[]> = {};
+    const studentGradesMap: Record<number, GradeInputRow[]> = {};
     grades.forEach(g => {
       if (!g.studentId) return;
       if (!studentGradesMap[g.studentId]) studentGradesMap[g.studentId] = [];
       studentGradesMap[g.studentId].push(g);
     });
 
-    // 3. Kalkulasi per siswa
-    const results = [];
+    // 3. Kalkulasi per siswa dan kumpulkan untuk Bulk Upsert
+    const upsertData: Array<typeof finalGrades.$inferInsert> = [];
+    
     for (const [sId, sGrades] of Object.entries(studentGradesMap)) {
       const studentId = Number(sId);
       const studentName = sGrades[0]?.studentName || "Siswa";
 
-      const nilaiKomponenInput = sGrades.map((sg: any) => ({
+      const nilaiKomponenInput: NilaiKomponen[] = sGrades.map((sg) => ({
         kode: sg.componentCode || "",
         nilai: sg.nilaiAngka,
       }));
 
       const finalScore = hitungNilaiAkhir(nilaiKomponenInput, formatFormula);
-      const predikat = hitungPredikat(finalScore, cur.type as any);
-      const deskripsi = generateDeskripsi(studentName, subject?.name || "", finalScore, predikat, cur.type as any);
+      const curriculumType = cur.type as CurriculumType;
+      const predikat = hitungPredikat(finalScore, curriculumType);
+      const deskripsi = generateDeskripsi(studentName, subject?.name || "", finalScore, predikat, curriculumType);
 
-      // Upsert manual with Drizzle
-      const [existing] = await db.select().from(finalGrades).where(
-          and(
-              eq(finalGrades.curriculumId, Number(curriculumId)),
-              eq(finalGrades.studentId, studentId),
-              eq(finalGrades.subjectId, Number(subjectId))
-          )
-      ).limit(1);
-
-      if (existing) {
-          const [updated] = await db
-            .update(finalGrades)
-            .set({
-                classroomId: Number(classroomId),
-                nilaiPengetahuan: finalScore,
-                nilaiKeterampilan: finalScore,
-                nilaiAkhir: finalScore,
-                predikat,
-                deskripsi,
-                isLocked: false,
-                updatedAt: new Date(),
-            })
-            .where(eq(finalGrades.id, existing.id))
-            .returning();
-          results.push(updated);
-      } else {
-          const [created] = await db
-            .insert(finalGrades)
-            .values({
-                curriculumId: Number(curriculumId),
-                studentId: studentId,
-                subjectId: Number(subjectId),
-                classroomId: Number(classroomId),
-                nilaiPengetahuan: finalScore,
-                nilaiKeterampilan: finalScore,
-                nilaiAkhir: finalScore,
-                predikat,
-                deskripsi,
-                isLocked: false,
-            })
-            .returning();
-          results.push(created);
-      }
+      upsertData.push({
+        curriculumId: Number(curriculumId),
+        studentId: studentId,
+        subjectId: Number(subjectId),
+        classroomId: Number(classroomId),
+        nilaiPengetahuan: finalScore,
+        nilaiKeterampilan: finalScore,
+        nilaiAkhir: finalScore,
+        predikat,
+        deskripsi,
+        isLocked: false,
+      });
     }
 
-    return NextResponse.json({ success: true, count: results.length });
+    // 4. Jalankan Bulk Upsert (Satu Kueri untuk Seluruh Siswa)
+    if (upsertData.length > 0) {
+      await db
+        .insert(finalGrades)
+        .values(upsertData)
+        .onConflictDoUpdate({
+          target: [finalGrades.curriculumId, finalGrades.studentId, finalGrades.subjectId],
+          set: {
+            classroomId: sql`excluded.classroom_id`,
+            nilaiPengetahuan: sql`excluded.nilai_pengetahuan`,
+            nilaiKeterampilan: sql`excluded.nilai_keterampilan`,
+            nilaiAkhir: sql`excluded.nilai_akhir`,
+            predikat: sql`excluded.predikat`,
+            deskripsi: sql`excluded.deskripsi`,
+            updatedAt: new Date(),
+          },
+        });
+    }
+
+    revalidateTag("grades");
+
+    return NextResponse.json({ success: true, count: upsertData.length });
   } catch (error) {
     console.error("Error calculating final grades:", error);
     return NextResponse.json(

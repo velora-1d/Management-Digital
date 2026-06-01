@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { useParams } from "next/navigation";
 import EmployeeForm from "@/components/EmployeeForm";
 
 export default function StaffEditPage() {
   const params = useParams();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ComponentProps<typeof EmployeeForm>["initialData"] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

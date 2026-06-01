@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
-import { exportCSV } from "@/lib/csv-export";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
 import { 
   Plus, 
-  Download, 
   MessageSquare, 
   Search, 
   Filter, 
@@ -85,19 +83,40 @@ export default function CounselingPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => {
-    fetch("/api/students").then(r => r.json()).then(d => setStudents(Array.isArray(d) ? d : []));
-    fetch("/api/teachers").then(r => r.json()).then(d => setTeachers(Array.isArray(d) ? d.filter((t: { status?: string }) => !t.status || t.status === "aktif") : []));
+    fetch("/api/students?limit=1000")
+      .then(r => r.json())
+      .then(d => setStudents(d.success ? (d.data || []) : (Array.isArray(d) ? d : [])));
+    fetch("/api/teachers?limit=1000")
+      .then(r => r.json())
+      .then(d => {
+        const items = d.success ? (d.data || []) : (Array.isArray(d) ? d : []);
+        setTeachers(items.filter((t: { status?: string }) => !t.status || t.status === "aktif"));
+      });
   }, []);
 
   const handleSubmit = async () => {
     if (!form.studentId || !form.category) { Swal.fire("Error", "Siswa dan kategori wajib", "error"); return; }
-    const method = editItem ? "PUT" : "POST";
-    const url = editItem ? `/api/counseling/${editItem.id}` : "/api/counseling";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setShowModal(false); setEditItem(null);
-    setForm({ studentId: "", counselorId: "", date: new Date().toISOString().split("T")[0], category: "akademik", description: "", followUp: "", status: "aktif" });
-    fetchData();
-    Swal.fire("Berhasil", editItem ? "Catatan BK diperbarui" : "Catatan BK ditambahkan", "success");
+    try {
+      const method = editItem ? "PUT" : "POST";
+      const url = editItem ? `/api/counseling/${editItem.id}` : "/api/counseling";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        setShowModal(false); setEditItem(null);
+        setForm({ studentId: "", counselorId: "", date: new Date().toISOString().split("T")[0], category: "akademik", description: "", followUp: "", status: "aktif" });
+        fetchData();
+        Swal.fire("Berhasil", editItem ? "Catatan BK diperbarui" : "Catatan BK ditambahkan", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menyimpan data", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -110,9 +129,23 @@ export default function CounselingPage() {
       confirmButtonColor: "#ef4444" 
     });
     if (!r.isConfirmed) return;
-    await fetch(`/api/counseling/${id}`, { method: "DELETE" });
-    fetchData();
-    Swal.fire("Berhasil", "Catatan telah dihapus", "success");
+    try {
+      const res = await fetch(`/api/counseling/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        fetchData();
+        Swal.fire("Berhasil", "Catatan telah dihapus", "success");
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menghapus", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleEdit = (item: CounselingRecord) => {
@@ -263,7 +296,7 @@ export default function CounselingPage() {
                       <CornerDownRight className="w-4 h-4 text-slate-400 mt-0.5" />
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tindak Lanjut</p>
-                        <p className="text-sm text-slate-600 leading-relaxed italic">"{item.followUp}"</p>
+                        <p className="text-sm text-slate-600 leading-relaxed italic">&quot;{item.followUp}&quot;</p>
                       </div>
                     </div>
                   )}

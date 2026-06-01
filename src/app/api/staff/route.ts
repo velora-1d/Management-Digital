@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 20));
   const search = searchParams.get("q") || "";
+  const status = searchParams.get("status") || "";
 
   try {
     let whereClause = and(eq(employees.type, "staf"), isNull(employees.deletedAt));
@@ -20,6 +21,9 @@ export async function GET(request: Request) {
           ilike(employees.nip, `%${search}%`)
         )
       );
+    }
+    if (status) {
+      whereClause = and(whereClause, eq(employees.status, status as "aktif" | "nonaktif"));
     }
 
     const [staff, [{ total }]] = await Promise.all([
@@ -41,38 +45,93 @@ export async function GET(request: Request) {
       data: staff,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Staff GET error:", error);
-    return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Terjadi kesalahan pada server";
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const { name, nip, position, status, phone, address, joinDate, baseSalary } = body;
 
-    if (!body.name?.trim()) {
+    if (!name?.trim()) {
       return NextResponse.json({ success: false, message: "Nama staf wajib diisi" }, { status: 400 });
     }
 
-    const [employee] = await db
+    // 1. Cek duplikasi (termasuk yang di-soft delete)
+    const existing = await db.select()
+      .from(employees)
+      .where(
+        and(
+          eq(employees.type, "staf"),
+          or(
+            ilike(employees.name, name.trim()),
+            nip ? eq(employees.nip, nip.trim()) : undefined
+          )
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      const record = existing[0];
+
+      // Jika masih aktif
+      if (!record.deletedAt) {
+        const field = record.name.toLowerCase() === name.trim().toLowerCase() ? "Nama" : "NIP";
+        return NextResponse.json({ 
+          success: false, 
+          message: `${field} staf "${field === 'Nama' ? name : nip}" sudah terdaftar dan masih aktif.` 
+        }, { status: 400 });
+      }
+
+      // Jika terhapus, lakukan Restore
+      const [restored] = await db.update(employees)
+        .set({
+          name: name.trim(),
+          nip: nip?.trim() || record.nip,
+          position: position || record.position,
+          status: status || "aktif",
+          phone: phone || record.phone,
+          address: address || record.address,
+          joinDate: joinDate || record.joinDate,
+          baseSalary: baseSalary ? Number(baseSalary) : record.baseSalary,
+          deletedAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(employees.id, record.id))
+        .returning();
+
+      return NextResponse.json({ 
+        success: true, 
+        message: "Data staf yang sebelumnya terhapus telah diaktifkan kembali.", 
+        data: restored,
+        isRestored: true 
+      });
+    }
+
+    // 2. Insert baru
+    const [newStaff] = await db
       .insert(employees)
       .values({
-        name: body.name,
-        nip: body.nip || "",
+        name: name.trim(),
+        nip: nip?.trim() || "",
         type: "staf",
-        position: body.position || "",
-        status: (body.status || "aktif") as any,
-        phone: body.phone || "",
-        address: body.address || "",
-        joinDate: body.joinDate || "",
-        baseSalary: body.baseSalary ? Number(body.baseSalary) : 0,
+        position: position || "",
+        status: status || "aktif",
+        phone: phone || "",
+        address: address || "",
+        joinDate: joinDate || "",
+        baseSalary: baseSalary ? Number(baseSalary) : 0,
       })
       .returning();
 
-    return NextResponse.json({ success: true, message: "Data staf berhasil ditambahkan", data: employee });
-  } catch (error) {
+    return NextResponse.json({ success: true, message: "Data staf berhasil ditambahkan", data: newStaff });
+  } catch (error: unknown) {
     console.error("Staff POST error:", error);
-    return NextResponse.json({ success: false, message: "Gagal menyimpan data staf" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Gagal menyimpan data staf";
+    return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }

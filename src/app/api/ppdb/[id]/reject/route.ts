@@ -15,7 +15,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!reg || reg.deletedAt) return NextResponse.json({ success: false, message: "Pendaftar tidak ditemukan" }, { status: 404 });
     if (reg.status === "ditolak") return NextResponse.json({ success: false, message: "Sudah ditolak sebelumnya" }, { status: 400 });
 
-    await db.update(ppdbRegistrations).set({ status: "ditolak" as any, updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
+    await db.update(ppdbRegistrations).set({ status: "ditolak", updatedAt: new Date() }).where(eq(ppdbRegistrations.id, regId));
 
     return NextResponse.json({ success: true, message: `${reg.name} ditolak.` });
   } catch (error) {

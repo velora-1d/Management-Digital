@@ -33,10 +33,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
       await tx.update(generalTransactions).set({
         description: description || existing.description,
-        date: date || existing.date,
-        categoryId: categoryId ? Number(categoryId) : existing.categoryId,
+        transactionDate: date || existing.transactionDate,
+        transactionCategoryId: categoryId ? Number(categoryId) : existing.transactionCategoryId,
         amount: newAmount,
-        type: newType as any,
+        type: newType,
         updatedAt: new Date(),
       }).where(eq(generalTransactions.id, id));
     });

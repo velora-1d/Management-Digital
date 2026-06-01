@@ -2,6 +2,71 @@
 import { useState, useEffect, useRef } from "react";
 import { animate, stagger } from "animejs";
 
+function getGreetingTheme(hour: number | null) {
+  if (hour === null) {
+    return {
+      background: "linear-gradient(135deg, #dbeafe, #93c5fd)",
+      shadow: "0 4px 20px rgba(59,130,246,0.25)",
+      icon: (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      greeting: "Selamat Datang!",
+    };
+  }
+
+  if (hour >= 5 && hour < 11) {
+    return {
+      background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+      shadow: "0 4px 20px rgba(251,191,36,0.3)",
+      icon: (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#d97706" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      greeting: "Selamat Pagi!",
+    };
+  }
+
+  if (hour >= 11 && hour < 15) {
+    return {
+      background: "linear-gradient(135deg, #dbeafe, #93c5fd)",
+      shadow: "0 4px 20px rgba(59,130,246,0.25)",
+      icon: (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      greeting: "Selamat Siang!",
+    };
+  }
+
+  if (hour >= 15 && hour < 18) {
+    return {
+      background: "linear-gradient(135deg, #fed7aa, #fdba74)",
+      shadow: "0 4px 20px rgba(251,146,60,0.3)",
+      icon: (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ea580c" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+        </svg>
+      ),
+      greeting: "Selamat Sore!",
+    };
+  }
+
+  return {
+    background: "linear-gradient(135deg, #1e1b4b, #312e81)",
+    shadow: "0 4px 20px rgba(30,27,75,0.35)",
+    icon: (
+      <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+      </svg>
+    ),
+    greeting: "Selamat Malam!",
+  };
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,6 +74,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [schoolName, setSchoolName] = useState("");
+  const [currentHour, setCurrentHour] = useState<number | null>(null);
+  const [currentYear, setCurrentYear] = useState("");
   const animatedRef = useRef(false);
 
   useEffect(() => {
@@ -16,6 +83,12 @@ export default function LoginPage() {
       .then(r => r.json())
       .then(d => { if (d.name) setSchoolName(d.name); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const now = new Date();
+    setCurrentHour(now.getHours());
+    setCurrentYear(String(now.getFullYear()));
   }, []);
 
   // Anime.js entrance animations
@@ -27,9 +100,9 @@ export default function LoginPage() {
     animate(".float-icon", {
       translateY: [-10, 10],
       duration: 2800,
-      ease: "inOutSine",
+      easing: "easeInOutSine",
       loop: true,
-      alternate: true,
+      direction: "alternate",
       delay: stagger(350),
     });
 
@@ -38,7 +111,7 @@ export default function LoginPage() {
       opacity: [0, 1],
       translateY: [25, 0],
       duration: 650,
-      ease: "outCubic",
+      easing: "easeOutCubic",
       delay: stagger(90, { start: 500 }),
     });
 
@@ -47,7 +120,7 @@ export default function LoginPage() {
       opacity: [0, 1],
       scale: [0.88, 1],
       duration: 800,
-      ease: "outCubic",
+      easing: "easeOutCubic",
       delay: 250,
     });
 
@@ -57,7 +130,7 @@ export default function LoginPage() {
       opacity: [0, 1],
       translateX: [35, 0],
       duration: 750,
-      ease: "outCubic",
+      easing: "easeOutCubic",
       delay: 450,
     });
 
@@ -65,7 +138,7 @@ export default function LoginPage() {
     animate(".geo-rotate", {
       rotate: [0, 360],
       duration: 90000,
-      ease: "linear",
+      easing: "linear",
       loop: true,
     });
 
@@ -75,9 +148,9 @@ export default function LoginPage() {
       translateX: [-4, 4],
       opacity: [0.3, 0.7],
       duration: 3500,
-      ease: "inOutSine",
+      easing: "easeInOutSine",
       loop: true,
-      alternate: true,
+      direction: "alternate",
       delay: stagger(200),
     });
   }, []);
@@ -105,9 +178,7 @@ export default function LoginPage() {
     }
   }
 
-  const initials = schoolName
-    ? schoolName.split(" ").filter(w => w.length > 1).map(w => w[0]).join("").toUpperCase().slice(0, 3)
-    : "MD";
+  const greetingTheme = getGreetingTheme(currentHour);
 
   const features = [
     {
@@ -397,59 +468,19 @@ export default function LoginPage() {
                 {/* Time icon */}
                 <div style={{
                   width: 56, height: 56, minWidth: 56,
-                  background: (() => {
-                    const h = new Date().getHours();
-                    if (h >= 5 && h < 11) return "linear-gradient(135deg, #fef3c7, #fde68a)";
-                    if (h >= 11 && h < 15) return "linear-gradient(135deg, #dbeafe, #93c5fd)";
-                    if (h >= 15 && h < 18) return "linear-gradient(135deg, #fed7aa, #fdba74)";
-                    return "linear-gradient(135deg, #1e1b4b, #312e81)";
-                  })(),
+                  background: greetingTheme.background,
                   borderRadius: "1rem",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: (() => {
-                    const h = new Date().getHours();
-                    if (h >= 5 && h < 11) return "0 4px 20px rgba(251,191,36,0.3)";
-                    if (h >= 11 && h < 15) return "0 4px 20px rgba(59,130,246,0.25)";
-                    if (h >= 15 && h < 18) return "0 4px 20px rgba(251,146,60,0.3)";
-                    return "0 4px 20px rgba(30,27,75,0.35)";
-                  })(),
+                  boxShadow: greetingTheme.shadow,
                 }}>
-                  {(() => {
-                    const h = new Date().getHours();
-                    if (h >= 5 && h < 11) return (
-                      <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#d97706" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    );
-                    if (h >= 11 && h < 15) return (
-                      <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    );
-                    if (h >= 15 && h < 18) return (
-                      <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ea580c" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                      </svg>
-                    );
-                    return (
-                      <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                      </svg>
-                    );
-                  })()}
+                  {greetingTheme.icon}
                 </div>
                 <div>
                   <h2 style={{
                     fontFamily: "var(--font-heading)", fontSize: "1.75rem", fontWeight: 800,
                     color: "#0f172a", margin: 0, letterSpacing: "-0.03em", lineHeight: 1.1,
                   }}>
-                    {(() => {
-                      const h = new Date().getHours();
-                      if (h >= 5 && h < 11) return "Selamat Pagi!";
-                      if (h >= 11 && h < 15) return "Selamat Siang!";
-                      if (h >= 15 && h < 18) return "Selamat Sore!";
-                      return "Selamat Malam!";
-                    })()}
+                    {greetingTheme.greeting}
                   </h2>
                   <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0.25rem 0 0", lineHeight: 1.4 }}>
                     Masuk ke sistem untuk memulai aktivitas
@@ -600,7 +631,7 @@ export default function LoginPage() {
 
           {/* Footer copyright */}
           <p style={{ textAlign: "center", fontSize: "0.625rem", color: "#94a3b8", marginTop: "1rem", fontWeight: 500 }}>
-            © {new Date().getFullYear()} {schoolName || "Management Digital"} — Seluruh hak cipta dilindungi.
+            © {currentYear || "2026"} {schoolName || "Management Digital"} - Seluruh hak cipta dilindungi.
           </p>
         </div>
       </div>

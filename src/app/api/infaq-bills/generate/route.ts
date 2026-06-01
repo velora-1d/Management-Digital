@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { infaqBills, studentEnrollments, students, classrooms, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, and, isNull, inArray, sql } from "drizzle-orm";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 
 const SEMESTER_1_MONTHS = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const SEMESTER_2_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni"];
 const FULL_YEAR_MONTHS = [...SEMESTER_1_MONTHS, ...SEMESTER_2_MONTHS];
+
+type InfaqBillInsert = typeof infaqBills.$inferInsert;
 
 export async function POST(request: Request) {
   try {
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
       classroomInfaqNominal: classrooms.infaqNominal,
     })
     .from(studentEnrollments)
-    .innerJoin(students, and(eq(studentEnrollments.studentId, students.id), isNull(students.deletedAt), eq(students.status, "aktif" as any)))
+    .innerJoin(students, and(eq(studentEnrollments.studentId, students.id), isNull(students.deletedAt), eq(students.status, "aktif")))
     .leftJoin(classrooms, eq(studentEnrollments.classroomId, classrooms.id))
     .where(and(...enrollmentConditions));
 
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
     const existingSet = new Set(existingBills.map(b => `${b.studentId}-${b.month}`));
 
     // 6. Siapkan data tagihan baru
-    const billsToCreate: any[] = [];
+    const billsToCreate: InfaqBillInsert[] = [];
 
     for (const student of enrollments) {
       for (const month of resolvedMonths) {
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
           month: String(month),
           year: String(year),
           nominal,
-          status: billStatus as any,
+          status: billStatus,
           unitId: user.unitId || "",
           academicYearId: resolvedAcademicYearId,
         });
@@ -161,7 +163,7 @@ export async function POST(request: Request) {
     // 7. Buat tagihan dalam transaction (atomik)
     let insertedCount = 0;
     await db.transaction(async (tx) => {
-      const result = await tx.insert(infaqBills).values(billsToCreate).onConflictDoNothing();
+      await tx.insert(infaqBills).values(billsToCreate).onConflictDoNothing();
       insertedCount = billsToCreate.length; // approximate
     });
 

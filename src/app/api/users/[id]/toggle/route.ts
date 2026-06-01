@@ -16,7 +16,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!user) return NextResponse.json({ success: false, message: "User tidak ditemukan" }, { status: 404 });
 
     const newStatus = user.status === "active" ? "inactive" : "active";
-    await db.update(users).set({ status: newStatus as any, updatedAt: new Date() }).where(eq(users.id, id));
+    await db.update(users).set({ status: newStatus, updatedAt: new Date() }).where(eq(users.id, id));
 
     return NextResponse.json({
       success: true,

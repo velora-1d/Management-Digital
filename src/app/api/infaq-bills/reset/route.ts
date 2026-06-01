@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { infaqBills, infaqPayments, students } from "@/db/schema";
+import { infaqBills, infaqPayments, students, studentEnrollments, academicYears } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
 import { eq, and, isNull, inArray, sql } from "drizzle-orm";
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   try {
     await requireAuth();
     const body = await request.json();
-    const { year, months, classroomId, semester } = body;
+    const { year, months, classroomId, semester, academicYearId } = body;
 
     if (!year) {
       return NextResponse.json({ success: false, message: "Tahun wajib diisi" }, { status: 400 });
@@ -42,12 +42,34 @@ export async function POST(request: Request) {
     // 2. Build conditions
     const conditions = [eq(infaqBills.year, String(year)), inArray(infaqBills.month, targetMonths), isNull(infaqBills.deletedAt)];
 
+    let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
+    if (!targetAcademicYearId) {
+      const [activeYear] = await db.select({ id: academicYears.id })
+        .from(academicYears)
+        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .limit(1);
+      targetAcademicYearId = activeYear?.id || null;
+    }
+
+    if (targetAcademicYearId) {
+      conditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
+    }
+
     if (classroomId) {
       const studentsInClass = await db.select({ id: students.id })
-        .from(students)
-        .where(and(eq(students.classroomId, Number(classroomId)), isNull(students.deletedAt)));
+        .from(studentEnrollments)
+        .innerJoin(students, eq(studentEnrollments.studentId, students.id))
+        .where(and(
+          eq(studentEnrollments.classroomId, Number(classroomId)),
+          targetAcademicYearId ? eq(studentEnrollments.academicYearId, targetAcademicYearId) : undefined,
+          isNull(studentEnrollments.deletedAt),
+          isNull(students.deletedAt)
+        ));
       const sIds = studentsInClass.map(s => s.id);
       if (sIds.length > 0) conditions.push(inArray(infaqBills.studentId, sIds));
+      else {
+        return NextResponse.json({ success: false, message: "Tidak ada siswa aktif di kelas tersebut untuk tahun ajaran yang dipilih" }, { status: 400 });
+      }
     }
 
     // 3. Query bills to reset

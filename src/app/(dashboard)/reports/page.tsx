@@ -1,45 +1,78 @@
 "use client";
-import { useState, useEffect } from "react";
-import Swal from "sweetalert2";
+import { useState } from "react";
 import { ExportButtons, type ExportOptions, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { FileText } from "lucide-react";
+import FilterBar from "@/components/FilterBar";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+interface InfaqReportItem {
+  student_name?: string;
+  month?: string;
+  amount: number;
+  paid: number;
+  remaining: number;
+  status: "paid" | "unpaid" | string;
+}
+
+interface RegistrationReportItem {
+  name?: string;
+  registration_number?: string;
+  formNo?: string;
+  status?: "diterima" | "ditolak" | "pending" | string;
+}
+
+interface SavingReportItem {
+  student_name?: string;
+  classroom?: string;
+  balance: number;
+}
+
+interface CashflowTransaction {
+  date?: string;
+  description?: string;
+  category?: string;
+  type: "income" | "expense" | string;
+  amount: number;
+}
+
+interface CashflowReport {
+  total_income?: number;
+  total_expense?: number;
+  transactions?: CashflowTransaction[];
+}
 
 export default function ReportsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReportsContent />
+    </Suspense>
+  );
+}
+
+function ReportsContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("infaq");
-  
-  // Data State
-  const [infaqData, setInfaqData] = useState<any[]>([]);
-  const [pendaftaranData, setPendaftaranData] = useState<any[]>([]);
-  const [tabunganData, setTabunganData] = useState<any[]>([]);
-  const [aruskasData, setAruskasData] = useState<any>(null);
-  
-  const [loading, setLoading] = useState(false);
+  const queryString = searchParams.toString();
 
-  useEffect(() => {
-    loadData(activeTab);
-  }, [activeTab]);
+  const { data: reportQuery, isLoading: loading } = useQuery({
+    queryKey: ["reports", activeTab, queryString],
+    queryFn: async () => {
+      const res = await fetch(`/api/reports/${activeTab}?${queryString}`);
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
 
-  const loadData = async (tab: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/reports/${tab}`);
-      const json = await res.json();
-      const d = json.data || json;
-      
-      if (tab === "infaq") setInfaqData(Array.isArray(d) ? d : []);
-      if (tab === "pendaftaran") setPendaftaranData(Array.isArray(d) ? d : []);
-      if (tab === "tabungan") setTabunganData(Array.isArray(d) ? d : []);
-      if (tab === "aruskas") setAruskasData(d || null);
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire("Error", "Gagal memuat data laporan", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const reportData = reportQuery?.data || reportQuery || null;
+  const infaqData: InfaqReportItem[] = activeTab === "infaq" && Array.isArray(reportData) ? reportData : [];
+  const pendaftaranData: RegistrationReportItem[] = activeTab === "pendaftaran" && Array.isArray(reportData) ? reportData : [];
+  const tabunganData: SavingReportItem[] = activeTab === "tabungan" && Array.isArray(reportData) ? reportData : [];
+  const aruskasData: CashflowReport | null = activeTab === "aruskas" && reportData && !Array.isArray(reportData) ? reportData as CashflowReport : null;
 
   const fmtRp = (n: number) => {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -123,10 +156,10 @@ export default function ReportsPage() {
         { header: "Tanggal", key: "date", width: 25, format: (v) => v ? new Date(v).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "-" },
         { header: "Keterangan", key: "description", width: 60 },
         { header: "Kategori", key: "category", width: 30 },
-        { header: "Masuk", key: "_in", width: 30, align: "right", format: (_, r) => r.type === "income" ? fmtRupiah(r.amount) : "-" },
-        { header: "Keluar", key: "_out", width: 30, align: "right", format: (_, r) => r.type === "expense" ? fmtRupiah(r.amount) : "-" },
+        { header: "Masuk", key: "_in", width: 30, align: "right", format: (_, r) => (r as unknown as CashflowTransaction).type === "income" ? fmtRupiah((r as unknown as CashflowTransaction).amount) : "-" },
+        { header: "Keluar", key: "_out", width: 30, align: "right", format: (_, r) => (r as unknown as CashflowTransaction).type === "expense" ? fmtRupiah((r as unknown as CashflowTransaction).amount) : "-" },
       ],
-      data: txns.map((t: any, i: number) => ({ ...t, _no: i + 1 })),
+      data: txns.map((t, i: number) => ({ ...t, _no: i + 1 })),
       summaryRows: [
         { label: "Total Pemasukan", value: fmtRupiah(pemasukan) },
         { label: "Total Pengeluaran", value: fmtRupiah(pengeluaran) },
@@ -249,8 +282,8 @@ export default function ReportsPage() {
             </thead>
             <tbody>
               {pendaftaranData.map((d, i) => {
-                let stColor = d.status === 'diterima' ? 'text-emerald-700' : d.status === 'ditolak' ? 'text-rose-700' : 'text-amber-700';
-                let stBg = d.status === 'diterima' ? 'bg-emerald-100' : d.status === 'ditolak' ? 'bg-rose-100' : 'bg-amber-100';
+                const stColor = d.status === 'diterima' ? 'text-emerald-700' : d.status === 'ditolak' ? 'text-rose-700' : 'text-amber-700';
+                const stBg = d.status === 'diterima' ? 'bg-emerald-100' : d.status === 'ditolak' ? 'bg-rose-100' : 'bg-amber-100';
                 return (
                   <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="p-3 text-sm text-slate-400">{i + 1}</td>
@@ -284,7 +317,7 @@ export default function ReportsPage() {
           <div />
           <ExportButtons options={getTabunganExportOptions()} />
         </div>
-        <div className="bg-gradient-to-br from-sky-100 to-sky-200 rounded-xl p-5 text-center mb-6">
+        <div className="bg-linear-to-br from-sky-100 to-sky-200 rounded-xl p-5 text-center mb-6">
           <p className="text-xs text-sky-700 m-0">Total Saldo Seluruh Siswa</p>
           <p className="font-extrabold text-2xl text-sky-900 mt-1 mb-0">{fmtRp(totalSaldo)}</p>
         </div>
@@ -340,7 +373,7 @@ export default function ReportsPage() {
             <p className="text-xs text-slate-500 m-0">Total Pengeluaran</p>
             <p className="font-extrabold text-lg text-rose-600 mt-1 mb-0">{fmtRp(pengeluaran)}</p>
           </div>
-          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 text-center">
+          <div className="bg-linear-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 m-0">Saldo Bersih</p>
             <p className={`font-extrabold text-lg mt-1 mb-0 ${saldo >= 0 ? 'text-slate-800' : 'text-rose-500'}`}>
               {fmtRp(saldo)}
@@ -361,7 +394,7 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {txns.map((t: any, i: number) => {
+                {txns.map((t, i: number) => {
                   const dt = t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
                   return (
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
@@ -390,6 +423,9 @@ export default function ReportsPage() {
         subtitle="Pusat pelaporan keuangan dan operasional madrasah"
         icon={<FileText />}
       />
+
+
+      <FilterBar />
 
       {/* Tab Navigation */}
       <div className="flex gap-2 flex-wrap">

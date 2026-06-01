@@ -10,7 +10,12 @@ const PROFILE_KEYS = [
   "school_logo",
   "school_address",
   "headmaster_name",
-  "headmaster_nip"
+  "headmaster_nip",
+  "headmaster_signature",
+  "homeroom_signature",
+  "report_logo",
+  "report_logo_position",
+  "report_logo_size",
 ];
 
 export async function GET() {
@@ -27,7 +32,12 @@ export async function GET() {
       logo: "",
       address: "",
       headmaster_name: "",
-      headmaster_nip: ""
+      headmaster_nip: "",
+      headmaster_signature: "",
+      homeroom_signature: "",
+      report_logo: "",
+      report_logo_position: "left",
+      report_logo_size: "medium",
     };
 
     settings.forEach((s) => {
@@ -38,6 +48,11 @@ export async function GET() {
       if (s.key === "school_address") profile.address = s.value;
       if (s.key === "headmaster_name") profile.headmaster_name = s.value;
       if (s.key === "headmaster_nip") profile.headmaster_nip = s.value;
+      if (s.key === "headmaster_signature") profile.headmaster_signature = s.value;
+      if (s.key === "homeroom_signature") profile.homeroom_signature = s.value;
+      if (s.key === "report_logo") profile.report_logo = s.value;
+      if (s.key === "report_logo_position") profile.report_logo_position = s.value;
+      if (s.key === "report_logo_size") profile.report_logo_size = s.value;
     });
 
     return NextResponse.json(profile);
@@ -60,7 +75,12 @@ export async function POST(request: Request) {
       logo: "school_logo",
       address: "school_address",
       headmaster_name: "headmaster_name",
-      headmaster_nip: "headmaster_nip"
+      headmaster_nip: "headmaster_nip",
+      headmaster_signature: "headmaster_signature",
+      homeroom_signature: "homeroom_signature",
+      report_logo: "report_logo",
+      report_logo_position: "report_logo_position",
+      report_logo_size: "report_logo_size",
     };
 
     for (const [bodyKey, dbKey] of Object.entries(mapKeys)) {
