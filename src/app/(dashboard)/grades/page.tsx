@@ -6,44 +6,31 @@ import { academicYears, classrooms, subjects, curriculums, gradeComponents } fro
 import { isNull, asc, eq, and } from "drizzle-orm";
 import GradesClient from "./client";
 
-import { unstable_cache } from "next/cache";
 
 export default async function GradesPage() {
   const [allAcademicYears, allClassrooms, allSubjects] = await Promise.all([
-    unstable_cache(
-      async () => db
-        .select({
-          id: academicYears.id,
-          year: academicYears.year,
-          isActive: academicYears.isActive,
-        })
-        .from(academicYears)
-        .where(isNull(academicYears.deletedAt))
-        .orderBy(asc(academicYears.year))
-        .limit(100),
-      ["academic-years"],
-      { tags: ["grades"] }
-    )(),
-    unstable_cache(
-      async () => db
-        .select({ id: classrooms.id, name: classrooms.name })
-        .from(classrooms)
-        .where(isNull(classrooms.deletedAt))
-        .orderBy(asc(classrooms.name))
-        .limit(200),
-      ["classrooms"],
-      { tags: ["grades"] }
-    )(),
-    unstable_cache(
-      async () => db
-        .select({ id: subjects.id, name: subjects.name, code: subjects.code })
-        .from(subjects)
-        .where(isNull(subjects.deletedAt))
-        .orderBy(asc(subjects.name))
-        .limit(200),
-      ["subjects"],
-      { tags: ["grades"] }
-    )(),
+    db
+      .select({
+        id: academicYears.id,
+        year: academicYears.year,
+        isActive: academicYears.isActive,
+      })
+      .from(academicYears)
+      .where(isNull(academicYears.deletedAt))
+      .orderBy(asc(academicYears.year))
+      .limit(100),
+    db
+      .select({ id: classrooms.id, name: classrooms.name })
+      .from(classrooms)
+      .where(isNull(classrooms.deletedAt))
+      .orderBy(asc(classrooms.name))
+      .limit(200),
+    db
+      .select({ id: subjects.id, name: subjects.name, code: subjects.code })
+      .from(subjects)
+      .where(isNull(subjects.deletedAt))
+      .orderBy(asc(subjects.name))
+      .limit(200),
   ]);
 
   const activeAY = allAcademicYears.find(y => y.isActive);

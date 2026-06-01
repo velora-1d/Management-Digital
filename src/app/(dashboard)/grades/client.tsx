@@ -87,7 +87,10 @@ export default function GradesPage({
     if (!selectedClassId) return;
     fetch(`/api/students?classroomId=${selectedClassId}`)
       .then(r => r.json())
-      .then(data => setStudents(data));
+      .then(data => {
+        const list = data && data.success && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        setStudents(list);
+      });
   }, [selectedClassId]);
 
   // Memuat KKM dan Grade yang sudah tersimpan untuk komponen tsb
@@ -107,7 +110,8 @@ export default function GradesPage({
         .then(r => r.json())
         .then(data => {
           const mapped: Record<number, GradeInput> = {};
-          data.forEach((d: { studentId: number; nilaiAngka: number; predikat: string }) => {
+          const list = data && data.success && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+          list.forEach((d: { studentId: number; nilaiAngka: number; predikat: string }) => {
             mapped[d.studentId] = { studentId: d.studentId, nilaiAngka: d.nilaiAngka, predikat: d.predikat };
           });
           setGrades(mapped);
@@ -127,7 +131,7 @@ export default function GradesPage({
     fetch(`/api/grades/final?curriculumId=${curriculum.id}&classroomId=${selectedClassId}&subjectId=${selectedSubjectId}`)
       .then(r => r.json())
       .then(data => {
-        setFinalGrades(data);
+        setFinalGrades(Array.isArray(data) ? data : []);
         setLoading(false);
       });
   };
