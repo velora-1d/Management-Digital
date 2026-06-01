@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { curriculums, academicYears, gradeComponents } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -33,17 +33,30 @@ export async function GET(req: Request) {
       .where(whereClause)
       .orderBy(desc(curriculums.createdAt));
 
-    // Fetch components for each curriculum
-    // Original had include gradeComponents
-    const detailedData = await Promise.all(results.map(async (cur) => {
-        const components = await db
-            .select()
-            .from(gradeComponents)
-            .where(eq(gradeComponents.curriculumId, cur.id));
-        return {
-            ...cur,
-            gradeComponents: components
-        };
+    // ⚡ Bolt Optimization: Eliminated N+1 query problem.
+    // Replaced `Promise.all` + `.map()` with a single `inArray` bulk fetch
+    // Impact: Reduces O(N) queries to O(1). Fetching 50 curriculums now requires 2 queries instead of 51.
+    const curriculumIds = results.map(r => r.id);
+    let allComponents: typeof gradeComponents.$inferSelect[] = [];
+
+    if (curriculumIds.length > 0) {
+      allComponents = await db
+        .select()
+        .from(gradeComponents)
+        .where(inArray(gradeComponents.curriculumId, curriculumIds));
+    }
+
+    const componentsMap = new Map<number, typeof gradeComponents.$inferSelect[]>();
+    for (const comp of allComponents) {
+      if (comp.curriculumId === null) continue;
+      const currArr = componentsMap.get(comp.curriculumId) || [];
+      currArr.push(comp);
+      componentsMap.set(comp.curriculumId, currArr);
+    }
+
+    const detailedData = results.map(cur => ({
+      ...cur,
+      gradeComponents: componentsMap.get(cur.id) || []
     }));
 
     return NextResponse.json(detailedData, {
