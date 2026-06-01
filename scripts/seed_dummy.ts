@@ -61,64 +61,91 @@ async function main() {
   console.log("=== MEMULAI PROSES SEEDING DATA DUMMY ===");
 
   try {
+    console.log("=== MEMBERSINKAN SEMUA DATA LAMA UNTUK RESET DARI AWAL ===");
+    await db.delete(studentGrades);
+    await db.delete(finalGrades);
+    await db.delete(reportCards);
+    await db.delete(classTeacherNotes);
+    await db.delete(attendances);
+    await db.delete(counselingRecords);
+    await db.delete(extracurricularMembers);
+    await db.delete(extracurriculars);
+    await db.delete(coopTransactions);
+    await db.delete(products);
+    await db.delete(infaqPayments);
+    await db.delete(infaqBills);
+    await db.delete(studentSavings);
+    await db.delete(studentCredits);
+    await db.delete(registrationPayments);
+    await db.delete(reRegistrations);
+    await db.delete(studentEnrollments);
+    await db.delete(students);
+    await db.delete(schedules);
+    await db.delete(teachingAssignments);
+    await db.delete(subjects);
+    await db.delete(kkms);
+    await db.delete(gradeFormulas);
+    await db.delete(gradeComponents);
+    await db.delete(curriculums);
+    await db.delete(employeeAttendances);
+    await db.delete(payrollDetails);
+    await db.delete(payrolls);
+    await db.delete(employeeSalaries);
+    await db.delete(employees);
+    await db.delete(classrooms);
+    await db.delete(academicYears);
+    console.log("Database cleaned up successfully!");
+
     // 1. Ambil atau Buat Tahun Ajaran Aktif
-    console.log("1. Mengambil atau membuat Tahun Ajaran...");
-    let ay = await db.query.academicYears.findFirst({
-      where: eq(academicYears.isActive, true)
-    });
-    if (!ay) {
-      const [created] = await db.insert(academicYears).values({
-        year: "2025/2026",
-        isActive: true,
-        startDate: "2025-07-14",
-        endDate: "2026-06-20"
-      }).returning();
-      ay = created;
-    }
+    console.log("1. Membuat Tahun Ajaran...");
+    const [ay] = await db.insert(academicYears).values({
+      year: "2025/2026",
+      isActive: true,
+      startDate: "2025-07-14",
+      endDate: "2026-06-20"
+    }).returning();
     const ayId = ay.id;
     console.log(`Tahun Ajaran Aktif: ${ay.year} (ID: ${ayId})`);
 
-    // 2. Ambil atau Buat Kelas 1-6
-    console.log("2. Mengambil atau membuat Kelas...");
-    const kelasNames = ["Kelas 1", "Kelas 2", "Kelas 3", "Kelas 4", "Kelas 5", "Kelas 6"];
+    // 2. Ambil atau Buat Kelas SMA
+    console.log("2. Membuat Kelas SMA...");
+    const kelasNames = [
+      "Kelas X-1", "Kelas X-2",
+      "Kelas XI-MIPA-1", "Kelas XI-MIPA-2", "Kelas XI-IPS-1", "Kelas XI-IPS-2",
+      "Kelas XII-MIPA-1", "Kelas XII-MIPA-2", "Kelas XII-IPS-1", "Kelas XII-IPS-2"
+    ];
     for (const name of kelasNames) {
-      const exists = await db.query.classrooms.findFirst({
-        where: and(eq(classrooms.name, name), isNull(classrooms.deletedAt))
-      });
-      if (!exists) {
-        await db.insert(classrooms).values({ name, academicYearId: ayId });
-      }
+      await db.insert(classrooms).values({ name, academicYearId: ayId, level: name.startsWith("Kelas X-") ? 10 : name.startsWith("Kelas XI-") ? 11 : 12 });
     }
     const classroomsList = await db.select().from(classrooms).where(isNull(classrooms.deletedAt));
     console.log(`Ditemukan ${classroomsList.length} kelas.`);
 
-    // 3. Ambil atau Buat Pegawai (Guru & Staf)
-    console.log("3. Mengambil atau membuat Pegawai...");
+    // 3. Ambil atau Buat Pegawai (Guru & Staf SMA)
+    console.log("3. Membuat Pegawai...");
     const guruData = [
-      { name: "Ustadzah Fatimah", position: "Wali Kelas 1" },
-      { name: "Ustadz Ahmad", position: "Wali Kelas 2" },
-      { name: "Ustadzah Khadijah", position: "Wali Kelas 3" },
-      { name: "Ustadz Bilal", position: "Wali Kelas 4" },
-      { name: "Ustadzah Aisyah", position: "Wali Kelas 5" },
-      { name: "Ustadz Umar", position: "Wali Kelas 6" },
+      { name: "Ustadzah Fatimah", position: "Wali Kelas X-1" },
+      { name: "Ustadz Ahmad", position: "Wali Kelas X-2" },
+      { name: "Ustadzah Khadijah", position: "Wali Kelas XI-MIPA-1" },
+      { name: "Ustadz Bilal", position: "Wali Kelas XI-MIPA-2" },
+      { name: "Ustadzah Aisyah", position: "Wali Kelas XI-IPS-1" },
+      { name: "Ustadz Umar", position: "Wali Kelas XI-IPS-2" },
+      { name: "Ustadzah Fatimah M", position: "Wali Kelas XII-MIPA-1" },
+      { name: "Ustadz Hanafi", position: "Wali Kelas XII-MIPA-2" },
+      { name: "Ustadzah Maryam", position: "Wali Kelas XII-IPS-1" },
+      { name: "Ustadz Yahya", position: "Wali Kelas XII-IPS-2" },
       { name: "Ustadz Hamzah", position: "Guru Al-Quran" },
       { name: "Ustadzah Ruqayyah", position: "Guru Fiqih" },
     ];
     for (let i = 0; i < guruData.length; i++) {
-      const exists = await db.query.employees.findFirst({
-        where: and(eq(employees.name, guruData[i].name), isNull(employees.deletedAt))
+      await db.insert(employees).values({
+        name: guruData[i].name,
+        nip: `G${String(i + 1).padStart(3, "0")}`,
+        type: "guru",
+        position: guruData[i].position,
+        status: "aktif",
+        phone: `08110000${i}`,
+        baseSalary: 2500000 + (i * 100000)
       });
-      if (!exists) {
-        await db.insert(employees).values({
-          name: guruData[i].name,
-          nip: `G${String(i + 1).padStart(3, "0")}`,
-          type: "guru",
-          position: guruData[i].position,
-          status: "aktif",
-          phone: `08110000${i}`,
-          baseSalary: 2500000 + (i * 100000)
-        });
-      }
     }
 
     const stafData = [
@@ -127,33 +154,74 @@ async function main() {
       { name: "Pak Joko", position: "Penjaga Sekolah" },
     ];
     for (let i = 0; i < stafData.length; i++) {
-      const exists = await db.query.employees.findFirst({
-        where: and(eq(employees.name, stafData[i].name), isNull(employees.deletedAt))
+      await db.insert(employees).values({
+        name: stafData[i].name,
+        nip: `S${String(i + 1).padStart(3, "0")}`,
+        type: "staf",
+        position: stafData[i].position,
+        status: "aktif",
+        phone: `08220000${i}`,
+        baseSalary: 2000000 + (i * 50000)
       });
-      if (!exists) {
-        await db.insert(employees).values({
-          name: stafData[i].name,
-          nip: `S${String(i + 1).padStart(3, "0")}`,
-          type: "staf",
-          position: stafData[i].position,
-          status: "aktif",
-          phone: `08220000${i}`,
-          baseSalary: 2000000 + (i * 50000)
-        });
-      }
     }
     const employeesList = await db.select().from(employees).where(isNull(employees.deletedAt));
     const teachers = employeesList.filter(e => e.type === "guru");
     console.log(`Ditemukan ${employeesList.length} pegawai (${teachers.length} guru).`);
 
-    // 4. Ambil Siswa yang Ada (TIDAK MEMBUAT SISWA BARU)
-    console.log("4. Memuat data siswa yang ada...");
-    const studentsList = await db.select().from(students).where(isNull(students.deletedAt));
-    console.log(`Ditemukan ${studentsList.length} siswa di database.`);
-
-    if (studentsList.length === 0) {
-      console.warn("⚠️ PERINGATAN: Tidak ada siswa ditemukan di database. Beberapa data dummy transaksional & akademik tidak akan maksimal terbuat.");
+    // Update wali kelas di kelas masing-masing
+    for (const classroom of classroomsList) {
+      const wali = teachers.find(t => t.position === `Wali Kelas ${classroom.name.replace("Kelas ", "")}`);
+      if (wali) {
+        await db.update(classrooms).set({ waliKelasId: wali.id }).where(eq(classrooms.id, classroom.id));
+      }
     }
+
+    // 4. Hapus data siswa lama dan buat baru per kelas
+    console.log("4. Membuat data siswa baru SMA (5 siswa per kelas)...");
+    const firstNames = ["Ahmad", "Muhammad", "Ali", "Hasan", "Fatimah", "Aisyah", "Khadijah", "Zainab", "Umar", "Usman", "Siti", "Dewi", "Budi", "Agus", "Rian", "Indah", "Putri", "Rizky", "Rahmat", "Yusuf"];
+    const lastNames = ["Saputra", "Pratama", "Hidayat", "Sari", "Lestari", "Kusuma", "Wibowo", "Ramadhan", "Setiawan", "Fadilah", "Ningsih", "Wijaya", "Maulana", "Fitriani", "Nugroho", "Rahayu"];
+
+    const studentsList = [];
+
+    for (const classroom of classroomsList) {
+      for (let sIdx = 1; sIdx <= 5; sIdx++) {
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const name = `${firstName} ${lastName}`;
+        const gender = ["Fatimah", "Aisyah", "Khadijah", "Zainab", "Siti", "Dewi", "Indah", "Putri", "Fitriani", "Rahayu"].includes(firstName) ? "P" : "L";
+        
+        const nis = `2324${String(classroom.id).padStart(2, "0")}${String(sIdx).padStart(2, "0")}`;
+        const nisn = `00${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const nik = `3273${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+
+        const [createdStudent] = await db.insert(students).values({
+          name,
+          gender,
+          nis,
+          nisn,
+          nik,
+          classroomId: classroom.id,
+          status: "aktif",
+          infaqStatus: "reguler",
+          infaqNominal: classroom.infaqNominal || 150000,
+          religion: "Islam",
+          entryDate: "2025-07-14",
+          unitId: "SMA"
+        }).returning();
+
+        if (createdStudent) {
+          await db.insert(studentEnrollments).values({
+            studentId: createdStudent.id,
+            classroomId: classroom.id,
+            academicYearId: ayId,
+            enrollmentType: "siswa_baru",
+            notes: "Seeded"
+          });
+          studentsList.push(createdStudent);
+        }
+      }
+    }
+    console.log(`Berhasil membuat ${studentsList.length} siswa baru SMA distributed per kelas.`);
 
     // 5. Mata Pelajaran (Subjects)
     console.log("5. Mengisi data Mata Pelajaran (Subjects)...");
