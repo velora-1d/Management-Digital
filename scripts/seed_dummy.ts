@@ -257,7 +257,7 @@ async function main() {
               studentId: student.id,
               date,
               status,
-              notes: status !== "hadir" ? "Catatan kehadiran dummy" : ""
+              note: status !== "hadir" ? "Catatan kehadiran dummy" : ""
             });
           }
         }
@@ -458,9 +458,8 @@ async function main() {
           await db.insert(employeeAttendances).values({
             employeeId: employee.id,
             date,
-            checkIn: "07:00",
-            checkOut: "15:00",
-            status: "present"
+            status: "hadir",
+            note: ""
           });
         }
       }
@@ -491,8 +490,8 @@ async function main() {
       await db.insert(announcements).values({
         title: "Pengumuman Kelulusan & Rapor",
         content: "Diberitahukan kepada seluruh wali murid bahwa pembagian rapor semester genap akan dilaksanakan pada tanggal 19 Juni 2026.",
-        targetAudience: "all",
-        isPinned: true
+        target: "all",
+        status: "published"
       });
     }
     console.log(`Surat & pengumuman terbuat.`);
@@ -673,12 +672,12 @@ async function main() {
       const transExists = await db.select().from(generalTransactions).limit(1);
       if (transExists.length === 0 && expCat) {
         await db.insert(generalTransactions).values({
-          type: "expense",
-          categoryId: expCat.id,
+          type: "out",
+          transactionCategoryId: expCat.id,
           cashAccountId: cashListDB[0].id,
           amount: 450000,
           description: "Pembayaran tagihan listrik sekolah bulan Mei",
-          date: "2026-05-30"
+          transactionDate: "2026-05-30"
         });
       }
       console.log(`Transaksi Umum terbuat.`);
@@ -750,8 +749,8 @@ async function main() {
           inventoryId: created.id,
           type: "addition",
           quantityChange: 1,
-          notes: "Inventarisasi baru hasil pengadaan",
-          date: "2026-01-15"
+          description: "Inventarisasi baru hasil pengadaan",
+          loggedBy: "Admin"
         });
       }
     }
@@ -944,15 +943,11 @@ async function main() {
         if (!exists) {
           await db.insert(reportCards).values({
             studentId: student.id,
+            classroomId: student.classroomId || classroomsList[0].id,
             curriculumId: curr.id,
             semester: "ganjil",
-            academicYearId: ayId,
-            classTeacherNotes: "Ananda memiliki perkembangan belajar yang sangat baik.",
-            attendanceHadir: 45,
-            attendanceSakit: 1,
-            attendanceIzin: 2,
-            attendanceAlfa: 0,
-            isPublished: true
+            status: "PUBLISHED",
+            catatanWali: "Ananda memiliki perkembangan belajar yang sangat baik."
           });
         }
 
@@ -968,8 +963,7 @@ async function main() {
             studentId: student.id,
             classroomId: student.classroomId || classroomsList[0].id,
             semester: "ganjil",
-            notes: "Terus tingkatkan prestasi belajar Anda di kelas.",
-            academicYearId: ayId
+            note: "Terus tingkatkan prestasi belajar Anda di kelas."
           });
         }
       }
@@ -995,9 +989,12 @@ async function main() {
             curriculumId: curr.id,
             studentId: student.id,
             subjectId: sub.id,
-            score: 85,
-            grade: "A",
-            notes: "Sangat baik"
+            classroomId: classId,
+            nilaiPengetahuan: 85,
+            nilaiKeterampilan: 85,
+            nilaiAkhir: 85,
+            predikat: "A",
+            deskripsi: "Sangat baik"
           });
         }
       }

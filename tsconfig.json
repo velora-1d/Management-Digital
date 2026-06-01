@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "sync-users.ts",
-    "run_migration.ts"
+    "run_migration.ts",
+    "scripts"
   ]
 }
