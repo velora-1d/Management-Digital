@@ -1,0 +1,4 @@
+## 2024-05-24 - Fix XSS Vulnerability in SweetAlert2 HTML Injection
+**Vulnerability:** User-controlled data (e.g., `item.name`, `item.category`, `item.location`) retrieved from an API was interpolated directly into a SweetAlert2 (`Swal.fire`) `html` string without any sanitization in the inventory edit modal.
+**Learning:** The React `dangerouslySetInnerHTML` is not the only vector for XSS; UI libraries that accept raw HTML strings (like SweetAlert2) are equally vulnerable when rendering dynamic content. In this codebase, the actual vulnerability lay in the modal rendering, not the static badge strings.
+**Prevention:** Always introduce an `escapeHtml` utility or use library-specific sanitization features when injecting user-supplied or dynamic data into HTML string templates for SweetAlert2 or similar components.
