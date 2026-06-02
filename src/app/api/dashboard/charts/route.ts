@@ -36,19 +36,44 @@ export async function GET(request: Request) {
     }
 
     // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
+    const startDate = months[0].start;
+    const endDate = months[months.length - 1].end;
+
+    const cashflowStats = await db.select({
+      year: sql<number>`cast(extract(year from ${generalTransactions.createdAt}) as integer)`.mapWith(Number),
+      month: sql<number>`cast(extract(month from ${generalTransactions.createdAt}) as integer)`.mapWith(Number),
+      type: generalTransactions.type,
+      total: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number)
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid"),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, startDate),
+      lte(generalTransactions.createdAt, endDate)
+    ))
+    .groupBy(
+      sql`extract(year from ${generalTransactions.createdAt})`,
+      sql`extract(month from ${generalTransactions.createdAt})`,
+      generalTransactions.type
     );
+
+    const cashflowData = months.map(m => {
+      const targetYear = m.start.getFullYear();
+      const targetMonth = m.start.getMonth() + 1; // extract(month) returns 1-12
+
+      let income = 0;
+      let expense = 0;
+
+      for (const stat of cashflowStats) {
+        if (stat.year === targetYear && stat.month === targetMonth) {
+          if (stat.type === "in") income += stat.total;
+          if (stat.type === "out") expense += stat.total;
+        }
+      }
+
+      return { month: m.label, income, expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
