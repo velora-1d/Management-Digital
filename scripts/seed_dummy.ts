@@ -461,10 +461,9 @@ async function main() {
 
     // 13. Komponen Nilai & Nilai Dummy Siswa (Grades)
     if (studentsList.length > 0 && curr) {
-      console.log("13. Membuat Komponen Nilai & Nilai Siswa...");
+      console.log("13. Membuat Komponen Nilai & Nilai Siswa untuk semua kelas & mapel...");
       const compNames = ["Tugas 1", "Ulangan Harian 1", "Ujian Tengah Semester", "Ujian Akhir Semester"];
-      const sub = subjectsList[0];
-      const classId = classroomsList[0].id;
+      const comps = [];
 
       for (const name of compNames) {
         let comp = await db.query.gradeComponents.findFirst({
@@ -486,27 +485,35 @@ async function main() {
           }).returning();
           comp = created;
         }
+        if (comp) comps.push(comp);
+      }
 
-        // Input Nilai untuk 5 siswa di kelas tersebut
-        if (comp) {
-          const classStudents = studentsList.filter(s => s.classroomId === classId).slice(0, 5);
-          for (const student of classStudents) {
-            const exists = await db.query.studentGrades.findFirst({
-              where: and(
-                eq(studentGrades.studentId, student.id),
-                eq(studentGrades.componentId, comp.id),
-                eq(studentGrades.subjectId, sub.id)
-              )
-            });
-            if (!exists) {
-              await db.insert(studentGrades).values({
-                studentId: student.id,
-                componentId: comp.id,
-                subjectId: sub.id,
-                classroomId: classId,
-                nilaiAngka: 75 + Math.floor(Math.random() * 20),
-                predikat: "B"
+      // Input Nilai untuk seluruh siswa di tiap kelas untuk tiap mapel
+      for (const classroom of classroomsList) {
+        const classStudents = studentsList.filter(s => s.classroomId === classroom.id);
+        if (classStudents.length === 0) continue;
+
+        for (const sub of subjectsList) {
+          for (const comp of comps) {
+            for (const student of classStudents) {
+              const exists = await db.query.studentGrades.findFirst({
+                where: and(
+                  eq(studentGrades.studentId, student.id),
+                  eq(studentGrades.componentId, comp.id),
+                  eq(studentGrades.subjectId, sub.id)
+                )
               });
+              if (!exists) {
+                const score = 75 + Math.floor(Math.random() * 20);
+                await db.insert(studentGrades).values({
+                  studentId: student.id,
+                  componentId: comp.id,
+                  subjectId: sub.id,
+                  classroomId: classroom.id,
+                  nilaiAngka: score,
+                  predikat: score >= 90 ? "A" : score >= 80 ? "B" : "C"
+                });
+              }
             }
           }
         }
@@ -999,8 +1006,7 @@ async function main() {
     // 28. Report Cards & Teacher Notes
     console.log("28. Report Cards & Teacher Notes...");
     if (studentsList.length > 0 && curr) {
-      for (let i = 0; i < Math.min(studentsList.length, 5); i++) {
-        const student = studentsList[i];
+      for (const student of studentsList) {
         const exists = await db.query.reportCards.findFirst({
           where: and(
             eq(reportCards.studentId, student.id),
@@ -1041,29 +1047,34 @@ async function main() {
     // 29. Final Grades
     console.log("29. Final Grades...");
     if (studentsList.length > 0 && curr) {
-      const sub = subjectsList[0];
-      const classId = classroomsList[0].id;
-      const classStudents = studentsList.filter(s => s.classroomId === classId).slice(0, 5);
-      for (const student of classStudents) {
-        const exists = await db.query.finalGrades.findFirst({
-          where: and(
-            eq(finalGrades.curriculumId, curr.id),
-            eq(finalGrades.studentId, student.id),
-            eq(finalGrades.subjectId, sub.id)
-          )
-        });
-        if (!exists) {
-          await db.insert(finalGrades).values({
-            curriculumId: curr.id,
-            studentId: student.id,
-            subjectId: sub.id,
-            classroomId: classId,
-            nilaiPengetahuan: 85,
-            nilaiKeterampilan: 85,
-            nilaiAkhir: 85,
-            predikat: "A",
-            deskripsi: "Sangat baik"
-          });
+      for (const classroom of classroomsList) {
+        const classStudents = studentsList.filter(s => s.classroomId === classroom.id);
+        if (classStudents.length === 0) continue;
+
+        for (const sub of subjectsList) {
+          for (const student of classStudents) {
+            const exists = await db.query.finalGrades.findFirst({
+              where: and(
+                eq(finalGrades.curriculumId, curr.id),
+                eq(finalGrades.studentId, student.id),
+                eq(finalGrades.subjectId, sub.id)
+              )
+            });
+            if (!exists) {
+              const score = 80 + Math.floor(Math.random() * 15);
+              await db.insert(finalGrades).values({
+                curriculumId: curr.id,
+                studentId: student.id,
+                subjectId: sub.id,
+                classroomId: classroom.id,
+                nilaiPengetahuan: score,
+                nilaiKeterampilan: score,
+                nilaiAkhir: score,
+                predikat: score >= 90 ? "A" : score >= 80 ? "B" : "C",
+                deskripsi: score >= 90 ? "Sangat baik dalam memahami materi" : "Baik dalam memahami materi"
+              });
+            }
+          }
         }
       }
     }

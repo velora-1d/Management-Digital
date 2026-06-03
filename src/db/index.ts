@@ -6,8 +6,10 @@ import * as schema from "@/db/schema";
 type DbSchema = typeof schema;
 type DbInstance = NodePgDatabase<DbSchema>;
 
-let globalPool: Pool | null = null;
-let globalDb: DbInstance | null = null;
+const globalForDb = globalThis as unknown as {
+  globalPool: Pool | undefined;
+  globalDb: DbInstance | undefined;
+};
 
 function normalizeConnectionString(url: string): string {
   try {
@@ -25,22 +27,23 @@ function createPool(): Pool {
 
   return new Pool({
     connectionString: normalizeConnectionString(url),
-    max: 50,
-    idleTimeoutMillis: 60000,
-    connectionTimeoutMillis: 10000,
+    max: 15, // Dioptimalkan dari 50 ke 15 agar hemat memori & mencegah limit koneksi PostgreSQL terlampaui
+    idleTimeoutMillis: 30000, // Koneksi idle dilepas lebih cepat (30s)
+    connectionTimeoutMillis: 5000, // Timeout koneksi dipercepat (5s)
+    statement_timeout: 10000, // Timeout query maksimal 10s agar aplikasi tidak hang selamanya jika DB locked
     ssl: url.includes("sslmode=require") ? { rejectUnauthorized: false } : false,
   });
 }
 
 function createDb(): DbInstance {
-  globalPool ??= createPool();
-  return drizzle(globalPool, { schema });
+  globalForDb.globalPool ??= createPool();
+  return drizzle(globalForDb.globalPool, { schema });
 }
 
 /** Gunakan ini untuk semua query DB. */
 export const getDb = (): DbInstance => {
-  globalDb ??= createDb();
-  return globalDb;
+  globalForDb.globalDb ??= createDb();
+  return globalForDb.globalDb;
 };
 
 /**
