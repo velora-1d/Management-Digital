@@ -25,30 +25,54 @@ export async function GET(request: Request) {
     }
 
     const now = new Date();
-    const months: { label: string; start: Date; end: Date }[] = [];
+    const months: { label: string; year: number; month: number }[] = [];
 
     // Cashflow 6 bulan terakhir
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
       const label = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" });
-      months.push({ label, start: d, end });
+      months.push({ label, year: d.getFullYear(), month: d.getMonth() + 1 });
     }
 
-    // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
+    const oldestMonth = months[0];
+    const newestMonth = months[months.length - 1];
+
+    const startDate = new Date(oldestMonth.year, oldestMonth.month - 1, 1);
+    const endDate = new Date(newestMonth.year, newestMonth.month, 0, 23, 59, 59);
+
+    // Fetch transactions grouped by year and month
+    const aggregatedTransactions = await db.select({
+      year: sql<number>`extract(year from ${generalTransactions.createdAt})`.mapWith(Number),
+      month: sql<number>`extract(month from ${generalTransactions.createdAt})`.mapWith(Number),
+      income: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'in' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
+      expense: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'out' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid"),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, startDate),
+      lte(generalTransactions.createdAt, endDate)
+    ))
+    .groupBy(
+      sql`extract(year from ${generalTransactions.createdAt})`,
+      sql`extract(month from ${generalTransactions.createdAt})`
     );
+
+    const transactionMap = new Map<string, { income: number; expense: number }>();
+    for (const t of aggregatedTransactions) {
+      transactionMap.set(`${t.year}-${t.month}`, { income: t.income, expense: t.expense });
+    }
+
+    const cashflowData = months.map(m => {
+      const key = `${m.year}-${m.month}`;
+      const data = transactionMap.get(key);
+      return {
+        month: m.label,
+        income: data?.income || 0,
+        expense: data?.expense || 0,
+      };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
