@@ -72,7 +72,7 @@ ARG NEXT_PUBLIC_APP_NAME
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3001
+ENV PORT=3002
 ENV DATABASE_URL=$DATABASE_URL
 ENV JWT_SECRET=$JWT_SECRET
 ENV R2_ACCOUNT_ID=$R2_ACCOUNT_ID
@@ -96,6 +96,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 
-EXPOSE 3001
+EXPOSE 3002
 
 CMD ["npm", "run", "start"]
