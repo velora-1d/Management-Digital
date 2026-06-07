@@ -414,11 +414,11 @@ function WakafContent() {
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div>
             <label style="font-size:0.75rem;font-weight:600;">Nama Program</label>
-            <input type="text" id="swal-p-name" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%" value="${p.name}">
+            <input type="text" id="swal-p-name" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%">
           </div>
           <div>
             <label style="font-size:0.75rem;font-weight:600;">Deskripsi</label>
-            <textarea id="swal-p-desc" class="swal2-input" style="margin:0;height:4rem;padding:0.5rem;font-size:0.875rem;width:100%;resize:none;">${p.description || ""}</textarea>
+            <textarea id="swal-p-desc" class="swal2-input" style="margin:0;height:4rem;padding:0.5rem;font-size:0.875rem;width:100%;resize:none;"></textarea>
           </div>
         </div>
       `,
@@ -454,15 +454,15 @@ function WakafContent() {
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div>
             <label style="font-size:0.75rem;font-weight:600;">Nama Lengkap</label>
-            <input type="text" id="swal-d-name" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%" value="${d.name}">
+            <input type="text" id="swal-d-name" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%">
           </div>
           <div>
             <label style="font-size:0.75rem;font-weight:600;">No HP</label>
-            <input type="text" id="swal-d-phone" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%" value="${d.phone || ""}">
+            <input type="text" id="swal-d-phone" class="swal2-input" style="margin:0;height:2.5rem;padding:0.5rem;font-size:0.875rem;width:100%">
           </div>
           <div>
             <label style="font-size:0.75rem;font-weight:600;">Alamat</label>
-            <textarea id="swal-d-address" class="swal2-input" style="margin:0;height:4rem;padding:0.5rem;font-size:0.875rem;width:100%;resize:none;">${d.address || ""}</textarea>
+            <textarea id="swal-d-address" class="swal2-input" style="margin:0;height:4rem;padding:0.5rem;font-size:0.875rem;width:100%;resize:none;"></textarea>
           </div>
         </div>
       `,

@@ -196,7 +196,7 @@ function JournalContent() {
           <div><label style="font-size:0.75rem;font-weight:600;">Tanggal</label>
           <input type="date" id="swal-tx-date" class="swal2-input" value="${tx.date.split('T')[0]}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <input type="text" id="swal-tx-desc" class="swal2-input" value="${tx.description || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-tx-desc" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
         </div>
       `,
       showCancelButton: true,
