@@ -122,10 +122,10 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Mapel *</label>
-          <input type="text" id="swal-edit-subject-name" class="swal2-input" value="${sub.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-edit-subject-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Kode / Singkatan</label>
-          <input type="text" id="swal-edit-subject-code" class="swal2-input" value="${sub.code || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-edit-subject-code" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Jenis *</label>
             <select id="swal-edit-subject-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
@@ -136,7 +136,7 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
           </div>
           
           <div><label style="font-size:0.75rem;font-weight:600;">Tingkat Kelas</label>
-          <input type="text" id="swal-edit-subject-tingkat" class="swal2-input" value="${sub.tingkatKelas || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-edit-subject-tingkat" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
         </div>
       `,
       showCancelButton: true,
