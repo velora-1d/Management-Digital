@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { requireAuth, requireRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
+    const user = await requireAuth();
+    requireRole(user, ['superadmin']);
+
     console.log("🚀 Menjalankan Migrasi Produksi (NIS Nullable)...");
     
     // Perintah sakti untuk merubah kolom secara langsung di production
@@ -20,11 +24,12 @@ export async function GET() {
       success: true, 
       message: "✅ DATABASE PRODUCTION BERHASIL DIMIGRASI! Masalah NIS selesai." 
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("❌ GAGAL MIGRASI PROD:", error);
+    const status = (error as { statusCode?: number }).statusCode || 500;
     return NextResponse.json({ 
       success: false, 
       message: error instanceof Error ? error.message : "Gagal migrasi produksi" 
-    }, { status: 500 });
+    }, { status });
   }
 }
