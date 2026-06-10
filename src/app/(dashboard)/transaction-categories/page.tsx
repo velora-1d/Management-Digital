@@ -85,14 +85,14 @@ export default function TransactionCategoriesPage() {
             throw new Error(err.message || "Gagal menghubungi server");
           }
           const json = await res.json();
-          if (json.success) { 
-            Swal.fire("Berhasil", "Kategori ditambahkan", "success"); 
-            refreshData(r.value.type); 
+          if (json.success) {
+            Swal.fire("Berhasil", "Kategori ditambahkan", "success");
+            refreshData(r.value.type);
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch (error: unknown) { 
+        } catch (error: unknown) {
           const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
+          Swal.fire("Error", msg, "error");
         }
       }
     });
@@ -104,17 +104,22 @@ export default function TransactionCategoriesPage() {
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Kategori</label>
-          <input type="text" id="swal-cat-name" class="swal2-input" value="${cat.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
+          <input type="text" id="swal-cat-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
             <select id="swal-cat-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="in" ${cat.type === 'in' ? 'selected' : ''}>Pemasukan (In)</option>
-              <option value="out" ${cat.type === 'out' ? 'selected' : ''}>Pengeluaran (Out)</option>
+              <option value="in">Pemasukan (In)</option>
+              <option value="out">Pengeluaran (Out)</option>
             </select>
           </div>
           <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;">${cat.description || ''}</textarea></div>
+          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;"></textarea></div>
         </div>
       `,
+      didOpen: () => {
+        (document.getElementById("swal-cat-name") as HTMLInputElement).value = cat.name;
+        (document.getElementById("swal-cat-type") as HTMLSelectElement).value = cat.type;
+        (document.getElementById("swal-cat-desc") as HTMLTextAreaElement).value = cat.description || "";
+      },
       showCancelButton: true,
       confirmButtonText: "Simpan",
       confirmButtonColor: "#10b981",
@@ -132,14 +137,14 @@ export default function TransactionCategoriesPage() {
             throw new Error(err.message || "Gagal menghubungi server");
           }
           const json = await res.json();
-          if (json.success) { 
-            Swal.fire("Berhasil", "Kategori diperbarui", "success"); 
-            refreshData(); 
+          if (json.success) {
+            Swal.fire("Berhasil", "Kategori diperbarui", "success");
+            refreshData();
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch (error: unknown) { 
+        } catch (error: unknown) {
           const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
+          Swal.fire("Error", msg, "error");
         }
       }
     });
@@ -162,14 +167,14 @@ export default function TransactionCategoriesPage() {
             throw new Error(err.message || "Gagal menghubungi server");
           }
           const json = await res.json();
-          if (json.success) { 
-            Swal.fire("Berhasil", "Dihapus", "success"); 
-            refreshData(type); 
+          if (json.success) {
+            Swal.fire("Berhasil", "Dihapus", "success");
+            refreshData(type);
           }
           else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch (error: unknown) { 
+        } catch (error: unknown) {
           const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
+          Swal.fire("Error", msg, "error");
         }
       }
     });
@@ -205,7 +210,7 @@ export default function TransactionCategoriesPage() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <ExportButtons 
+                <ExportButtons
                   options={{
                     title: "Kategori Keuangan",
                     filename: `kategori_keuangan_${new Date().toISOString().split("T")[0]}`,
@@ -217,8 +222,8 @@ export default function TransactionCategoriesPage() {
                     data: [...allInCats, ...allOutCats]
                   }}
                 />
-                <button 
-                  onClick={handleAdd} 
+                <button
+                  onClick={handleAdd}
                   className="inline-flex items-center px-4 py-2 bg-white text-purple-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50 active:scale-95 shadow-lg shadow-purple-900/20"
                 >
                   <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
