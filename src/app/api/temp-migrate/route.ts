@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { requireAuth, requireRole, AuthError } from "@/lib/rbac";
 
 export async function GET() {
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin"]);
+
     console.log("🚀 Menjalankan Migrasi SQL Sementara...");
     
     await db.execute(sql`ALTER TABLE students ALTER COLUMN nis DROP NOT NULL;`);
@@ -19,11 +23,14 @@ export async function GET() {
       success: true, 
       message: "✅ DATABASE BERHASIL DIMIGRASI! Kolom NIS/NISN/NIK/NoKK sekarang Nullable." 
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    }
     console.error("❌ GAGAL MIGRASI SEMENTARA:", error);
     return NextResponse.json({ 
       success: false, 
-      message: error instanceof Error ? error.message : "Gagal migrasi" 
+      message: "Gagal migrasi sementara"
     }, { status: 500 });
   }
 }
