@@ -36,19 +36,47 @@ export async function GET(request: Request) {
     }
 
     // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
+    // Bolt: Optimized N+1 queries. Replaced parallel queries inside months.map
+    // with a single bulk database fetch to prevent N+1 query performance bottleneck.
+    // We aggregate in memory using exact JS Date boundaries to prevent timezone bugs.
+    let bulkTransactions: { createdAt: Date | null; type: string | null; amount: number }[] = [];
+    if (months.length > 0) {
+      // Ensure we always capture the absolute min and max bounds regardless of array sort order
+      const startDates = months.map(m => m.start.getTime());
+      const endDates = months.map(m => m.end.getTime());
+      const absoluteStart = new Date(Math.min(...startDates));
+      const absoluteEnd = new Date(Math.max(...endDates));
+
+      bulkTransactions = await db.select({
+        createdAt: generalTransactions.createdAt,
+        type: generalTransactions.type,
+        amount: generalTransactions.amount
       })
-    );
+      .from(generalTransactions)
+      .where(and(
+        eq(generalTransactions.status, "valid"),
+        isNull(generalTransactions.deletedAt),
+        gte(generalTransactions.createdAt, absoluteStart),
+        lte(generalTransactions.createdAt, absoluteEnd)
+      ));
+    }
+
+    const cashflowData = months.map((m) => {
+      let income = 0;
+      let expense = 0;
+
+      for (const tx of bulkTransactions) {
+        if (!tx.createdAt || !tx.type) continue;
+        const txTime = tx.createdAt.getTime();
+        // Exact interval matching based on JS application dates
+        if (txTime >= m.start.getTime() && txTime <= m.end.getTime()) {
+          if (tx.type === "in") income += Number(tx.amount || 0);
+          if (tx.type === "out") expense += Number(tx.amount || 0);
+        }
+      }
+
+      return { month: m.label, income, expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
