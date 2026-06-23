@@ -78,20 +78,20 @@ export default function InventoryPage() {
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
           <input id="swal-inv-name" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
+
           <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
           <input id="swal-inv-cat" class="swal2-input" placeholder="Mebel, Elektronik..." style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
+
           <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
           <input id="swal-inv-qty" type="number" class="swal2-input" value="1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
+
           <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
           <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
             <option value="Baik">Baik</option>
             <option value="Rusak Ringan">Rusak Ringan</option>
             <option value="Rusak Berat">Rusak Berat</option>
           </select></div>
-          
+
           <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
           <input id="swal-inv-loc" class="swal2-input" placeholder="Ruang Kelas 1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
 
@@ -153,20 +153,20 @@ export default function InventoryPage() {
           <div style="text-align:left;display:grid;gap:0.75rem;">
             <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
             <input id="swal-inv-name" class="swal2-input" value="${item.name || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
+
             <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
             <input id="swal-inv-cat" class="swal2-input" value="${item.category || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
+
             <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
             <input id="swal-inv-qty" type="number" class="swal2-input" value="${item.quantity || 1}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
+
             <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
             <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
               <option value="Baik" ${item.condition === "Baik" ? "selected" : ""}>Baik</option>
               <option value="Rusak Ringan" ${item.condition === "Rusak Ringan" ? "selected" : ""}>Rusak Ringan</option>
               <option value="Rusak Berat" ${item.condition === "Rusak Berat" ? "selected" : ""}>Rusak Berat</option>
             </select></div>
-            
+
             <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
             <input id="swal-inv-loc" class="swal2-input" value="${item.location || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
 
@@ -320,13 +320,18 @@ export default function InventoryPage() {
                 <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
               ) : (
                 data.map((item, i) => {
-                  let badge = "";
+                  let badgeContent = "";
+                  let badgeClassName = "";
+
                   if (item.condition === "Baik") {
-                    badge = '<span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">Baik</span>';
+                    badgeContent = "Baik";
+                    badgeClassName = "px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100";
                   } else if (item.condition === "Rusak Ringan") {
-                    badge = '<span class="px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100">Rusak Ringan</span>';
+                    badgeContent = "Rusak Ringan";
+                    badgeClassName = "px-3 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-100";
                   } else {
-                    badge = '<span class="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>';
+                    badgeContent = "Rusak Berat";
+                    badgeClassName = "px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100";
                   }
 
                   return (
@@ -340,13 +345,15 @@ export default function InventoryPage() {
                         <span style={{ background: "#f1f5f9", color: "#475569", padding: "0.375rem 0.875rem", borderRadius: 9999, fontSize: "0.75rem", fontWeight: 600 }}>{item.category || "-"}</span>
                       </td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontWeight: 700, fontSize: "1rem", color: "#334155", verticalAlign: "middle" }}>{item.quantity || 0}</td>
-                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }} dangerouslySetInnerHTML={{ __html: badge }}></td>
+                      <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", verticalAlign: "middle" }}>
+                        <span className={badgeClassName}>{badgeContent}</span>
+                      </td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "right", verticalAlign: "middle", position: "relative" }}>
-                        <button 
-                          onClick={(ev) => { 
-                            ev.stopPropagation(); 
+                        <button
+                          onClick={(ev) => {
+                            ev.stopPropagation();
                             ev.nativeEvent.stopImmediatePropagation();
-                            setOpenActionId(openActionId === item.id ? null : item.id); 
+                            setOpenActionId(openActionId === item.id ? null : item.id);
                           }}
                           style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
                           className="hover:bg-slate-100 hover:text-slate-800 transition-colors"
@@ -357,7 +364,7 @@ export default function InventoryPage() {
                         </button>
 
                         {openActionId === item.id && (
-                          <div 
+                          <div
                             style={{ position: "absolute", top: "100%", right: "1.5rem", zIndex: 50, background: "#fff", border: "1px solid #e2e8f0", borderRadius: "0.75rem", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", minWidth: "140px", overflow: "hidden", display: "flex", flexDirection: "column", padding: "0.375rem" }}
                             onClick={(ev) => ev.stopPropagation()}
                           >
