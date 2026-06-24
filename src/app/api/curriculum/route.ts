@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { curriculums, academicYears, gradeComponents } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -33,17 +33,40 @@ export async function GET(req: Request) {
       .where(whereClause)
       .orderBy(desc(curriculums.createdAt));
 
-    // Fetch components for each curriculum
-    // Original had include gradeComponents
-    const detailedData = await Promise.all(results.map(async (cur) => {
-        const components = await db
-            .select()
-            .from(gradeComponents)
-            .where(eq(gradeComponents.curriculumId, cur.id));
-        return {
-            ...cur,
-            gradeComponents: components
-        };
+    // Fetch components for each curriculum using a single query to prevent N+1
+    const curriculumIds = results.map((cur) => cur.id);
+    const componentsByCurriculum = new Map<number, typeof allComponents[0][]>();
+    let allComponents: {
+      id: number;
+      curriculumId: number | null;
+      name: string;
+      code: string;
+      type: string;
+      formatNilai: string;
+      bobot: number;
+      urutan: number;
+      isWajib: boolean;
+      createdAt: Date;
+    }[] = [];
+
+    if (curriculumIds.length > 0) {
+      allComponents = await db
+        .select()
+        .from(gradeComponents)
+        .where(inArray(gradeComponents.curriculumId, curriculumIds));
+
+      for (const comp of allComponents) {
+        if (comp.curriculumId === null) continue;
+        if (!componentsByCurriculum.has(comp.curriculumId)) {
+          componentsByCurriculum.set(comp.curriculumId, []);
+        }
+        componentsByCurriculum.get(comp.curriculumId)!.push(comp);
+      }
+    }
+
+    const detailedData = results.map((cur) => ({
+      ...cur,
+      gradeComponents: componentsByCurriculum.get(cur.id) || [],
     }));
 
     return NextResponse.json(detailedData, {
