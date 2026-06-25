@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { curriculums, academicYears, gradeComponents } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -33,18 +33,31 @@ export async function GET(req: Request) {
       .where(whereClause)
       .orderBy(desc(curriculums.createdAt));
 
-    // Fetch components for each curriculum
-    // Original had include gradeComponents
-    const detailedData = await Promise.all(results.map(async (cur) => {
-        const components = await db
-            .select()
-            .from(gradeComponents)
-            .where(eq(gradeComponents.curriculumId, cur.id));
+    // Fetch components for all curriculums in a single query
+    const curriculumIds = results.map(cur => cur.id);
+    let allComponents: typeof gradeComponents.$inferSelect[] = [];
+
+    if (curriculumIds.length > 0) {
+      allComponents = await db
+        .select()
+        .from(gradeComponents)
+        .where(inArray(gradeComponents.curriculumId, curriculumIds));
+    }
+
+    const componentsByCurriculumId = new Map<number, typeof gradeComponents.$inferSelect[]>();
+    for (const component of allComponents) {
+      if (component.curriculumId === null) continue;
+      const arr = componentsByCurriculumId.get(component.curriculumId) || [];
+      arr.push(component);
+      componentsByCurriculumId.set(component.curriculumId, arr);
+    }
+
+    const detailedData = results.map((cur) => {
         return {
             ...cur,
-            gradeComponents: components
+            gradeComponents: componentsByCurriculumId.get(cur.id) || []
         };
-    }));
+    });
 
     return NextResponse.json(detailedData, {
       headers: { "Cache-Control": "no-store" },
