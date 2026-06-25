@@ -38,10 +38,10 @@ export async function GET() {
         with active_enrollments as (
           select se.student_id, se.classroom_id, s.status, s.classroom_id as student_classroom_id
           from ${studentEnrollments} se
-          inner join ${students} s on ${students.id} = ${studentEnrollments.studentId}
-          where ${studentEnrollments.academicYearId} = ${activeYearId}
-            and ${studentEnrollments.deletedAt} is null
-            and ${students.deletedAt} is null
+          inner join ${students} s on s.id = se.student_id
+          where se.academic_year_id = ${activeYearId}
+            and se.deleted_at is null
+            and s.deleted_at is null
         )
         select
           count(*) filter (where status <> 'aktif')::int as non_active_with_active_enrollment,
