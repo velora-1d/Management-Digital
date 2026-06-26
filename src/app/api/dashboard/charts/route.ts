@@ -36,19 +36,56 @@ export async function GET(request: Request) {
     }
 
     // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
-      })
+    // ⚡ Bolt: Replaced N+1 query loops with a single aggregated query for all 6 months
+    const minStart = months.length > 0 ? months[0].start : new Date(); // Oldest month start is at index 0 because loop builds it from i=5 down to i=0
+    const maxEnd = months.length > 0 ? months[months.length - 1].end : new Date(); // Current month end is at last index
+
+    const aggregatedCashflow = await db.select({
+      year: sql<number>`extract(year from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`.mapWith(Number),
+      month: sql<number>`extract(month from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`.mapWith(Number),
+      type: generalTransactions.type,
+      total: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number),
+    })
+    .from(generalTransactions)
+    .where(and(
+      eq(generalTransactions.status, "valid"),
+      isNull(generalTransactions.deletedAt),
+      gte(generalTransactions.createdAt, minStart),
+      lte(generalTransactions.createdAt, maxEnd)
+    ))
+    .groupBy(
+      sql`extract(year from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`,
+      sql`extract(month from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`,
+      generalTransactions.type
     );
+
+    const cashflowMap = new Map<string, { income: number; expense: number }>();
+    for (const record of aggregatedCashflow) {
+      const key = `${record.year}-${record.month}`;
+      const entry = cashflowMap.get(key) || { income: 0, expense: 0 };
+      if (record.type === "in") entry.income += record.total;
+      if (record.type === "out") entry.expense += record.total;
+      cashflowMap.set(key, entry);
+    }
+
+    // Helper for matching JS local time with PostgreSQL's Asia/Jakarta time
+    const dateFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "numeric",
+    });
+
+    const cashflowData = months.map(m => {
+      // Month in JS is 0-indexed, PostgreSQL extract month is 1-indexed (1-12)
+      // Extract exact year and month from the formatted Asia/Jakarta timezone
+      const parts = dateFormatter.formatToParts(m.start);
+      const yearStr = parts.find((p) => p.type === "year")?.value;
+      const monthStr = parts.find((p) => p.type === "month")?.value;
+
+      const key = `${yearStr}-${monthStr}`;
+      const data = cashflowMap.get(key) || { income: 0, expense: 0 };
+      return { month: m.label, income: data.income, expense: data.expense };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
