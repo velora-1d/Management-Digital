@@ -1,0 +1,3 @@
+## 2024-06-27 - [N+1 Query Bottleneck in Curriculum API]
+**Learning:** Found an N+1 performance bottleneck caused by using `Promise.all` inside a `.map()` to fetch related database entities (grade components) for each curriculum. This scales linearly with the number of curriculums, degrading performance.
+**Action:** Pre-fetch all related entities in a single query using Drizzle ORM's `inArray` clause (after extracting all primary IDs), and map them in memory using a `Map` data structure. Always guard `inArray` queries with an array length check (e.g., `if (ids.length > 0)`) to prevent SQL syntax errors.
