@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { extracurriculars, employees, extracurricularMembers, students } from "@/db/schema";
-import { eq, isNull, asc, sql } from "drizzle-orm";
+import { eq, isNull, asc, sql, inArray } from "drizzle-orm";
 
 // GET /api/extracurricular
 export async function GET(req: Request) {
@@ -38,32 +38,40 @@ export async function GET(req: Request) {
 
     const total = totalResult[0]?.count || 0;
 
-    // Fetch members for each extracurricular (optional, but original include had it)
-    // To be efficient, we do separate fetch or join
-    // But original logic had nested include, let's just return what we have or do a separate fetch for details
-    
-    // Original had include for members.student too.
-    // For simplicity and efficiency, maybe we fetch members separately if needed
-    // But let's follow original structure where possible
-    const detailedData = await Promise.all(results.map(async (item) => {
-        const members = await db
-            .select({
-                id: extracurricularMembers.id,
-                student: {
-                    id: students.id,
-                    name: students.name,
-                    nisn: students.nisn
-                }
-            })
-            .from(extracurricularMembers)
-            .leftJoin(students, eq(extracurricularMembers.studentId, students.id))
-            .where(eq(extracurricularMembers.extracurricularId, item.id));
-        
-        return {
-            ...item,
-            employee: item.employeeId ? { id: item.employeeId, name: item.employeeName } : null,
-            members
-        };
+    const extraIds = results.map(r => r.id);
+    const membersMap = new Map<number, { id: number; student: { id: number; name: string; nisn: string | null; } | null }[]>();
+
+    if (extraIds.length > 0) {
+      const allMembers = await db
+        .select({
+            id: extracurricularMembers.id,
+            extracurricularId: extracurricularMembers.extracurricularId,
+            student: {
+                id: students.id,
+                name: students.name,
+                nisn: students.nisn
+            }
+        })
+        .from(extracurricularMembers)
+        .leftJoin(students, eq(extracurricularMembers.studentId, students.id))
+        .where(inArray(extracurricularMembers.extracurricularId, extraIds));
+
+      for (const mem of allMembers) {
+        if (mem.extracurricularId === null) continue;
+        if (!membersMap.has(mem.extracurricularId)) {
+          membersMap.set(mem.extracurricularId, []);
+        }
+        membersMap.get(mem.extracurricularId)!.push({
+            id: mem.id,
+            student: mem.student
+        });
+      }
+    }
+
+    const detailedData = results.map(item => ({
+        ...item,
+        employee: item.employeeId ? { id: item.employeeId, name: item.employeeName } : null,
+        members: membersMap.get(item.id) || []
     }));
 
     return NextResponse.json({
