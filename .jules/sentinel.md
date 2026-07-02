@@ -1,0 +1,4 @@
+## 2024-05-27 - SweetAlert2 XSS Vulnerability in Transaction Categories
+**Vulnerability:** User input (`cat.name`, `cat.description`) was directly interpolated into the SweetAlert2 `html` property in `src/app/(dashboard)/transaction-categories/page.tsx`, leading to a Cross-Site Scripting (XSS) vulnerability.
+**Learning:** SweetAlert2's `html` property renders raw HTML. Directly inserting unsanitized database content (like names or descriptions) allows malicious scripts to execute when the modal is opened.
+**Prevention:** Avoid passing user variables directly into the `html` property. Instead, render empty input elements and safely populate their values using the `didOpen` callback and DOM manipulation (e.g., `document.getElementById('...').value = ...`), which treats the content strictly as text.
