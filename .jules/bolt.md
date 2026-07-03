@@ -1,0 +1,3 @@
+## 2025-07-03 - N+1 Query in Time-Series Aggregations
+**Learning:** This codebase frequently performs time-series aggregations (like cashflow over the last 6 months) by using `Promise.all` inside a `.map` loop to execute separate queries for each time period (e.g., month). This creates an N+1 query problem, hitting the database multiple times unnecessarily (e.g., 12 queries for 6 months of income and expenses).
+**Action:** Consolidate these queries into a single query using Drizzle ORM's `groupBy` combined with PostgreSQL date extraction (`sql<number>\`extract(month from ${table.createdAt} AT TIME ZONE 'Asia/Jakarta')\``) to handle timezone boundaries correctly. Fetch all grouped data in one pass and map it in memory.
