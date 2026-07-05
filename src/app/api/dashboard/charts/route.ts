@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { academicYears, classrooms, studentEnrollments, generalTransactions, infaqBills, students } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
-import { eq, and, isNull, gte, lte, asc, sql } from "drizzle-orm";
+import { eq, and, isNull, gte, lte, asc, sql,  } from "drizzle-orm";
 
 /**
  * GET /api/dashboard/charts — Data untuk charts dashboard dengan filter
@@ -36,19 +36,54 @@ export async function GET(request: Request) {
     }
 
     // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
+    const cashflowData = months.map(m => ({ month: m.label, income: 0, expense: 0 }));
+    if (months.length > 0) {
+      const minDate = months[0].start;
+      const maxDate = months[months.length - 1].end;
+
+      const agg = await db.select({
+        year: sql<number>`extract(year from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`.mapWith(Number),
+        month: sql<number>`extract(month from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`.mapWith(Number),
+        income: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'in' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
+        expense: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'out' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
       })
-    );
+      .from(generalTransactions)
+      .where(and(
+        eq(generalTransactions.status, "valid"),
+        isNull(generalTransactions.deletedAt),
+        gte(generalTransactions.createdAt, minDate),
+        lte(generalTransactions.createdAt, maxDate)
+      ))
+      .groupBy(
+        sql`extract(year from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`,
+        sql`extract(month from ${generalTransactions.createdAt} AT TIME ZONE 'Asia/Jakarta')`
+      );
+
+      const dataMap = new Map<string, { income: number; expense: number }>();
+      agg.forEach(row => {
+        dataMap.set(`${row.year}-${row.month}`, { income: row.income, expense: row.expense });
+      });
+
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "numeric",
+      });
+
+      cashflowData.forEach((item, index) => {
+        const mStart = months[index].start;
+        const parts = formatter.formatToParts(mStart);
+        const y = parts.find(p => p.type === "year")?.value;
+        const mo = parts.find(p => p.type === "month")?.value;
+        const key = `${y}-${mo}`;
+
+        if (dataMap.has(key)) {
+          const v = dataMap.get(key)!;
+          item.income = v.income;
+          item.expense = v.expense;
+        }
+      });
+    }
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
