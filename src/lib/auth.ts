@@ -6,10 +6,9 @@ import crypto from "crypto";
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    console.warn(
-      "WARNING: JWT_SECRET tidak ditemukan. Pastikan sudah di-set di environment variables.",
+    throw new Error(
+      "CRITICAL: JWT_SECRET tidak ditemukan. Pastikan sudah di-set di environment variables.",
     );
-    return "";
   }
   return secret;
 }
