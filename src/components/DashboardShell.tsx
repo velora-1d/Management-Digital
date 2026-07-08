@@ -12,6 +12,7 @@ interface DashboardShellProps {
 import { HelpProvider } from "@/components/HelpContext";
 import HelpDrawer from "@/components/HelpDrawer";
 import HelpFAB from "@/components/HelpFAB";
+import MutationChecker from "@/components/MutationChecker";
 
 export default function DashboardShell({ user, children }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -38,7 +39,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
           <Header user={user} />
           <div className="flex-1 overflow-auto custom-scrollbar">
-            <div className="p-8 max-w-[1600px] mx-auto space-y-8 min-h-[calc(100vh-64px)]">
+            <div className="p-6 md:p-8 space-y-8 min-h-[calc(100vh-64px)] w-full">
               <PageTransition>
                 {children}
               </PageTransition>
@@ -46,6 +47,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
           </div>
         </main>
       </div>
+      <MutationChecker user={user} />
       <HelpDrawer />
       <HelpFAB />
     </HelpProvider>

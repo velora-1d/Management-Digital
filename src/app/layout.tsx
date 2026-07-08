@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { Providers } from "./providers";
+import { getBuildId } from "@/lib/version";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -15,8 +16,13 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const buildId = getBuildId();
+
   return (
     <html lang="id">
+      <head>
+        <meta name="next-build-id" content={buildId} />
+      </head>
       <body className={`${inter.variable} ${outfit.variable} antialiased text-gray-800 min-h-screen`} suppressHydrationWarning>
         <Providers>
           {children}
