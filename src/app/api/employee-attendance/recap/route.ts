@@ -38,31 +38,41 @@ export async function GET(req: Request) {
       .from(employeeAttendances)
       .where(like(employeeAttendances.date, `${prefix}%`));
 
+    // Pre-aggregate attendances by employeeId to convert O(N*M) lookup to O(N+M)
+    const attendanceMap = new Map<number, { hadir: number, sakit: number, izin: number, alpha: number, totalAtt: number }>();
+    for (const att of attendances) {
+      if (att.employeeId === null) continue;
+      if (!attendanceMap.has(att.employeeId)) {
+        attendanceMap.set(att.employeeId, { hadir: 0, sakit: 0, izin: 0, alpha: 0, totalAtt: 0 });
+      }
+      const stats = attendanceMap.get(att.employeeId)!;
+      stats.totalAtt++;
+      if (att.status === "hadir") stats.hadir++;
+      else if (att.status === "sakit") stats.sakit++;
+      else if (att.status === "izin") stats.izin++;
+      else if (att.status === "alpha") stats.alpha++;
+    }
+
     const recap = empList.map(emp => {
-      const empAttendances = attendances.filter(a => a.employeeId === emp.id);
-      const totalAtt = empAttendances.length;
-      const hadir = empAttendances.filter(a => a.status === "hadir").length;
-      const sakit = empAttendances.filter(a => a.status === "sakit").length;
-      const izin = empAttendances.filter(a => a.status === "izin").length;
-      const alpha = empAttendances.filter(a => a.status === "alpha").length;
-      const persen = totalAtt > 0 ? Math.round((hadir / totalAtt) * 100) : 0;
+      const stats = attendanceMap.get(emp.id) || { hadir: 0, sakit: 0, izin: 0, alpha: 0, totalAtt: 0 };
+      const persen = stats.totalAtt > 0 ? Math.round((stats.hadir / stats.totalAtt) * 100) : 0;
 
       return {
         employeeId: emp.id,
         name: emp.name,
         position: emp.position,
-        total: totalAtt,
-        hadir,
-        sakit,
-        izin,
-        alpha,
+        total: stats.totalAtt,
+        hadir: stats.hadir,
+        sakit: stats.sakit,
+        izin: stats.izin,
+        alpha: stats.alpha,
         persen,
       };
     });
 
-    return NextResponse.json({ 
-      month, 
-      year, 
+    return NextResponse.json({
+      month,
+      year,
       recap,
       pagination: {
         total,
