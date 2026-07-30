@@ -1,0 +1,3 @@
+## 2024-06-16 - [Dashboard Cashflow N+1 Query Fix]
+**Learning:** When resolving N+1 queries by grouping aggregated time-series data using database-native `extract()` functions (e.g., Postgres `extract(month)`), timezone discrepancies between the Node.js application server and the database server can lead to silently shifting boundary intervals. Grouping by JavaScript `Date` bounds directly is safer.
+**Action:** Pre-fetch bulk transactional data spanning the absolute `min` and `max` date boundaries, and map the aggregations in-memory across explicit JavaScript `Date` intervals instead of relying on SQL engine timezone formatting.
