@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { curriculums, academicYears, gradeComponents } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -35,15 +35,29 @@ export async function GET(req: Request) {
 
     // Fetch components for each curriculum
     // Original had include gradeComponents
-    const detailedData = await Promise.all(results.map(async (cur) => {
-        const components = await db
+    const curriculumIds = results.map((cur) => cur.id);
+    let allComponents: typeof gradeComponents.$inferSelect[] = [];
+
+    if (curriculumIds.length > 0) {
+        allComponents = await db
             .select()
             .from(gradeComponents)
-            .where(eq(gradeComponents.curriculumId, cur.id));
-        return {
-            ...cur,
-            gradeComponents: components
-        };
+            .where(inArray(gradeComponents.curriculumId, curriculumIds));
+    }
+
+    const componentsMap = new Map<number, typeof gradeComponents.$inferSelect[]>();
+    for (const component of allComponents) {
+        if (component.curriculumId === null) continue;
+        const id = component.curriculumId;
+        if (!componentsMap.has(id)) {
+            componentsMap.set(id, []);
+        }
+        componentsMap.get(id)!.push(component);
+    }
+
+    const detailedData = results.map((cur) => ({
+        ...cur,
+        gradeComponents: componentsMap.get(cur.id) || [],
     }));
 
     return NextResponse.json(detailedData, {
