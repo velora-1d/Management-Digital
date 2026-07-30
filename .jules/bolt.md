@@ -1,0 +1,3 @@
+## 2024-06-03 - N+1 Query in Time-Series Aggregation
+**Learning:** When generating time-series data (like a 6-month cashflow chart) where the date range is fixed, mapping over periods and firing individual database queries for each creates a significant N+1 bottleneck. This is a common performance anti-pattern.
+**Action:** Always pre-calculate the absolute start and end dates of the time window, use a single database query to fetch all data within that window, group the data using SQL date functions (e.g. `extract(year...)`, `extract(month...)`), and use an in-memory `Map` lookup to rebuild the time-series array in O(1) time.
