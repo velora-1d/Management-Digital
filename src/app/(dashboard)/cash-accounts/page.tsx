@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense, useCallback } from "react";
+import { useState, Suspense, useCallback, useMemo } from "react";
 import { Plus, Search, Filter, Download, CreditCard, MoreHorizontal, Pencil, Trash2, Building2, Hash, ShieldCheck, LayoutGrid, ArrowUpRight, Wallet, Landmark, AlertCircle, RefreshCcw } from "lucide-react";
 import Swal from "sweetalert2";
 import { useSearchParams } from "next/navigation";
@@ -57,7 +57,9 @@ function CashAccountsContent() {
     placeholderData: (prev) => prev,
   });
 
-  const items: CashAccount[] = cashAccountsQuery?.success ? cashAccountsQuery.data || [] : [];
+  const items: CashAccount[] = useMemo(() => {
+    return cashAccountsQuery?.success ? cashAccountsQuery.data || [] : [];
+  }, [cashAccountsQuery]);
 
   const refreshCashAccounts = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
@@ -132,6 +134,17 @@ function CashAccountsContent() {
     totalBalance: items.reduce((acc, curr) => acc + (curr.balance || 0), 0)
   };
 
+  // ⚡ Bolt Optimization:
+  // Use O(N) reduce instead of O(N log N) inline sorting to find the most active account.
+  // This also wraps the result in useMemo to prevent redundant calculations on every render
+  // and eliminates the in-place Array.prototype.sort() mutation inside JSX.
+  const mostActiveAccount = useMemo(() => {
+    if (items.length === 0) return null;
+    return items.reduce((prev, current) =>
+      (prev.transactionCount > current.transactionCount) ? prev : current
+    );
+  }, [items]);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
@@ -204,10 +217,10 @@ function CashAccountsContent() {
           </div>
           <p className="text-indigo-100 font-medium mb-1 truncate">Akun Teraktif</p>
           <h3 className="text-2xl font-bold truncate">
-            {items.length > 0 ? items.sort((a,b) => b.transactionCount - a.transactionCount)[0].accountName : 'N/A'}
+            {mostActiveAccount ? mostActiveAccount.accountName : 'N/A'}
           </h3>
           <p className="mt-4 text-white/80 text-sm font-medium">
-            Mencatat {items.length > 0 ? items.sort((a,b) => b.transactionCount - a.transactionCount)[0].transactionCount : 0} transaksi
+            Mencatat {mostActiveAccount ? mostActiveAccount.transactionCount : 0} transaksi
           </p>
         </div>
       </div>

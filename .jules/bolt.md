@@ -1,0 +1,3 @@
+## 2026-06-06 - Array.prototype.sort() React Mutation Anti-Pattern
+**Learning:** Found an instance where `items.sort()` was called directly inside JSX. In JavaScript, `sort()` mutates the original array in place, which is a dangerous anti-pattern in React render cycles and causes unintended side effects across the component. It's also an expensive O(N log N) operation that was running twice per render.
+**Action:** When finding extremes (max/min/most active), always prefer O(N) `.reduce()` over sorting. Wrap the calculation in `useMemo` and add comments explaining the algorithmic optimization to preserve context.
