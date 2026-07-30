@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { requireAuth, requireRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
+    const user = await requireAuth();
+    requireRole(user, ["superadmin"]);
+
     console.log("🚀 Menjalankan Migrasi SQL Sementara...");
     
     await db.execute(sql`ALTER TABLE students ALTER COLUMN nis DROP NOT NULL;`);
