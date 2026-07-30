@@ -35,20 +35,45 @@ export async function GET(request: Request) {
       months.push({ label, start: d, end });
     }
 
-    // Cashflow per bulan
-    const cashflowData = await Promise.all(
-      months.map(async (m) => {
-        const [[{ income }], [{ expense }]] = await Promise.all([
-          db.select({ income: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "in"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-          db.select({ expense: sql<number>`coalesce(sum(${generalTransactions.amount}), 0)`.mapWith(Number) })
-            .from(generalTransactions)
-            .where(and(eq(generalTransactions.type, "out"), eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt), gte(generalTransactions.createdAt, m.start), lte(generalTransactions.createdAt, m.end))),
-        ]);
-        return { month: m.label, income, expense };
+    // Cashflow per bulan (optimized using single grouped query)
+    const minStart = months[0].start;
+    const maxEnd = months[months.length - 1].end;
+
+    const cashflowResult = await db.select({
+        year: sql<number>`extract(year from ${generalTransactions.createdAt})`.mapWith(Number),
+        month: sql<number>`extract(month from ${generalTransactions.createdAt})`.mapWith(Number),
+        income: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'in' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
+        expense: sql<number>`coalesce(sum(case when ${generalTransactions.type} = 'out' then ${generalTransactions.amount} else 0 end), 0)`.mapWith(Number),
       })
-    );
+      .from(generalTransactions)
+      .where(and(
+        eq(generalTransactions.status, "valid"),
+        isNull(generalTransactions.deletedAt),
+        gte(generalTransactions.createdAt, minStart),
+        lte(generalTransactions.createdAt, maxEnd)
+      ))
+      .groupBy(
+        sql`extract(year from ${generalTransactions.createdAt})`,
+        sql`extract(month from ${generalTransactions.createdAt})`
+      );
+
+    const cashflowMap = new Map();
+    for (const row of cashflowResult) {
+      cashflowMap.set(`${row.year}-${row.month}`, { income: row.income, expense: row.expense });
+    }
+
+    const cashflowData = months.map((m) => {
+      // getMonth() is 0-indexed, PostgreSQL extract month is 1-12
+      const year = m.start.getFullYear();
+      const month = m.start.getMonth() + 1;
+      const key = `${year}-${month}`;
+      const data = cashflowMap.get(key);
+      return {
+        month: m.label,
+        income: data?.income || 0,
+        expense: data?.expense || 0,
+      };
+    });
 
     // 2. Distribusi siswa per kelas
     const classroomConditions = [isNull(classrooms.deletedAt)];
