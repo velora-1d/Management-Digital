@@ -1,0 +1,4 @@
+
+## 2025-03-02 - Consolidate Time-Series Loops
+**Learning:** Performing database queries inside a `.map()` block for time-series data creates severe N+1 bottlenecks (O(N) connections). Furthermore, relying on simple `createdAt` ranges across loops is computationally inefficient compared to leveraging PostgreSQL's native `extract` and `groupBy` functions. However, when replacing loops with `groupBy`, it is crucial to handle timezone casting explicitly (e.g., `AT TIME ZONE 'Asia/Jakarta'`) both in the SQL extraction and the in-memory JS processing using `Intl.DateTimeFormat` to prevent off-by-one month drift caused by UTC boundary shifts.
+**Action:** Always pre-fetch time-series aggregations in a single grouped query before mapping to specific date brackets in memory, ensuring both SQL operations and JS parsing apply the exact same timezone rules.
