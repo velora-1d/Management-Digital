@@ -1,0 +1,4 @@
+## 2024-05-18 - Missing SweetAlert2 XSS vulnerability fix
+**Vulnerability:** A SweetAlert2 modal in `handleEdit` was interpolating user-controlled data directly into the `html` string template, creating a highly exploitable XSS vector.
+**Learning:** While I initially fixed a theoretical issue with `dangerouslySetInnerHTML`, I completely overlooked the glaring vulnerability of unescaped variables in SweetAlert2 config strings just a few lines above. String interpolation into HTML blocks (like modals) is a widespread pattern that needs careful attention.
+**Prevention:** When reviewing files for XSS, actively scan for any UI libraries that accept raw HTML strings (like `Swal.fire({ html: ... })`) and verify that user-controlled values are assigned via DOM manipulation inside callbacks (e.g., `didOpen`), not string interpolation.
