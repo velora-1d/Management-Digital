@@ -1,0 +1,4 @@
+## 2024-05-18 - XSS via SweetAlert2 html property
+**Vulnerability:** User-controlled strings (`cat.name`, `cat.type`, `cat.description`) were interpolated directly into the `html` configuration property of `Swal.fire` in `src/app/(dashboard)/transaction-categories/page.tsx`. This allows an attacker to inject arbitrary HTML or JavaScript via malicious category names, leading to Cross-Site Scripting (XSS).
+**Learning:** SweetAlert2 does not automatically sanitize strings passed to the `html` option. Interpolating unsanitized user data directly into this property creates a highly exploitable XSS vector.
+**Prevention:** Never use template literals to inject user data into `Swal.fire`'s `html` property. Instead, render empty inputs in the HTML string, and use the `didOpen` callback combined with standard DOM manipulation (`document.getElementById('id').value = data`) to safely assign values as text data.
