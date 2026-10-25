@@ -229,17 +229,19 @@ export default function TrackingPerKelasPage() {
     const isVoid = m.status === "void";
     const isSebagian = m.status === "sebagian";
 
-    const bg = isLunas ? "#dcfce7" : isVoid ? "#f1f5f9" : isSebagian ? "#dbeafe" : "#fef2f2";
-    const color = isLunas ? "#166534" : isVoid ? "#94a3b8" : isSebagian ? "#1e40af" : "#991b1b";
+    const bg = isLunas ? "#dcfce7" : isVoid ? "#f1f5f9" : isSebagian ? "#fef3c7" : "#fee2e2";
+    const color = isLunas ? "#15803d" : isVoid ? "#64748b" : isSebagian ? "#b45309" : "#b91c1c";
+    const border = isLunas ? "#bbf7d0" : isVoid ? "#e2e8f0" : isSebagian ? "#fde68a" : "#fecaca";
     const label = isLunas ? "L" : isVoid ? "V" : isSebagian ? "S" : "-";
 
     return (
       <div style={{ position: "relative", display: "inline-block" }} className="group">
         <button
+          className="font-mono"
           style={{
-            padding: "0.25rem 0.5rem", borderRadius: "0.375rem", border: "none",
+            padding: "0.2rem 0.5rem", borderRadius: 999, border: `1px solid ${border}`,
             background: bg, color, fontSize: "0.6875rem", fontWeight: 700,
-            cursor: isVoid ? "default" : "pointer", minWidth: 32,
+            cursor: isVoid ? "default" : "pointer", minWidth: 28,
           }}
           title={`${m.monthName}: ${fmtRp(m.nominal)} | Bayar: ${fmtRp(m.totalPaid)} | Sisa: ${fmtRp(m.remaining)}`}
           onClick={(e) => { if (isVoid) return; e.stopPropagation(); }}
@@ -355,14 +357,14 @@ export default function TrackingPerKelasPage() {
           {[
             { label: "Jumlah Siswa", value: data.summary.totalStudents, fmt: false, color: "#2563eb" },
             { label: "Total Kewajiban", value: data.summary.totalNominal, fmt: true, color: "#2563eb" },
-            { label: "Terbayar", value: data.summary.totalPaid, fmt: true, color: "#22c55e" },
-            { label: "Tunggakan", value: data.summary.totalRemaining, fmt: true, color: "#ef4444" },
-            { label: "Lunas Semua", value: data.summary.allLunas, fmt: false, color: "#22c55e" },
-            { label: "Ada Tunggakan", value: data.summary.hasArrears, fmt: false, color: "#ef4444" },
+            { label: "Terbayar", value: data.summary.totalPaid, fmt: true, color: "#16a34a" },
+            { label: "Tunggakan", value: data.summary.totalRemaining, fmt: true, color: "#e11d48" },
+            { label: "Lunas Semua", value: data.summary.allLunas, fmt: false, color: "#16a34a" },
+            { label: "Ada Tunggakan", value: data.summary.hasArrears, fmt: false, color: "#e11d48" },
           ].map((s, i) => (
-            <div key={i} style={{ padding: "0.75rem", borderRadius: "0.625rem", background: "#fff", border: "1px solid #e2e8f0" }}>
-              <p style={{ fontSize: "0.625rem", color: "#94a3b8", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>{s.label}</p>
-              <p style={{ fontSize: "1.125rem", fontWeight: 700, color: s.color, margin: "0.125rem 0 0" }}>
+            <div key={i} style={{ padding: "0.75rem", borderRadius: "0.5rem", background: "#fff", border: "1px solid #e2e8f0" }}>
+              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>{s.label}</p>
+              <p className="font-mono font-bold" style={{ fontSize: "1.125rem", color: s.color, margin: "0.125rem 0 0" }}>
                 {s.fmt ? fmtRp(s.value) : s.value}
               </p>
             </div>
@@ -378,7 +380,7 @@ export default function TrackingPerKelasPage() {
       ) : !data?.tracking?.length ? (
         <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Tidak ada siswa di kelas ini</div>
       ) : (
-        <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "auto" }}>
+        <div style={{ background: "#fff", borderRadius: "0.5rem", border: "1px solid #e2e8f0", overflow: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
             <thead>
               <tr style={{ background: "#f8fafc" }}>
@@ -394,14 +396,16 @@ export default function TrackingPerKelasPage() {
                 <tr key={student.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                   <td style={{ padding: "0.625rem 1rem", fontWeight: 500, color: "#1e293b", position: "sticky", left: 0, background: "#fff", borderRight: "1px solid #f1f5f9" }}>
                     <p style={{ margin: 0, fontSize: "0.8125rem", fontWeight: 600 }}>{student.name}</p>
-                    <p style={{ margin: 0, fontSize: "0.625rem", color: "#94a3b8" }}>{student.nisn || "-"}</p>
+                    <p style={{ margin: 0, fontSize: "0.6875rem", color: "#64748b" }}>
+                      NISN: <span className="font-mono font-medium text-slate-700">{student.nisn || "-"}</span>
+                    </p>
                   </td>
                   {student.months.map((m) => (
                     <td key={m.month} style={{ padding: "0.375rem", textAlign: "center" }}>
                       {renderBadge(student, m)}
                     </td>
                   ))}
-                  <td style={{ padding: "0.625rem 0.75rem", textAlign: "right", fontWeight: 600, color: student.totalRemaining > 0 ? "#ef4444" : "#22c55e", fontSize: "0.75rem" }}>
+                  <td className="font-mono" style={{ padding: "0.625rem 0.75rem", textAlign: "right", fontWeight: 600, color: student.totalRemaining > 0 ? "#e11d48" : "#16a34a", fontSize: "0.75rem" }}>
                     {student.totalRemaining > 0 ? fmtRp(student.totalRemaining) : "Lunas"}
                   </td>
                 </tr>

@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useCallback, type ReactNode } from "react";
 
-type ModalSize = "sm" | "md" | "lg" | "xl";
+export type ModalSize = "sm" | "md" | "lg" | "xl";
 
-interface ModalProps {
+export interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -53,33 +53,35 @@ export default function Modal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs animate-fade-in"
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
         className={[
-          "relative w-full bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in-up",
+          "relative w-full bg-white text-slate-800 rounded-lg shadow-xl border border-slate-200 overflow-hidden animate-fade-in-up",
           sizeMap[size],
         ].join(" ")}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
             <div>
-              <h3 className="font-heading font-bold text-lg text-slate-800 m-0">
+              <h3 className="font-heading font-semibold text-lg text-slate-900 m-0 tracking-tight">
                 {title}
               </h3>
               {subtitle && (
-                <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+              type="button"
+              className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Tutup modal"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -87,11 +89,11 @@ export default function Modal({
         )}
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto text-slate-200">{children}</div>
+        <div className="px-6 py-5 max-h-[75vh] overflow-y-auto text-slate-700">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-slate-200 bg-slate-50/70">
             {footer}
           </div>
         )}

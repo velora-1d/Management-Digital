@@ -410,19 +410,19 @@ export default function PpdbPage({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-4 flex flex-col justify-center">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total</p>
-            <p className="font-heading text-2xl font-extrabold text-slate-800 m-0">{stats.total}</p>
+            <p className="font-mono text-2xl font-extrabold text-slate-800 m-0">{stats.total}</p>
           </Card>
           <Card className="p-4 flex flex-col justify-center border-l-4 border-l-amber-500">
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Menunggu</p>
-            <p className="font-heading text-2xl font-extrabold text-amber-700 m-0">{stats.pending}</p>
+            <p className="font-mono text-2xl font-extrabold text-amber-700 m-0">{stats.pending}</p>
           </Card>
           <Card className="p-4 flex flex-col justify-center border-l-4 border-l-emerald-500">
             <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Diterima</p>
-            <p className="font-heading text-2xl font-extrabold text-emerald-700 m-0">{stats.diterima}</p>
+            <p className="font-mono text-2xl font-extrabold text-emerald-700 m-0">{stats.diterima}</p>
           </Card>
           <Card className="p-4 flex flex-col justify-center border-l-4 border-l-rose-500">
             <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Ditolak</p>
-            <p className="font-heading text-2xl font-extrabold text-rose-700 m-0">{stats.ditolak}</p>
+            <p className="font-mono text-2xl font-extrabold text-rose-700 m-0">{stats.ditolak}</p>
           </Card>
         </div>
       )}
@@ -495,24 +495,24 @@ export default function PpdbPage({
             <h4 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>Rekap Penerimaan Kas PPDB</h4>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div style={{ background: "#e0f2fe", borderRadius: "0.75rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: "#e0f2fe", borderRadius: "0.5rem", padding: "1rem", textAlign: "center", border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: "0.625rem", fontWeight: 700, color: "#0284c7", textTransform: "uppercase", margin: 0 }}>Daftar</p>
-              <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem", fontWeight: 800, color: "#0c4a6e", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.daftar?.total || 0).toLocaleString("id-ID")}</p>
-              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}>{paymentStats.daftar?.count || 0} lunas</p>
+              <p className="font-mono" style={{ fontSize: "1.125rem", fontWeight: 800, color: "#0c4a6e", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.daftar?.total || 0).toLocaleString("id-ID")}</p>
+              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}><span className="font-mono">{paymentStats.daftar?.count || 0}</span> lunas</p>
             </div>
-            <div style={{ background: "#fef3c7", borderRadius: "0.75rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: "#fef3c7", borderRadius: "0.5rem", padding: "1rem", textAlign: "center", border: "1px solid #fde68a" }}>
               <p style={{ fontSize: "0.625rem", fontWeight: 700, color: "#d97706", textTransform: "uppercase", margin: 0 }}>Buku</p>
-              <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem", fontWeight: 800, color: "#78350f", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.buku?.total || 0).toLocaleString("id-ID")}</p>
-              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}>{paymentStats.buku?.count || 0} lunas</p>
+              <p className="font-mono" style={{ fontSize: "1.125rem", fontWeight: 800, color: "#78350f", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.buku?.total || 0).toLocaleString("id-ID")}</p>
+              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}><span className="font-mono">{paymentStats.buku?.count || 0}</span> lunas</p>
             </div>
-            <div style={{ background: "#ffe4e6", borderRadius: "0.75rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: "#ffe4e6", borderRadius: "0.5rem", padding: "1rem", textAlign: "center", border: "1px solid #fecdd3" }}>
               <p style={{ fontSize: "0.625rem", fontWeight: 700, color: "#e11d48", textTransform: "uppercase", margin: 0 }}>Seragam</p>
-              <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem", fontWeight: 800, color: "#881337", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.seragam?.total || 0).toLocaleString("id-ID")}</p>
-              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}>{paymentStats.seragam?.count || 0} lunas</p>
+              <p className="font-mono" style={{ fontSize: "1.125rem", fontWeight: 800, color: "#881337", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.seragam?.total || 0).toLocaleString("id-ID")}</p>
+              <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}><span className="font-mono">{paymentStats.seragam?.count || 0}</span> lunas</p>
             </div>
-            <div style={{ background: "#d1fae5", borderRadius: "0.75rem", padding: "1rem", textAlign: "center", border: "1.5px solid #a7f3d0" }}>
+            <div style={{ background: "#d1fae5", borderRadius: "0.5rem", padding: "1rem", textAlign: "center", border: "1px solid #a7f3d0" }}>
               <p style={{ fontSize: "0.625rem", fontWeight: 700, color: "#047857", textTransform: "uppercase", margin: 0 }}>Total</p>
-              <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem", fontWeight: 800, color: "#064e3b", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.grandTotal || 0).toLocaleString("id-ID")}</p>
+              <p className="font-mono" style={{ fontSize: "1.125rem", fontWeight: 800, color: "#064e3b", margin: "0.25rem 0 0" }}>Rp {Number(paymentStats.grandTotal || 0).toLocaleString("id-ID")}</p>
               <p style={{ fontSize: "0.625rem", color: "#64748b", margin: "0.125rem 0 0" }}>Masuk Kas</p>
             </div>
           </div>
@@ -594,7 +594,7 @@ export default function PpdbPage({
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#e0f2fe,#bae6fd)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                    <div style={{ width: 64, height: 64, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#0284c7" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                     </div>
                     <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.9375rem", color: "#1e293b", margin: 0 }}>Belum Ada Pendaftar</p>
@@ -602,24 +602,24 @@ export default function PpdbPage({
                 </td></tr>
               ) : filtered.map((reg, i: number) => {
                 const genderBadge = reg.gender === "L"
-                  ? <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#2563eb", background: "#eff6ff" }}>Putra</span>
-                  : <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#ec4899", background: "#fdf2f8" }}>Putri</span>;
+                  ? <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe" }}>Putra</span>
+                  : <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#d97706", background: "#fef3c7", border: "1px solid #fde68a" }}>Putri</span>;
 
                 let statusBadge;
                 const s = reg.status;
-                if (s === "menunggu" || s === "pending") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>Menunggu</span>;
-                else if (s === "diterima") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>Diterima</span>;
-                else if (s === "ditolak") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>Ditolak</span>;
-                else if (s === "converted") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", borderRadius: 999 }}>Siswa</span>;
-                else statusBadge = <span style={{ padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: 999 }}>{s}</span>;
+                if (s === "menunggu" || s === "pending") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 999 }}>Menunggu</span>;
+                else if (s === "diterima") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", border: "1px solid #a7f3d0", borderRadius: 999 }}>Diterima</span>;
+                else if (s === "ditolak") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", border: "1px solid #fecdd3", borderRadius: 999 }}>Ditolak</span>;
+                else if (s === "converted") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 999 }}>Siswa</span>;
+                else statusBadge = <span style={{ padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#475569", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 999 }}>{s}</span>;
 
                 return (
-                  <tr key={reg.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9", opacity: s === "ditolak" ? 0.5 : 1 }}>
-                    <td style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
-                    <td style={{ padding: "1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#0ea5e9" }}>{reg.formNo || `#${reg.id}`}</td>
+                  <tr key={reg.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #e2e8f0", opacity: s === "ditolak" ? 0.5 : 1 }}>
+                    <td className="font-mono" style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
+                    <td className="font-mono" style={{ padding: "1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#0284c7" }}>{reg.formNo || `#${reg.id}`}</td>
                     <td style={{ padding: "1rem" }}>
                       <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{reg.name || "-"}</p>
-                      <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>{reg.fatherName || reg.motherName || "-"}</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#64748b", marginTop: "0.125rem" }}>{reg.fatherName || reg.motherName || "-"}</p>
                     </td>
                     <td style={{ padding: "1rem", textAlign: "center" }}>{genderBadge}</td>
                     <td style={{ padding: "1rem", textAlign: "center" }}>
@@ -627,7 +627,7 @@ export default function PpdbPage({
                         {(reg.payments && reg.payments.length > 0) ? Array.from(new Map(reg.payments.map((p) => [p.paymentType, p])).values()).map((p) => (
                           <button key={p.id} onClick={() => openPayModal(p)}
                             title={`${p.paymentType}: Rp ${Number(p.nominal).toLocaleString('id-ID')} — klik untuk ${p.isPaid ? 'revert' : 'bayar'}`}
-                            style={{ padding: "0.2rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: 999, border: "none", cursor: "pointer",
+                            style={{ padding: "0.2rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: 999, border: `1px solid ${p.isPaid ? '#a7f3d0' : '#fde68a'}`, cursor: "pointer",
                               background: p.isPaid ? "#d1fae5" : "#fef3c7", color: p.isPaid ? "#047857" : "#92400e" }}>
                             {p.isPaid ? "Lunas" : "Belum"} - {p.paymentType}
                           </button>

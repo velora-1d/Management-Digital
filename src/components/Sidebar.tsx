@@ -34,7 +34,7 @@ const menuItems = [
     { name: "Kalender Akademik", short: "Kalender", href: "/calendar", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
   ]},
   { group: "KEUANGAN", items: [
-    { name: "Infaq / SPP - LIVE", short: "Infaq", href: "/infaq-bills", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { name: "Infaq / SPP", short: "Infaq", href: "/infaq-bills", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { name: "Akun Kas", short: "Akun Kas", href: "/cash-accounts", icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
     { name: "Tabungan Siswa", short: "Tabungan", href: "/tabungan", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
     { name: "Wakaf & Donasi", short: "Wakaf", href: "/wakaf", icon: "M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" },
@@ -69,28 +69,34 @@ const menuItems = [
 
 function hasMenuAccess(href: string, role: string): boolean {
   if (!role) return false;
-  // Normalisasi: Lowercase dan hilangkan spasi (misal "Super Admin" -> "superadmin")
   const normalizedRole = role.toLowerCase().replace(/\s+/g, "");
-  
   if (normalizedRole === "superadmin") return true;
   const allowed = SIDEBAR_PERMISSIONS[href];
   if (!allowed) return true;
   return allowed.includes(normalizedRole as Role);
 }
 
-export default function Sidebar({ user, collapsed, onToggle }: { user: { name: string; role: string }; collapsed: boolean; onToggle: () => void }) {
+export default function Sidebar({
+  user,
+  collapsed,
+  onToggle,
+}: {
+  user: { name: string; role: string };
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<{ name: string; logo: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/settings/profile")
-      .then(res => res.json())
-      .then(data => setProfile({ name: data.name, logo: ensureHttpsUrl(data.logo) }))
+      .then((res) => res.json())
+      .then((data) => setProfile({ name: data.name, logo: ensureHttpsUrl(data.logo) }))
       .catch(console.error);
   }, []);
 
-  // Tutup mobile sidebar saat navigasi (Pola Optimasi React Render-time)
+  // Close mobile sidebar on route change
   const [prevPath, setPrevPath] = useState(pathname);
   if (pathname !== prevPath) {
     setPrevPath(pathname);
@@ -101,78 +107,105 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
 
   const sidebarContent = (
     <>
-      {/* Logo */}
-      <div className={`flex items-center shrink-0 ${collapsed ? "px-3 py-5 justify-center" : "px-5 py-5"}`} style={{ borderBottom: "1px solid #2C2C2E" }}>
+      {/* Sidebar Header */}
+      <div
+        className={`flex items-center shrink-0 border-b border-slate-200 bg-white ${
+          collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
+        }`}
+      >
         {profile?.logo ? (
-          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center p-0.5 border border-slate-800" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-            <Image src={ensureHttpsUrl(profile.logo)} alt="Logo" width={40} height={40} className="w-full h-full object-contain rounded-lg" />
+          <div className="shrink-0 w-9 h-9 rounded-lg overflow-hidden bg-white border border-slate-200 flex items-center justify-center p-0.5 shadow-xs">
+            <Image
+              src={ensureHttpsUrl(profile.logo)}
+              alt="Logo"
+              width={36}
+              height={36}
+              className="w-full h-full object-contain rounded"
+            />
           </div>
         ) : (
-          <div className="shrink-0" style={{ padding: 7, background: "linear-gradient(135deg, #00E5FF, #0284c7)", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,229,255,0.25)" }}>
-            <span className="w-7 h-7 flex items-center justify-center font-extrabold text-sm" style={{ color: "#000000" }}>
-              {profile?.name ? profile.name.charAt(0).toUpperCase() : "M"}
-            </span>
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+            {profile?.name ? profile.name.charAt(0).toUpperCase() : "M"}
           </div>
         )}
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
-            <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap">{profile?.name || "Nama Madrasah"}</span>
-            <p className="text-[10px] font-semibold text-[#00E5FF] tracking-wider uppercase">Management Digital</p>
+            <span className="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap block truncate">
+              {profile?.name || "Nama Madrasah"}
+            </span>
+            <p className="text-[10px] font-semibold text-blue-600 tracking-wider uppercase">
+              Management Digital
+            </p>
           </div>
         )}
       </div>
 
-      {/* Toggle Button */}
+      {/* Desktop Toggle Button */}
       <button
         onClick={onToggle}
-        className="hidden md:flex absolute -right-3 top-[72px] z-50 w-6 h-6 bg-[#0f172a] border border-slate-800 rounded-full items-center justify-center shadow-md hover:border-[#00E5FF] hover:bg-[#2C2C2E] transition-colors cursor-pointer"
+        aria-label={collapsed ? "Perluas menu sidebar" : "Ciutkan menu sidebar"}
+        className="hidden md:flex absolute -right-3 top-5 z-40 w-6 h-6 bg-white border border-slate-200 rounded-full items-center justify-center shadow-xs text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
       >
-        <svg className={`w-3 h-3 text-[#98989D] transition-transform ${collapsed ? "" : "rotate-180"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className={`w-3.5 h-3.5 transition-transform ${collapsed ? "" : "rotate-180"}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
-      {/* Nav */}
-      <div id="sidebar-nav" className="flex-1 overflow-y-auto py-4">
+      {/* Navigation Menu */}
+      <div id="sidebar-nav" className="flex-1 overflow-y-auto py-3 custom-scrollbar">
         <nav className={collapsed ? "px-2 space-y-0.5" : "px-3 space-y-0.5"}>
           {menuItems.map((group, gi) => {
-            const visibleItems = group.items.filter(item => {
-              if (item.href === "/cash-accounts") return true; // Buka paksa untuk diagnosa
+            const visibleItems = group.items.filter((item) => {
+              if (item.href === "/cash-accounts") return true;
               return hasMenuAccess(item.href, user.role);
             });
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={gi}>
+              <div key={gi} className="mb-2">
                 {!collapsed && (
-                  <div className={`px-3 pb-2 ${gi > 0 ? "pt-5 mt-3" : "pt-2"}`} style={gi > 0 ? { borderTop: "1px solid #2C2C2E" } : {}}>
-                    <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-[#98989D]">{group.group}</span>
+                  <div className={`px-3 pb-1 ${gi > 0 ? "pt-3" : "pt-1"}`}>
+                    <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                      {group.group}
+                    </span>
                   </div>
                 )}
-                {collapsed && gi > 0 && <div className="my-3 mx-2 border-t border-slate-800" />}
+                {collapsed && gi > 0 && <div className="my-2 mx-2 border-t border-slate-200" />}
+
                 {visibleItems.map((item, ii) => {
                   const isExternal = item.href.startsWith("__external:");
                   const externalUrl = isExternal ? item.href.replace("__external:", "") : null;
-                  const isActive = !isExternal && (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/")));
+                  const isActive =
+                    !isExternal &&
+                    (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/")));
 
                   const itemClassName = [
-                    "group flex items-center transition-all duration-200",
+                    "group flex items-center transition-all duration-150",
                     collapsed
-                      ? (isActive
-                          ? "justify-center p-3 my-0.5 rounded-xl bg-white/5 text-[#00E5FF] ring-1 ring-[#00E5FF]/40"
-                          : "justify-center p-3 my-0.5 rounded-xl text-[#98989D] hover:bg-white/5 hover:text-white")
-                      : (isActive
-                          ? "px-3 py-2.5 gap-3 rounded-r-xl border-l-4 border-[#00E5FF] text-white bg-white/5 shadow-xs"
-                          : "px-3 py-2.5 gap-3 rounded-r-xl border-l-4 border-transparent text-[#98989D] hover:bg-white/5 hover:text-white"),
+                      ? isActive
+                        ? "justify-center p-2.5 my-0.5 rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-200"
+                        : "justify-center p-2.5 my-0.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      : isActive
+                      ? "px-3 py-2 gap-3 rounded-r-lg border-l-4 border-blue-600 bg-blue-50 text-blue-700 font-medium"
+                      : "px-3 py-2 gap-3 rounded-r-lg border-l-4 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal",
                   ].join(" ");
 
                   const itemContent = (
                     <>
                       <svg
                         className={[
-                          "shrink-0 transition-colors duration-200",
+                          "shrink-0 transition-colors duration-150",
                           collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
-                          isActive ? "text-[#00E5FF]" : isExternal ? "text-emerald-400 group-hover:text-emerald-300" : "text-[#98989D] group-hover:text-white",
+                          isActive
+                            ? "text-blue-600"
+                            : isExternal
+                            ? "text-slate-500 group-hover:text-blue-600"
+                            : "text-slate-400 group-hover:text-slate-700",
                         ].join(" ")}
                         fill="none"
                         viewBox="0 0 24 24"
@@ -181,15 +214,27 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                       </svg>
                       {!collapsed && (
-                        <span className={`text-[13px] font-medium truncate flex-1 ${isActive ? "text-white font-semibold" : isExternal ? "text-emerald-400/90 group-hover:text-emerald-300" : ""}`}>
+                        <span className="text-[13px] truncate flex-1">
                           {item.name}
                         </span>
                       )}
                       {!collapsed && isExternal && (
-                        <span className="ml-auto text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-md shrink-0">↗</span>
+                        <svg
+                          className="w-3.5 h-3.5 ml-auto text-slate-400 group-hover:text-slate-600 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
                       )}
                       {isActive && !collapsed && !isExternal && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] shrink-0" />
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
                       )}
                     </>
                   );
@@ -220,24 +265,24 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
                     </Link>
                   );
                 })}
-
               </div>
             );
           })}
         </nav>
       </div>
 
-
       {/* User Footer */}
-      <div className={`shrink-0 ${collapsed ? "p-3" : "p-4"}`} style={{ borderTop: "1px solid #2C2C2E", background: "#161618" }}>
+      <div className={`shrink-0 border-t border-slate-200 bg-slate-50/70 ${collapsed ? "p-3" : "p-3.5"}`}>
         <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-          <div className="w-9 h-9 flex items-center justify-center font-bold text-sm rounded-lg shrink-0" style={{ background: "linear-gradient(135deg, #00E5FF, #0284c7)", color: "#000000" }}>
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs shrink-0">
             {initial}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">{user.name}</p>
-              <p className="text-[10px] font-bold text-[#00E5FF] uppercase tracking-wider">{user.role}</p>
+              <p className="text-xs font-semibold text-slate-900 truncate">{user.name}</p>
+              <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide truncate">
+                {user.role}
+              </p>
             </div>
           )}
         </div>
@@ -247,33 +292,36 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile Hamburger Trigger Button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0f172a] border border-slate-800 rounded-xl shadow-lg flex items-center justify-center text-[#98989D] hover:text-white cursor-pointer"
+        aria-label="Buka menu navigasi"
+        className="md:hidden fixed top-3.5 left-4 z-40 w-9 h-9 bg-white border border-slate-200 rounded-lg shadow-xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
-      {/* Mobile overlay */}
+      {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 h-full flex flex-col animate-fade-in border-r border-slate-800" style={{ background: "#0f172a" }}>
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="relative w-72 h-full flex flex-col bg-white border-r border-slate-200 shadow-xl animate-fade-in">
             {sidebarContent}
           </aside>
         </div>
       )}
 
-      {/* Desktop sidebar */}
+      {/* Desktop Sidebar */}
       <aside
         className={[
-          "hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out border-r border-slate-800",
-          collapsed ? "w-[72px]" : "w-[272px]",
+          "hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out bg-white border-r border-slate-200",
+          collapsed ? "w-[72px]" : "w-[264px]",
         ].join(" ")}
-        style={{ background: "#0f172a" }}
       >
         {sidebarContent}
       </aside>

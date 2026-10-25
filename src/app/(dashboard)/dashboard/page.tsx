@@ -11,6 +11,7 @@ import {
 import { getAuthUser, JwtPayload } from "@/lib/auth";
 import FilterBar from "@/components/FilterBar";
 import DashboardTabs from "@/components/DashboardTabs";
+import Link from "next/link";
 import { Suspense } from "react";
 import DashboardCharts from "@/components/DashboardCharts";
 import { and, eq, ilike, gte, lte, isNull, inArray, isNotNull, not, or, sql } from "drizzle-orm";
@@ -99,6 +100,7 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     savingsAggRes, billAggRes, wakafAggRes,
     coopTrxAggRes, coopCreditAggRes,
     counselingCountRes, announcementsCountRes, lettersCountRes,
+    recentBillsRes, recentTxRes,
   ] = await Promise.all([
     db.select({ 
       total: sql<number>`count(distinct ${students.id})`.mapWith(Number),
@@ -192,6 +194,31 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     db.select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(letters)
       .where(gte(letters.date, dateStart.toISOString().split('T')[0])),
+
+    db.select({
+      id: infaqBills.id,
+      studentName: students.name,
+      month: infaqBills.month,
+      year: infaqBills.year,
+      nominal: infaqBills.nominal,
+    })
+    .from(infaqBills)
+    .innerJoin(students, eq(infaqBills.studentId, students.id))
+    .where(and(eq(infaqBills.status, "belum_lunas"), isNull(infaqBills.deletedAt)))
+    .orderBy(sql`${infaqBills.id} desc`)
+    .limit(5),
+
+    db.select({
+      id: generalTransactions.id,
+      type: generalTransactions.type,
+      amount: generalTransactions.amount,
+      description: generalTransactions.description,
+      transactionDate: generalTransactions.transactionDate,
+    })
+    .from(generalTransactions)
+    .where(and(eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt)))
+    .orderBy(sql`${generalTransactions.createdAt} desc`)
+    .limit(5),
   ]);
 
   const stats = enrollmentCounts[0];
@@ -227,6 +254,8 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     announcementsCount: announcementsCountRes[0]?.count || 0,
     lettersCount: lettersCountRes[0]?.count || 0,
     currentMonthName: month || monthsList[now.getMonth()],
+    recentBills: recentBillsRes || [],
+    recentTransactions: recentTxRes || [],
   };
 };
 
@@ -298,24 +327,26 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
 
   return (
     <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="anim-hero" style={{ background: "linear-gradient(135deg,#0f172a 0%,#0f172a 50%,#0f172a 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.04)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.03)", borderRadius: "50%" }} />
-        <div style={{ padding: "1.5rem 2rem", position: "relative", zIndex: 10 }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 flex items-center justify-center rounded-xl" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", border: "1.5px solid rgba(255,255,255,0.15)" }}>
-                <svg className="w-5.5 h-5.5" style={{ color: "#f59e0b" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-              </div>
-              <div>
-                <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", color: "#fff" }}>Halo, {user?.name || "Administrator"}!</h2>
-                <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.5)", marginTop: "0.125rem" }}>Ringkasan Data Panel: {
+      {/* Clean Light Hero Header */}
+      <div className="bg-white rounded-md border border-slate-200 p-6 shadow-xs relative overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 flex items-center justify-center rounded-md bg-blue-50 text-blue-600 border border-blue-100">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 tracking-tight font-heading">
+                Halo, {user?.name || "Administrator"}!
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Ringkasan Data Panel: <span className="font-medium text-slate-700">{
                   activeTab === 'overview' ? 'Utama / General' : 
                   activeTab === 'finance' ? 'Keuangan & Pembayaran' : 
                   activeTab === 'academic' ? 'Akademik & Kesiswaan' : 'HR & Operasional'
-                }</p>
-              </div>
+                }</span>
+              </p>
             </div>
           </div>
         </div>
@@ -325,19 +356,19 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard anim={1} label="Siswa Aktif (Enroll)" value={data.totalSiswa} color="#2563eb" bg="#dbeafe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            footer={<><span>Putra: <strong style={{ color: "#2563eb" }}>{data.totalSiswaPa}</strong></span><span>Putri: <strong style={{ color: "#f59e0b" }}>{data.totalSiswaPi}</strong></span></>}
+            footer={<><span>Putra: <strong className="font-mono text-blue-600">{data.totalSiswaPa}</strong></span><span>Putri: <strong className="font-mono text-amber-500">{data.totalSiswaPi}</strong></span></>}
           />
           <KpiCard anim={2} label="Pemasukan (Netto)" value={fmtRp(data.pemasukanPeriode - data.pengeluaranPeriode)} color="#10b981" bg="#d1fae5" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" small
-            footer={<><span>{data.currentMonthName}: <strong style={{ color: "#10b981" }}>{fmtRp(data.pemasukanBulanIni - data.pengeluaranBulanIni)}</strong></span></>}
+            footer={<><span>{data.currentMonthName}: <strong className="font-mono text-emerald-600">{fmtRp(data.pemasukanBulanIni - data.pengeluaranBulanIni)}</strong></span></>}
           />
-          <KpiCard anim={3} label="Total Guru & Staff" value={data.totalGuru + data.totalStaff} color="#3b82f6" bg="#ede9fe" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            footer={<><span>Guru: <strong style={{ color: "#3b82f6" }}>{data.totalGuru}</strong></span><span>Staff: <strong style={{ color: "#a78bfa" }}>{data.totalStaff}</strong></span></>}
+          <KpiCard anim={3} label="Total Guru & Staff" value={data.totalGuru + data.totalStaff} color="#0284c7" bg="#e0f2fe" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            footer={<><span>Guru: <strong className="font-mono text-blue-600">{data.totalGuru}</strong></span><span>Staff: <strong className="font-mono text-sky-600">{data.totalStaff}</strong></span></>}
           />
           <KpiCard anim={4} label="Pendaftar PPDB" value={data.ppdbPending + data.ppdbDiterima} color="#0ea5e9" bg="#e0f2fe" icon="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            footer={<><span>Pending: <strong style={{ color: "#0ea5e9" }}>{data.ppdbPending}</strong></span><span>Diterima: <strong style={{ color: "#10b981" }}>{data.ppdbDiterima}</strong></span></>}
+            footer={<><span>Pending: <strong className="font-mono text-sky-600">{data.ppdbPending}</strong></span><span>Diterima: <strong className="font-mono text-emerald-600">{data.ppdbDiterima}</strong></span></>}
           />
           <KpiCard anim={5} label="Kepatuhan Lunas SPP" value={`${data.complianceRate}%`} color="#f59e0b" bg="#fef3c7" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            footer={<><span>Data Berdasarkan Filter Periode</span></>}
+            footer={<span className="text-slate-400">Berdasarkan Filter Periode</span>}
           />
         </div>
       )}
@@ -346,25 +377,25 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {activeTab === "finance" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard anim={1} label="Pemasukan Periode" value={fmtRp(data.pemasukanPeriode)} color="#10b981" bg="#d1fae5" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" small
-            footer={<><span>{data.currentMonthName}</span><strong style={{ color: "#10b981" }}>{fmtRp(data.pemasukanBulanIni)}</strong></>}
+            footer={<><span>{data.currentMonthName}</span><strong className="font-mono text-emerald-600">{fmtRp(data.pemasukanBulanIni)}</strong></>}
           />
           <KpiCard anim={2} label="Pengeluaran Periode" value={fmtRp(data.pengeluaranPeriode)} color="#f43f5e" bg="#ffe4e6" icon="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" small valueColor="#f43f5e"
-            footer={<><span>{data.currentMonthName}</span><strong style={{ color: "#f43f5e" }}>{fmtRp(data.pengeluaranBulanIni)}</strong></>}
+            footer={<><span>{data.currentMonthName}</span><strong className="font-mono text-rose-600">{fmtRp(data.pengeluaranBulanIni)}</strong></>}
           />
           <KpiCard anim={3} label="Tunggakan SPP (Siswa)" value={data.tunggakanTotal} color="#f43f5e" bg="#ffe4e6" icon="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" valueColor="#f43f5e"
-            footer={<><span>Siswa PA: <strong style={{ color: "#f43f5e" }}>{data.tunggakanPa}</strong></span><span>Siswa PI: <strong style={{ color: "#f43f5e" }}>{data.tunggakanPi}</strong></span></>}
+            footer={<><span>Siswa PA: <strong className="font-mono text-rose-600">{data.tunggakanPa}</strong></span><span>Siswa PI: <strong className="font-mono text-rose-600">{data.tunggakanPi}</strong></span></>}
           />
           <KpiCard anim={4} label="Estimasi Tunggakan (Nominal)" value={fmtRp(data.tunggakanTotalNominal)} color="#d97706" bg="#fef3c7" icon="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" small
-            footer={<><span>Total Piutang SPP</span><strong style={{ color: "#d97706" }}>Periode</strong></>}
+            footer={<><span>Total Piutang SPP</span><strong className="font-mono text-amber-600">Periode</strong></>}
           />
           <KpiCard anim={5} label="Saldo Tabungan Siswa" value={fmtRp(data.saldoTabungan)} color="#06b6d4" bg="#cffafe" icon="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" small
-            footer={<><span>Semua Kelas Aktif</span><strong style={{ color: "#06b6d4" }}>Balance</strong></>}
+            footer={<><span>Semua Kelas Aktif</span><strong className="font-mono text-cyan-600">Balance</strong></>}
           />
           <KpiCard anim={6} label="Saldo Wakaf (Net)" value={fmtRp(data.wakafNet)} color="#0ea5e9" bg="#e0f2fe" icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" small
-            footer={<><span>Kas Wakaf Tersedia</span><strong style={{ color: "#0ea5e9" }}>Netto</strong></>}
+            footer={<><span>Kas Wakaf Tersedia</span><strong className="font-mono text-sky-600">Netto</strong></>}
           />
           <KpiCard anim={7} label="Penyaluran Wakaf" value={fmtRp(data.wakafOut)} color="#f43f5e" bg="#ffe4e6" icon="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" small valueColor="#f43f5e"
-            footer={<><span>Dana Disalurkan</span><strong style={{ color: "#f43f5e" }}>Out</strong></>}
+            footer={<><span>Dana Disalurkan</span><strong className="font-mono text-rose-600">Out</strong></>}
           />
         </div>
       )}
@@ -372,17 +403,17 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {/* TAB AKADEMIK */}
       {activeTab === "academic" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard anim={1} label="Kelas Periode Ini" value={data.totalKelas} color="#22c55e" bg="#dcfce7" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            footer={<><span>Aktif: <strong style={{ color: "#22c55e" }}>{data.totalKelas}</strong></span><span>Siswa: <strong style={{ color: "#2563eb" }}>{data.totalSiswa}</strong></span></>}
+          <KpiCard anim={1} label="Kelas Periode Ini" value={data.totalKelas} color="#10b981" bg="#d1fae5" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            footer={<><span>Aktif: <strong className="font-mono text-emerald-600">{data.totalKelas}</strong></span><span>Siswa: <strong className="font-mono text-blue-600">{data.totalSiswa}</strong></span></>}
           />
           <KpiCard anim={2} label="Siswa Aktif Laki-Laki" value={data.totalSiswaPa} color="#0ea5e9" bg="#e0f2fe" icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            footer={<><span>Rasio Laki: <strong>{data.totalSiswa ? Math.round((data.totalSiswaPa/data.totalSiswa)*100) : 0}%</strong></span></>}
+            footer={<><span>Rasio Laki: <strong className="font-mono">{data.totalSiswa ? Math.round((data.totalSiswaPa/data.totalSiswa)*100) : 0}%</strong></span></>}
           />
-          <KpiCard anim={3} label="Siswa Aktif Perempuan" value={data.totalSiswaPi} color="#ec4899" bg="#fce7f3" icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            footer={<><span>Rasio Perempuan: <strong>{data.totalSiswa ? Math.round((data.totalSiswaPi/data.totalSiswa)*100) : 0}%</strong></span></>}
+          <KpiCard anim={3} label="Siswa Aktif Perempuan" value={data.totalSiswaPi} color="#f59e0b" bg="#fef3c7" icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            footer={<><span>Rasio Perempuan: <strong className="font-mono">{data.totalSiswa ? Math.round((data.totalSiswaPi/data.totalSiswa)*100) : 0}%</strong></span></>}
           />
           <KpiCard anim={4} label="Kasus/Catatan BK (Periode)" value={data.counselingCount} color="#2563eb" bg="#dbeafe" icon="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            footer={<><span>Riwayat Bimbingan</span><strong style={{ color: "#2563eb" }}>Konseling</strong></>}
+            footer={<><span>Riwayat Bimbingan</span><strong className="font-mono text-blue-600">Konseling</strong></>}
           />
         </div>
       )}
@@ -390,24 +421,104 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {/* TAB HR & UMUM */}
       {activeTab === "hr" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard anim={1} label="Total Tenaga Pengajar (Guru)" value={data.totalGuru} color="#3b82f6" bg="#ede9fe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            footer={<><span>Status Pegawai Aktif</span></>}
+          <KpiCard anim={1} label="Total Tenaga Pengajar (Guru)" value={data.totalGuru} color="#2563eb" bg="#dbeafe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            footer={<span>Status Pegawai Aktif</span>}
           />
-          <KpiCard anim={2} label="Total Tenaga Kependidikan" value={data.totalStaff} color="#3b82f6" bg="#dbeafe" icon="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            footer={<><span>Staf & Tata Usaha</span></>}
+          <KpiCard anim={2} label="Total Tenaga Kependidikan" value={data.totalStaff} color="#0284c7" bg="#e0f2fe" icon="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            footer={<span>Staf & Tata Usaha</span>}
           />
           <KpiCard anim={3} label="Omzet Koperasi (Periode)" value={fmtRp(data.coopTotal)} color="#10b981" bg="#d1fae5" icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" small
-            footer={<><span>Total: <strong>{data.coopCount}</strong> Trx</span><strong style={{ color: "#10b981" }}>Koperasi</strong></>}
+            footer={<><span>Total: <strong className="font-mono">{data.coopCount}</strong> Trx</span><strong className="font-mono text-emerald-600">Koperasi</strong></>}
           />
-          <KpiCard anim={4} label="Administrasi Tata Usaha" value={data.lettersCount} color="#94a3b8" bg="#f1f5f9" icon="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            footer={<><span>Surat: <strong>{data.lettersCount}</strong></span><span>Berita: <strong>{data.announcementsCount}</strong></span></>}
+          <KpiCard anim={4} label="Administrasi Tata Usaha" value={data.lettersCount} color="#64748b" bg="#f1f5f9" icon="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            footer={<><span>Surat: <strong className="font-mono">{data.lettersCount}</strong></span><span>Berita: <strong className="font-mono">{data.announcementsCount}</strong></span></>}
           />
         </div>
       )}
 
-      <Suspense fallback={<div className="h-64 bg-slate-100 rounded-xl animate-pulse mt-8 border border-slate-200"></div>}>
+      <Suspense fallback={<div className="h-64 bg-slate-100 rounded-md animate-pulse mt-8 border border-slate-200"></div>}>
         <DashboardCharts data={data} tab={activeTab} />
       </Suspense>
+
+      {/* ZERO-SCROLLBAR RULE: Recent Activities / Mutations & Arrears (Top 5 only, no vertical scrollbar) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+        {/* Card 1: Tunggakan SPP Teratas */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tunggakan SPP Terkini</h3>
+              </div>
+              <Link href="/infaq-bills" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 transition-colors">
+                Lihat Semua
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+            {data.recentBills.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center italic">Tidak ada tunggakan SPP aktif.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {data.recentBills.slice(0, 5).map((b) => (
+                  <div key={b.id} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                    <div>
+                      <p className="font-semibold text-slate-800">{b.studentName}</p>
+                      <p className="text-[11px] text-slate-500">Periode: {b.month} {b.year}</p>
+                    </div>
+                    <span className="font-mono font-bold text-rose-600 text-[13px]">{fmtRp(b.nominal)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-400 flex justify-between items-center">
+            <span>Maksimal 5 item ditampilkan</span>
+            <span className="font-mono font-medium text-slate-600">Total: {data.tunggakanTotal} tagihan</span>
+          </div>
+        </div>
+
+        {/* Card 2: Mutasi Kas Terbaru */}
+        <div className="bg-white rounded-md border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Mutasi Kas Terbaru</h3>
+              </div>
+              <Link href="/transactions" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 transition-colors">
+                Lihat Semua
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+            {data.recentTransactions.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center italic">Belum ada mutasi transaksi.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {data.recentTransactions.slice(0, 5).map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${tx.type === 'in' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                        {tx.type === 'in' ? 'Masuk' : 'Keluar'}
+                      </span>
+                      <div>
+                        <p className="font-semibold text-slate-800 line-clamp-1">{tx.description || "Transaksi Kas"}</p>
+                        <p className="text-[11px] font-mono text-slate-400">{tx.transactionDate || "-"}</p>
+                      </div>
+                    </div>
+                    <span className={`font-mono font-bold text-[13px] ${tx.type === 'in' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === 'in' ? '+' : '-'}{fmtRp(tx.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-400 flex justify-between items-center">
+            <span>Maksimal 5 mutasi terkini</span>
+            <span className="text-slate-500">Buku Kas Utama</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -416,15 +527,15 @@ function KpiCard({ anim, label, value, color, bg, icon, footer, small, valueColo
   anim: number; label: string; value: string | number; color: string; bg: string; icon: string; footer: React.ReactNode; small?: boolean; valueColor?: string;
 }) {
   return (
-    <div className={`kpi-card anim-card-${anim} bg-white p-5 rounded-xl border border-slate-200 relative overflow-hidden`}>
-      <div style={{ position: "absolute", right: -16, bottom: -16, width: 80, height: 80, background: bg, borderRadius: "50%", opacity: 0.5 }} />
+    <div className={`kpi-card anim-card-${anim} bg-white p-5 rounded-md border border-slate-200 relative overflow-hidden shadow-xs hover:border-slate-300 transition-colors`}>
+      <div style={{ position: "absolute", right: -16, bottom: -16, width: 80, height: 80, background: bg, borderRadius: "50%", opacity: 0.35 }} />
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div className="kpi-icon w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
+        <div className="kpi-icon w-10 h-10 rounded-md flex items-center justify-center mb-3" style={{ background: bg }}>
           <svg className="w-5 h-5" style={{ color }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} /></svg>
         </div>
-        <p style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
-        <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: small ? "1.25rem" : "1.5rem", color: valueColor || "#1e293b", marginTop: "0.25rem" }}>{value}</p>
-        <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between" style={{ fontSize: "0.6875rem", color: "#64748b" }}>
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+        <p className={`font-mono font-extrabold ${small ? 'text-xl' : 'text-2xl'} text-slate-800 mt-1 tracking-tight`} style={valueColor ? { color: valueColor } : undefined}>{value}</p>
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
           {footer}
         </div>
       </div>

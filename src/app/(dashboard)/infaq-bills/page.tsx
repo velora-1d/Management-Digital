@@ -461,32 +461,32 @@ function InfaqBillsContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Total Tagihan</p>
-          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalNominal) : "Rp 0"}</h3>
+          <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalNominal) : "Rp 0"}</h3>
           <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
-            {stats ? stats.totalBills : 0} item tagihan
+            <span className="font-mono">{stats ? stats.totalBills : 0}</span>&nbsp;item tagihan
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Terkumpul</p>
-          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalPaid) : "Rp 0"}</h3>
+          <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalPaid) : "Rp 0"}</h3>
           <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
-            {stats ? stats.lunasCount + stats.sebagianCount : 0} tagihan terbayar
+            <span className="font-mono">{stats ? stats.lunasCount + stats.sebagianCount : 0}</span>&nbsp;tagihan terbayar
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-rose-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tunggakan</p>
-          <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalUnpaid) : "Rp 0"}</h3>
+          <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalUnpaid) : "Rp 0"}</h3>
           <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span>
-            {stats ? stats.belumLunasCount : 0} tagihan belum lunas
+            <span className="font-mono">{stats ? stats.belumLunasCount : 0}</span>&nbsp;tagihan belum lunas
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Collection Rate</p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-bold text-slate-800">{stats ? stats.collectionRate.toFixed(1) : "0.0"}%</h3>
+            <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? stats.collectionRate.toFixed(1) : "0.0"}%</h3>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
             <div className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${stats ? Math.min(100, stats.collectionRate) : 0}%` }}></div>
@@ -616,30 +616,32 @@ function InfaqBillsContent() {
                 const idx = ((pagination.page - 1) * pagination.limit) + i + 1;
                 const initial = (b.student_name || "?").charAt(0).toUpperCase();
                 let statusBadge;
-                if (b.status === "lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>Lunas</span>;
-                else if (b.status === "sebagian") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>Sebagian</span>;
-                else if (b.status === "belum_lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>Belum Lunas</span>;
-                else statusBadge = <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6b7280", background: "#e5e7eb", borderRadius: 999 }}>Void</span>;
+                if (b.status === "lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", border: "1px solid #a7f3d0", borderRadius: 999 }}>Lunas</span>;
+                else if (b.status === "sebagian") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 999 }}>Sebagian</span>;
+                else if (b.status === "belum_lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", border: "1px solid #fecdd3", borderRadius: 999 }}>Belum Lunas</span>;
+                else statusBadge = <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#475569", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 999 }}>Void</span>;
 
                 return (
                   <tr key={b.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9", opacity: b.status === "void" ? 0.45 : 1 }}>
-                    <td style={{ padding: "1rem 1.5rem", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{idx}</td>
+                    <td className="font-mono" style={{ padding: "1rem 1.5rem", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600 }}>{idx}</td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <div style={{ width: 36, height: 36, background: "linear-gradient(135deg,#fef3c7,#fde68a)", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#b45309" }}>{initial}</div>
+                        <div style={{ width: 36, height: 36, background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#b45309" }}>{initial}</div>
                         <div>
                           <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{b.student_name || "-"}</p>
-                          <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>{b.nisn || "-"}</p>
+                          <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>
+                            NISN: <span className="font-mono text-slate-700 font-medium">{b.nisn || "-"}</span>
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{b.classroom || "-"}</span></td>
+                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{b.classroom || "-"}</span></td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{b.month || "-"}</p>
-                      <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>{b.academic_year || b.year || "-"}</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }} className="font-mono">{b.academic_year || b.year || "-"}</p>
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                      {b.nominal <= 0 ? <span style={{ fontWeight: 700, fontSize: "0.8125rem", color: "#059669" }}>GRATIS</span> : <span style={{ fontWeight: 700, fontSize: "0.8125rem", color: "#1e293b" }}>Rp {Number(b.nominal).toLocaleString("id-ID")}</span>}
+                      {b.nominal <= 0 ? <span style={{ fontWeight: 700, fontSize: "0.8125rem", color: "#059669" }}>GRATIS</span> : <span className="font-mono font-bold text-[13px] text-slate-800">Rp {Number(b.nominal).toLocaleString("id-ID")}</span>}
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>{statusBadge}</td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center", position: "relative" }}>

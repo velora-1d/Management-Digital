@@ -1,34 +1,36 @@
 "use client";
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "danger" | "ghost" | "outline";
-type Size = "sm" | "md" | "lg";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline" | "success";
+export type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   icon?: ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
 }
 
-const variantStyles: Record<Variant, string> = {
+const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md shadow-cyan-950/20 hover:brightness-110 hover:shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:-translate-y-0.5 active:translate-y-0 border-0",
+    "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 border border-transparent font-medium shadow-xs",
+  success:
+    "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 border border-transparent font-medium shadow-xs",
   secondary:
-    "bg-[#2C2C2E] text-slate-100 border border-[#3A3A3C] shadow-sm hover:bg-[#3A3A3C] hover:text-white hover:border-[#48484A] hover:-translate-y-0.5 active:translate-y-0 font-medium",
+    "bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border border-slate-300 text-slate-700 font-medium shadow-xs",
   danger:
-    "bg-linear-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-950/30 hover:brightness-110 hover:shadow-lg hover:shadow-rose-900/40 hover:-translate-y-0.5 active:translate-y-0 border-0 font-semibold",
+    "bg-white border border-rose-300 text-rose-600 hover:bg-rose-50 active:bg-rose-100 font-medium shadow-xs",
   ghost:
-    "bg-transparent text-slate-300 hover:bg-white/10 hover:text-white border-0 font-medium",
+    "bg-transparent text-slate-600 hover:bg-slate-100 active:bg-slate-200 hover:text-slate-900 border-0 font-medium",
   outline:
-    "bg-transparent text-[#00E5FF] border border-[#00E5FF]/40 hover:bg-[#00E5FF]/10 hover:border-[#00E5FF] hover:-translate-y-0.5 active:translate-y-0 font-semibold",
+    "bg-white text-blue-600 border border-slate-300 hover:bg-blue-50 hover:border-blue-400 active:bg-blue-100 font-medium shadow-xs",
 };
 
-const sizeStyles: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs gap-1.5 rounded-lg",
-  md: "px-4 py-2.5 text-sm gap-2 rounded-xl",
-  lg: "px-6 py-3 text-sm gap-2.5 rounded-xl",
+const sizeStyles: Record<ButtonSize, string> = {
+  sm: "px-2.5 py-1.5 text-xs gap-1.5 rounded-md",
+  md: "px-3.5 py-2 text-sm gap-2 rounded-md",
+  lg: "px-5 py-2.5 text-base gap-2.5 rounded-md",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -53,11 +55,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isDisabled}
         className={[
-          "inline-flex items-center justify-center transition-all duration-200 cursor-pointer select-none",
+          "inline-flex items-center justify-center transition-colors duration-150 cursor-pointer select-none",
           variantStyles[variant],
           sizeStyles[size],
           fullWidth ? "w-full" : "",
-          isDisabled ? "opacity-50 cursor-not-allowed translate-y-0! shadow-none! pointer-events-none" : "",
+          isDisabled ? "opacity-50 cursor-not-allowed shadow-none! pointer-events-none" : "",
           className,
         ]
           .filter(Boolean)

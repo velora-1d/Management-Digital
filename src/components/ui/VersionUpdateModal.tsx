@@ -22,20 +22,19 @@ export default function VersionUpdateModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto outline-none">
-      {/* Heavy glassmorphism overlay - menghalangi interaksi di luar modal */}
-      <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md transition-opacity duration-300" />
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300" />
 
-      {/* Modal Card dengan animasi fade-in-up */}
-      <div className="relative w-full max-w-md bg-[#1E1E1E] rounded-2xl shadow-2xl border border-[#2C2C2E] p-6 md:p-8 overflow-hidden animate-fade-in-up text-center select-none text-white">
+      {/* Modal Card */}
+      <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl border border-slate-200 p-6 md:p-8 overflow-hidden animate-fade-in-up text-center select-none text-slate-800">
         
-        {/* Dekorasi Garis Gradient di Bagian Atas */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600" />
+        {/* Dekorasi Garis di Bagian Atas */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600" />
 
-        {/* Warning Icon dengan efek pulse dan ping */}
-        <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-cyan-500/10 text-[#00E5FF] mb-6 relative">
-          <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" />
+        {/* Warning Icon */}
+        <div className="mx-auto flex items-center justify-center w-14 h-14 rounded-full bg-blue-50 text-blue-600 mb-5 relative border border-blue-100">
           <svg
-            className="w-8 h-8 relative z-10 animate-pulse"
+            className="w-7 h-7"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -50,12 +49,12 @@ export default function VersionUpdateModal({
         </div>
 
         {/* Informasi Update */}
-        <h3 className="font-heading font-extrabold text-2xl text-white mb-3 tracking-tight">
-          Aplikasi Diperbarui!
+        <h3 className="font-heading font-semibold text-xl text-slate-900 mb-2 tracking-tight">
+          Aplikasi Diperbarui
         </h3>
-        <p className="text-sm text-slate-400 leading-relaxed mb-8">
-          Versi baru aplikasi terdeteksi di server. Harap lakukan hard refresh 
-          agar Anda dapat menggunakan fitur-fitur terbaru secara stabil dan menghindari error.
+        <p className="text-sm text-slate-600 leading-relaxed mb-6">
+          Versi baru aplikasi terdeteksi di server. Harap muat ulang halaman 
+          agar Anda dapat menggunakan fitur terbaru secara stabil dan optimal.
         </p>
 
         {/* Tombol Refresh */}
@@ -66,24 +65,24 @@ export default function VersionUpdateModal({
             variant="primary"
             size="lg"
             fullWidth
-            className="group relative overflow-hidden transition-all duration-300 font-bold active:scale-[0.98]"
+            className="font-medium"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
+            <span className="flex items-center justify-center gap-2">
               <svg 
-                className={`w-5 h-5 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} 
+                className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor" 
-                strokeWidth={2.5}
+                strokeWidth={2}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 21v-5h-.582m-15.356-2A8.001 8.001 0 112.79 16.11" />
               </svg>
-              {isLoading ? "Memuat Ulang..." : "Refresh Sekarang"}
+              {isLoading ? "Memuat Ulang..." : "Muat Ulang Sekarang"}
             </span>
           </Button>
           
-          <span className="text-[10px] text-slate-400 mt-3 block">
-            Halaman akan dimuat ulang dengan menghapus data cache browser.
+          <span className="text-xs text-slate-400 mt-3 block">
+            Halaman akan dimuat ulang dengan memperbarui cache browser.
           </span>
         </div>
       </div>

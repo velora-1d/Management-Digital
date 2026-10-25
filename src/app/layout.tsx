@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import { getBuildId } from "@/lib/version";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-heading" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Management Digital | Velora",
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="next-build-id" content={buildId} />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} antialiased bg-slate-50 text-slate-800 min-h-screen`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} antialiased bg-slate-50 text-slate-800 min-h-screen`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

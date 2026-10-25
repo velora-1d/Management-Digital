@@ -1,63 +1,84 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
-interface PageHeaderProps {
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+export interface PageHeaderProps {
   title: string;
   subtitle?: string;
   icon?: ReactNode;
-  gradient?: string; // tailwind gradient classes
+  gradient?: string; // Kept for backward compatibility
   actions?: ReactNode;
-}
-
-const defaultGradient = "from-cyan-600 via-sky-600 to-blue-700";
-
-function sanitizeGradient(grad?: string): string {
-  if (!grad) return defaultGradient;
-  return grad
-    .replace(/indigo/g, "sky")
-    .replace(/purple/g, "cyan")
-    .replace(/violet/g, "blue")
-    .replace(/fuchsia/g, "cyan");
+  breadcrumb?: BreadcrumbItem[];
+  className?: string;
 }
 
 export default function PageHeader({
   title,
   subtitle,
   icon,
-  gradient = defaultGradient,
   actions,
+  breadcrumb,
+  className = "",
 }: PageHeaderProps) {
-  const activeGradient = sanitizeGradient(gradient);
-
   return (
     <div
-      className={`bg-linear-to-br ${activeGradient} rounded-2xl overflow-hidden relative shadow-lg shadow-cyan-950/20 border border-white/10`}
+      className={`bg-white rounded-lg border border-slate-200 p-5 shadow-xs ${className}`}
     >
-      {/* Dekorasi circles dengan clean cyan & blue highlight */}
-      <div className="absolute -right-6 -top-6 w-56 h-56 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute right-28 -bottom-10 w-44 h-44 bg-blue-400/20 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute left-1/3 top-0 w-64 h-32 bg-cyan-300/10 rounded-full blur-3xl pointer-events-none" />
+      {breadcrumb && breadcrumb.length > 0 && (
+        <nav aria-label="Breadcrumb" className="mb-2.5">
+          <ol className="flex items-center gap-1.5 text-xs text-slate-500 font-medium flex-wrap">
+            {breadcrumb.map((item, index) => {
+              const isLast = index === breadcrumb.length - 1;
+              return (
+                <li key={index} className="flex items-center gap-1.5">
+                  {index > 0 && <span className="text-slate-400">/</span>}
+                  {item.href && !isLast ? (
+                    <Link
+                      href={item.href}
+                      className="hover:text-blue-600 transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <span className={isLast ? "text-slate-900 font-semibold" : ""}>
+                      {item.label}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      )}
 
-      <div className="p-6 relative z-10">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {icon && (
-              <div className="w-11 h-11 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/25 shadow-sm shrink-0">
-                <span className="text-white [&>svg]:w-5 [&>svg]:h-5">{icon}</span>
-              </div>
-            )}
-            <div>
-              <h2 className="font-heading font-bold text-xl md:text-2xl text-white m-0 tracking-tight leading-tight">
-                {title}
-              </h2>
-              {subtitle && (
-                <p className="text-[13px] text-white/85 mt-0.5 leading-relaxed font-medium">{subtitle}</p>
-              )}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          {icon && (
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200/80 rounded-lg flex items-center justify-center text-blue-600 shrink-0 shadow-xs">
+              <span className="[&>svg]:w-5 [&>svg]:h-5">{icon}</span>
             </div>
-          </div>
-          {actions && (
-            <div className="flex items-center gap-2.5 flex-wrap">{actions}</div>
           )}
+          <div>
+            <h1 className="font-heading font-semibold text-xl text-slate-900 m-0 tracking-tight leading-tight">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5 leading-normal">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
+
+        {actions && (
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {actions}
+          </div>
+        )}
       </div>
     </div>
   );

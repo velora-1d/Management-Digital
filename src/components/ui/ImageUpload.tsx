@@ -66,7 +66,7 @@ export default function ImageUpload({
   return (
     <div className="space-y-3">
       {url && (
-        <div className="relative w-full max-w-[200px] aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
+        <div className="relative w-full max-w-[200px] aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={ensureHttpsUrl(url)} alt="Uploaded preview" className="object-cover w-full h-full" />
         </div>
@@ -94,7 +94,7 @@ export default function ImageUpload({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 shadow-sm"
+          className="px-3.5 py-1.5 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 shadow-xs cursor-pointer"
         >
           {isUploading ? (
              <svg className="animate-spin w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
@@ -108,20 +108,20 @@ export default function ImageUpload({
            <button
              type="button"
              onClick={() => setUrl("")}
-             className="px-3 py-2 text-sm font-semibold text-rose-600 bg-rose-50 rounded-xl hover:bg-rose-100 transition-colors"
+             className="px-3 py-1.5 text-sm font-medium text-rose-600 bg-white border border-rose-200 rounded-md hover:bg-rose-50 transition-colors cursor-pointer"
            >
              Hapus
            </button>
         )}
       </div>
-      {!url && <p className="text-xs text-slate-500 italic">Atau tempelkan URL langsung:</p>}
+      {!url && <p className="text-xs text-slate-500">Atau tempelkan URL langsung:</p>}
       {!url && (
         <input 
           type="text" 
           value={url}
           onChange={(e) => setUrl(ensureHttpsUrl(e.target.value))}
           placeholder={placeholder || "https://..."} 
-          className="w-full h-11 border border-[#2C2C2E] bg-[#121212] text-white rounded-xl px-4 focus:ring-2 focus:ring-[#00E5FF]/20 focus:border-[#00E5FF] outline-none text-sm shadow-sm placeholder:text-slate-500"
+          className="w-full h-9 border border-slate-300 bg-white text-slate-800 rounded-md px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm placeholder:text-slate-400 shadow-xs"
         />
       )}
     </div>

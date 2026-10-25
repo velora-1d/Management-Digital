@@ -20,6 +20,8 @@ interface StudentRecord {
   id: number;
   name: string;
   nisn?: string | null;
+  nik?: string | null;
+  birthDate?: string | null;
   gender: string;
   category: string;
   status: string;
@@ -100,7 +102,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
   const catColors: Record<string, string[]> = {
     reguler: ["#f1f5f9", "#475569"],
     yatim: ["#fef3c7", "#92400e"],
-    kurang_mampu: ["#ede9fe", "#6b21a8"],
+    kurang_mampu: ["#e0f2fe", "#0369a1"],
   };
 
   const statusColors: Record<string, string[]> = {
@@ -180,13 +182,13 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0", width: 50 }}>No</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Siswa</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Kategorisasi</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Kelas</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Status</th>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Aksi</th>
+              <tr style={{ background: "#f8fafc" }}>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0", width: 50 }}>No</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Siswa</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Kategorisasi</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Kelas</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Status</th>
+                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -198,8 +200,8 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
               ) : data.length === 0 ? (
                 <tr><td colSpan={6} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
-                      <svg style={{ width: 28, height: 28, color: "#3b82f6" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <div style={{ width: 64, height: 64, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                      <svg style={{ width: 28, height: 28, color: "#2563eb" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                     <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.9375rem", color: "#1e293b", margin: 0 }}>Belum Ada Data Siswa</p>
                     <p style={{ fontSize: "0.8125rem", color: "#94a3b8", marginTop: "0.375rem" }}>Periksa filter Anda atau klik tombol Tambah untuk menambahkan data siswa.</p>
@@ -214,29 +216,34 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
                   const catLabel = (s.category || "reguler").replace("_", " ").replace(/\b\w/g, (l:string) => l.toUpperCase());
 
                   return (
-                    <tr key={s.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "1rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600, verticalAlign: "middle" }}>{idx}</td>
+                    <tr key={s.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td className="font-mono" style={{ padding: "1rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600, verticalAlign: "middle" }}>{idx}</td>
                       <td style={{ padding: "1rem 1.5rem", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ width: 40, height: 40, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#2563eb" }}>{(s.name || "?").charAt(0).toUpperCase()}</div>
+                          <div style={{ width: 38, height: 38, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#2563eb" }}>{(s.name || "?").charAt(0).toUpperCase()}</div>
                           <div>
                             <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{s.name || "-"}</p>
-                            <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>NISN: {s.nisn || "-"} · {genderLabel}</p>
+                            <p style={{ fontSize: "0.6875rem", color: "#64748b", marginTop: "0.125rem" }}>
+                              NISN: <span className="font-mono text-slate-700 font-medium">{s.nisn || "-"}</span>
+                              {s.nik ? <> · NIK: <span className="font-mono text-slate-700 font-medium">{s.nik}</span></> : null}
+                              {s.birthDate ? <> · Tgl: <span className="font-mono text-slate-700 font-medium">{s.birthDate}</span></> : null}
+                              {" "}· {genderLabel}
+                            </p>
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: "1rem 1.5rem" }}>
-                        <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, borderRadius: 999, background: cc[0], color: cc[1] }}>{catLabel}</span>
+                        <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, borderRadius: 999, background: cc[0], color: cc[1], border: `1px solid ${cc[0] === '#f1f5f9' ? '#e2e8f0' : 'transparent'}` }}>{catLabel}</span>
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                         {(s.classroom && s.classroom.name) ? (
-                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom.name}</span>
+                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom.name}</span>
                         ) : (
-                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", padding: "0.25rem 0.625rem", borderRadius: 999 }}>Tanpa Kelas</span>
+                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", padding: "0.25rem 0.625rem", borderRadius: 999 }}>Tanpa Kelas</span>
                         )}
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
-                        <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, borderRadius: 999, textTransform: "capitalize", background: sc[0], color: sc[1] }}>{s.status || "-"}</span>
+                        <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, borderRadius: 999, textTransform: "capitalize", background: sc[0], color: sc[1], border: `1px solid ${sc[0] === '#e5e7eb' ? '#cbd5e1' : 'transparent'}` }}>{s.status || "-"}</span>
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center", position: "relative" }}>
                         <button 

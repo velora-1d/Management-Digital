@@ -55,7 +55,7 @@ function fmtRp(n: number) {
   return "Rp " + (n || 0).toLocaleString("id-ID");
 }
 
-const cardStyle: React.CSSProperties = { background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem", overflow: "hidden" };
+const cardStyle: React.CSSProperties = { background: "#ffffff", borderRadius: "0.375rem", border: "1px solid #e2e8f0", padding: "1.25rem", overflow: "hidden" };
 const titleStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" };
 
 // --- SUB-COMPONENTS (DECLARED OUTSIDE RENDER) ---
@@ -63,9 +63,9 @@ const titleStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 700, 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipItem[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", color: "#fff", padding: "0.5rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-      <p style={{ margin: 0, fontWeight: 700 }}>{payload[0].name || label}</p>
-      <p style={{ margin: "2px 0 0", color: "#94a3b8" }}>
+    <div style={{ background: "#ffffff", color: "#1e293b", padding: "0.5rem 0.75rem", borderRadius: "0.375rem", fontSize: "0.75rem", border: "1px solid #e2e8f0", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+      <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>{payload[0].name || label}</p>
+      <p className="font-mono" style={{ margin: "2px 0 0", color: "#2563eb", fontWeight: 700 }}>
         {typeof payload[0].value === "number" && payload[0].value > 999
           ? fmtRp(payload[0].value)
           : payload[0].value}
@@ -132,11 +132,11 @@ const ChartArusKas = ({ data }: ChartProps) => {
           <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : v} />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="masuk" fill="#10b981" radius={[6, 6, 0, 0]} barSize={30} name="Masuk" />
-          <Bar dataKey="keluar" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={30} name="Keluar" />
+          <Bar dataKey="masuk" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} name="Masuk" />
+          <Bar dataKey="keluar" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} name="Keluar" />
         </BarChart>
       </ResponsiveContainer>
-      <div style={{ textAlign: "center", padding: "0.375rem", background: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#ecfdf5" : "#fff1f2", borderRadius: "0.5rem", fontSize: "0.6875rem", fontWeight: 700, color: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#059669" : "#e11d48", marginTop: "0.5rem" }}>
+      <div className="font-mono" style={{ textAlign: "center", padding: "0.375rem", background: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#ecfdf5" : "#fff1f2", borderRadius: "0.375rem", fontSize: "0.6875rem", fontWeight: 700, color: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#059669" : "#e11d48", marginTop: "0.5rem" }}>
         Saldo: {fmtRp(data.pemasukanBulanIni - data.pengeluaranBulanIni)}
       </div>
     </div>
@@ -178,7 +178,7 @@ const ChartKepatuhanSPP = ({ data }: ChartProps) => {
           </RadialBarChart>
         </ResponsiveContainer>
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-          <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "1.5rem", color: "#1e293b", margin: 0 }}>{data.complianceRate}%</p>
+          <p className="font-mono" style={{ fontWeight: 800, fontSize: "1.5rem", color: "#1e293b", margin: 0 }}>{data.complianceRate}%</p>
           <p style={{ fontSize: "0.5625rem", color: "#94a3b8", margin: "2px 0 0" }}>Lunas</p>
         </div>
       </div>
@@ -200,12 +200,12 @@ const ChartDistribusiTunggakan = ({ data }: ChartProps) => {
           <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={35} name="Siswa">
-            {tunggakanData.map((_, i) => <Cell key={i} fill={["#2563eb", "#f59e0b"][i]} />)}
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={35} name="Siswa">
+            {tunggakanData.map((_, i) => <Cell key={i} fill={["#2563eb", "#0ea5e9"][i]} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <div style={{ textAlign: "center", padding: "0.375rem", background: "#fff1f2", borderRadius: "0.5rem", fontSize: "0.6875rem", fontWeight: 700, color: "#e11d48", marginTop: "0.5rem" }}>
+      <div className="font-mono" style={{ textAlign: "center", padding: "0.375rem", background: "#fff1f2", borderRadius: "0.375rem", fontSize: "0.6875rem", fontWeight: 700, color: "#e11d48", marginTop: "0.5rem" }}>
         Total: {data.tunggakanTotal} siswa
       </div>
     </div>
@@ -226,8 +226,8 @@ const ChartTabunganWakaf = ({ data }: ChartProps) => {
           <XAxis type="number" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : v} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} width={70} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(37, 99, 235,0.06)" }} />
-          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20} name="Nominal">
-            {danaData.map((_, i) => <Cell key={i} fill={["#06b6d4", "#d97706"][i]} />)}
+          <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} name="Nominal">
+            {danaData.map((_, i) => <Cell key={i} fill={["#06b6d4", "#0284c7"][i]} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -237,32 +237,32 @@ const ChartTabunganWakaf = ({ data }: ChartProps) => {
 
 const ChartRingkasanKeuangan = ({ data }: ChartProps) => {
   return (
-    <div style={{ background: "linear-gradient(135deg,#0f172a,#0f172a)", borderRadius: "1rem", padding: "1.25rem", color: "#fff", display: "flex", flexDirection: "column", height: "100%" }}>
-      <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Ringkasan Keuangan</p>
+    <div style={{ background: "#ffffff", borderRadius: "0.375rem", border: "1px solid #e2e8f0", padding: "1.25rem", color: "#1e293b", display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)" }}>
+      <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Ringkasan Keuangan</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", flex: 1, justifyContent: "center" }}>
         {[
-          { label: "Pemasukan", value: fmtRp(data.pemasukanBulanIni), color: "#34d399" },
-          { label: "Pengeluaran", value: fmtRp(data.pengeluaranBulanIni), color: "#fb7185" },
+          { label: "Pemasukan", value: fmtRp(data.pemasukanBulanIni), color: "#059669" },
+          { label: "Pengeluaran", value: fmtRp(data.pengeluaranBulanIni), color: "#e11d48" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)" }}>{item.label}</span>
-            <strong style={{ fontSize: "0.9375rem", color: item.color }}>{item.value}</strong>
+            <span style={{ fontSize: "0.75rem", color: "#64748b" }}>{item.label}</span>
+            <strong className="font-mono" style={{ fontSize: "0.9375rem", color: item.color }}>{item.value}</strong>
           </div>
         ))}
-        <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
+        <div style={{ height: 1, background: "#f1f5f9" }} />
         {[
-          { label: "Tabungan", value: fmtRp(data.saldoTabungan), color: "#67e8f9" },
-          { label: "Wakaf", value: fmtRp(data.wakafNet), color: "#fcd34d" },
+          { label: "Tabungan", value: fmtRp(data.saldoTabungan), color: "#0891b2" },
+          { label: "Wakaf", value: fmtRp(data.wakafNet), color: "#0284c7" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)" }}>{item.label}</span>
-            <strong style={{ fontSize: "0.9375rem", color: item.color }}>{item.value}</strong>
+            <span style={{ fontSize: "0.75rem", color: "#64748b" }}>{item.label}</span>
+            <strong className="font-mono" style={{ fontSize: "0.9375rem", color: item.color }}>{item.value}</strong>
           </div>
         ))}
-        <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
+        <div style={{ height: 1, background: "#f1f5f9" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>Saldo Bulan Ini</span>
-          <strong style={{ fontSize: "1.125rem", color: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#34d399" : "#fb7185" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1e293b" }}>Saldo Bulan Ini</span>
+          <strong className="font-mono" style={{ fontSize: "1.125rem", color: data.pemasukanBulanIni >= data.pengeluaranBulanIni ? "#059669" : "#e11d48" }}>
             {fmtRp(data.pemasukanBulanIni - data.pengeluaranBulanIni)}
           </strong>
         </div>
