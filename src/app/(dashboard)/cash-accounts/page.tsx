@@ -97,7 +97,7 @@ function CashAccountsContent() {
       text: `Akun "${name}" akan dihapus secara soft-delete.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#4f46e5',
+      confirmButtonColor: '#1d4ed8',
       cancelButtonColor: '#ef4444',
       confirmButtonText: 'Ya, Hapus!',
       cancelButtonText: 'Batal'
@@ -137,7 +137,7 @@ function CashAccountsContent() {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wider uppercase">
             <ShieldCheck className="w-3.5 h-3.5" />
             Finansial & Kas
           </div>
@@ -160,7 +160,7 @@ function CashAccountsContent() {
               setForm({ accountName: "", accountNumber: "", bankName: "", status: "active" });
               setModalOpen(true);
             }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-xl shadow-indigo-200 active:scale-95"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-xl shadow-blue-200 active:scale-95"
           >
             <Plus className="w-5 h-5" />
             Tambah Akun Baru
@@ -198,11 +198,11 @@ function CashAccountsContent() {
           </div>
         </div>
 
-        <div className="bg-linear-to-br from-indigo-600 to-violet-700 p-6 rounded-3xl shadow-xl shadow-indigo-100 relative overflow-hidden text-white">
+        <div className="bg-linear-to-br from-cyan-600 to-blue-700 p-6 rounded-3xl shadow-xl shadow-blue-100 relative overflow-hidden text-white">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <Landmark className="w-24 h-24" />
           </div>
-          <p className="text-indigo-100 font-medium mb-1 truncate">Akun Teraktif</p>
+          <p className="text-blue-100 font-medium mb-1 truncate">Akun Teraktif</p>
           <h3 className="text-2xl font-bold truncate">
             {items.length > 0 ? items.sort((a,b) => b.transactionCount - a.transactionCount)[0].accountName : 'N/A'}
           </h3>
@@ -217,13 +217,13 @@ function CashAccountsContent() {
         {/* Table Controls */}
         <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <input 
               type="text"
               placeholder="Cari nama akun atau bank..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-100 outline-none placeholder:text-slate-400 text-slate-700 font-medium transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-400 text-slate-700 font-medium transition-all"
             />
           </div>
           
@@ -283,11 +283,11 @@ function CashAccountsContent() {
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform shadow-sm">
                           {item.bankName ? <Landmark className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
                         </div>
                         <div>
-                          <p className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase">{item.accountName}</p>
+                          <p className="font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase">{item.accountName}</p>
                           <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
                             <Hash className="w-3 h-3" />
                             <span>ID: KAS-{item.id.toString().padStart(4, '0')}</span>
@@ -332,7 +332,7 @@ function CashAccountsContent() {
                             });
                             setModalOpen(true);
                           }}
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg shadow-sm transition-all"
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg shadow-sm transition-all"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
@@ -369,7 +369,7 @@ function CashAccountsContent() {
                 <h3 className="text-xl font-black text-slate-900 uppercase">{editingId ? "Update Akun" : "Registrasi Akun"}</h3>
                 <p className="text-sm text-slate-400 font-medium">Lengkapi parameter akun kas dengan benar.</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
                  <CreditCard className="w-6 h-6" />
               </div>
             </div>
@@ -379,14 +379,14 @@ function CashAccountsContent() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Identitas Akun</label>
                 <div className="relative group">
-                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
                       <LayoutGrid className="w-5 h-5" />
                    </div>
                   <input
                     type="text"
                     required
                     placeholder="Contoh: Kas Utama Bendahara"
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
                     value={form.accountName}
                     onChange={(e) => setForm({ ...form, accountName: e.target.value })}
                   />
@@ -397,13 +397,13 @@ function CashAccountsContent() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Bank (Optional)</label>
                   <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
                         <Building2 className="w-5 h-5" />
                     </div>
                     <input
                       type="text"
                       placeholder="BSI / Mandiri / dll"
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
                       value={form.bankName}
                       onChange={(e) => setForm({ ...form, bankName: e.target.value })}
                     />
@@ -412,13 +412,13 @@ function CashAccountsContent() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nomor Rekening</label>
                   <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
                         <Hash className="w-5 h-5" />
                     </div>
                     <input
                       type="text"
                       placeholder="Masukan angka saja"
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
                       value={form.accountNumber}
                       onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
                     />

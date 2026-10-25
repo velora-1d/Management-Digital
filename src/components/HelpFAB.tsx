@@ -22,10 +22,10 @@ export default function HelpFAB() {
       className={`
         fixed bottom-6 right-6 z-40
         w-14 h-14 rounded-full
-        bg-linear-to-br from-indigo-500 to-indigo-600
-        text-white shadow-lg shadow-indigo-500/30
+        bg-linear-to-br from-blue-500 to-blue-600
+        text-white shadow-lg shadow-blue-500/30
         flex items-center justify-center
-        hover:scale-110 hover:shadow-xl hover:shadow-indigo-500/40
+        hover:scale-110 hover:shadow-xl hover:shadow-blue-500/40
         active:scale-95
         transition-all duration-300 ease-out
         group

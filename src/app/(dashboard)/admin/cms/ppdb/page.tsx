@@ -80,7 +80,7 @@ export default function PpdbCMS() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function PpdbCMS() {
       {/* Header */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function PpdbCMS() {
         <button 
           onClick={handleSubmit}
           disabled={saving}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
         >
           <Save className="w-5 h-5" />
           {saving ? "Menyimpan..." : "Simpan Perubahan"}
@@ -113,7 +113,7 @@ export default function PpdbCMS() {
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ToggleLeft className="w-5 h-5 text-indigo-500" />
+              <ToggleLeft className="w-5 h-5 text-blue-500" />
               Status & Periode
             </h3>
             
@@ -125,7 +125,7 @@ export default function PpdbCMS() {
                     <button
                       key={s}
                       onClick={() => setFormData({...formData, ppdb_status: s})}
-                      className={`flex-1 py-2 rounded-lg font-bold capitalize transition-all ${formData.ppdb_status === s ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                      className={`flex-1 py-2 rounded-lg font-bold capitalize transition-all ${formData.ppdb_status === s ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                     >
                       {s}
                     </button>
@@ -138,7 +138,7 @@ export default function PpdbCMS() {
                   type="text" 
                   value={formData.ppdb_year}
                   onChange={(e) => setFormData({...formData, ppdb_year: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="2024/2025"
                 />
               </div>
@@ -148,7 +148,7 @@ export default function PpdbCMS() {
                   type="text" 
                   value={formData.ppdb_start_date}
                   onChange={(e) => setFormData({...formData, ppdb_start_date: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="1 Januari 2024"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function PpdbCMS() {
                   type="text" 
                   value={formData.ppdb_end_date}
                   onChange={(e) => setFormData({...formData, ppdb_end_date: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="30 Juni 2024"
                 />
               </div>
@@ -167,7 +167,7 @@ export default function PpdbCMS() {
 
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-indigo-500" />
+              <CreditCard className="w-5 h-5 text-blue-500" />
               Biaya & Kontak
             </h3>
             
@@ -178,7 +178,7 @@ export default function PpdbCMS() {
                   type="text" 
                   value={formData.ppdb_fee}
                   onChange={(e) => setFormData({...formData, ppdb_fee: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="Rp 250.000"
                 />
               </div>
@@ -188,7 +188,7 @@ export default function PpdbCMS() {
                   type="text" 
                   value={formData.ppdb_whatsapp}
                   onChange={(e) => setFormData({...formData, ppdb_whatsapp: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="628xxxxxxxxxx"
                 />
               </div>
@@ -200,7 +200,7 @@ export default function PpdbCMS() {
         <div className="space-y-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-500" />
+              <Users className="w-5 h-5 text-blue-500" />
               Kuota Santri
             </h3>
             <div className="space-y-4">
@@ -210,7 +210,7 @@ export default function PpdbCMS() {
                   type="number" 
                   value={formData.ppdb_quota}
                   onChange={(e) => setFormData({...formData, ppdb_quota: e.target.value})}
-                  className="w-full text-3xl font-black text-center text-slate-900 bg-slate-50 py-4 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-3xl font-black text-center text-slate-900 bg-slate-50 py-4 rounded-2xl border-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -219,7 +219,7 @@ export default function PpdbCMS() {
                   type="number" 
                   value={formData.ppdb_registered}
                   onChange={(e) => setFormData({...formData, ppdb_registered: e.target.value})}
-                  className="w-full text-3xl font-black text-center text-indigo-600 bg-indigo-50 py-4 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-3xl font-black text-center text-blue-600 bg-blue-50 py-4 rounded-2xl border-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function PpdbCMS() {
 
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-indigo-500" />
+              <ImageIcon className="w-5 h-5 text-blue-500" />
               Banner PPDB
             </h3>
             <ImageUpload 

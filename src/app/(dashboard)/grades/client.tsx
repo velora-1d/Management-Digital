@@ -210,7 +210,7 @@ export default function GradesPage({
       <PageHeader
         title="Manajemen Nilai & Deskripsi"
         subtitle="Input penilaian terstruktur dan otomatisasi pembuatan deskripsi capaian kompetensi."
-        icon={<ClipboardCheck className="w-6 h-6 text-indigo-600" />}
+        icon={<ClipboardCheck className="w-6 h-6 text-blue-600" />}
       />
 
       {/* Filter Section */}
@@ -219,7 +219,7 @@ export default function GradesPage({
           <label>
             <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tahun Ajaran</span>
             <select
-              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               value={selectedYearId}
               onChange={(e) => setSelectedYearId(e.target.value)}
             >
@@ -230,7 +230,7 @@ export default function GradesPage({
           <label>
             <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Semester</span>
             <select
-              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
             >
@@ -241,7 +241,7 @@ export default function GradesPage({
           <label>
             <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kelas</span>
             <select
-              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
             >
@@ -252,7 +252,7 @@ export default function GradesPage({
           <label>
             <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mata Pelajaran</span>
             <select
-              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               value={selectedSubjectId}
               onChange={(e) => setSelectedSubjectId(e.target.value)}
             >
@@ -283,21 +283,21 @@ export default function GradesPage({
           <div className="flex flex-wrap border-b border-slate-100 bg-slate-50/50">
             <button
               onClick={() => setActiveTab("input")}
-              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'input' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'input' ? 'text-blue-600 border-blue-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
               <Search className="w-4 h-4" />
               1. Input Nilai
             </button>
             <button
               onClick={() => setActiveTab("akhir")}
-              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'akhir' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'akhir' ? 'text-blue-600 border-blue-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
               <Calculator className="w-4 h-4" />
               2. Kalkulasi Akhir
             </button>
             <button
               onClick={() => setActiveTab("deskripsi")}
-              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'deskripsi' ? 'text-indigo-600 border-indigo-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
+              className={`px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 border-b-2 ${activeTab === 'deskripsi' ? 'text-blue-600 border-blue-600 bg-white' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50'}`}
             >
               <FileText className="w-4 h-4" />
               3. Deskripsi Naratif
@@ -311,7 +311,7 @@ export default function GradesPage({
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-bold text-slate-700 whitespace-nowrap">Pilih Komponen:</span>
                     <select
-                      className="rounded-lg border-slate-200 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-w-[240px]"
+                      className="rounded-lg border-slate-200 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 min-w-[240px]"
                       value={selectedComponentId}
                       onChange={(e) => setSelectedComponentId(e.target.value)}
                     >
@@ -321,7 +321,7 @@ export default function GradesPage({
                   </div>
                   <div className="px-4 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">KKM Dasar:</span>
-                    <span className="text-sm font-black text-indigo-700">{kkm}</span>
+                    <span className="text-sm font-black text-blue-700">{kkm}</span>
                   </div>
                 </div>
 
@@ -331,7 +331,7 @@ export default function GradesPage({
                     <p className="italic text-sm">Pilih kelas, mapel, dan komponen penilaian.</p>
                   </div>
                 ) : loading ? (
-                  <div className="py-12 text-center text-indigo-600 font-medium animate-pulse">Memuat data penilaian...</div>
+                  <div className="py-12 text-center text-blue-600 font-medium animate-pulse">Memuat data penilaian...</div>
                 ) : (
                   <div className="space-y-6">
                     <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
@@ -358,13 +358,13 @@ export default function GradesPage({
                                   <input
                                     type="number"
                                     min="0" max="100"
-                                    className={`w-24 text-center text-lg font-bold border rounded-lg px-2 py-1.5 outline-none transition-all focus:ring-4 ${isUnderKkm ? "border-red-200 text-red-600 bg-red-50 focus:ring-red-100" : "border-slate-200 text-slate-700 focus:border-indigo-500 focus:ring-indigo-100"}`}
+                                    className={`w-24 text-center text-lg font-bold border rounded-lg px-2 py-1.5 outline-none transition-all focus:ring-4 ${isUnderKkm ? "border-red-200 text-red-600 bg-red-50 focus:ring-red-100" : "border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-100"}`}
                                     value={nilai || ""}
                                     onChange={(e) => handleGradeChange(student.id, Number(e.target.value))}
                                   />
                                 </td>
                                 <td className="px-4 py-3.5 text-center">
-                                  <span className={`px-2 py-1 rounded text-xs font-black ${g?.predikat ? "bg-indigo-50 text-indigo-700" : "text-slate-300"}`}>
+                                  <span className={`px-2 py-1 rounded text-xs font-black ${g?.predikat ? "bg-blue-50 text-blue-700" : "text-slate-300"}`}>
                                     {g?.predikat || "-"}
                                   </span>
                                 </td>
@@ -378,7 +378,7 @@ export default function GradesPage({
                     <div className="flex justify-end pt-2">
                       <button 
                         onClick={saveGrades} 
-                        className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all"
+                        className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-0.5 transition-all"
                       >
                         <Save className="w-4 h-4" />
                         Simpan Draft Nilai
@@ -391,7 +391,7 @@ export default function GradesPage({
 
             {activeTab === "akhir" && (
               <div className="space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-linear-to-r from-indigo-600 to-violet-600 p-6 rounded-2xl shadow-lg shadow-indigo-100 text-white">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-linear-to-r from-cyan-500 to-blue-600 p-6 rounded-2xl shadow-lg shadow-blue-100 text-white">
                   <div className="space-y-1">
                     <h3 className="text-lg font-bold">Kalkulasi Nilai Akhir</h3>
                     <p className="text-white/80 text-sm max-w-xl">
@@ -400,7 +400,7 @@ export default function GradesPage({
                   </div>
                   <button 
                     onClick={hitungNilaiAkhir} 
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-sm whitespace-nowrap"
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm whitespace-nowrap"
                   >
                     <Zap className="w-5 h-5 fill-current" />
                     Proses Sekarang
@@ -409,7 +409,7 @@ export default function GradesPage({
 
                 {loading ? (
                   <div className="p-20 text-center space-y-4">
-                    <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                     <p className="text-slate-500 font-medium">Mengkalkulasi nilai akhir...</p>
                   </div>
                 ) : finalGrades.length === 0 ? (
@@ -438,7 +438,7 @@ export default function GradesPage({
                             <td className="px-4 py-4 text-center font-medium">{f.nilaiPengetahuan}</td>
                             <td className="px-4 py-4 text-center font-medium">{f.nilaiKeterampilan}</td>
                             <td className="px-4 py-4 text-center">
-                              <span className="text-lg font-black text-indigo-600">{f.nilaiAkhir}</span>
+                              <span className="text-lg font-black text-blue-600">{f.nilaiAkhir}</span>
                             </td>
                             <td className="px-4 py-4 text-center">
                               <span className="px-2 py-1 bg-slate-100 rounded font-black text-slate-700">{f.predikat}</span>
@@ -481,7 +481,7 @@ export default function GradesPage({
                   <div className="space-y-6">
                     <div className="grid gap-4">
                       {finalGrades.map((f) => (
-                        <div key={f.id} className="group p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-300 hover:shadow-md transition-all">
+                        <div key={f.id} className="group p-5 bg-white border border-slate-200 rounded-2xl hover:border-blue-300 hover:shadow-md transition-all">
                           <div className="flex justify-between items-center mb-3">
                             <h4 className="font-bold text-slate-800 flex items-center gap-2">
                               {f.student?.name}
@@ -489,11 +489,11 @@ export default function GradesPage({
                             </h4>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-bold text-slate-500">Nilai Akhir:</span>
-                              <span className="text-sm font-black text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded italic">{f.nilaiAkhir} ({f.predikat})</span>
+                              <span className="text-sm font-black text-blue-600 px-2 py-0.5 bg-blue-50 rounded italic">{f.nilaiAkhir} ({f.predikat})</span>
                             </div>
                           </div>
                           <textarea
-                            className="w-full min-h-[100px] text-sm leading-relaxed border-slate-200 bg-slate-50/50 rounded-xl p-4 outline-none transition-all focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-400"
+                            className="w-full min-h-[100px] text-sm leading-relaxed border-slate-200 bg-slate-50/50 rounded-xl p-4 outline-none transition-all focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-400"
                             defaultValue={f.deskripsi}
                             placeholder="Tuliskan catatan kemajuan belajar atau deskripsi naratif di sini..."
                           />
@@ -502,7 +502,7 @@ export default function GradesPage({
                     </div>
                     
                     <div className="flex justify-end sticky bottom-6">
-                      <button className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all">
+                      <button className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-xl shadow-blue-100 hover:bg-blue-700 hover:-translate-y-1 transition-all">
                         <Save className="w-5 h-5" />
                         Simpan Semua Deskripsi
                       </button>

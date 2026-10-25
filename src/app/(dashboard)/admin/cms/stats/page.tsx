@@ -33,10 +33,10 @@ const ICON_OPTIONS = [
 
 const COLOR_OPTIONS = [
   { name: "Amber", value: "from-amber-500 to-orange-600" },
-  { name: "Blue", value: "from-blue-500 to-indigo-600" },
+  { name: "Blue", value: "from-blue-500 to-blue-600" },
   { name: "Emerald", value: "from-emerald-500 to-teal-600" },
   { name: "Rose", value: "from-rose-500 to-pink-600" },
-  { name: "Purple", value: "from-purple-500 to-violet-600" },
+  { name: "Cyan", value: "from-cyan-500 to-blue-600" },
 ];
 
 export default function StatsCMS() {

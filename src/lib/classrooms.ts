@@ -7,14 +7,20 @@ export async function getClassroomsList({
   limit = 10,
   q = "",
   academicYearId,
+  tenantId,
 }: {
   page?: number;
   limit?: number;
   q?: string;
   academicYearId?: number | null;
+  tenantId?: number | null;
 }) {
   const skip = (page - 1) * limit;
   const conditions = [isNull(classrooms.deletedAt)];
+
+  if (tenantId) {
+    conditions.push(eq(classrooms.tenantId, tenantId));
+  }
 
   if (q) {
     conditions.push(ilike(classrooms.name, `%${q}%`));

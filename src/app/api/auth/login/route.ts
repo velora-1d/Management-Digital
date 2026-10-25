@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { verifyPassword, setAuthCookie, isLegacyHash, hashPassword } from "@/lib/auth";
+import { getTenantFromHost, resolveTenant } from "@/lib/tenant";
 
 // =============================================================
 // Rate Limiting — in-memory, cukup untuk single-instance deploy
@@ -64,6 +65,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const host = request.headers.get("host") || request.headers.get("x-forwarded-host");
+    const headerTenantSlug = request.headers.get("x-tenant-slug");
+    const tenantSlug = headerTenantSlug || getTenantFromHost(host);
+    const tenant = await resolveTenant(tenantSlug);
+    const tenantId = tenant.id;
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -88,6 +95,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "Email atau password salah." },
         { status: 401 }
+      );
+    }
+
+    // Periksa keterikatan pengguna pada tenant (superadmin diizinkan lintas tenant)
+    if (user.role !== "superadmin" && user.tenantId && user.tenantId !== tenantId) {
+      recordAttempt(ip);
+      return NextResponse.json(
+        { success: false, message: "Pengguna tidak terdaftar pada instansi/sekolah ini." },
+        { status: 403 }
       );
     }
 
@@ -117,7 +133,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Set cookie JWT
+    const activeTenantId = user.role === "superadmin" ? tenantId : (user.tenantId || tenantId);
+
+    // Set cookie JWT dengan menyertakan tenantId dan tenantSlug
     await setAuthCookie(
       {
         userId: user.id,
@@ -125,6 +143,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
         unitId: user.unitId || "",
+        tenantId: activeTenantId,
+        tenantSlug: tenant.slug,
       },
       { secure: isSecureRequest }
     );
@@ -137,6 +157,8 @@ export async function POST(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
+        tenantId: activeTenantId,
+        tenantSlug: tenant.slug,
       },
     });
   } catch (error) {

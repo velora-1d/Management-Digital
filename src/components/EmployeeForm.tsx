@@ -70,7 +70,7 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
           title: title,
           text: json.message,
           icon: "success",
-          confirmButtonColor: "#6366f1",
+          confirmButtonColor: "#2563eb",
         }).then(() => router.push(backUrl));
       } else {
         Swal.fire("Gagal", json.message || "Error", "error");
@@ -83,7 +83,7 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
   };
 
   const gradientColor = isGuru
-    ? "linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a78bfa 100%)"
+    ? "linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#a78bfa 100%)"
     : "linear-gradient(135deg,#0ea5e9 0%,#0284c7 50%,#0369a1 100%)";
 
   return (
@@ -109,22 +109,22 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
       <form onSubmit={handleSubmit}>
         {/* A. Identitas */}
         <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
-          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.875rem", fontWeight: 700, color: isGuru ? "#6366f1" : "#0ea5e9", margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ width: "1.5rem", height: "1.5rem", background: isGuru ? "#eef2ff" : "#e0f2fe", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", color: isGuru ? "#4f46e5" : "#0284c7", fontWeight: 800 }}>A</span>
+          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.875rem", fontWeight: 700, color: isGuru ? "#2563eb" : "#0ea5e9", margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ width: "1.5rem", height: "1.5rem", background: isGuru ? "#eff6ff" : "#e0f2fe", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", color: isGuru ? "#1d4ed8" : "#0284c7", fontWeight: 800 }}>A</span>
             Identitas Pegawai
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Nama Lengkap (Beserta Gelar) <span style={{ color: "#e11d48" }}>*</span></label>
-              <input type="text" name="name" value={f.name} onChange={handleChange} required placeholder={isGuru ? "Contoh: Ahmad Dahlan, S.Pd." : "Contoh: Siti Aminah"} style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              <input type="text" name="name" value={f.name} onChange={handleChange} required placeholder={isGuru ? "Contoh: Ahmad Dahlan, S.Pd." : "Contoh: Siti Aminah"} style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
             <div>
               <label style={labelStyle}>NIP / NUPTK</label>
-              <input type="text" name="nip" value={f.nip} onChange={handleChange} placeholder="Contoh: 198001012010011001" style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              <input type="text" name="nip" value={f.nip} onChange={handleChange} placeholder="Contoh: 198001012010011001" style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
             <div>
               <label style={labelStyle}>Posisi / Jabatan <span style={{ color: "#e11d48" }}>*</span></label>
-              <input type="text" name="position" value={f.position} onChange={handleChange} required placeholder={isGuru ? "Wali Kelas 1A / Guru PAI" : "Admin TU / Bendahara"} style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              <input type="text" name="position" value={f.position} onChange={handleChange} required placeholder={isGuru ? "Wali Kelas 1A / Guru PAI" : "Admin TU / Bendahara"} style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
           </div>
         </div>
@@ -138,29 +138,29 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
             <div>
               <label style={labelStyle}>Status Kepegawaian <span style={{ color: "#e11d48" }}>*</span></label>
-              <select name="status" value={f.status} onChange={handleChange} required style={inputStyle} className="focus:border-indigo-500 bg-white">
+              <select name="status" value={f.status} onChange={handleChange} required style={inputStyle} className="focus:border-blue-500 bg-white">
                 <option value="aktif">Aktif</option>
                 <option value="nonaktif">Non-Aktif / Cuti</option>
               </select>
             </div>
             <div>
               <label style={labelStyle}>Tanggal Bergabung</label>
-              <input type="date" name="joinDate" value={f.joinDate} onChange={handleChange} style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              <input type="date" name="joinDate" value={f.joinDate} onChange={handleChange} style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
             <div>
               <label style={labelStyle}>No. HP / WhatsApp</label>
-              <input type="text" name="phone" value={f.phone} onChange={handleChange} placeholder="08xx-xxxx-xxxx" style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              <input type="text" name="phone" value={f.phone} onChange={handleChange} placeholder="08xx-xxxx-xxxx" style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
             <div>
               <label style={labelStyle}>Gaji Pokok (Rp)</label>
               <input type="text" name="baseSalary" value={f.baseSalary ? `Rp ${formatRp(String(f.baseSalary))}` : ""} onChange={(e) => {
                 const raw = e.target.value.replace(/\D/g, "");
                 setF({ ...f, baseSalary: raw ? Number(raw) : 0 });
-              }} placeholder="Rp 0" style={inputStyle} className="focus:border-indigo-500 transition-colors" />
+              }} placeholder="Rp 0" style={inputStyle} className="focus:border-blue-500 transition-colors" />
             </div>
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Alamat Domisili</label>
-              <textarea name="address" value={f.address} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-indigo-500 transition-colors" />
+              <textarea name="address" value={f.address} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-blue-500 transition-colors" />
             </div>
           </div>
         </div>

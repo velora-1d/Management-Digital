@@ -117,7 +117,7 @@ export default function MutationsPage() {
       showCancelButton: true,
       confirmButtonText: "Ya, Proses",
       cancelButtonText: "Batal",
-      confirmButtonColor: "#4f46e5",
+      confirmButtonColor: "#1d4ed8",
     });
 
     if (!r.isConfirmed) return;
@@ -182,15 +182,15 @@ export default function MutationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-2">Kelas Asal</label>
-            <select value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setPage(1); }} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 bg-white font-medium">
+            <select value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setPage(1); }} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white font-medium">
               <option value="">— Pilih Kelas —</option>
-              <option value="none" className="text-rose-600 font-bold">⚠️ Tanpa Kelas (Siswa Baru)</option>
+              <option value="none" className="text-rose-600 font-bold">Tanpa Kelas (Siswa Baru)</option>
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-2">Aksi Mutasi</label>
-            <select value={action} onChange={e => setAction(e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 bg-white">
+            <select value={action} onChange={e => setAction(e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white">
               <option value="pindah_kelas">Pindah Kelas</option>
               <option value="lulus">Kelulusan</option>
               <option value="pindah">Pindah Sekolah</option>
@@ -200,7 +200,7 @@ export default function MutationsPage() {
           {action === "pindah_kelas" && (
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-2">Kelas Tujuan</label>
-              <select value={targetClass} onChange={e => setTargetClass(e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-500 bg-white">
+              <select value={targetClass} onChange={e => setTargetClass(e.target.value)} className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white">
                 <option value="">— Pilih —</option>
                 {classrooms.filter(c => c.id.toString() !== selectedClass).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -222,7 +222,7 @@ export default function MutationsPage() {
               {audit?.activeYear ? `Tahun aktif ${audit.activeYear.year}` : "Belum ada tahun ajaran aktif"}
             </p>
           </div>
-          <button onClick={loadAudit} className="px-3 py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors">
+          <button onClick={loadAudit} className="px-3 py-2 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
             Muat Ulang Audit
           </button>
         </div>
@@ -291,7 +291,7 @@ export default function MutationsPage() {
             <h4 className="font-bold text-slate-800 text-sm">Daftar Siswa {selectedClass ? "" : "(Pilih Kelas Terlebih Dahulu)"}</h4>
           </div>
           {students.length > 0 && (
-            <button onClick={toggleAll} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            <button onClick={toggleAll} className="text-xs font-semibold text-blue-600 hover:text-blue-800">
               {selected.length === students.length ? "Batal Semua" : "Pilih Semua"}
             </button>
           )}
@@ -300,7 +300,7 @@ export default function MutationsPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50">
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200 w-12">✓</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200 w-12">Pilih</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase border-b border-slate-200 w-12">No</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">NISN</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">Nama Siswa</th>
@@ -317,14 +317,14 @@ export default function MutationsPage() {
                 <tr><td colSpan={6} className="p-12 text-center text-sm text-slate-400">Tidak ada siswa di kelas ini.</td></tr>
               ) : (
                 students.map((s, i) => (
-                  <tr key={s.id} onClick={() => toggleSelect(s.id)} className={`border-b border-slate-100 cursor-pointer transition-colors ${selected.includes(s.id) ? "bg-indigo-50" : "hover:bg-slate-50"}`}>
+                  <tr key={s.id} onClick={() => toggleSelect(s.id)} className={`border-b border-slate-100 cursor-pointer transition-colors ${selected.includes(s.id) ? "bg-blue-50" : "hover:bg-slate-50"}`}>
                     <td className="px-6 py-3 text-center">
                       <input 
                         type="checkbox" 
                         checked={selected.includes(s.id)} 
                         onChange={() => toggleSelect(s.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-4 h-4 accent-indigo-600 cursor-pointer" 
+                        className="w-4 h-4 accent-blue-600 cursor-pointer" 
                       />
                     </td>
                     <td className="px-6 py-3 text-center text-xs text-slate-400">{(page - 1) * limit + i + 1}</td>

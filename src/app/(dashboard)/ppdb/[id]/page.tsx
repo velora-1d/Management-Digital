@@ -140,7 +140,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
         title="Edit Detail PPDB"
         subtitle="Silakan ubah data pendaftar pada form di bawah ini"
         icon={<UserPlus />}
-        gradient="from-indigo-500 to-indigo-600"
+        gradient="from-blue-500 to-blue-600"
         actions={
           <Link href="/ppdb" className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all text-decoration-none">
             <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -152,7 +152,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
       <form onSubmit={handleSubmit}>
         {/* A. Identitas Calon Murid */}
         <Card className="p-8 mb-6">
-          <SectionHeader letter="A" label="Identitas Calon Murid" color="#4f46e5" />
+          <SectionHeader letter="A" label="Identitas Calon Murid" color="#1d4ed8" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
             <Field label="Nama Lengkap (Sesuai Akta)" name="name" required span2 formData={f} onChange={handleChange} />
             <Field label="Tempat Lahir" name="birthPlace" formData={f} onChange={handleChange} />
@@ -183,7 +183,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
 
         {/* B. Data Periodik Fisik */}
         <Card className="p-8 mb-6">
-          <SectionHeader letter="B" label="Data Periodik Fisik" color="#4f46e5" />
+          <SectionHeader letter="B" label="Data Periodik Fisik" color="#1d4ed8" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1.25rem" }}>
             <Field label="Tinggi Badan (cm)" name="height" type="number" formData={f} onChange={handleChange} />
             <Field label="Berat Badan (kg)" name="weight" type="number" formData={f} onChange={handleChange} />
@@ -194,7 +194,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
 
         {/* C. Identitas Orang Tua */}
         <Card className="p-8 mb-6">
-          <SectionHeader letter="C" label="Identitas Orang Tua" color="#4f46e5" />
+          <SectionHeader letter="C" label="Identitas Orang Tua" color="#1d4ed8" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
             {/* Kolom Ayah */}
             <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
@@ -235,7 +235,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
         {/* D. Wali Murid */}
         <Card className="p-8 mb-6">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-            <SectionHeader letter="D" label="Wali Murid (Jika Bersama Wali)" color="#4f46e5" />
+            <SectionHeader letter="D" label="Wali Murid (Jika Bersama Wali)" color="#1d4ed8" />
             <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Kosongkan jika bersama orang tua kandung.</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
@@ -259,7 +259,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
 
         {/* E. Catatan */}
         <Card className="p-8 mb-6">
-          <SectionHeader letter="E" label="Tambahan & Catatan" color="#4f46e5" />
+          <SectionHeader letter="E" label="Tambahan & Catatan" color="#1d4ed8" />
           <div>
             <label style={labelStyle}>Catatan Khusus (Riwayat Medis / Keadaan Tertentu)</label>
             <textarea name="notes" value={f.notes || ""} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: "none" }} className="focus:border-sky-500 transition-colors bg-white text-slate-800" />
@@ -269,7 +269,7 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
         {/* Submit */}
         <Card className="p-6 flex flex-wrap justify-between items-center gap-4">
           <Link href="/ppdb" style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", textDecoration: "none" }}>← Batal & Kembali</Link>
-          <button type="submit" disabled={loading} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 2rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: loading ? "#94a3b8" : "linear-gradient(135deg,#6366f1,#4f46e5)", border: "none", borderRadius: "0.625rem", cursor: loading ? "not-allowed" : "pointer" }} className="hover:opacity-90 transition-opacity">
+          <button type="submit" disabled={loading} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 2rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: loading ? "#94a3b8" : "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: "0.625rem", cursor: loading ? "not-allowed" : "pointer" }} className="hover:opacity-90 transition-opacity">
             <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
             {loading ? "Menyimpan..." : "Simpan Perubahan Data"}
           </button>

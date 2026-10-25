@@ -69,7 +69,7 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
         icon={<School />}
         actions={
           <button onClick={handleSave} disabled={saving}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50">
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50">
             {saving ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : <Save className="w-4 h-4" />}
             Simpan Profil
           </button>
@@ -77,13 +77,13 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
       />
 
       {loading ? (
-        <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+        <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
           <Card className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
               <h2 className="font-heading font-bold text-sm text-slate-800">Data Sekolah</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,10 +92,10 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
                   <label className="text-xs font-semibold text-slate-600 mb-1 block">{pk.label}</label>
                   {pk.type === "textarea" ? (
                     <textarea value={profile[pk.key] || ""} onChange={e => updateField(pk.key, e.target.value)} rows={2}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" />
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
                   ) : pk.type === "select" ? (
                     <select value={profile[pk.key] || ""} onChange={e => updateField(pk.key, e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                       <option value="">— Pilih —</option>
                       {pk.options?.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
@@ -124,7 +124,7 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
                     </div>
                   ) : (
                     <input value={profile[pk.key] || ""} onChange={e => updateField(pk.key, e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   )}
                 </div>
               ))}

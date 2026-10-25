@@ -291,11 +291,11 @@ export default function AttendancePage({
       <PageHeader
         title="Absensi Siswa"
         subtitle="Kelola data kehadiran harian dan cetak rekapitulasi absensi siswa."
-        icon={<ClipboardList className="w-5 h-5 text-indigo-600" />}
+        icon={<ClipboardList className="w-5 h-5 text-blue-600" />}
         actions={
           activeAcademicYear && (
             <div className="bg-white/60 backdrop-blur-sm border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm border-slate-200">
-              T.A Aktif: <span className="text-indigo-600 ml-1">{activeAcademicYear.year}</span>
+              T.A Aktif: <span className="text-blue-600 ml-1">{activeAcademicYear.year}</span>
             </div>
           )
         }
@@ -308,7 +308,7 @@ export default function AttendancePage({
             onClick={() => setActiveTab("input")}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "input"
-                ? "bg-white text-indigo-600 shadow-sm"
+                ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
             }`}
           >
@@ -319,7 +319,7 @@ export default function AttendancePage({
             onClick={() => setActiveTab("recap")}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "recap"
-                ? "bg-white text-indigo-600 shadow-sm"
+                ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
             }`}
           >
@@ -380,7 +380,7 @@ export default function AttendancePage({
                                 Kehadiran
                                 <button 
                                   onClick={handleMarkAllPresent}
-                                  className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                  className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
                                 >
                                   Hadirkan Semua
                                 </button>
@@ -654,7 +654,7 @@ export default function AttendancePage({
                     </button>
                     <button
                       onClick={handleDownloadRecapPDF}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-2 shadow-sm"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center gap-2 shadow-sm"
                     >
                       <Download className="w-4 h-4" />
                       Cetak Rapor Absensi (PDF)

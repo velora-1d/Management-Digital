@@ -231,7 +231,7 @@ export default function TrackingPerKelasPage() {
 
     const bg = isLunas ? "#dcfce7" : isVoid ? "#f1f5f9" : isSebagian ? "#dbeafe" : "#fef2f2";
     const color = isLunas ? "#166534" : isVoid ? "#94a3b8" : isSebagian ? "#1e40af" : "#991b1b";
-    const label = isLunas ? "✓" : isVoid ? "✗" : isSebagian ? "◐" : "○";
+    const label = isLunas ? "L" : isVoid ? "V" : isSebagian ? "S" : "-";
 
     return (
       <div style={{ position: "relative", display: "inline-block" }} className="group">
@@ -257,7 +257,7 @@ export default function TrackingPerKelasPage() {
             {(m.status === "belum_lunas" || m.status === "sebagian") && (
               <>
                 <button onClick={() => openPay(student, m)} style={dropBtn("#059669")}>Bayar</button>
-                <button onClick={() => handleEditNominal(m.billId, student.name, m.nominal)} style={dropBtn("#6366f1")}>Edit</button>
+                <button onClick={() => handleEditNominal(m.billId, student.name, m.nominal)} style={dropBtn("#2563eb")}>Edit</button>
                 <button onClick={() => handleDelete(m.billId)} style={dropBtn("#64748b")}>Hapus</button>
               </>
             )}
@@ -287,8 +287,8 @@ export default function TrackingPerKelasPage() {
           <p style={{ fontSize: "0.8125rem", color: "#64748b", marginTop: "0.25rem" }}>Pantau pembayaran SPP seluruh siswa per kelas</p>
         </div>
         <button onClick={() => router.push("/infaq-bills")} style={{
-          padding: "0.5rem 1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#6366f1",
-          background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer",
+          padding: "0.5rem 1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#2563eb",
+          background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", cursor: "pointer",
         }}>← Kembali ke Tagihan</button>
       </div>
 
@@ -328,10 +328,10 @@ export default function TrackingPerKelasPage() {
                 format: (_v: unknown, row: Record<string, unknown>) => {
                   const md = row[`m_${m.month}`] as string | undefined;
                   if (!md || md === '-') return '-';
-                  if (md === 'lunas') return '✓';
-                  if (md === 'sebagian') return '◐';
-                  if (md === 'void') return '✗';
-                  return '○';
+                  if (md === 'lunas') return 'Lunas';
+                  if (md === 'sebagian') return 'Sebagian';
+                  if (md === 'void') return 'Batal';
+                  return 'Belum';
                 }
               })),
               { header: "Tunggakan", key: "totalRemaining", width: 22, align: "right" as const, format: (v: unknown) => (Number(v) > 0 ? fmtRupiah(Number(v)) : 'Lunas') },
@@ -353,8 +353,8 @@ export default function TrackingPerKelasPage() {
       {data?.summary && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
           {[
-            { label: "Jumlah Siswa", value: data.summary.totalStudents, fmt: false, color: "#6366f1" },
-            { label: "Total Kewajiban", value: data.summary.totalNominal, fmt: true, color: "#6366f1" },
+            { label: "Jumlah Siswa", value: data.summary.totalStudents, fmt: false, color: "#2563eb" },
+            { label: "Total Kewajiban", value: data.summary.totalNominal, fmt: true, color: "#2563eb" },
             { label: "Terbayar", value: data.summary.totalPaid, fmt: true, color: "#22c55e" },
             { label: "Tunggakan", value: data.summary.totalRemaining, fmt: true, color: "#ef4444" },
             { label: "Lunas Semua", value: data.summary.allLunas, fmt: false, color: "#22c55e" },
@@ -402,7 +402,7 @@ export default function TrackingPerKelasPage() {
                     </td>
                   ))}
                   <td style={{ padding: "0.625rem 0.75rem", textAlign: "right", fontWeight: 600, color: student.totalRemaining > 0 ? "#ef4444" : "#22c55e", fontSize: "0.75rem" }}>
-                    {student.totalRemaining > 0 ? fmtRp(student.totalRemaining) : "✓ Lunas"}
+                    {student.totalRemaining > 0 ? fmtRp(student.totalRemaining) : "Lunas"}
                   </td>
                 </tr>
               ))}
@@ -435,12 +435,12 @@ export default function TrackingPerKelasPage() {
 
             {payMethod === "tabungan" && (
               <div style={{ padding: "0.5rem 0.75rem", background: "#eff6ff", borderRadius: "0.5rem", marginBottom: "0.75rem", fontSize: "0.8125rem" }}>
-                <span style={{ fontWeight: 600, color: "#1e40af" }}>💰 Saldo Tabungan: </span>
+                <span style={{ fontWeight: 600, color: "#1e40af" }}>Saldo Tabungan: </span>
                 <span style={{ fontWeight: 700, color: savingBalance !== null && savingBalance < Number(payAmount) ? "#ef4444" : "#059669" }}>
                   {savingBalance !== null ? fmtRp(savingBalance) : "Memuat..."}
                 </span>
                 {savingBalance !== null && savingBalance < Number(payAmount) && (
-                  <p style={{ fontSize: "0.6875rem", color: "#ef4444", margin: "0.25rem 0 0", fontWeight: 600 }}>⚠️ Saldo tidak mencukupi!</p>
+                  <p style={{ fontSize: "0.6875rem", color: "#ef4444", margin: "0.25rem 0 0", fontWeight: 600 }}>Saldo tidak mencukupi!</p>
                 )}
               </div>
             )}

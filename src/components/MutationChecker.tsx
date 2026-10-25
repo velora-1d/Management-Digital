@@ -111,7 +111,7 @@ export default function MutationChecker({ user }: MutationCheckerProps) {
         {/* Alasan Utama Section */}
         <div className="text-left space-y-3 mb-6">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-            ⚠️ Mengapa Mutasi Ini Wajib Dilakukan?
+            Mengapa Mutasi Ini Wajib Dilakukan?
           </h4>
           <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside bg-slate-50 p-3 rounded-lg border border-slate-100">
             <li>
@@ -132,7 +132,7 @@ export default function MutationChecker({ user }: MutationCheckerProps) {
             onClick={() => setShowFlowGuide(!showFlowGuide)}
             className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-bold text-slate-700 transition-colors"
           >
-            <span>🗺️ LIHAT ALUR KERJA (FLOW) MUTASI</span>
+            <span>LIHAT ALUR KERJA (FLOW) MUTASI</span>
             <svg 
               className={`w-4 h-4 transition-transform duration-200 ${showFlowGuide ? "rotate-180" : ""}`} 
               fill="none" 
@@ -147,28 +147,28 @@ export default function MutationChecker({ user }: MutationCheckerProps) {
           {showFlowGuide && (
             <div className="p-4 border-t border-slate-200/80 bg-white space-y-3.5 text-xs text-slate-600">
               <div className="flex gap-3">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 font-bold text-indigo-600 shrink-0">1</span>
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 font-bold text-blue-600 shrink-0">1</span>
                 <div>
                   <strong className="text-slate-800 block">Siapkan Kelas Tujuan</strong>
                   Pastikan kelas-kelas baru untuk tahun ajaran aktif sudah dibuat di menu <strong className="text-slate-700">Data Master &gt; Kelas</strong>.
                 </div>
               </div>
               <div className="flex gap-3">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 font-bold text-indigo-600 shrink-0">2</span>
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 font-bold text-blue-600 shrink-0">2</span>
                 <div>
                   <strong className="text-slate-800 block">Tugaskan Wali Kelas & Guru</strong>
                   Atur penugasan guru di menu <strong className="text-slate-700">Akademik &gt; Penugasan Guru</strong>.
                 </div>
               </div>
               <div className="flex gap-3">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 font-bold text-indigo-600 shrink-0">3</span>
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 font-bold text-blue-600 shrink-0">3</span>
                 <div>
                   <strong className="text-slate-800 block">Jalankan Mutasi Siswa</strong>
                   Buka halaman <strong className="text-slate-700">Mutasi Siswa</strong>. Pilih kelas asal (kelas lama), pilih siswa, pilih kelas tujuan (kelas baru), lalu klik <strong className="text-slate-700">Eksekusi</strong>.
                 </div>
               </div>
               <div className="flex gap-3">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 font-bold text-indigo-600 shrink-0">4</span>
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 font-bold text-blue-600 shrink-0">4</span>
                 <div>
                   <strong className="text-slate-800 block">Ubah Status Siswa Non-Aktif/Lulus</strong>
                   Bagi siswa kelas akhir yang sudah lulus atau siswa yang pindah sekolah, pilih aksi <strong className="text-slate-700">Kelulusan</strong> atau <strong className="text-slate-700">Pindah Sekolah</strong> untuk mengupdate status master mereka.

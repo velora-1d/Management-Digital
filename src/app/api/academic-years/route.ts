@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { academicYears } from "@/db/schema";
 import { and, ilike, isNull, desc, sql, eq } from "drizzle-orm";
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const authUser = await getAuthUser();
+    const headerTenantId = req.headers.get("x-tenant-id");
+    const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
+
     const { searchParams } = new URL(req.url);
     const optionsOnly = searchParams.get("options") === "true";
     const page = parseInt(searchParams.get("page") || "1");
@@ -12,7 +17,10 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q") || "";
     const skip = (page - 1) * limit;
 
-    const conditions = [isNull(academicYears.deletedAt)];
+    const conditions = [
+      isNull(academicYears.deletedAt),
+      eq(academicYears.tenantId, tenantId),
+    ];
     if (q) {
       conditions.push(ilike(academicYears.year, `%${q}%`));
     }
@@ -67,17 +75,24 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const authUser = await getAuthUser();
+    const headerTenantId = req.headers.get("x-tenant-id");
+    const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
+
     const body = await req.json();
 
     if (!body.year) {
       return NextResponse.json({ success: false, message: "Tahun ajaran wajib diisi" }, { status: 400 });
     }
 
-    // Pengecekan data duplikat (termasuk yang di-soft-delete)
+    // Pengecekan data duplikat per-tenant (termasuk yang di-soft-delete)
     const [existingWithDeleted] = await db
       .select()
       .from(academicYears)
-      .where(eq(academicYears.year, body.year));
+      .where(and(
+        eq(academicYears.tenantId, tenantId),
+        eq(academicYears.year, body.year)
+      ));
 
     if (existingWithDeleted) {
       if (existingWithDeleted.deletedAt) {
@@ -88,7 +103,7 @@ export async function POST(req: NextRequest) {
             isActive: body.isActive || false,
             updatedAt: new Date() 
           })
-          .where(eq(academicYears.id, existingWithDeleted.id))
+          .where(and(eq(academicYears.id, existingWithDeleted.id), eq(academicYears.tenantId, tenantId)))
           .returning();
         
         return NextResponse.json({ success: true, message: "Tahun ajaran lama ditemukan di arsip dan telah diaktifkan kembali", data: restored });
@@ -98,12 +113,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Jika isActive true, nonaktifkan tahun ajaran lain
+    // Jika isActive true, nonaktifkan tahun ajaran lain hanya pada tenant ini
     if (body.isActive) {
-      await db.update(academicYears).set({ isActive: false });
+      await db.update(academicYears)
+        .set({ isActive: false })
+        .where(eq(academicYears.tenantId, tenantId));
     }
 
     const [newYear] = await db.insert(academicYears).values({
+      tenantId,
       year: body.year,
       isActive: body.isActive || false,
       startDate: body.startDate || null,

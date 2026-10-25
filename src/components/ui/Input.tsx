@@ -28,8 +28,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             "focus-within:ring-2 focus-within:ring-offset-0",
             hasError
               ? "border-rose-500/80 focus-within:ring-rose-500/20 focus-within:border-rose-500"
-              : "border-[#2C2C2E] focus-within:ring-[#00E5FF]/20 focus-within:border-[#00E5FF]",
-            "bg-[#121212]",
+              : "border-slate-200 focus-within:ring-[#00E5FF]/20 focus-within:border-[#00E5FF]",
+            "bg-white",
           ].join(" ")}
         >
           {prefixText && (
@@ -44,7 +44,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={[
-              "flex-1 bg-transparent px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none",
+              "flex-1 bg-transparent px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-500 outline-none",
               prefixIcon || prefixText ? "pl-2" : "",
               suffixIcon ? "pr-2" : "",
               className,

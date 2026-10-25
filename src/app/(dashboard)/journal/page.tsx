@@ -179,7 +179,7 @@ function JournalContent() {
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
           <div style="display:flex;align-items:center;gap:0;">
-            <span style="display:inline-flex;align-items:center;padding:0 0.75rem;height:2.5rem;background:#f1f5f9;border:1.5px solid #e2e8f0;border-right:none;border-radius:0.625rem 0 0 0.625rem;font-size:0.875rem;font-weight:700;color:#6366f1;">Rp</span>
+            <span style="display:inline-flex;align-items:center;padding:0 0.75rem;height:2.5rem;background:#f1f5f9;border:1.5px solid #e2e8f0;border-right:none;border-radius:0.625rem 0 0 0.625rem;font-size:0.875rem;font-weight:700;color:#2563eb;">Rp</span>
             <input type="text" id="swal-tx-amount" class="swal2-input" value="${formattedAmount}" style="margin:0;flex:1;height:2.5rem;padding:0.5rem;font-size:0.875rem;font-weight:700;border-radius:0 0.625rem 0.625rem 0;border-left:none;" oninput="this.value=this.value.replace(/\\D/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.')">
           </div></div>
           <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
@@ -262,9 +262,9 @@ function JournalContent() {
         title="Jurnal Umum"
         subtitle="Kelola arus kas masuk dan keluar sekolah secara terpusat."
         icon={<BookOpen />}
-        gradient="from-indigo-800 via-indigo-900 to-indigo-600"
+        gradient="from-blue-800 via-blue-900 to-blue-600"
         actions={
-          <button onClick={() => setShowCreate(true)} className="inline-flex items-center px-4 py-2 bg-white text-indigo-900 rounded-lg text-sm font-bold shadow hover:bg-slate-50 transition-colors">
+          <button onClick={() => setShowCreate(true)} className="inline-flex items-center px-4 py-2 bg-white text-blue-900 rounded-lg text-sm font-bold shadow hover:bg-slate-50 transition-colors">
             <svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Catat Jurnal Baru
           </button>
         }
@@ -396,7 +396,7 @@ function JournalContent() {
                               <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem" }}>
                                 Aksi Jurnal
                               </div>
-                              <button onClick={() => { setOpenActionId(null); handleEdit(entry); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#6366f1", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-indigo-50">
+                              <button onClick={() => { setOpenActionId(null); handleEdit(entry); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#2563eb", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
                                 Edit Transaksi
                               </button>
                               <button onClick={() => { setOpenActionId(null); handleVoid(entry.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#d97706", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-amber-50">
@@ -442,7 +442,7 @@ function JournalContent() {
             <div style={{ marginTop: "1rem" }}>
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Jumlah *</label>
               <div style={{ display: "flex", alignItems: "center" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", padding: "0 0.75rem", height: "2.75rem", background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRight: "none", borderRadius: "0.625rem 0 0 0.625rem", fontSize: "0.875rem", fontWeight: 700, color: "#6366f1" }}>Rp</span>
+                <span style={{ display: "inline-flex", alignItems: "center", padding: "0 0.75rem", height: "2.75rem", background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRight: "none", borderRadius: "0.625rem 0 0 0.625rem", fontSize: "0.875rem", fontWeight: 700, color: "#2563eb" }}>Rp</span>
                 <input type="text" value={form.amountDisplay} onChange={e => handleAmountChange(e.target.value)} placeholder="0" style={{ flex: 1, padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderLeft: "none", borderRadius: "0 0.625rem 0.625rem 0", fontSize: "1rem", fontWeight: 700, outline: "none", height: "2.75rem", boxSizing: "border-box" }} />
               </div>
               {form.amount > 0 && <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.25rem" }}>= {fmtRp(form.amount)}</p>}

@@ -185,7 +185,7 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
 
         .pagination-info-total {
           font-weight: 700;
-          color: #6366f1;
+          color: #2563eb;
           font-variant-numeric: tabular-nums;
         }
 
@@ -210,13 +210,13 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
         }
 
         .pagination-limit-select:hover {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
         }
 
         .pagination-limit-select:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .pagination-limit-chevron {
@@ -249,10 +249,10 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
         }
 
         .pagination-nav-btn:hover:not(:disabled) {
-          background: #6366f1;
-          border-color: #6366f1;
+          background: #2563eb;
+          border-color: #2563eb;
           color: #fff;
-          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
           transform: translateY(-1px);
         }
 
@@ -287,15 +287,15 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
 
         .pagination-page-btn:hover:not(.active) {
           background: #f1f5f9;
-          color: #6366f1;
+          color: #2563eb;
           border-color: #e2e8f0;
         }
 
         .pagination-page-btn.active {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
           color: #fff;
           border-color: transparent;
-          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
           transform: scale(1.05);
         }
 
@@ -316,8 +316,8 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
         }
 
         .pagination-dots:hover {
-          background: #eef2ff;
-          color: #6366f1;
+          background: #eff6ff;
+          color: #2563eb;
         }
 
         .pagination-jump {
@@ -335,7 +335,7 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
           font-size: 0.75rem;
           font-weight: 600;
           text-align: center;
-          border: 1.5px solid #c7d2fe;
+          border: 1.5px solid #bfdbfe;
           border-radius: 0.5rem;
           outline: none;
           background: #fff;
@@ -351,8 +351,8 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
         }
 
         .pagination-jump-input:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .pagination-jump-btn {
@@ -363,14 +363,14 @@ export default function Pagination({ page, totalPages, total, limit = 20, onPage
           height: 2rem;
           border-radius: 0.5rem;
           border: none;
-          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          background: linear-gradient(135deg, #2563eb, #3b82f6);
           color: #fff;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .pagination-jump-btn:hover {
-          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
           transform: translateY(-1px);
         }
 

@@ -129,7 +129,7 @@ export default function ClassroomsClient({
             )}
             <button 
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
+              className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-blue-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
             >
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -202,7 +202,7 @@ export default function ClassroomsClient({
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-wider">{c.name || "-"}</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wider">{c.name || "-"}</span>
                     </td>
                     <td className="py-4 px-6 text-sm text-slate-600 font-medium">
                       {c.waliKelas || <span className="text-slate-400 italic font-normal text-xs">Belum ada</span>}
@@ -211,7 +211,7 @@ export default function ClassroomsClient({
                       <div className="flex flex-col items-center">
                         <Link
                           href={`/students?classroomId=${c.id}&academicYearId=${c.academicYearId || ""}&status=aktif`}
-                          className="text-sm font-bold text-slate-800 underline decoration-dotted underline-offset-4 hover:text-indigo-600"
+                          className="text-sm font-bold text-slate-800 underline decoration-dotted underline-offset-4 hover:text-blue-600"
                           title="Lihat daftar siswa aktif di kelas ini"
                         >
                           {c.student_count || 0}
@@ -326,7 +326,7 @@ export default function ClassroomsClient({
                               const msg = error instanceof Error ? error.message : "Gagal update";
                               Swal.fire("Error", msg, "error"); 
                             }
-                          }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#6366f1", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-indigo-50">
+                          }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#2563eb", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
                             Edit Data
                           </button>
                           <button onClick={async () => {
@@ -440,12 +440,12 @@ export default function ClassroomsClient({
             }} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Kelas <span className="text-rose-500">*</span></label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Contoh: 1-A" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none" />
+                <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Contoh: 1-A" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Tingkat</label>
-                  <select value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                  <select value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
                     <option value="1">Tingkat 1</option>
                     <option value="2">Tingkat 2</option>
                     <option value="3">Tingkat 3</option>
@@ -456,12 +456,12 @@ export default function ClassroomsClient({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Tarif Infaq (Rp)</label>
-                  <input type="number" value={formData.infaqNominal} onChange={e => setFormData({ ...formData, infaqNominal: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none" />
+                  <input type="number" value={formData.infaqNominal} onChange={e => setFormData({ ...formData, infaqNominal: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Tahun Ajaran</label>
-                <select value={formData.academicYearId} onChange={e => setFormData({ ...formData, academicYearId: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                <select value={formData.academicYearId} onChange={e => setFormData({ ...formData, academicYearId: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
                   <option value="">-- Tidak Ada --</option>
                   {academicYears.map((ay: AYItem) => (
                     <option key={ay.id} value={ay.id}>{ay.year} {ay.isActive ? '(Aktif)' : ''}</option>
@@ -470,7 +470,7 @@ export default function ClassroomsClient({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Wali Kelas</label>
-                <select value={formData.waliKelasId} onChange={e => setFormData({ ...formData, waliKelasId: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                <select value={formData.waliKelasId} onChange={e => setFormData({ ...formData, waliKelasId: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
                   <option value="">-- Belum Ada --</option>
                   {teachers.map((t: { id: number, name: string }) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -480,7 +480,7 @@ export default function ClassroomsClient({
 
               <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 -mx-6 -mb-6 mt-6 bg-slate-50">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                <button type="submit" className="px-4 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-indigo-950 rounded-lg shadow-sm transition-colors">Simpan Kelas</button>
+                <button type="submit" className="px-4 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-blue-950 rounded-lg shadow-sm transition-colors">Simpan Kelas</button>
               </div>
             </form>
           </div>

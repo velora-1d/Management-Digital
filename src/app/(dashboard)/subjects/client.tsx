@@ -323,7 +323,7 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
                     <td className="py-2.5 px-4 text-[13px] font-semibold text-slate-800">{item.name}</td>
                     <td className="py-2.5 px-4 text-[13px]">
                       <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                        item.type === 'wajib' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 
+                        item.type === 'wajib' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
                         item.type === 'mulok' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                         'bg-amber-50 text-amber-600 border-amber-100'
                       }`}>
@@ -333,7 +333,7 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
                     <td className="py-2.5 px-4 text-[13px] text-slate-600">{item.tingkatKelas || 'Semua'}</td>
                     <td className="py-2.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <button onClick={() => handleEdit(item)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 hover:border-indigo-200 rounded text-center transition-colors">Edit</button>
+                        <button onClick={() => handleEdit(item)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-blue-600 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 hover:border-blue-200 rounded text-center transition-colors">Edit</button>
                         <button onClick={() => handleDelete(item.id)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-50 border border-rose-100/50 hover:border-rose-200 rounded text-center transition-colors">Hapus</button>
                       </div>
                     </td>

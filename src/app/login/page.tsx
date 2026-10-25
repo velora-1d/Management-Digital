@@ -56,10 +56,10 @@ function getGreetingTheme(hour: number | null) {
   }
 
   return {
-    background: "linear-gradient(135deg, #1e1b4b, #312e81)",
-    shadow: "0 4px 20px rgba(30,27,75,0.35)",
+    background: "linear-gradient(135deg, #0f172a, #0f172a)",
+    shadow: "0 4px 20px rgba(15, 23, 42,0.35)",
     icon: (
-      <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" strokeWidth={1.8}>
+      <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
       </svg>
     ),
@@ -215,16 +215,16 @@ export default function LoginPage() {
 
   /* ──────────── 3D-style SVG floating icons ──────────── */
   const FloatingBook = () => (
-    <svg className="float-icon" width="60" height="60" viewBox="0 0 60 60" fill="none" style={{ filter: "drop-shadow(0 6px 16px rgba(99,102,241,0.4))" }}>
+    <svg className="float-icon" width="60" height="60" viewBox="0 0 60 60" fill="none" style={{ filter: "drop-shadow(0 6px 16px rgba(37, 99, 235,0.4))" }}>
       <defs>
-        <linearGradient id="book-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#818cf8"/><stop offset="100%" stopColor="#6366f1"/></linearGradient>
+        <linearGradient id="book-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60a5fa"/><stop offset="100%" stopColor="#2563eb"/></linearGradient>
       </defs>
       <rect x="10" y="8" width="40" height="44" rx="4" fill="url(#book-g)" />
-      <rect x="14" y="8" width="36" height="44" rx="3" fill="#eef2ff" />
-      <rect x="14" y="8" width="5" height="44" fill="#6366f1" opacity="0.2" />
-      <line x1="22" y1="20" x2="42" y2="20" stroke="#c7d2fe" strokeWidth="2" strokeLinecap="round" />
-      <line x1="22" y1="27" x2="38" y2="27" stroke="#c7d2fe" strokeWidth="2" strokeLinecap="round" />
-      <line x1="22" y1="34" x2="35" y2="34" stroke="#e0e7ff" strokeWidth="2" strokeLinecap="round" />
+      <rect x="14" y="8" width="36" height="44" rx="3" fill="#eff6ff" />
+      <rect x="14" y="8" width="5" height="44" fill="#2563eb" opacity="0.2" />
+      <line x1="22" y1="20" x2="42" y2="20" stroke="#bfdbfe" strokeWidth="2" strokeLinecap="round" />
+      <line x1="22" y1="27" x2="38" y2="27" stroke="#bfdbfe" strokeWidth="2" strokeLinecap="round" />
+      <line x1="22" y1="34" x2="35" y2="34" stroke="#dbeafe" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 
@@ -256,12 +256,12 @@ export default function LoginPage() {
   );
 
   const FloatingPencil = () => (
-    <svg className="float-icon" width="20" height="65" viewBox="0 0 20 65" fill="none" style={{ filter: "drop-shadow(0 4px 10px rgba(99,102,241,0.3))" }}>
+    <svg className="float-icon" width="20" height="65" viewBox="0 0 20 65" fill="none" style={{ filter: "drop-shadow(0 4px 10px rgba(37, 99, 235,0.3))" }}>
       <defs>
         <linearGradient id="pencil-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#f59e0b"/></linearGradient>
       </defs>
       <rect x="3" y="8" width="14" height="42" rx="2" fill="url(#pencil-g)" />
-      <rect x="3" y="8" width="14" height="8" rx="2" fill="#a5b4fc" />
+      <rect x="3" y="8" width="14" height="8" rx="2" fill="#93c5fd" />
       <polygon points="3,50 17,50 10,62" fill="#fde68a" />
       <polygon points="7,56 13,56 10,62" fill="#374151" />
     </svg>
@@ -283,7 +283,7 @@ export default function LoginPage() {
       {/* ═══════════════ PANEL KIRI ═══════════════ */}
       <div className="hidden lg:flex" style={{
         width: "55%",
-        background: "linear-gradient(155deg, #020617 0%, #0f172a 25%, #1e1b4b 50%, #1e3a5f 75%, #172554 100%)",
+        background: "linear-gradient(155deg, #020617 0%, #0f172a 25%, #0f172a 50%, #1e3a5f 75%, #172554 100%)",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
@@ -294,7 +294,7 @@ export default function LoginPage() {
         {/* BG decorations */}
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
           {/* Ambient glows */}
-          <div style={{ position: "absolute", width: 600, height: 600, top: "-15%", right: "-10%", background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)", borderRadius: "50%" }} />
+          <div style={{ position: "absolute", width: 600, height: 600, top: "-15%", right: "-10%", background: "radial-gradient(circle, rgba(37, 99, 235,0.18) 0%, transparent 70%)", borderRadius: "50%" }} />
           <div style={{ position: "absolute", width: 500, height: 500, bottom: "-10%", left: "-8%", background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)", borderRadius: "50%" }} />
           <div style={{ position: "absolute", width: 300, height: 300, top: "40%", left: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
 
@@ -322,7 +322,7 @@ export default function LoginPage() {
             <div key={i} className="particle" style={{
               position: "absolute", top: p.top, left: p.left,
               width: p.size, height: p.size, borderRadius: "50%",
-              background: "#818cf8", opacity: 0.3,
+              background: "#60a5fa", opacity: 0.3,
             }} />
           ))}
         </div>
@@ -358,7 +358,7 @@ export default function LoginPage() {
             }}>
               {schoolName || "Management Digital"}
             </h1>
-            <div style={{ width: 36, height: 3, background: "linear-gradient(90deg, #818cf8, #3b82f6)", borderRadius: 999, margin: "0 auto 0.625rem" }} />
+            <div style={{ width: 36, height: 3, background: "linear-gradient(90deg, #60a5fa, #3b82f6)", borderRadius: 999, margin: "0 auto 0.625rem" }} />
             <p style={{ color: "rgba(165,180,252,0.8)", fontSize: "0.8125rem", lineHeight: 1.6, margin: 0 }}>
               Sistem Informasi Terintegrasi untuk Pengelolaan Administrasi Sekolah
             </p>
@@ -377,15 +377,15 @@ export default function LoginPage() {
                 cursor: "default", opacity: 0,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
-                onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(129,140,248,0.35)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(99,102,241,0.18)"; }}
+                onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(96, 165, 250,0.35)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(37, 99, 235,0.18)"; }}
                 onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)"; }}
               >
                 <div style={{
                   width: 36, height: 36, minWidth: 36,
-                  background: "linear-gradient(135deg, rgba(99,102,241,0.3), rgba(59,130,246,0.2))",
+                  background: "linear-gradient(135deg, rgba(37, 99, 235,0.3), rgba(59,130,246,0.2))",
                   borderRadius: "0.5rem",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#a5b4fc", border: "1px solid rgba(165,180,252,0.2)",
+                  color: "#93c5fd", border: "1px solid rgba(165,180,252,0.2)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
                 }}>{f.icon}</div>
                 <div style={{ minWidth: 0 }}>
@@ -407,16 +407,16 @@ export default function LoginPage() {
 
       {/* ═══════════════ PANEL KANAN: FORM LOGIN ═══════════════ */}
       <div className="w-full lg:w-[45%] flex items-center justify-center p-5 sm:p-8" style={{
-        background: "linear-gradient(160deg, #eef2ff 0%, #e8ecff 20%, #f0f0ff 50%, #f8fafc 100%)",
+        background: "linear-gradient(160deg, #eff6ff 0%, #e8ecff 20%, #f0f0ff 50%, #f8fafc 100%)",
         position: "relative", overflow: "hidden",
       }}>
         {/* Decorative bg */}
-        <div style={{ position: "absolute", top: "-8%", right: "-10%", width: 320, height: 320, background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "-8%", right: "-10%", width: 320, height: 320, background: "radial-gradient(circle, rgba(37, 99, 235,0.07) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: "-8%", left: "-8%", width: 260, height: 260, background: "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "35%", right: "40%", width: 400, height: 400, background: "radial-gradient(circle, rgba(251,191,36,0.03) 0%, transparent 60%)", borderRadius: "50%", pointerEvents: "none" }} />
         {/* Dot grid */}
         <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.02, pointerEvents: "none" }} viewBox="0 0 200 200" preserveAspectRatio="none">
-          <defs><pattern id="rdots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="0.7" fill="#6366f1" /></pattern></defs>
+          <defs><pattern id="rdots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="0.7" fill="#2563eb" /></pattern></defs>
           <rect width="200" height="200" fill="url(#rdots)" />
         </svg>
         {/* Background illustration (transparan) */}
@@ -446,7 +446,7 @@ export default function LoginPage() {
             backdropFilter: "blur(28px)",
             borderRadius: "1.25rem",
             overflow: "hidden",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.02), 0 12px 48px rgba(99,102,241,0.1), 0 0 0 1px rgba(99,102,241,0.06)",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.02), 0 12px 48px rgba(37, 99, 235,0.1), 0 0 0 1px rgba(37, 99, 235,0.06)",
             border: "1px solid rgba(255,255,255,0.6)",
             opacity: 0,
             position: "relative",
@@ -454,7 +454,7 @@ export default function LoginPage() {
             {/* Left gradient border accent */}
             <div style={{
               position: "absolute", left: 0, top: 0, bottom: 0, width: 4,
-              background: "linear-gradient(180deg, #4f46e5 0%, #818cf8 40%, #fbbf24 100%)",
+              background: "linear-gradient(180deg, #1d4ed8 0%, #60a5fa 40%, #fbbf24 100%)",
               borderRadius: "1.25rem 0 0 1.25rem",
             }} />
 
@@ -462,7 +462,7 @@ export default function LoginPage() {
             <div style={{
               padding: "2rem 2rem 1.25rem 2.25rem",
               background: "linear-gradient(135deg, rgba(238,242,255,0.5) 0%, rgba(224,231,254,0.3) 100%)",
-              borderBottom: "1px solid rgba(99,102,241,0.06)",
+              borderBottom: "1px solid rgba(37, 99, 235,0.06)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                 {/* Time icon */}
@@ -521,13 +521,13 @@ export default function LoginPage() {
                       placeholder="nama@email.com" required autoComplete="username"
                       style={{
                         width: "100%", padding: "0.875rem 1rem 0.875rem 2.875rem",
-                        border: "1.5px solid #e0e7ff", borderRadius: "0.75rem",
+                        border: "1.5px solid #dbeafe", borderRadius: "0.75rem",
                         fontSize: "0.875rem", color: "#1e293b",
                         background: "#f8f9ff", outline: "none",
                         transition: "all 0.25s ease", boxSizing: "border-box",
                       }}
-                      onFocus={e => { e.target.style.borderColor = "#818cf8"; e.target.style.background = "#fff"; e.target.style.boxShadow = "0 0 0 4px rgba(99,102,241,0.08), 0 2px 8px rgba(99,102,241,0.06)"; }}
-                      onBlur={e => { e.target.style.borderColor = "#e0e7ff"; e.target.style.background = "#f8f9ff"; e.target.style.boxShadow = "none"; }}
+                      onFocus={e => { e.target.style.borderColor = "#60a5fa"; e.target.style.background = "#fff"; e.target.style.boxShadow = "0 0 0 4px rgba(37, 99, 235,0.08), 0 2px 8px rgba(37, 99, 235,0.06)"; }}
+                      onBlur={e => { e.target.style.borderColor = "#dbeafe"; e.target.style.background = "#f8f9ff"; e.target.style.boxShadow = "none"; }}
                     />
                   </div>
                 </div>
@@ -546,18 +546,18 @@ export default function LoginPage() {
                       placeholder="Masukkan password anda..." required autoComplete="current-password"
                       style={{
                         width: "100%", padding: "0.875rem 2.875rem 0.875rem 2.875rem",
-                        border: "1.5px solid #e0e7ff", borderRadius: "0.75rem",
+                        border: "1.5px solid #dbeafe", borderRadius: "0.75rem",
                         fontSize: "0.875rem", color: "#1e293b",
                         background: "#f8f9ff", outline: "none",
                         transition: "all 0.25s ease", boxSizing: "border-box",
                       }}
-                      onFocus={e => { e.target.style.borderColor = "#818cf8"; e.target.style.background = "#fff"; e.target.style.boxShadow = "0 0 0 4px rgba(99,102,241,0.08), 0 2px 8px rgba(99,102,241,0.06)"; }}
-                      onBlur={e => { e.target.style.borderColor = "#e0e7ff"; e.target.style.background = "#f8f9ff"; e.target.style.boxShadow = "none"; }}
+                      onFocus={e => { e.target.style.borderColor = "#60a5fa"; e.target.style.background = "#fff"; e.target.style.boxShadow = "0 0 0 4px rgba(37, 99, 235,0.08), 0 2px 8px rgba(37, 99, 235,0.06)"; }}
+                      onBlur={e => { e.target.style.borderColor = "#dbeafe"; e.target.style.background = "#f8f9ff"; e.target.style.boxShadow = "none"; }}
                     />
                     <button type="button" onClick={() => setShowPass(!showPass)} style={{
                       position: "absolute", right: "0.875rem", top: "50%", transform: "translateY(-50%)",
                       background: "none", border: "none", cursor: "pointer", padding: "0.25rem",
-                      color: showPass ? "#6366f1" : "#94a3b8", transition: "color 0.2s ease",
+                      color: showPass ? "#2563eb" : "#94a3b8", transition: "color 0.2s ease",
                     }}>
                       {showPass ? (
                         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
@@ -573,15 +573,15 @@ export default function LoginPage() {
                   width: "100%", padding: "0.9375rem 1.5rem",
                   border: "none", borderRadius: "0.75rem",
                   fontSize: "0.9375rem", fontWeight: 700, color: "#fff",
-                  background: loading ? "#94a3b8" : "linear-gradient(135deg, #312e81, #4f46e5, #6366f1)",
+                  background: loading ? "#94a3b8" : "linear-gradient(135deg, #0f172a, #1d4ed8, #2563eb)",
                   cursor: loading ? "not-allowed" : "pointer",
                   transition: "all 0.3s ease",
-                  boxShadow: loading ? "none" : "0 4px 20px rgba(79,70,229,0.35)",
+                  boxShadow: loading ? "none" : "0 4px 20px rgba(29, 78, 216,0.35)",
                   letterSpacing: "0.02em",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: "0.625rem",
                 }}
-                  onMouseOver={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(79,70,229,0.45)"; }}}
-                  onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = loading ? "none" : "0 4px 20px rgba(79,70,229,0.35)"; }}
+                  onMouseOver={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(29, 78, 216,0.45)"; }}}
+                  onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = loading ? "none" : "0 4px 20px rgba(29, 78, 216,0.35)"; }}
                 >
                   {loading ? (
                     <>
@@ -609,21 +609,21 @@ export default function LoginPage() {
             <div style={{
               padding: "0.75rem 2rem",
               background: "linear-gradient(135deg, rgba(238,242,255,0.6), rgba(224,231,254,0.4))",
-              borderTop: "1px solid rgba(99,102,241,0.06)",
+              borderTop: "1px solid rgba(37, 99, 235,0.06)",
               display: "flex", alignItems: "center", justifyContent: "center", gap: "1rem",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#6366f1" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                 <span style={{ fontSize: "0.625rem", color: "#64748b", fontWeight: 600 }}>Terenkripsi</span>
               </div>
-              <div style={{ width: 1, height: 14, background: "rgba(99,102,241,0.12)" }} />
+              <div style={{ width: 1, height: 14, background: "rgba(37, 99, 235,0.12)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#6366f1" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                 <span style={{ fontSize: "0.625rem", color: "#64748b", fontWeight: 600 }}>Aman</span>
               </div>
-              <div style={{ width: 1, height: 14, background: "rgba(99,102,241,0.12)" }} />
+              <div style={{ width: 1, height: 14, background: "rgba(37, 99, 235,0.12)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#6366f1" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span style={{ fontSize: "0.625rem", color: "#64748b", fontWeight: 600 }}>Online 24/7</span>
               </div>
             </div>

@@ -91,7 +91,7 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
         actions={
           <Link 
             href="/staff/new" 
-            className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
+            className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-blue-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
           >
             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -104,7 +104,7 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
       <Card
         title="Daftar Staf"
         icon={
-          <div className="w-2 h-2 rounded-full bg-linear-to-tr from-blue-500 to-indigo-500" />
+          <div className="w-2 h-2 rounded-full bg-linear-to-tr from-blue-500 to-blue-500" />
         }
         actions={
           <div className="flex gap-2 items-center flex-wrap">
@@ -227,7 +227,7 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
                             <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem" }}>
                               Aksi Staf
                             </div>
-                            <button onClick={() => { setOpenActionId(null); handleEdit(s); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#6366f1", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-indigo-50">
+                            <button onClick={() => { setOpenActionId(null); handleEdit(s); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#2563eb", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
                               Edit Data
                             </button>
                             <button onClick={() => { setOpenActionId(null); handleDelete(s); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#e11d48", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-rose-50">

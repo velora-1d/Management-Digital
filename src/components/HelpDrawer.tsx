@@ -67,7 +67,7 @@ export default function HelpDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -92,8 +92,8 @@ export default function HelpDrawer() {
           {content ? (
             <div className="space-y-8">
               {/* Title & Desc */}
-              <div className="bg-linear-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100/50 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+              <div className="bg-linear-to-br from-blue-50 to-white p-5 rounded-2xl border border-blue-100/50 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full -mr-4 -mt-4"></div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2 relative z-10">{content.title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed relative z-10">{content.description}</p>
               </div>
@@ -111,17 +111,17 @@ export default function HelpDrawer() {
                 {content.features.map((feat, idx) => (
                   <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow group">
                     <h5 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                       <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm text-white">
+                       <div className="h-10 w-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0 shadow-sm text-white">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                        </div>
                       {feat.title}
                     </h5>
-                    <div className="relative border-l-2 border-indigo-100/50 ml-3 space-y-5">
+                    <div className="relative border-l-2 border-blue-100/50 ml-3 space-y-5">
                       {feat.steps.map((step, stepIdx) => (
                         <div key={stepIdx} className="ml-5 relative">
-                          <span className="absolute flex items-center justify-center w-5 h-5 bg-white rounded-full -left-[31px] top-0 border-2 border-indigo-200 text-[10px] font-bold text-indigo-500 shadow-sm">
+                          <span className="absolute flex items-center justify-center w-5 h-5 bg-white rounded-full -left-[31px] top-0 border-2 border-blue-200 text-[10px] font-bold text-blue-500 shadow-sm">
                             {stepIdx + 1}
                           </span>
                           <p className="text-[13px] text-slate-600 leading-relaxed pt-0.5">{step}</p>
@@ -182,7 +182,7 @@ export default function HelpDrawer() {
               href="https://ve-lora.my.id" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-4 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl transition-colors group"
+              className="px-4 flex items-center justify-center bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-xl transition-colors group"
               title="Kunjungi Website Developer"
             >
               <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">

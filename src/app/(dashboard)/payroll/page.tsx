@@ -375,7 +375,7 @@ export default function PayrollPage() {
         title="Manajemen Penggajian"
         subtitle="Kelola komponen, atur gaji, generate slip, dan pantau riwayat."
         icon={<Banknote />}
-        gradient="from-sky-500 via-blue-500 to-indigo-500"
+        gradient="from-sky-500 via-blue-500 to-blue-500"
       />
 
       {/* Tabs */}

@@ -276,7 +276,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ [ke
 function DashboardContentLoading() {
   return (
     <div className="space-y-6">
-      <div className="h-[104px] rounded-2xl bg-indigo-50 animate-pulse border border-indigo-100"></div>
+      <div className="h-[104px] rounded-2xl bg-blue-50 animate-pulse border border-blue-100"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-start gap-4 animate-pulse">
@@ -299,7 +299,7 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <div className="anim-hero" style={{ background: "linear-gradient(135deg,#312e81 0%,#1e1b4b 50%,#0f172a 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
+      <div className="anim-hero" style={{ background: "linear-gradient(135deg,#0f172a 0%,#0f172a 50%,#0f172a 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
         <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.04)", borderRadius: "50%" }} />
         <div style={{ position: "absolute", right: 80, bottom: -40, width: 150, height: 150, background: "rgba(255,255,255,0.03)", borderRadius: "50%" }} />
         <div style={{ padding: "1.5rem 2rem", position: "relative", zIndex: 10 }}>
@@ -324,14 +324,14 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {/* TAB OVERVIEW */}
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <KpiCard anim={1} label="Siswa Aktif (Enroll)" value={data.totalSiswa} color="#6366f1" bg="#e0e7ff" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            footer={<><span>Putra: <strong style={{ color: "#6366f1" }}>{data.totalSiswaPa}</strong></span><span>Putri: <strong style={{ color: "#f59e0b" }}>{data.totalSiswaPi}</strong></span></>}
+          <KpiCard anim={1} label="Siswa Aktif (Enroll)" value={data.totalSiswa} color="#2563eb" bg="#dbeafe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            footer={<><span>Putra: <strong style={{ color: "#2563eb" }}>{data.totalSiswaPa}</strong></span><span>Putri: <strong style={{ color: "#f59e0b" }}>{data.totalSiswaPi}</strong></span></>}
           />
           <KpiCard anim={2} label="Pemasukan (Netto)" value={fmtRp(data.pemasukanPeriode - data.pengeluaranPeriode)} color="#10b981" bg="#d1fae5" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" small
             footer={<><span>{data.currentMonthName}: <strong style={{ color: "#10b981" }}>{fmtRp(data.pemasukanBulanIni - data.pengeluaranBulanIni)}</strong></span></>}
           />
-          <KpiCard anim={3} label="Total Guru & Staff" value={data.totalGuru + data.totalStaff} color="#8b5cf6" bg="#ede9fe" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            footer={<><span>Guru: <strong style={{ color: "#8b5cf6" }}>{data.totalGuru}</strong></span><span>Staff: <strong style={{ color: "#a78bfa" }}>{data.totalStaff}</strong></span></>}
+          <KpiCard anim={3} label="Total Guru & Staff" value={data.totalGuru + data.totalStaff} color="#3b82f6" bg="#ede9fe" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            footer={<><span>Guru: <strong style={{ color: "#3b82f6" }}>{data.totalGuru}</strong></span><span>Staff: <strong style={{ color: "#a78bfa" }}>{data.totalStaff}</strong></span></>}
           />
           <KpiCard anim={4} label="Pendaftar PPDB" value={data.ppdbPending + data.ppdbDiterima} color="#0ea5e9" bg="#e0f2fe" icon="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
             footer={<><span>Pending: <strong style={{ color: "#0ea5e9" }}>{data.ppdbPending}</strong></span><span>Diterima: <strong style={{ color: "#10b981" }}>{data.ppdbDiterima}</strong></span></>}
@@ -373,7 +373,7 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {activeTab === "academic" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard anim={1} label="Kelas Periode Ini" value={data.totalKelas} color="#22c55e" bg="#dcfce7" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            footer={<><span>Aktif: <strong style={{ color: "#22c55e" }}>{data.totalKelas}</strong></span><span>Siswa: <strong style={{ color: "#6366f1" }}>{data.totalSiswa}</strong></span></>}
+            footer={<><span>Aktif: <strong style={{ color: "#22c55e" }}>{data.totalKelas}</strong></span><span>Siswa: <strong style={{ color: "#2563eb" }}>{data.totalSiswa}</strong></span></>}
           />
           <KpiCard anim={2} label="Siswa Aktif Laki-Laki" value={data.totalSiswaPa} color="#0ea5e9" bg="#e0f2fe" icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
             footer={<><span>Rasio Laki: <strong>{data.totalSiswa ? Math.round((data.totalSiswaPa/data.totalSiswa)*100) : 0}%</strong></span></>}
@@ -381,8 +381,8 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
           <KpiCard anim={3} label="Siswa Aktif Perempuan" value={data.totalSiswaPi} color="#ec4899" bg="#fce7f3" icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
             footer={<><span>Rasio Perempuan: <strong>{data.totalSiswa ? Math.round((data.totalSiswaPi/data.totalSiswa)*100) : 0}%</strong></span></>}
           />
-          <KpiCard anim={4} label="Kasus/Catatan BK (Periode)" value={data.counselingCount} color="#6366f1" bg="#e0e7ff" icon="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            footer={<><span>Riwayat Bimbingan</span><strong style={{ color: "#6366f1" }}>Konseling</strong></>}
+          <KpiCard anim={4} label="Kasus/Catatan BK (Periode)" value={data.counselingCount} color="#2563eb" bg="#dbeafe" icon="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            footer={<><span>Riwayat Bimbingan</span><strong style={{ color: "#2563eb" }}>Konseling</strong></>}
           />
         </div>
       )}
@@ -390,7 +390,7 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
       {/* TAB HR & UMUM */}
       {activeTab === "hr" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard anim={1} label="Total Tenaga Pengajar (Guru)" value={data.totalGuru} color="#8b5cf6" bg="#ede9fe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+          <KpiCard anim={1} label="Total Tenaga Pengajar (Guru)" value={data.totalGuru} color="#3b82f6" bg="#ede9fe" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
             footer={<><span>Status Pegawai Aktif</span></>}
           />
           <KpiCard anim={2} label="Total Tenaga Kependidikan" value={data.totalStaff} color="#3b82f6" bg="#dbeafe" icon="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"

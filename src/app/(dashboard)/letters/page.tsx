@@ -132,7 +132,7 @@ export default function LettersPage() {
         title: "Perhatian",
         text: "Perihal surat wajib diisi",
         icon: "warning",
-        confirmButtonColor: "#4f46e5"
+        confirmButtonColor: "#0284c7"
       }); 
       return; 
     }
@@ -284,7 +284,7 @@ export default function LettersPage() {
                 }); 
                 setShowModal(true); 
               }}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-indigo-200 flex items-center gap-2"
+              className="px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-sky-200 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>{tab === "masuk" ? "Catat Surat Masuk" : "Buat Surat Keluar"}</span>
@@ -336,14 +336,14 @@ export default function LettersPage() {
           <div className="flex p-1 bg-slate-100/80 rounded-xl max-w-sm">
             <button 
               onClick={() => { setTab("masuk"); setSearchQuery(""); }} 
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${tab === "masuk" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${tab === "masuk" ? "bg-white text-sky-700 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
             >
               <Inbox className="w-4 h-4" />
               <span>Surat Masuk</span>
             </button>
             <button 
               onClick={() => { setTab("keluar"); setSearchQuery(""); }} 
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${tab === "keluar" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${tab === "keluar" ? "bg-white text-sky-700 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
             >
               <Send className="w-4 h-4" />
               <span>Surat Keluar</span>
@@ -357,7 +357,7 @@ export default function LettersPage() {
               placeholder={`Cari surat ${tab}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all"
             />
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function LettersPage() {
           <div className="space-y-6 flex-1">
             <div className="space-y-4">
               {data.map(item => (
-              <Card key={item.id} className="group hover:border-indigo-200 hover:shadow-md transition-all">
+              <Card key={item.id} className="group hover:border-sky-200 hover:shadow-md transition-all">
                 <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                   
                   <div className="flex-1 min-w-0">
@@ -405,7 +405,7 @@ export default function LettersPage() {
                       </span>
                     </div>
                     
-                    <h4 className="text-lg font-bold text-slate-800 mb-1.5 truncate group-hover:text-indigo-700 transition-colors">
+                    <h4 className="text-lg font-bold text-slate-800 mb-1.5 truncate group-hover:text-sky-700 transition-colors">
                       {item.subject}
                     </h4>
                     
@@ -446,7 +446,7 @@ export default function LettersPage() {
                     <div className="flex gap-1 ml-2">
                       <button 
                         onClick={() => handleEdit(item)} 
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-5 h-5" />
@@ -486,7 +486,7 @@ export default function LettersPage() {
           <Card className="relative w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${tab === "masuk" ? "bg-indigo-50 text-indigo-600" : "bg-violet-50 text-violet-600"}`}>
+                <div className={`p-2 rounded-xl ${tab === "masuk" ? "bg-sky-50 text-sky-600" : "bg-cyan-50 text-cyan-600"}`}>
                   {tab === "masuk" ? <Inbox className="w-5 h-5" /> : <Send className="w-5 h-5" />}
                 </div>
                 <div>
@@ -508,7 +508,7 @@ export default function LettersPage() {
                   value={form.subject} 
                   onChange={e => setForm({ ...form, subject: e.target.value })} 
                   placeholder="Contoh: Undangan Rapat Wali Murid"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
                 />
               </div>
 
@@ -521,7 +521,7 @@ export default function LettersPage() {
                       value={tab === "masuk" ? form.sender : form.receiver} 
                       onChange={e => setForm(tab === "masuk" ? { ...form, sender: e.target.value } : { ...form, receiver: e.target.value })} 
                       placeholder={tab === "masuk" ? "Kementerian Pendidikan" : "Wali Murid Kelas 10"}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
                     />
                   </div>
                 </div>
@@ -538,7 +538,7 @@ export default function LettersPage() {
                         const monthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(new Date(newDate));
                         setForm({ ...form, date: newDate, month: monthName });
                       }} 
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
+                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all" 
                     />
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export default function LettersPage() {
                   <select 
                     value={form.semester}
                     onChange={e => setForm({ ...form, semester: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
                   >
                     <option value="">Pilih Semester</option>
                     <option value="ganjil">Ganjil</option>
@@ -562,7 +562,7 @@ export default function LettersPage() {
                   <select 
                     value={form.month}
                     onChange={e => setForm({ ...form, month: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
                   >
                     {[
                       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -580,7 +580,7 @@ export default function LettersPage() {
                   value={form.number} 
                   onChange={e => setForm({ ...form, number: e.target.value })} 
                   placeholder={tab === "keluar" ? "Boleh dikosongkan untuk auto-generate" : "Masukkan nomor surat masuk"}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
                 />
               </div>
 
@@ -590,7 +590,7 @@ export default function LettersPage() {
                  <select 
                    value={form.status} 
                    onChange={e => setForm({ ...form, status: e.target.value })} 
-                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
                  >
                    {Object.entries(statusLabels).map(([k, v]) => (
                      <option key={k} value={k}>{v}</option>
@@ -609,7 +609,7 @@ export default function LettersPage() {
               </button>
               <button 
                 onClick={handleSubmit} 
-                className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-all"
+                className="px-8 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold shadow-md shadow-sky-200 transition-all"
               >
                 {editItem ? "Simpan Perubahan" : "Simpan Surat"}
               </button>

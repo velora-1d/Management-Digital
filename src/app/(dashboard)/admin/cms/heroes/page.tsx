@@ -141,17 +141,17 @@ export default function HeroesCMS() {
               <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                 <button 
                   onClick={() => setEditing(hero)}
-                  className="p-3 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-indigo-600 transition-colors"
+                  className="p-3 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-blue-600 transition-colors"
                   title="Edit Banner"
                 >
-                  ✏️
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
                 <button 
                   onClick={() => handleDelete(hero.id!)}
                   className="p-3 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-rose-600 transition-colors"
                   title="Hapus Banner"
                 >
-                  🗑️
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function HeroesCMS() {
                   name="subtitle" 
                   defaultValue={editing.subtitle} 
                   rows={2} 
-                  className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                  className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
                 />
               </div>
               <div className="space-y-2">

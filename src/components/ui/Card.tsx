@@ -21,11 +21,11 @@ export default function Card({
 }: CardProps) {
   return (
     <div 
-      className={`bg-[#1E1E1E] text-white rounded-2xl border border-[#2C2C2E] shadow-xl overflow-hidden ${className}`}
+      className={`bg-white text-slate-800 rounded-2xl border border-slate-200/80 shadow-xl overflow-hidden ${className}`}
     >
       {(title || actions) && (
         <div 
-          className={`${compact ? 'px-4 py-3' : 'px-8 py-5'} border-b border-[#2C2C2E] flex items-center justify-between gap-4 flex-wrap`} 
+          className={`${compact ? 'px-4 py-3' : 'px-8 py-5'} border-b border-slate-200/80 flex items-center justify-between gap-4 flex-wrap`} 
           style={{ borderBottom: "1px solid #2C2C2E" }}
         >
           <div className="flex items-center gap-2.5">
@@ -37,7 +37,7 @@ export default function Card({
               )
             )}
             {title && (
-              <h4 className="font-heading font-bold text-sm text-white m-0 tracking-wide">
+              <h4 className="font-heading font-bold text-sm text-slate-800 m-0 tracking-wide">
                 {title}
               </h4>
             )}

@@ -103,7 +103,7 @@ export default function ProfilePage() {
       <PageHeader
         title="Profil Pengguna"
         subtitle="Kelola informasi akun dan keamanan Anda"
-        icon={<User className="w-5 h-5 text-indigo-600" />}
+        icon={<User className="w-5 h-5 text-blue-600" />}
       />
 
       {/* Grid Settings */}
@@ -112,7 +112,7 @@ export default function ProfilePage() {
         {/* Section 1: Informasi Profil */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm h-fit">
           <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
               {(profile.name || "?").charAt(0).toUpperCase()}
             </div>
             <div>
@@ -127,7 +127,7 @@ export default function ProfilePage() {
                 type="text" 
                 value={profile.name} 
                 onChange={(e) => setProfile({...profile, name: e.target.value})} 
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-1 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-1 transition-all shadow-sm"
               />
             </div>
             <div>
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                 type="text" 
                 value={profile.username} 
                 onChange={(e) => setProfile({...profile, username: e.target.value})} 
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-1 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-1 transition-all shadow-sm"
               />
             </div>
             <div>
@@ -151,7 +151,7 @@ export default function ProfilePage() {
             <div className="pt-2">
               <button 
                 onClick={saveProfile} 
-                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-linear-to-r from-indigo-600 to-indigo-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-linear-to-r from-blue-600 to-blue-500 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
                 Simpan Profil

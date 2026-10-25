@@ -4,6 +4,7 @@ import { students, studentEnrollments, academicYears } from "@/db/schema";
 import { and, eq, or, isNull } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { getStudentsList } from "@/lib/students";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * Mengekstrak field Dapodik dari body request.
@@ -66,6 +67,7 @@ function extractStudentData(body: Record<string, unknown>) {
     // E. Administrasi
     infaqStatus: (b.infaqStatus || "reguler") as string,
     infaqNominal: b.infaqNominal ? Number(b.infaqNominal) : 0,
+    unitId: (b.unitId || b.unit_id || "") as string,
   };
 }
 
@@ -81,6 +83,10 @@ export async function GET(request: Request) {
   const ageMin = searchParams.get("ageMin");
   const ageMax = searchParams.get("ageMax");
 
+  const authUser = await getAuthUser();
+  const headerTenantId = request.headers.get("x-tenant-id");
+  const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
+
   try {
     const result = await getStudentsList({
       page,
@@ -92,6 +98,7 @@ export async function GET(request: Request) {
       status,
       ageMin,
       ageMax,
+      tenantId,
     });
 
     const response = NextResponse.json({
@@ -112,17 +119,31 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const data = extractStudentData(body);
+    const authUser = await getAuthUser();
+    const headerTenantId = request.headers.get("x-tenant-id");
+    const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
 
-    if (!data.name?.trim()) {
+    const body = await request.json();
+    const extractedData = extractStudentData(body);
+
+    if (!extractedData.name?.trim()) {
       return NextResponse.json({ success: false, message: "Nama siswa wajib diisi" }, { status: 400 });
     }
 
-    // 1. Cari tahun ajaran aktif
+    const studentData = {
+      ...extractedData,
+      tenantId,
+      unitId: extractedData.unitId || authUser?.unitId || "",
+    };
+
+    // 1. Cari tahun ajaran aktif pada tenant terkait
     const activeYearRes = await db.select({ id: academicYears.id })
       .from(academicYears)
-      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .where(and(
+        eq(academicYears.isActive, true),
+        isNull(academicYears.deletedAt),
+        eq(academicYears.tenantId, tenantId)
+      ))
       .limit(1);
     
     if (activeYearRes.length === 0) {
@@ -134,15 +155,16 @@ export async function POST(request: Request) {
 
     const targetYearId = activeYearRes[0].id;
 
-    // 2. Cek Duplikasi
+    // 2. Cek Duplikasi dibatasi pada tenant terkait
     const dupeConds = [];
-    if (data.nisn?.trim()) dupeConds.push(eq(students.nisn, data.nisn.trim()));
-    if (data.nik?.trim()) dupeConds.push(eq(students.nik, data.nik.trim()));
+    if (studentData.nisn?.trim()) dupeConds.push(eq(students.nisn, studentData.nisn.trim()));
+    if (studentData.nik?.trim()) dupeConds.push(eq(students.nik, studentData.nik.trim()));
 
     const existing = await db.select()
       .from(students)
       .where(
         and(
+          eq(students.tenantId, tenantId),
           isNull(students.deletedAt),
           dupeConds.length > 0 ? or(...dupeConds) : eq(students.id, -1)
         )
@@ -163,11 +185,11 @@ export async function POST(request: Request) {
       const student = await db.transaction(async (tx) => {
         const [restored] = await tx.update(students)
           .set({
-            ...data,
+            ...studentData,
             deletedAt: null,
             updatedAt: new Date(),
           })
-          .where(eq(students.id, record.id))
+          .where(and(eq(students.id, record.id), eq(students.tenantId, tenantId)))
           .returning();
 
         const existingEnrollment = await tx.select()
@@ -175,20 +197,22 @@ export async function POST(request: Request) {
           .where(and(
             eq(studentEnrollments.studentId, record.id),
             eq(studentEnrollments.academicYearId, targetYearId),
+            eq(studentEnrollments.tenantId, tenantId),
             isNull(studentEnrollments.deletedAt)
           ))
           .limit(1);
         
         if (existingEnrollment.length === 0) {
            await tx.insert(studentEnrollments).values({
+            tenantId,
             studentId: record.id,
-            classroomId: data.classroomId,
+            classroomId: studentData.classroomId,
             academicYearId: targetYearId,
             enrollmentType: "kembali",
           });
         } else {
            await tx.update(studentEnrollments)
-            .set({ classroomId: data.classroomId, updatedAt: new Date() })
+            .set({ classroomId: studentData.classroomId, updatedAt: new Date() })
             .where(eq(studentEnrollments.id, existingEnrollment[0].id));
         }
 
@@ -205,11 +229,12 @@ export async function POST(request: Request) {
 
     // 3. Insert Baru
     const newStudent = await db.transaction(async (tx) => {
-      const [inserted] = await tx.insert(students).values(data).returning();
+      const [inserted] = await tx.insert(students).values(studentData).returning();
 
       await tx.insert(studentEnrollments).values({
+        tenantId,
         studentId: inserted.id,
-        classroomId: data.classroomId,
+        classroomId: studentData.classroomId,
         academicYearId: targetYearId,
         enrollmentType: "baru",
       });

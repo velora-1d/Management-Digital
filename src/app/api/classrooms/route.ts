@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { academicYears, classrooms } from "@/db/schema";
 import { getClassroomsList } from "@/lib/classrooms";
 import { and, asc, eq, ilike, isNull } from "drizzle-orm";
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +14,10 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q") || "";
     const reqAcademicYearId = searchParams.get("academicYearId");
 
+    const authUser = await getAuthUser();
+    const headerTenantId = req.headers.get("x-tenant-id");
+    const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
+
     // Tentukan tahun ajaran: gunakan query param jika ada, jika tidak → tahun aktif
     // Kirim "all" untuk tampilkan semua tahun ajaran
     let academicYearId: number | null = null;
@@ -22,13 +27,20 @@ export async function GET(req: NextRequest) {
       const [activeYear] = await db
         .select({ id: academicYears.id })
         .from(academicYears)
-        .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+        .where(and(
+          eq(academicYears.isActive, true),
+          isNull(academicYears.deletedAt),
+          eq(academicYears.tenantId, tenantId)
+        ))
         .limit(1);
       academicYearId = activeYear?.id ?? null;
     }
 
     if (optionsOnly) {
-      const conditions = [isNull(classrooms.deletedAt)];
+      const conditions = [
+        isNull(classrooms.deletedAt),
+        eq(classrooms.tenantId, tenantId),
+      ];
       if (q) {
         conditions.push(ilike(classrooms.name, `%${q}%`));
       }
@@ -54,7 +66,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const result = await getClassroomsList({ page, limit, q, academicYearId });
+    const result = await getClassroomsList({ page, limit, q, academicYearId, tenantId });
 
     return NextResponse.json(
       {
@@ -77,6 +89,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const authUser = await getAuthUser();
+    const headerTenantId = req.headers.get("x-tenant-id");
+    const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
+
     const body = await req.json();
     const { name, level, academicYearId, waliKelasId, infaqNominal } = body;
 
@@ -84,10 +100,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Nama kelas wajib diisi" }, { status: 400 });
     }
 
-    // 1. Cek apakah ada record dengan nama yang sama (termasuk yang di-soft delete)
+    // 1. Cek apakah ada record dengan nama yang sama pada tenant ini
     const existing = await db.select()
       .from(classrooms)
-      .where(ilike(classrooms.name, name))
+      .where(and(
+        eq(classrooms.tenantId, tenantId),
+        ilike(classrooms.name, name)
+      ))
       .limit(1);
 
     if (existing.length > 0) {
@@ -111,7 +130,7 @@ export async function POST(req: NextRequest) {
           deletedAt: null,
           updatedAt: new Date(),
         })
-        .where(eq(classrooms.id, record.id))
+        .where(and(eq(classrooms.id, record.id), eq(classrooms.tenantId, tenantId)))
         .returning();
 
       return NextResponse.json({
@@ -122,8 +141,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Jika tidak ada, insert baru
+    // 2. Jika tidak ada, insert baru dengan tenantId
     const [newClassroom] = await db.insert(classrooms).values({
+      tenantId,
       name: name,
       level: level ? Number(level) : 1,
       academicYearId: (academicYearId && academicYearId !== "null") ? Number(academicYearId) : null,

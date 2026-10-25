@@ -93,7 +93,7 @@ export default function CoopCreditsPage() {
         title="Piutang Siswa"
         subtitle="Kelola bon dan pelunasan"
         icon={<ReceiptText />}
-        gradient="from-indigo-500 to-blue-600"
+        gradient="from-blue-500 to-blue-600"
         actions={
           <ExportButtons 
             options={{
@@ -141,12 +141,12 @@ export default function CoopCreditsPage() {
       {/* Filter */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1 flex gap-1 max-w-sm">
         {[{ v: "belum_lunas", l: "Belum Lunas" }, { v: "cicil", l: "Cicilan" }, { v: "lunas", l: "Lunas" }, { v: "", l: "Semua" }].map(f => (
-          <button key={f.v} onClick={() => setFilter(f.v)} className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${filter === f.v ? "bg-indigo-600 text-white shadow" : "text-slate-500 hover:text-slate-700"}`}>{f.l}</button>
+          <button key={f.v} onClick={() => setFilter(f.v)} className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${filter === f.v ? "bg-blue-600 text-white shadow" : "text-slate-500 hover:text-slate-700"}`}>{f.l}</button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+        <div className="flex justify-center items-center h-64 bg-white rounded-xl border border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
       ) : data.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed"><p className="text-sm text-slate-500">Tidak ada data piutang</p></div>
       ) : (
@@ -155,7 +155,7 @@ export default function CoopCreditsPage() {
             const sisa = c.amount - c.paidAmount;
             const persen = c.amount > 0 ? Math.round((c.paidAmount / c.amount) * 100) : 0;
             return (
-              <Card key={c.id} className="p-4 hover:border-indigo-100 transition-colors">
+              <Card key={c.id} className="p-4 hover:border-blue-100 transition-colors">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

@@ -245,22 +245,22 @@ export default function InventoryPage() {
       <PageHeader
         title="Inventaris Madrasah"
         subtitle="Pencatatan & Pengelolaan Aset Barang Madrasah"
-        icon={<Package className="w-5 h-5 text-indigo-600" />}
+        icon={<Package className="w-5 h-5 text-blue-600" />}
       />
       {/* KPI Total Nilai */}
       <Card compact>
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-slate-600">Total Nilai Aset</span>
-          <span className="text-xl font-extrabold text-indigo-700">Rp {totalValue.toLocaleString("id-ID")}</span>
+          <span className="text-xl font-extrabold text-blue-700">Rp {totalValue.toLocaleString("id-ID")}</span>
         </div>
       </Card>
 
       {/* Tabel Inventaris */}
       <Card
         title="Daftar Aset"
-        icon={<Package className="w-5 h-5 text-indigo-600" />}
+        icon={<Package className="w-5 h-5 text-blue-600" />}
         actions={
-          <button onClick={handleAdd} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+          <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
             Tambah Aset
           </button>
@@ -334,7 +334,7 @@ export default function InventoryPage() {
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600, verticalAlign: "middle" }}>{(page - 1) * limit + i + 1}</td>
                       <td style={{ padding: "1.25rem 1.5rem", verticalAlign: "middle" }}>
                         <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>{item.name}</p>
-                        {item.location && <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>📍 {item.location}</p>}
+                        {item.location && <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>{item.location}</p>}
                       </td>
                       <td style={{ padding: "1.25rem 1.5rem", verticalAlign: "middle" }}>
                         <span style={{ background: "#f1f5f9", color: "#475569", padding: "0.375rem 0.875rem", borderRadius: 9999, fontSize: "0.75rem", fontWeight: 600 }}>{item.category || "-"}</span>

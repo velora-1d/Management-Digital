@@ -60,15 +60,15 @@ export default function Modal({
       {/* Panel */}
       <div
         className={[
-          "relative w-full bg-[#1E1E1E] text-white rounded-2xl shadow-2xl border border-[#2C2C2E] overflow-hidden animate-fade-in-up",
+          "relative w-full bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in-up",
           sizeMap[size],
         ].join(" ")}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#2C2C2E]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
             <div>
-              <h3 className="font-heading font-bold text-lg text-white m-0">
+              <h3 className="font-heading font-bold text-lg text-slate-800 m-0">
                 {title}
               </h3>
               {subtitle && (
@@ -77,7 +77,7 @@ export default function Modal({
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -91,7 +91,7 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2C2C2E] bg-[#181818]/90">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
             {footer}
           </div>
         )}

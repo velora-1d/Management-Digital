@@ -124,13 +124,13 @@ export default function SettingsPage() {
       html: `
         <div style="text-align:left;display:grid;gap:0.75rem;">
           <label style="font-size:0.75rem;font-weight:600;">Nama</label>
-          <input id="swal-u-name" class="swal2-input focus:ring-2 ring-indigo-500 border-slate-300 rounded" style="margin:0;">
+          <input id="swal-u-name" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Username (Email)</label>
-          <input id="swal-u-user" class="swal2-input focus:ring-2 ring-indigo-500 border-slate-300 rounded" style="margin:0;">
+          <input id="swal-u-user" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Password</label>
-          <input id="swal-u-pass" type="password" class="swal2-input focus:ring-2 ring-indigo-500 border-slate-300 rounded" style="margin:0;">
+          <input id="swal-u-pass" type="password" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
           <label style="font-size:0.75rem;font-weight:600;">Role</label>
-          <select id="swal-u-role" class="swal2-select focus:ring-2 ring-indigo-500 border-slate-300 rounded" style="margin:0;">
+          <select id="swal-u-role" class="swal2-select focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
             <option value="admin">Admin</option>
             <option value="operator">Operator</option>
             <option value="kepsek">Kepsek</option>
@@ -141,7 +141,7 @@ export default function SettingsPage() {
       showCancelButton: true,
       confirmButtonText: 'Simpan',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#4f46e5',
+      confirmButtonColor: '#1d4ed8',
       preConfirm: () => {
         return {
           name: (document.getElementById('swal-u-name') as HTMLInputElement).value,
@@ -202,7 +202,7 @@ export default function SettingsPage() {
       showCancelButton: true,
       confirmButtonText: 'Simpan',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#4f46e5',
+      confirmButtonColor: '#1d4ed8',
       preConfirm: () => {
         return {
           name: (document.getElementById('swal-e-name') as HTMLInputElement).value,
@@ -267,7 +267,7 @@ export default function SettingsPage() {
   const wipeAllData = async () => {
     // Langkah 1: Peringatan awal
     const step1 = await Swal.fire({
-      title: '⚠️ ZONA BAHAYA',
+      title: 'ZONA BAHAYA',
       html: `<div style="text-align:left">
         <p style="font-size:0.875rem;color:#dc2626;font-weight:700;">Anda akan menghapus SEMUA data dalam sistem.</p>
         <ul style="font-size:0.8125rem;color:#475569;margin-top:8px;padding-left:1.5rem;list-style:disc;">
@@ -286,7 +286,7 @@ export default function SettingsPage() {
 
     // Langkah 2: Wajib backup dulu
     const step2 = await Swal.fire({
-      title: '📦 Backup Data Wajib',
+      title: 'Backup Data Wajib',
       html: `<div style="text-align:left">
         <p style="font-size:0.875rem;color:#475569;">Sebelum menghapus data, Anda <strong style="color:#dc2626;">WAJIB</strong> mengunduh backup terlebih dahulu.</p>
         <p style="font-size:0.8125rem;color:#94a3b8;margin-top:8px;">Klik tombol di bawah untuk mengunduh file backup, lalu lanjutkan.</p>
@@ -294,7 +294,7 @@ export default function SettingsPage() {
       icon: 'info',
       showCancelButton: true,
       confirmButtonColor: '#0ea5e9',
-      confirmButtonText: '⬇ Download Backup Sekarang',
+      confirmButtonText: 'Download Backup Sekarang',
       cancelButtonText: 'Batal Proses',
     });
     if (!step2.isConfirmed) return;
@@ -307,7 +307,7 @@ export default function SettingsPage() {
 
     // Langkah 3: Konfirmasi akhir dengan ketik HAPUS SEMUA
     const step3 = await Swal.fire({
-      title: '🔴 Konfirmasi Akhir',
+      title: 'Konfirmasi Akhir',
       html: `<div style="text-align:left">
         <p style="font-size:0.875rem;color:#dc2626;font-weight:700;">Pastikan file backup sudah terdownload!</p>
         <p style="font-size:0.8125rem;color:#475569;margin-top:8px;">Ketik <strong>HAPUS SEMUA</strong> untuk konfirmasi penghapusan seluruh data.</p>
@@ -347,10 +347,10 @@ export default function SettingsPage() {
 
   const handleRestore = async () => {
     const { value: file } = await Swal.fire({
-      title: '📥 Restore Data dari Backup',
+      title: 'Restore Data dari Backup',
       html: `<div style="text-align:left">
         <p style="font-size:0.875rem;color:#475569;">Pilih file backup SQL yang ingin di-restore.</p>
-        <p style="font-size:0.75rem;color:#94a3b8;margin-top:6px;">⚠️ Data saat ini akan <strong>digantikan</strong> sepenuhnya oleh data dari backup.</p>
+        <p style="font-size:0.75rem;color:#94a3b8;margin-top:6px;">Data saat ini akan <strong>digantikan</strong> sepenuhnya oleh data dari backup.</p>
       </div>`,
       input: 'file',
       inputAttributes: { accept: '.sql', 'aria-label': 'Upload file backup SQL' },
@@ -411,7 +411,7 @@ export default function SettingsPage() {
         if (res.ok && json.success) {
           const list = (json.restored || []).join(', ');
           Swal.fire({
-            title: '✅ Restore Berhasil!',
+            title: 'Restore Berhasil!',
             html: `<div style="text-align:left"><p style="font-size:0.875rem;color:#475569;">Data berhasil di-restore:</p><p style="font-size:0.8125rem;color:#1e293b;margin-top:6px;">${list || 'Semua data'}</p></div>`,
             icon: 'success'
           });
@@ -439,33 +439,33 @@ export default function SettingsPage() {
           onClick={() => setActiveTab('profil')} 
           className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
             activeTab === 'profil' 
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
           }`}
         >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'profil' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'profil' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
           Profil Madrasah
         </button>
         <button 
           onClick={() => setActiveTab('users')} 
           className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
             activeTab === 'users' 
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
           }`}
         >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'users' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'users' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           Manajemen User
         </button>
         <button 
           onClick={() => setActiveTab('tools')} 
           className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
             activeTab === 'tools' 
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
           }`}
         >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'tools' ? 'text-indigo-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'tools' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
           Alat Lanjut
         </button>
       </div>
@@ -474,7 +474,7 @@ export default function SettingsPage() {
       {activeTab === 'profil' && (
         <Card noPadding>
           <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Identitas Utama Madrasah</h4>
           </div>
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -497,7 +497,7 @@ export default function SettingsPage() {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Madrasah (Sidebar)</label>
                 <div className="flex items-center gap-3">
                   <label className="inline-flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer shadow-sm transition-colors text-sm font-semibold text-slate-700">
-                    <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     Pilih Gambar
@@ -515,31 +515,31 @@ export default function SettingsPage() {
 
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Lengkap Madrasah <span className="text-rose-500">*</span></label>
-              <input type="text" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm" />
+              <input type="text" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Telepon / WhatsApp</label>
-              <input type="text" value={profile.phone} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm" />
+              <input type="text" value={profile.phone} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Official</label>
-              <input type="email" value={profile.email} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm" />
+              <input type="email" value={profile.email} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Alamat Lengkap</label>
-              <textarea rows={3} value={profile.address} onChange={(e) => setProfile({...profile, address: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm resize-none"></textarea>
+              <textarea rows={3} value={profile.address} onChange={(e) => setProfile({...profile, address: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm resize-none"></textarea>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Kepala Madrasah</label>
-              <input type="text" value={profile.headmaster_name} onChange={(e) => setProfile({...profile, headmaster_name: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm" />
+              <input type="text" value={profile.headmaster_name} onChange={(e) => setProfile({...profile, headmaster_name: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">NIP Kepala Madrasah</label>
-              <input type="text" value={profile.headmaster_nip} onChange={(e) => setProfile({...profile, headmaster_nip: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 ring-offset-2 transition-all shadow-sm" />
+              <input type="text" value={profile.headmaster_nip} onChange={(e) => setProfile({...profile, headmaster_nip: e.target.value})} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 ring-offset-2 transition-all shadow-sm" />
             </div>
           </div>
           <div className="p-5 bg-slate-50 border-t border-slate-100 flex justify-end">
-            <button onClick={saveProfile} className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-sm hover:shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
+            <button onClick={saveProfile} className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition-all">
               <Save className="w-4 h-4 mr-2" />
               Simpan Perubahan
             </button>
@@ -552,10 +552,10 @@ export default function SettingsPage() {
         <Card noPadding>
           <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
               <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Akses & Manajemen Pengguna</h4>
             </div>
-            <button onClick={addUser} className="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+            <button onClick={addUser} className="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
               <UserPlus className="w-4 h-4 mr-2" />
               Tambah Akun
             </button>
@@ -580,7 +580,7 @@ export default function SettingsPage() {
                     <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                          <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
                             {(u.name || "?").charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -590,7 +590,7 @@ export default function SettingsPage() {
                         </div>
                       </td>
                       <td className="p-4 align-middle">
-                        <span className="inline-flex px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wide">
+                        <span className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wide">
                           {u.role}
                         </span>
                       </td>
@@ -609,7 +609,7 @@ export default function SettingsPage() {
                       </td>
                       <td className="p-4 align-middle text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => editUser(u)} className="inline-flex px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors">
+                          <button onClick={() => editUser(u)} className="inline-flex px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
                             Edit
                           </button>
                           <button onClick={() => resetPassword(u.id, u.username)} className="inline-flex px-3 py-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors">

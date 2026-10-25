@@ -23,6 +23,8 @@ export interface JwtPayload {
   email: string;
   role: string;
   unitId: string;
+  tenantId?: number;
+  tenantSlug?: string;
 }
 
 export interface AuthCookieOptions {

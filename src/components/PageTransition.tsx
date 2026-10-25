@@ -58,7 +58,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
           right: 0,
           zIndex: 9999,
           height: 3,
-          background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)",
+          background: "linear-gradient(90deg, #2563eb, #3b82f6, #a78bfa)",
           animation: "progressBar 1.5s ease-in-out infinite",
         }} />
       )}

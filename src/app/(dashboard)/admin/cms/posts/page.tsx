@@ -139,7 +139,7 @@ export default function PostsCMS() {
                   </Badge>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
-                  <button onClick={() => setEditing(post)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
+                  <button onClick={() => setEditing(post)} className="text-blue-600 hover:text-blue-900 font-bold">Edit</button>
                   <button onClick={() => handleDelete(post.id!)} className="text-rose-600 hover:text-rose-900 font-bold">Hapus</button>
                 </td>
               </tr>
@@ -167,7 +167,7 @@ export default function PostsCMS() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Kategori</label>
-                  <select name="category" defaultValue={editing.category} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <select name="category" defaultValue={editing.category} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="Berita">Berita</option>
                     <option value="Pengumuman">Pengumuman</option>
                     <option value="Artikel">Artikel</option>
@@ -178,7 +178,7 @@ export default function PostsCMS() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Status</label>
-                  <select name="status" defaultValue={editing.status} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <select name="status" defaultValue={editing.status} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="published">Published</option>
                     <option value="draft">Draft</option>
                   </select>
@@ -195,7 +195,7 @@ export default function PostsCMS() {
                   defaultValue={editing.content} 
                   required 
                   rows={8}
-                  className="w-full border border-slate-300 rounded-xl p-4 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full border border-slate-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="Tulis berita di sini (suport Markdown)..."
                 />
               </div>

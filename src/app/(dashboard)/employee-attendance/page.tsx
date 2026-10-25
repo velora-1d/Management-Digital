@@ -114,19 +114,19 @@ export default function EmployeeAttendancePage() {
       <PageHeader
         title="Absensi Pegawai"
         subtitle="Kelola kehadiran guru dan staf secara harian dan rekap kehadiran bulanan."
-        icon={<div className="w-8 h-8 rounded-full bg-linear-to-tr from-indigo-500 to-violet-500" />}
+        icon={<div className="w-8 h-8 rounded-full bg-linear-to-tr from-cyan-500 to-blue-500" />}
         actions={
           <div className="flex bg-white rounded-lg border border-slate-200 p-1">
             <button 
               onClick={() => setTab("input")} 
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === "input" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === "input" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}
             >
               <Calendar className="w-4 h-4" />
               Input Harian
             </button>
             <button 
               onClick={() => setTab("rekap")} 
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === "rekap" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === "rekap" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}
             >
               <History className="w-4 h-4" />
               Rekap Bulanan
@@ -145,7 +145,7 @@ export default function EmployeeAttendancePage() {
                   type="date" 
                   value={selectedDate} 
                   onChange={e => setSelectedDate(e.target.value)} 
-                  className="pl-9 pr-4 py-2 w-full sm:w-auto border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
+                  className="pl-9 pr-4 py-2 w-full sm:w-auto border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" 
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function EmployeeAttendancePage() {
             <button 
               onClick={handleSave} 
               disabled={saving || !records.length}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm shadow-blue-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {saving ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
@@ -166,7 +166,7 @@ export default function EmployeeAttendancePage() {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600/20 border-t-indigo-600 mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600/20 border-t-blue-600 mb-4"></div>
               <p className="text-sm text-slate-500 font-medium">Memuat data pegawai...</p>
             </div>
           ) : existingRecords.length === 0 ? (
@@ -224,7 +224,7 @@ export default function EmployeeAttendancePage() {
                             value={rec?.note || ""} 
                             onChange={e => updateRecord(emp.id, "note", e.target.value)} 
                             placeholder="Tambahkan catatan..."
-                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400" 
                           />
                         </td>
                       </tr>
@@ -254,7 +254,7 @@ export default function EmployeeAttendancePage() {
               <select 
                 value={recapMonth} 
                 onChange={e => setRecapMonth(parseInt(e.target.value))} 
-                className="border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer transition-all appearance-none pr-8 relative"
+                className="border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer transition-all appearance-none pr-8 relative"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.2em 1.2em` }}
               >
                 {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -262,7 +262,7 @@ export default function EmployeeAttendancePage() {
               <select 
                 value={recapYear} 
                 onChange={e => setRecapYear(parseInt(e.target.value))} 
-                className="border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer transition-all appearance-none pr-8 relative"
+                className="border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer transition-all appearance-none pr-8 relative"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.2em 1.2em` }}
               >
                 {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
@@ -294,7 +294,7 @@ export default function EmployeeAttendancePage() {
 
           {loadingRecap ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600/20 border-t-indigo-600 mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600/20 border-t-blue-600 mb-4"></div>
               <p className="text-sm text-slate-500 font-medium">Memuat rekapitulasi...</p>
             </div>
           ) : recap.length === 0 ? (

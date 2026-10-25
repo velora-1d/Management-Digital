@@ -6,9 +6,9 @@ import Swal from "sweetalert2";
 
 const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "0.625rem 0.875rem", border: "1.5px solid #e2e8f0", borderRadius: "0.5rem", fontSize: "0.8125rem", outline: "none" };
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.375rem" };
-const sectionHeaderStyle = (letter: string, label: string, color = "#6366f1") => (
+const sectionHeaderStyle = (letter: string, label: string, color = "#2563eb") => (
   <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.875rem", fontWeight: 700, color, margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-    <span style={{ width: "1.5rem", height: "1.5rem", background: "#eef2ff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", color: "#4f46e5", fontWeight: 800 }}>{letter}</span>
+    <span style={{ width: "1.5rem", height: "1.5rem", background: "#eff6ff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", color: "#1d4ed8", fontWeight: 800 }}>{letter}</span>
     {label}
   </h3>
 );
@@ -93,7 +93,7 @@ interface FieldProps {
 const Field = ({ label, name, type = "text", required = false, span2 = false, placeholder = "", children, formData, onChange }: FieldProps) => (
   <div style={span2 ? { gridColumn: "span 2" } : {}}>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    {children || <input type={type} name={name} value={formData[name] as string} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-indigo-500 transition-colors" />}
+    {children || <input type={type} name={name} value={formData[name] as string} onChange={onChange} required={required} placeholder={placeholder} style={inputStyle} className="focus:border-blue-500 transition-colors" />}
   </div>
 );
 
@@ -109,7 +109,7 @@ interface SelectProps {
 const Select = ({ label, name, required = false, options, formData, onChange }: SelectProps) => (
   <div style={{ width: "100%" }}>
     <label style={labelStyle}>{label} {required && <span style={{ color: "#e11d48" }}>*</span>}</label>
-    <select name={name} value={formData[name] as string} onChange={onChange} required={required} style={inputStyle} className="focus:border-indigo-500 bg-white">
+    <select name={name} value={formData[name] as string} onChange={onChange} required={required} style={inputStyle} className="focus:border-blue-500 bg-white">
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>
   </div>
@@ -192,7 +192,7 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
           title: title,
           text: json.message || "Data berhasil disimpan",
           icon: "success",
-          confirmButtonColor: "#6366f1",
+          confirmButtonColor: "#2563eb",
         }).then(() => router.push("/students"));
       } else {
         Swal.fire("Gagal", json.message || "Error", "error");
@@ -207,7 +207,7 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
   return (
     <div className="space-y-6 animate-fade-in-up" style={{ maxWidth: "100%" }}>
       {/* Header */}
-      <div style={{ background: "linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a78bfa 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
+      <div style={{ background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#a78bfa 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
         <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
         <div style={{ padding: "2rem", position: "relative", zIndex: 10, display: "flex", alignItems: "center", gap: "1rem" }}>
           <Link href="/students" style={{ width: 40, height: 40, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }} className="hover:bg-white/30">
@@ -239,7 +239,7 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
             <Field label="Jumlah Saudara" name="siblingCount" type="number" formData={f} onChange={handleChange} />
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Alamat Murid</label>
-              <textarea name="address" value={f.address} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-indigo-500 transition-colors" />
+              <textarea name="address" value={f.address} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-blue-500 transition-colors" />
             </div>
             <Field label="Desa / Kelurahan" name="village" formData={f} onChange={handleChange} />
             <Field label="Kecamatan" name="district" formData={f} onChange={handleChange} />
@@ -320,14 +320,14 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
             <Field label="No. Kontak Wali" name="guardianPhone" formData={f} onChange={handleChange} />
             <div style={{ gridColumn: "span 2" }}>
               <label style={labelStyle}>Alamat Wali</label>
-              <textarea name="guardianAddress" value={f.guardianAddress} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-indigo-500 transition-colors" />
+              <textarea name="guardianAddress" value={f.guardianAddress} onChange={handleChange} rows={2} style={{ ...inputStyle, resize: "none" }} className="focus:border-blue-500 transition-colors" />
             </div>
           </div>
         </div>
 
         {/* E. Administrasi Internal */}
         <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "2rem", marginBottom: "1.5rem" }}>
-          {sectionHeaderStyle("E", "Status & Administrasi Internal", "#8b5cf6")}
+          {sectionHeaderStyle("E", "Status & Administrasi Internal", "#3b82f6")}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem" }}>
             <Select label="Kategori Biaya" name="category" required options={[["reguler", "Reguler (Wajib Bayar)"], ["kurang_mampu", "Kurang Mampu"], ["yatim_piatu", "Yatim / Piatu"], ["keluarga_guru", "Keluarga Guru"]]} formData={f} onChange={handleChange} />
             <Select label="Status Siswa" name="status" required options={[["aktif", "Aktif"], ["lulus", "Lulus"], ["pindah", "Pindah"], ["nonaktif", "Nonaktif"]]} formData={f} onChange={handleChange} />
@@ -362,7 +362,7 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
         {/* Submit */}
         <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.25rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Link href="/students" style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", textDecoration: "none" }}>← Batal & Kembali</Link>
-          <button type="submit" disabled={loading} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 2rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: loading ? "#94a3b8" : "linear-gradient(135deg,#6366f1,#4f46e5)", border: "none", borderRadius: "0.625rem", cursor: loading ? "not-allowed" : "pointer" }} className="hover:opacity-90 transition-opacity">
+          <button type="submit" disabled={loading} style={{ display: "inline-flex", alignItems: "center", padding: "0.75rem 2rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: loading ? "#94a3b8" : "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: "0.625rem", cursor: loading ? "not-allowed" : "pointer" }} className="hover:opacity-90 transition-opacity">
             <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
             {loading ? "Menyimpan..." : (isEdit ? "Update Data Siswa" : "Simpan Data Siswa")}
           </button>

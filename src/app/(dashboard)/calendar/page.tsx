@@ -29,13 +29,13 @@ interface CalendarEvent {
 }
 
 const typeOptions = [
-  { value: "kegiatan", label: "Kegiatan", color: "#6366f1" },
+  { value: "kegiatan", label: "Kegiatan", color: "#2563eb" },
   { value: "ujian", label: "Ujian", color: "#f59e0b" },
   { value: "libur", label: "Libur", color: "#ef4444" },
 ];
 
 const typeColors: Record<string, string> = { 
-  kegiatan: "bg-indigo-50 text-indigo-600 border-indigo-100", 
+  kegiatan: "bg-blue-50 text-blue-600 border-blue-100", 
   ujian: "bg-amber-50 text-amber-600 border-amber-100", 
   libur: "bg-rose-50 text-rose-600 border-rose-100", 
   rapat: "bg-emerald-50 text-emerald-600 border-emerald-100", 
@@ -50,7 +50,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [filterType, setFilterType] = useState("");
-  const [form, setForm] = useState({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#6366f1", location: "", description: "", targetAudience: "" });
+  const [form, setForm] = useState({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#2563eb", location: "", description: "", targetAudience: "" });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -72,7 +72,7 @@ export default function CalendarPage() {
     const url = editItem ? `/api/calendar/${editItem.id}` : "/api/calendar";
     await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     setShowModal(false); setEditItem(null);
-    setForm({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#6366f1", location: "", description: "", targetAudience: "" });
+    setForm({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#2563eb", location: "", description: "", targetAudience: "" });
     fetchData();
     Swal.fire("Berhasil", editItem ? "Event diperbarui" : "Event ditambahkan", "success");
   };
@@ -147,8 +147,8 @@ export default function CalendarPage() {
         icon={<CalendarIcon />}
         actions={
           <button 
-            onClick={() => { setEditItem(null); setForm({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#6366f1", location: "", description: "", targetAudience: "" }); setShowModal(true); }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            onClick={() => { setEditItem(null); setForm({ title: "", dateStart: "", dateEnd: "", type: "kegiatan", color: "#2563eb", location: "", description: "", targetAudience: "" }); setShowModal(true); }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Tambah Event
@@ -161,7 +161,7 @@ export default function CalendarPage() {
         <Card noPadding className="lg:col-span-3 overflow-hidden border-none shadow-sm">
           <div className="p-6 bg-white border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-              <LayoutGrid className="w-5 h-5 text-indigo-500" />
+              <LayoutGrid className="w-5 h-5 text-blue-500" />
               {monthNames[currentMonth]} {currentYear}
             </h2>
             <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export default function CalendarPage() {
                 <select 
                   value={filterType} 
                   onChange={e => setFilterType(e.target.value)} 
-                  className="bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                  className="bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
                 >
                   <option value="">SEMUA TIPE</option>
                   {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label.toUpperCase()}</option>)}
@@ -194,7 +194,7 @@ export default function CalendarPage() {
                     <>
                       <span className={`text-xs font-bold ${
                         `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}` === new Date().toISOString().split("T")[0]
-                          ? "w-6 h-6 bg-indigo-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-indigo-100" : "text-slate-400"
+                          ? "w-6 h-6 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-100" : "text-slate-400"
                       }`}>{cell.day}</span>
                       <div className="mt-2 space-y-1">
                         {cell.events.slice(0, 3).map(ev => (
@@ -244,14 +244,14 @@ export default function CalendarPage() {
                 <div 
                   key={ev.id} 
                   onClick={() => handleEdit(ev)}
-                  className="group bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-indigo-100 hover:shadow-md transition-all cursor-pointer"
+                  className="group bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-blue-100 hover:shadow-md transition-all cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
                       <div className="w-2 h-2 rounded-full ring-4 ring-slate-50" style={{ backgroundColor: ev.color }}></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{ev.title}</h4>
+                      <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors uppercase tracking-tight">{ev.title}</h4>
                       <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                         {ev.dateStart}{ev.dateEnd && ev.dateEnd !== ev.dateStart ? ` — ${ev.dateEnd}` : ""}
                       </p>
@@ -280,7 +280,7 @@ export default function CalendarPage() {
                   type="text" 
                   value={form.title} 
                   onChange={e => setForm({ ...form, title: e.target.value })} 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Nama kegiatan atau acara..."
                 />
               </div>
@@ -292,7 +292,7 @@ export default function CalendarPage() {
                     type="date" 
                     value={form.dateStart} 
                     onChange={e => setForm({ ...form, dateStart: e.target.value })} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -301,7 +301,7 @@ export default function CalendarPage() {
                     type="date" 
                     value={form.dateEnd} 
                     onChange={e => setForm({ ...form, dateEnd: e.target.value })} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
                   />
                 </div>
 
@@ -313,7 +313,7 @@ export default function CalendarPage() {
                       const opt = typeOptions.find(t => t.value === e.target.value);
                       setForm({ ...form, type: e.target.value, color: opt?.color || form.color });
                     }} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
                   >
                     {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -325,7 +325,7 @@ export default function CalendarPage() {
                       type="color" 
                       value={form.color} 
                       onChange={e => setForm({ ...form, color: e.target.value })} 
-                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-2xl p-1 cursor-pointer focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-2xl p-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function CalendarPage() {
                   value={form.description} 
                   onChange={e => setForm({ ...form, description: e.target.value })} 
                   rows={3} 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none shadow-sm"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm"
                   placeholder="Detail acara, lokasi, atau informasi lainnya..."
                 />
               </div>
@@ -360,7 +360,7 @@ export default function CalendarPage() {
               )}
               <button 
                 onClick={handleSubmit} 
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100 active:scale-95"
               >
                 {editItem ? "Simpan Perubahan" : "Simpan Event"}
               </button>

@@ -198,8 +198,8 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
               ) : data.length === 0 ? (
                 <tr><td colSpan={6} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#e0e7ff)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
-                      <svg style={{ width: 28, height: 28, color: "#8b5cf6" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                      <svg style={{ width: 28, height: 28, color: "#3b82f6" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                     <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.9375rem", color: "#1e293b", margin: 0 }}>Belum Ada Data Siswa</p>
                     <p style={{ fontSize: "0.8125rem", color: "#94a3b8", marginTop: "0.375rem" }}>Periksa filter Anda atau klik tombol Tambah untuk menambahkan data siswa.</p>
@@ -208,7 +208,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
               ) : (
                 data.map((s, i) => {
                   const idx = ((pagination.page - 1) * pagination.limit) + i + 1;
-                  const genderLabel = s.gender === "L" ? "♂ Laki-laki" : "♀ Perempuan";
+                  const genderLabel = s.gender === "L" ? "Laki-laki" : "Perempuan";
                   const cc = catColors[s.category] || catColors.reguler;
                   const sc = statusColors[s.status] || statusColors.nonaktif;
                   const catLabel = (s.category || "reguler").replace("_", " ").replace(/\b\w/g, (l:string) => l.toUpperCase());
@@ -218,7 +218,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600, verticalAlign: "middle" }}>{idx}</td>
                       <td style={{ padding: "1rem 1.5rem", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ width: 40, height: 40, background: "linear-gradient(135deg,#ede9fe,#e0e7ff)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#6366f1" }}>{(s.name || "?").charAt(0).toUpperCase()}</div>
+                          <div style={{ width: 40, height: 40, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#2563eb" }}>{(s.name || "?").charAt(0).toUpperCase()}</div>
                           <div>
                             <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{s.name || "-"}</p>
                             <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>NISN: {s.nisn || "-"} · {genderLabel}</p>
@@ -230,7 +230,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                         {(s.classroom && s.classroom.name) ? (
-                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom.name}</span>
+                          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom.name}</span>
                         ) : (
                           <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", padding: "0.25rem 0.625rem", borderRadius: 999 }}>Tanpa Kelas</span>
                         )}
@@ -263,8 +263,8 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
                             </div>
                             <Link 
                               href={`/students/${s.id}/edit`} 
-                              style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#6366f1", textDecoration: "none", borderRadius: "0.5rem" }}
-                              className="hover:bg-indigo-50"
+                              style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#2563eb", textDecoration: "none", borderRadius: "0.5rem" }}
+                              className="hover:bg-blue-50"
                             >
                               Edit Data
                             </Link>

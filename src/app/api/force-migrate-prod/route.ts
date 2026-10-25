@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 
 export async function GET() {
   try {
-    console.log("🚀 Menjalankan Migrasi Produksi (NIS Nullable)...");
+    console.log("Menjalankan Migrasi Produksi (NIS Nullable)...");
     
     // Perintah sakti untuk merubah kolom secara langsung di production
     await db.execute(sql`ALTER TABLE students ALTER COLUMN nis DROP NOT NULL;`);

@@ -233,7 +233,7 @@ function InfaqBillsContent() {
         `,
         icon: "error",
         showCancelButton: true,
-        confirmButtonColor: "#6366f1",
+        confirmButtonColor: "#2563eb",
         cancelButtonColor: "#64748b",
         confirmButtonText: "Atur Biaya Sekarang",
         cancelButtonText: "Batal"
@@ -459,7 +459,7 @@ function InfaqBillsContent() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Total Tagihan</p>
           <h3 className="text-2xl font-bold text-slate-800">{stats ? fmtRupiah(stats.totalNominal) : "Rp 0"}</h3>
           <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
@@ -503,7 +503,7 @@ function InfaqBillsContent() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowBulkUpdate(true)}
-              className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-bold text-xs uppercase tracking-wide border border-indigo-100 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-bold text-xs uppercase tracking-wide border border-blue-100 transition-colors"
             >
               <Settings className="w-4 h-4 mr-2" />
               Setting Biaya
@@ -515,7 +515,7 @@ function InfaqBillsContent() {
                 if (zeroClasses.length > 0) {
                   const classNames = zeroClasses.map((c) => c.name).join(", ");
                   const result = await Swal.fire({
-                    title: "⚠️ Nominal Belum Diatur!",
+                    title: "Nominal Belum Diatur!",
                     html: `
                       <div style="text-align: left; font-size: 0.875rem; color: #334155;">
                         <p>Sebelum generate tagihan, nominal SPP/Infaq <strong>wajib</strong> diatur terlebih dahulu.</p>
@@ -528,7 +528,7 @@ function InfaqBillsContent() {
                     `,
                     icon: "warning",
                     showCancelButton: true,
-                    confirmButtonColor: "#6366f1",
+                    confirmButtonColor: "#2563eb",
                     cancelButtonColor: "#94a3b8",
                     confirmButtonText: "Atur Biaya Sekarang",
                     cancelButtonText: "Batal",
@@ -540,7 +540,7 @@ function InfaqBillsContent() {
                 }
                 setShowGenerate(true);
               }}
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm"
             >
               <RefreshCcw className="w-4 h-4 mr-2" />
               Generate Tagihan
@@ -560,10 +560,10 @@ function InfaqBillsContent() {
       <Card>
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
             <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Tagihan</h4>
           </div>
-          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{pagination.total} Data</span>
+          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{pagination.total} Data</span>
         </div>
         {data.length > 0 && (
           <div className="px-6 py-3 border-b border-slate-100">
@@ -616,9 +616,9 @@ function InfaqBillsContent() {
                 const idx = ((pagination.page - 1) * pagination.limit) + i + 1;
                 const initial = (b.student_name || "?").charAt(0).toUpperCase();
                 let statusBadge;
-                if (b.status === "lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>✓ Lunas</span>;
-                else if (b.status === "sebagian") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>◐ Sebagian</span>;
-                else if (b.status === "belum_lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>✗ Belum Lunas</span>;
+                if (b.status === "lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>Lunas</span>;
+                else if (b.status === "sebagian") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>Sebagian</span>;
+                else if (b.status === "belum_lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>Belum Lunas</span>;
                 else statusBadge = <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6b7280", background: "#e5e7eb", borderRadius: 999 }}>Void</span>;
 
                 return (
@@ -633,7 +633,7 @@ function InfaqBillsContent() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{b.classroom || "-"}</span></td>
+                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{b.classroom || "-"}</span></td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{b.month || "-"}</p>
                       <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>{b.academic_year || b.year || "-"}</p>
@@ -675,7 +675,7 @@ function InfaqBillsContent() {
                               <button onClick={() => { setOpenActionId(null); setSelectedBill(b); setPayAmount(String(b.nominal - (b.total_paid || 0))); setShowPayment(true); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#059669", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-emerald-50">
                                 Bayar Tagihan
                               </button>
-                              <button onClick={() => { setOpenActionId(null); handleEditNominal(b); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#6366f1", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-indigo-50">
+                              <button onClick={() => { setOpenActionId(null); handleEditNominal(b); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#2563eb", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
                                 Edit Nominal
                               </button>
                               <button onClick={() => { setOpenActionId(null); handleVoid(b.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.8125rem", fontWeight: 600, color: "#e11d48", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-rose-50">
@@ -746,8 +746,8 @@ function InfaqBillsContent() {
                   <label style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pilih Bulan</label>
                   <div style={{ display: "flex", gap: "0.375rem" }}>
                     <button onClick={() => setGenMonths([1,2,3,4,5,6,7,8,9,10,11,12])} style={{ padding: "0.25rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#1e293b", cursor: "pointer" }}>Semua</button>
-                    <button onClick={() => setGenMonths([7,8,9,10,11,12])} style={{ padding: "0.25rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#6366f1", cursor: "pointer" }}>Jul-Des</button>
-                    <button onClick={() => setGenMonths([1,2,3,4,5,6])} style={{ padding: "0.25rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#4f46e5", cursor: "pointer" }}>Jan-Jun</button>
+                    <button onClick={() => setGenMonths([7,8,9,10,11,12])} style={{ padding: "0.25rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#2563eb", cursor: "pointer" }}>Jul-Des</button>
+                    <button onClick={() => setGenMonths([1,2,3,4,5,6])} style={{ padding: "0.25rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#1d4ed8", cursor: "pointer" }}>Jan-Jun</button>
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
@@ -775,7 +775,7 @@ function InfaqBillsContent() {
               </div>
             ) : (
               <div style={{ padding: "1rem", borderRadius: "0.625rem", background: "#fef3c7", border: "1px solid #fde68a" }}>
-                <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#b45309", margin: 0 }}>📅 1 Tahun Ajaran Penuh</p>
+                <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#b45309", margin: 0 }}>1 Tahun Ajaran Penuh</p>
                 <p style={{ fontSize: "0.75rem", color: "#92400e", marginTop: "0.375rem" }}>
                   Akan auto-generate tagihan untuk 12 bulan sekaligus (Juli – Juni).
                 </p>
@@ -870,11 +870,11 @@ function InfaqBillsContent() {
         <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={() => setShowReset(false)} />
           <div style={{ position: "relative", background: "#fff", borderRadius: "1rem", padding: "2rem", width: "100%", maxWidth: 440, boxShadow: "0 16px 48px rgba(0,0,0,0.15)" }}>
-            <h3 style={{ fontWeight: 700, fontSize: "1.125rem", color: "#ef4444", margin: "0 0 0.25rem" }}>🔄 Reset Tagihan</h3>
+            <h3 style={{ fontWeight: 700, fontSize: "1.125rem", color: "#ef4444", margin: "0 0 0.25rem" }}>Reset Tagihan</h3>
             <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0 0 1.25rem" }}>Hapus tagihan beserta pembayarannya agar bisa di-generate ulang.</p>
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
               {(["semester", "bulan"] as const).map(m => (
-                <button key={m} onClick={() => setResetMode(m)} style={{ flex: 1, padding: "0.5rem", fontSize: "0.8125rem", fontWeight: 600, borderRadius: "0.5rem", border: "1.5px solid", borderColor: resetMode === m ? "#6366f1" : "#e2e8f0", background: resetMode === m ? "#eef2ff" : "#fff", color: resetMode === m ? "#4f46e5" : "#64748b", cursor: "pointer" }}>{m === "semester" ? "Per Semester" : "Per Bulan"}</button>
+                <button key={m} onClick={() => setResetMode(m)} style={{ flex: 1, padding: "0.5rem", fontSize: "0.8125rem", fontWeight: 600, borderRadius: "0.5rem", border: "1.5px solid", borderColor: resetMode === m ? "#2563eb" : "#e2e8f0", background: resetMode === m ? "#eff6ff" : "#fff", color: resetMode === m ? "#1d4ed8" : "#64748b", cursor: "pointer" }}>{m === "semester" ? "Per Semester" : "Per Bulan"}</button>
               ))}
             </div>
             <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "0.25rem" }}>Tahun</label>
@@ -896,7 +896,7 @@ function InfaqBillsContent() {
                   {Object.entries(monthShort).map(([num, name]) => {
                     const n = Number(num);
                     const sel = resetMonths.includes(n);
-                    return (<button key={n} onClick={() => setResetMonths(sel ? resetMonths.filter(x => x !== n) : [...resetMonths, n])} style={{ padding: "0.375rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "0.375rem", border: "1.5px solid", cursor: "pointer", borderColor: sel ? "#6366f1" : "#e2e8f0", background: sel ? "#eef2ff" : "#fff", color: sel ? "#4f46e5" : "#64748b" }}>{name}</button>);
+                    return (<button key={n} onClick={() => setResetMonths(sel ? resetMonths.filter(x => x !== n) : [...resetMonths, n])} style={{ padding: "0.375rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "0.375rem", border: "1.5px solid", cursor: "pointer", borderColor: sel ? "#2563eb" : "#e2e8f0", background: sel ? "#eff6ff" : "#fff", color: sel ? "#1d4ed8" : "#64748b" }}>{name}</button>);
                   })}
                 </div>
               </>
@@ -907,7 +907,7 @@ function InfaqBillsContent() {
               {classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <div style={{ padding: "0.625rem 0.75rem", borderRadius: "0.5rem", background: "#fef2f2", border: "1px solid #fecaca", marginBottom: "1rem" }}>
-              <p style={{ fontSize: "0.75rem", color: "#991b1b", margin: 0, fontWeight: 600 }}>⚠️ Tagihan dan pembayaran terkait akan dihapus secara permanen.</p>
+              <p style={{ fontSize: "0.75rem", color: "#991b1b", margin: 0, fontWeight: 600 }}>Tagihan dan pembayaran terkait akan dihapus secara permanen.</p>
             </div>
             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
               <button onClick={() => setShowReset(false)} style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.5rem", cursor: "pointer" }}>Batal</button>
@@ -936,7 +936,7 @@ function InfaqBillsContent() {
         <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={() => setShowBulkUpdate(false)} />
           <div style={{ position: "relative", background: "#fff", borderRadius: "1rem", padding: "2rem", width: "100%", maxWidth: 500, boxShadow: "0 16px 48px rgba(0,0,0,0.15)" }}>
-            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#1e293b", margin: "0 0 0.25rem" }}>⚙️ Pengaturan Biaya SPP Masal</h3>
+            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#1e293b", margin: "0 0 0.25rem" }}>Pengaturan Biaya SPP Masal</h3>
             <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0 0 1.5rem" }}>Update nominal biaya SPP standar untuk kelas yang dipilih.</p>
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Filter Tahun Akademik</label>
@@ -947,28 +947,28 @@ function InfaqBillsContent() {
             </div>
             <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Pilih Kelas</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem", maxHeight: "160px", overflowY: "auto", padding: "0.5rem", border: "1.5px solid #e2e8f0", borderRadius: "0.75rem", marginBottom: "1rem" }}>
-              <button onClick={() => { const tc = bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms; if (bulkClassIds.length === tc.length) setBulkClassIds([]); else setBulkClassIds(tc.map(c => c.id)); }} style={{ gridColumn: "span 3", padding: "0.375rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px dashed #6366f1", background: "#f5f3ff", color: "#4f46e5", cursor: "pointer", marginBottom: "0.25rem" }}>
+              <button onClick={() => { const tc = bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms; if (bulkClassIds.length === tc.length) setBulkClassIds([]); else setBulkClassIds(tc.map(c => c.id)); }} style={{ gridColumn: "span 3", padding: "0.375rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "0.375rem", border: "1px dashed #2563eb", background: "#f5f3ff", color: "#1d4ed8", cursor: "pointer", marginBottom: "0.25rem" }}>
                 {bulkClassIds.length > 0 && bulkClassIds.length === (bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)).length : classrooms.length) ? "Hapus Semua Pilihan" : "Pilih Semua Kelas Terfilter"}
               </button>
               {(bulkYearId ? classrooms.filter(c => c.academicYearId === Number(bulkYearId)) : classrooms).map((c) => {
                 const isSel = bulkClassIds.includes(c.id);
-                return (<button key={c.id} onClick={() => setBulkClassIds(prev => isSel ? prev.filter(id => id !== c.id) : [...prev, c.id])} style={{ padding: "0.5rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "0.5rem", border: "1.5px solid", borderColor: isSel ? "#6366f1" : "#e2e8f0", background: isSel ? "#eef2ff" : "#fff", color: isSel ? "#4f46e5" : "#64748b", cursor: "pointer" }}>{c.name}</button>);
+                return (<button key={c.id} onClick={() => setBulkClassIds(prev => isSel ? prev.filter(id => id !== c.id) : [...prev, c.id])} style={{ padding: "0.5rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "0.5rem", border: "1.5px solid", borderColor: isSel ? "#2563eb" : "#e2e8f0", background: isSel ? "#eff6ff" : "#fff", color: isSel ? "#1d4ed8" : "#64748b", cursor: "pointer" }}>{c.name}</button>);
               })}
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.5rem" }}>
                 <label style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>Nominal Biaya Baru (Rp)</label>
-                {bulkClassIds.length > 0 && (<span style={{ fontSize: "0.65rem", color: "#6366f1", fontWeight: 700, background: "#eef2ff", padding: "0.15rem 0.5rem", borderRadius: "0.25rem" }}>Tarif Lama: {(() => { const sel = classrooms.filter(c => bulkClassIds.includes(c.id)); const noms = sel.map(c => c.infaqNominal || 0); const mn = Math.min(...noms); const mx = Math.max(...noms); return mn === mx ? `Rp ${mn.toLocaleString("id-ID")}` : `Rp ${mn.toLocaleString("id-ID")} - Rp ${mx.toLocaleString("id-ID")}`; })()}</span>)}
+                {bulkClassIds.length > 0 && (<span style={{ fontSize: "0.65rem", color: "#2563eb", fontWeight: 700, background: "#eff6ff", padding: "0.15rem 0.5rem", borderRadius: "0.25rem" }}>Tarif Lama: {(() => { const sel = classrooms.filter(c => bulkClassIds.includes(c.id)); const noms = sel.map(c => c.infaqNominal || 0); const mn = Math.min(...noms); const mx = Math.max(...noms); return mn === mx ? `Rp ${mn.toLocaleString("id-ID")}` : `Rp ${mn.toLocaleString("id-ID")} - Rp ${mx.toLocaleString("id-ID")}`; })()}</span>)}
               </div>
-              <input type="number" value={bulkNominal} onChange={e => setBulkNominal(e.target.value)} placeholder="Masukkan nominal baru..." style={{ width: "100%", padding: "0.75rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "1rem", fontWeight: 700, outline: "none" }} className="focus:border-indigo-500" />
-              {bulkNominal && bulkClassIds.length > 0 && (<p style={{ fontSize: "0.7rem", color: "#059669", fontWeight: 600, marginTop: "0.5rem" }}>✨ Semua kelas terpilih akan diseragamkan menjadi <strong>Rp {Number(bulkNominal).toLocaleString("id-ID")}</strong></p>)}
+              <input type="number" value={bulkNominal} onChange={e => setBulkNominal(e.target.value)} placeholder="Masukkan nominal baru..." style={{ width: "100%", padding: "0.75rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.75rem", fontSize: "1rem", fontWeight: 700, outline: "none" }} className="focus:border-blue-500" />
+              {bulkNominal && bulkClassIds.length > 0 && (<p style={{ fontSize: "0.7rem", color: "#059669", fontWeight: 600, marginTop: "0.5rem" }}>Semua kelas terpilih akan diseragamkan menjadi <strong>Rp {Number(bulkNominal).toLocaleString("id-ID")}</strong></p>)}
             </div>
             <div style={{ padding: "0.75rem", borderRadius: "0.75rem", background: "#fffbeb", border: "1px solid #fde68a", marginBottom: "1.5rem" }}>
               <p style={{ fontSize: "0.75rem", color: "#92400e", margin: 0, lineHeight: 1.5 }}><strong>Catatan:</strong> Perubahan ini akan mengupdate biaya standar di tingkat kelas. Tagihan yang <strong>akan</strong> datang akan menggunakan nominal baru ini.</p>
             </div>
             <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
               <button onClick={() => setShowBulkUpdate(false)} style={{ padding: "0.625rem 1.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Batal</button>
-              <button disabled={bulkLoading} onClick={handleBulkUpdate} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: bulkLoading ? "#94a3b8" : "linear-gradient(135deg,#6366f1,#4f46e5)", border: "none", borderRadius: "0.625rem", cursor: bulkLoading ? "not-allowed" : "pointer" }}>
+              <button disabled={bulkLoading} onClick={handleBulkUpdate} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: bulkLoading ? "#94a3b8" : "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: "0.625rem", cursor: bulkLoading ? "not-allowed" : "pointer" }}>
                 {bulkLoading ? "Memproses..." : `Update ${bulkClassIds.length} Kelas`}
               </button>
             </div>

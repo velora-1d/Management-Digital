@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 
 export async function GET() {
   try {
-    console.log("🚀 Menjalankan Migrasi SQL Sementara...");
+    console.log("Menjalankan Migrasi SQL Sementara...");
     
     await db.execute(sql`ALTER TABLE students ALTER COLUMN nis DROP NOT NULL;`);
     await db.execute(sql`ALTER TABLE students ALTER COLUMN nis SET DEFAULT NULL;`);

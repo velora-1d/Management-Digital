@@ -102,14 +102,14 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className={`flex items-center shrink-0 ${collapsed ? "px-3 py-5 justify-center" : "px-5 py-5"}`} style={{ borderBottom: "1px solid rgba(99,102,241,0.15)" }}>
+      <div className={`flex items-center shrink-0 ${collapsed ? "px-3 py-5 justify-center" : "px-5 py-5"}`} style={{ borderBottom: "1px solid #2C2C2E" }}>
         {profile?.logo ? (
-          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center p-0.5" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center p-0.5 border border-slate-800" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
             <Image src={ensureHttpsUrl(profile.logo)} alt="Logo" width={40} height={40} className="w-full h-full object-contain rounded-lg" />
           </div>
         ) : (
-          <div className="shrink-0" style={{ padding: 7, background: "linear-gradient(135deg, #f59e0b, #f97316)", borderRadius: 10, boxShadow: "0 4px 12px rgba(245,158,11,0.3)" }}>
-            <span className="w-7 h-7 flex items-center justify-center font-extrabold text-sm" style={{ color: "#1e1b4b" }}>
+          <div className="shrink-0" style={{ padding: 7, background: "linear-gradient(135deg, #00E5FF, #0284c7)", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,229,255,0.25)" }}>
+            <span className="w-7 h-7 flex items-center justify-center font-extrabold text-sm" style={{ color: "#000000" }}>
               {profile?.name ? profile.name.charAt(0).toUpperCase() : "M"}
             </span>
           </div>
@@ -117,7 +117,7 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
             <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap">{profile?.name || "Nama Madrasah"}</span>
-            <p className="text-[10px] font-semibold text-indigo-400/60 tracking-wider uppercase">Management Digital</p>
+            <p className="text-[10px] font-semibold text-[#00E5FF] tracking-wider uppercase">Management Digital</p>
           </div>
         )}
       </div>
@@ -125,9 +125,9 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="hidden md:flex absolute -right-3 top-[72px] z-50 w-6 h-6 bg-white border border-slate-200 rounded-full items-center justify-center shadow-md hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer"
+        className="hidden md:flex absolute -right-3 top-[72px] z-50 w-6 h-6 bg-[#0f172a] border border-slate-800 rounded-full items-center justify-center shadow-md hover:border-[#00E5FF] hover:bg-[#2C2C2E] transition-colors cursor-pointer"
       >
-        <svg className={`w-3 h-3 text-slate-500 transition-transform ${collapsed ? "" : "rotate-180"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`w-3 h-3 text-[#98989D] transition-transform ${collapsed ? "" : "rotate-180"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -145,22 +145,25 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
             return (
               <div key={gi}>
                 {!collapsed && (
-                  <div className={`px-3 pb-2 ${gi > 0 ? "pt-5 mt-3" : "pt-2"}`} style={gi > 0 ? { borderTop: "1px solid rgba(99,102,241,0.1)" } : {}}>
-                    <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: "rgba(129,140,248,0.45)" }}>{group.group}</span>
+                  <div className={`px-3 pb-2 ${gi > 0 ? "pt-5 mt-3" : "pt-2"}`} style={gi > 0 ? { borderTop: "1px solid #2C2C2E" } : {}}>
+                    <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-[#98989D]">{group.group}</span>
                   </div>
                 )}
-                {collapsed && gi > 0 && <div className="my-3 mx-2 border-t border-indigo-900/30" />}
+                {collapsed && gi > 0 && <div className="my-3 mx-2 border-t border-slate-800" />}
                 {visibleItems.map((item, ii) => {
                   const isExternal = item.href.startsWith("__external:");
                   const externalUrl = isExternal ? item.href.replace("__external:", "") : null;
                   const isActive = !isExternal && (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/")));
 
                   const itemClassName = [
-                    "group flex items-center rounded-xl transition-all duration-200",
-                    collapsed ? "justify-center p-3 my-0.5" : "px-3 py-2.5 gap-3",
-                    isActive
-                      ? "bg-linear-to-r from-indigo-600/30 to-violet-600/20 text-white shadow-sm"
-                      : "text-indigo-200/70 hover:bg-indigo-600/15 hover:text-white",
+                    "group flex items-center transition-all duration-200",
+                    collapsed
+                      ? (isActive
+                          ? "justify-center p-3 my-0.5 rounded-xl bg-white/5 text-[#00E5FF] ring-1 ring-[#00E5FF]/40"
+                          : "justify-center p-3 my-0.5 rounded-xl text-[#98989D] hover:bg-white/5 hover:text-white")
+                      : (isActive
+                          ? "px-3 py-2.5 gap-3 rounded-r-xl border-l-4 border-[#00E5FF] text-white bg-white/5 shadow-xs"
+                          : "px-3 py-2.5 gap-3 rounded-r-xl border-l-4 border-transparent text-[#98989D] hover:bg-white/5 hover:text-white"),
                   ].join(" ");
 
                   const itemContent = (
@@ -169,7 +172,7 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
                         className={[
                           "shrink-0 transition-colors duration-200",
                           collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
-                          isActive ? "text-amber-400" : isExternal ? "text-emerald-400/70 group-hover:text-emerald-300" : "text-indigo-400/60 group-hover:text-indigo-300",
+                          isActive ? "text-[#00E5FF]" : isExternal ? "text-emerald-400 group-hover:text-emerald-300" : "text-[#98989D] group-hover:text-white",
                         ].join(" ")}
                         fill="none"
                         viewBox="0 0 24 24"
@@ -178,15 +181,15 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                       </svg>
                       {!collapsed && (
-                        <span className={`text-[13px] font-semibold truncate flex-1 ${isActive ? "text-white" : isExternal ? "text-emerald-300/80 group-hover:text-emerald-200" : ""}`}>
+                        <span className={`text-[13px] font-medium truncate flex-1 ${isActive ? "text-white font-semibold" : isExternal ? "text-emerald-400/90 group-hover:text-emerald-300" : ""}`}>
                           {item.name}
                         </span>
                       )}
                       {!collapsed && isExternal && (
-                        <span className="ml-auto text-[9px] font-bold text-emerald-400/60 bg-emerald-400/10 px-1.5 py-0.5 rounded-md shrink-0">↗</span>
+                        <span className="ml-auto text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-md shrink-0">↗</span>
                       )}
                       {isActive && !collapsed && !isExternal && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] shrink-0" />
                       )}
                     </>
                   );
@@ -226,15 +229,15 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
 
 
       {/* User Footer */}
-      <div className={`shrink-0 ${collapsed ? "p-3" : "p-4"}`} style={{ borderTop: "1px solid rgba(99,102,241,0.2)", background: "rgba(15,12,60,0.5)" }}>
+      <div className={`shrink-0 ${collapsed ? "p-3" : "p-4"}`} style={{ borderTop: "1px solid #2C2C2E", background: "#161618" }}>
         <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-          <div className="w-9 h-9 flex items-center justify-center font-bold text-sm rounded-lg shrink-0" style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#1e1b4b" }}>
+          <div className="w-9 h-9 flex items-center justify-center font-bold text-sm rounded-lg shrink-0" style={{ background: "linear-gradient(135deg, #00E5FF, #0284c7)", color: "#000000" }}>
             {initial}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{user.name}</p>
-              <p className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider">{user.role}</p>
+              <p className="text-[10px] font-bold text-[#00E5FF] uppercase tracking-wider">{user.role}</p>
             </div>
           )}
         </div>
@@ -247,7 +250,7 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white border border-slate-200 rounded-xl shadow-lg flex items-center justify-center text-slate-600 cursor-pointer"
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0f172a] border border-slate-800 rounded-xl shadow-lg flex items-center justify-center text-[#98989D] hover:text-white cursor-pointer"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -257,8 +260,8 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 h-full flex flex-col animate-fade-in" style={{ background: "#0f0c3c" }}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="relative w-72 h-full flex flex-col animate-fade-in border-r border-slate-800" style={{ background: "#0f172a" }}>
             {sidebarContent}
           </aside>
         </div>
@@ -267,10 +270,10 @@ export default function Sidebar({ user, collapsed, onToggle }: { user: { name: s
       {/* Desktop sidebar */}
       <aside
         className={[
-          "hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out",
+          "hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out border-r border-slate-800",
           collapsed ? "w-[72px]" : "w-[272px]",
         ].join(" ")}
-        style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #0f0c3c 100%)" }}
+        style={{ background: "#0f172a" }}
       >
         {sidebarContent}
       </aside>

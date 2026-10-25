@@ -34,9 +34,9 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
 
   return (
     <HelpProvider>
-      <div className="flex h-screen w-full overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="flex h-screen w-full overflow-hidden bg-slate-50 text-slate-800" style={{ fontFamily: "'Inter', sans-serif" }}>
         <Sidebar user={user} collapsed={collapsed} onToggle={handleToggle} />
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
           <Header user={user} />
           <div className="flex-1 overflow-auto custom-scrollbar">
             <div className="p-6 md:p-8 space-y-8 min-h-[calc(100vh-64px)] w-full">

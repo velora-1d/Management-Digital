@@ -141,7 +141,7 @@ export default function SettingsCMS() {
           {/* Narasi & Visi Misi */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">📜</div>
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600"><svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
               <h2 className="text-xl font-bold text-slate-900">Narasi & Visi Misi</h2>
             </div>
             
@@ -153,7 +153,7 @@ export default function SettingsCMS() {
                   defaultValue={settings.school_history} 
                   rows={4} 
                   placeholder="Ceritakan sejarah berdirinya sekolah..."
-                  className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                  className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,7 +164,7 @@ export default function SettingsCMS() {
                     defaultValue={settings.school_vision} 
                     rows={3} 
                     placeholder="Visi utama sekolah..."
-                    className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                    className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -174,7 +174,7 @@ export default function SettingsCMS() {
                     defaultValue={settings.school_mission} 
                     rows={3} 
                     placeholder="Misi-misi sekolah (pisahkan dengan baris baru)..."
-                    className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                    className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function SettingsCMS() {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg" className="px-12 shadow-xl shadow-indigo-200" disabled={saving}>
+            <Button type="submit" size="lg" className="px-12 shadow-xl shadow-blue-200" disabled={saving}>
               {saving ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
             </Button>
           </div>

@@ -179,7 +179,7 @@ export default function ExtracurricularPage() {
           <div className="flex gap-2">
             <button 
               onClick={() => { setEditItem(null); setForm({ name: "", employeeId: "", schedule: "", status: "aktif" }); setShowModal(true); }}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Tambah Ekskul
@@ -219,7 +219,7 @@ export default function ExtracurricularPage() {
       <Card noPadding>
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : data.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-100 m-4 rounded-xl">
@@ -263,7 +263,7 @@ export default function ExtracurricularPage() {
                     <button 
                       onClick={() => handleEdit(item)} 
                       title="Edit Ekskul"
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
@@ -297,7 +297,7 @@ export default function ExtracurricularPage() {
                         <p className="text-sm text-slate-400">Belum ada anggota terdaftar</p>
                         <button 
                           onClick={() => openAssign(item.id)}
-                          className="mt-4 text-xs font-bold text-indigo-600 hover:underline"
+                          className="mt-4 text-xs font-bold text-blue-600 hover:underline"
                         >
                           Klik untuk Menambah Anggota
                         </button>
@@ -322,7 +322,7 @@ export default function ExtracurricularPage() {
                                   <select 
                                     value={m.predicate || ""} 
                                     onChange={(e) => handleUpdatePredicate(m.id, e.target.value)}
-                                    className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none w-full max-w-[160px] bg-white shadow-sm"
+                                    className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none w-full max-w-[160px] bg-white shadow-sm"
                                   >
                                     <option value="">— Pilih Predikat —</option>
                                     <option value="Sangat Baik">Sangat Baik</option>
@@ -380,7 +380,7 @@ export default function ExtracurricularPage() {
                     value={form.name} 
                     onChange={e => setForm({ ...form, name: e.target.value })} 
                     placeholder="Contoh: Pramuka, Basket"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm" 
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
                   />
                 </div>
                 <div>
@@ -388,7 +388,7 @@ export default function ExtracurricularPage() {
                   <select 
                     value={form.employeeId} 
                     onChange={e => setForm({ ...form, employeeId: e.target.value })} 
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm bg-white"
                   >
                     <option value="">— Pilih Guru Pembina —</option>
                     {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -400,7 +400,7 @@ export default function ExtracurricularPage() {
                     value={form.schedule} 
                     onChange={e => setForm({ ...form, schedule: e.target.value })} 
                     placeholder="Contoh: Jumat 15:00-17:00" 
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm" 
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
                   />
                 </div>
                 <div>
@@ -413,8 +413,8 @@ export default function ExtracurricularPage() {
                         onClick={() => setForm({ ...form, status: s })}
                         className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl border transition-all ${
                           form.status === s 
-                            ? "bg-indigo-600 border-indigo-600 text-white" 
-                            : "bg-white border-slate-200 text-slate-400 hover:border-indigo-200"
+                            ? "bg-blue-600 border-blue-600 text-white" 
+                            : "bg-white border-slate-200 text-slate-400 hover:border-blue-200"
                         }`}
                       >
                         {s}
@@ -432,7 +432,7 @@ export default function ExtracurricularPage() {
                 </button>
                 <button 
                   onClick={handleSubmit} 
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-200"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-200"
                 >
                   Simpan Perubahan
                 </button>
@@ -451,8 +451,8 @@ export default function ExtracurricularPage() {
                 <h2 className="text-xl font-bold text-slate-800">Assign Anggota</h2>
                 <p className="text-sm text-slate-500">Pilih siswa yang akan mengikuti ekstrakurikuler</p>
               </div>
-              <div className="bg-indigo-100 px-3 py-1.5 rounded-full">
-                <span className="text-xs font-bold text-indigo-700">{selectedStudents.length} Terpilih</span>
+              <div className="bg-blue-100 px-3 py-1.5 rounded-full">
+                <span className="text-xs font-bold text-blue-700">{selectedStudents.length} Terpilih</span>
               </div>
             </div>
             
@@ -462,7 +462,7 @@ export default function ExtracurricularPage() {
                   <input 
                     type="text" 
                     placeholder="Cari nama atau NISN..." 
-                    className="w-full bg-slate-50 border-none rounded-2xl py-3 px-5 pl-12 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full bg-slate-50 border-none rounded-2xl py-3 px-5 pl-12 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 </div>
@@ -471,7 +471,7 @@ export default function ExtracurricularPage() {
               {students.map(s => (
                 <label key={s.id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                   selectedStudents.includes(s.id) 
-                    ? "bg-indigo-50/50 border-indigo-200" 
+                    ? "bg-blue-50/50 border-blue-200" 
                     : "bg-white border-transparent hover:bg-slate-50"
                 }`}>
                   <input 
@@ -480,7 +480,7 @@ export default function ExtracurricularPage() {
                     onChange={(e) => {
                       setSelectedStudents(e.target.checked ? [...selectedStudents, s.id] : selectedStudents.filter(id => id !== s.id));
                     }} 
-                    className="w-5 h-5 rounded-lg border-2 border-slate-300 text-indigo-600 focus:ring-indigo-500" 
+                    className="w-5 h-5 rounded-lg border-2 border-slate-300 text-blue-600 focus:ring-blue-500" 
                   />
                   <div className="flex-1">
                     <p className="text-sm font-bold text-slate-800">{s.name}</p>
@@ -499,7 +499,7 @@ export default function ExtracurricularPage() {
               </button>
               <button 
                 onClick={handleAssign} 
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-100"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100"
               >
                 Simpan ({selectedStudents.length} Siswa)
               </button>

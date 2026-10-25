@@ -12,9 +12,27 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
+// ─── TENANTS ───────────────────────────────────────────────────────────────
+export const tenants = pgTable('tenants', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  domain: text('domain'),
+  status: text('status').notNull().default('aktif'),
+  plan: text('plan').notNull().default('standard'),
+  settings: jsonb('settings').$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export type Tenant = typeof tenants.$inferSelect;
+export type NewTenant = typeof tenants.$inferInsert;
+
 // ─── USERS ─────────────────────────────────────────────────────────────────
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
@@ -29,6 +47,7 @@ export const users = pgTable('users', {
 // ─── ACADEMIC YEARS ────────────────────────────────────────────────────────
 export const academicYears = pgTable('academic_years', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   year: text('year').notNull(),
   isActive: boolean('is_active').notNull().default(false),
   startDate: text('start_date'),
@@ -41,6 +60,7 @@ export const academicYears = pgTable('academic_years', {
 // ─── CLASSROOMS ────────────────────────────────────────────────────────────
 export const classrooms = pgTable('classrooms', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   name: text('name').notNull(),
   level: integer('level').notNull().default(1),
   academicYearId: integer('academic_year_id'),
@@ -54,6 +74,7 @@ export const classrooms = pgTable('classrooms', {
 // ─── STUDENTS ──────────────────────────────────────────────────────────────
 export const students = pgTable('students', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   nisn: text('nisn'),
   nis: text('nis'),
   nik: text('nik'),
@@ -389,6 +410,7 @@ export const salaryComponents = pgTable('salary_components', {
 // ─── EMPLOYEE SALARIES ─────────────────────────────────────────────────────
 export const employeeSalaries = pgTable('employee_salaries', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   employeeId: integer('employee_id'),
   componentId: integer('component_id'),
   amount: doublePrecision('amount').notNull().default(0),
@@ -422,6 +444,7 @@ export const payrolls = pgTable('payrolls', {
 // ─── PAYROLL DETAILS ───────────────────────────────────────────────────────
 export const payrollDetails = pgTable('payroll_details', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   payrollId: integer('payroll_id'),
   componentId: integer('component_id'),
   componentName: text('component_name').notNull().default(''),
@@ -455,6 +478,7 @@ export const inventories = pgTable('inventories', {
 // ─── INVENTORY LOGS ────────────────────────────────────────────────────────
 export const inventoryLogs = pgTable('inventory_logs', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   inventoryId: integer('inventory_id'),
   type: text('type').notNull().default(''),
   quantityChange: integer('quantity_change').notNull().default(0),
@@ -468,6 +492,7 @@ export const inventoryLogs = pgTable('inventory_logs', {
 // ─── STUDENT ENROLLMENTS ───────────────────────────────────────────────────
 export const studentEnrollments = pgTable('student_enrollments', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   studentId: integer('student_id'),
   classroomId: integer('classroom_id'),
   academicYearId: integer('academic_year_id'),
@@ -497,6 +522,7 @@ export const schoolSettings = pgTable('school_settings', {
 // ─── AUDIT LOGS ────────────────────────────────────────────────────────────
 export const auditLogs = pgTable('audit_logs', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   userId: integer('user_id'),
   action: text('action').notNull().default(''),
   modelType: text('model_type').notNull().default(''),
@@ -562,6 +588,7 @@ export const schedules = pgTable('schedules', {
 // ─── ATTENDANCES ───────────────────────────────────────────────────────────
 export const attendances = pgTable('attendances', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   studentId: integer('student_id'),
   classroomId: integer('classroom_id'),
   academicYearId: integer('academic_year_id'),
@@ -592,6 +619,7 @@ export const extracurriculars = pgTable('extracurriculars', {
 // ─── EXTRACURRICULAR MEMBERS ───────────────────────────────────────────────
 export const extracurricularMembers = pgTable('extracurricular_members', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   extracurricularId: integer('extracurricular_id'),
   studentId: integer('student_id'),
   joinDate: text('join_date').notNull().default(''),
@@ -652,6 +680,7 @@ export const curriculums = pgTable('curriculums', {
 // ─── GRADE COMPONENTS ──────────────────────────────────────────────────────
 export const gradeComponents = pgTable('grade_components', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   curriculumId: integer('curriculum_id'),
   name: text('name').notNull(),
   code: text('code').notNull().default(''),
@@ -667,6 +696,7 @@ export const gradeComponents = pgTable('grade_components', {
 // ─── KKM ───────────────────────────────────────────────────────────────────
 export const kkms = pgTable('kkms', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   curriculumId: integer('curriculum_id'),
   subjectId: integer('subject_id'),
   nilaiKKM: doublePrecision('nilai_kkm').notNull().default(75),
@@ -680,6 +710,7 @@ export const kkms = pgTable('kkms', {
 // ─── STUDENT GRADES ────────────────────────────────────────────────────────
 export const studentGrades = pgTable('student_grades', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   componentId: integer('component_id'),
   studentId: integer('student_id'),
   subjectId: integer('subject_id'),
@@ -696,6 +727,7 @@ export const studentGrades = pgTable('student_grades', {
 // ─── FINAL GRADES ──────────────────────────────────────────────────────────
 export const finalGrades = pgTable('final_grades', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   curriculumId: integer('curriculum_id'),
   studentId: integer('student_id'),
   subjectId: integer('subject_id'),
@@ -715,6 +747,7 @@ export const finalGrades = pgTable('final_grades', {
 // ─── GRADE FORMULAS ────────────────────────────────────────────────────────
 export const gradeFormulas = pgTable('grade_formulas', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   curriculumId: integer('curriculum_id'),
   jenis: text('jenis').notNull().default('pengetahuan'),
   formula: text('formula').notNull().default('[]'),
@@ -725,6 +758,7 @@ export const gradeFormulas = pgTable('grade_formulas', {
 // ─── REPORT CARDS ──────────────────────────────────────────────────────────
 export const reportCards = pgTable('report_cards', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   studentId: integer('student_id'),
   classroomId: integer('classroom_id'),
   curriculumId: integer('curriculum_id'),
@@ -747,6 +781,7 @@ export const reportCards = pgTable('report_cards', {
 // ─── CLASS TEACHER NOTES ───────────────────────────────────────────────────
 export const classTeacherNotes = pgTable('class_teacher_notes', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   studentId: integer('student_id'),
   classroomId: integer('classroom_id'),
   semester: text('semester').notNull().default('ganjil'),
@@ -761,6 +796,7 @@ export const classTeacherNotes = pgTable('class_teacher_notes', {
 // ─── EMPLOYEE ATTENDANCES ──────────────────────────────────────────────────
 export const employeeAttendances = pgTable('employee_attendances', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   employeeId: integer('employee_id'),
   date: text('date').notNull().default(''),
   status: text('status').notNull().default('hadir'),
@@ -817,6 +853,7 @@ export const announcements = pgTable('announcements', {
 // ─── ORGANIZATION POSITIONS ────────────────────────────────────────────────
 export const organizationPositions = pgTable('organization_positions', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   employeeId: integer('employee_id'),
   position: text('position').notNull().default(''),
   startDate: text('start_date').notNull().default(''),
@@ -862,6 +899,7 @@ export const coopTransactions = pgTable('coop_transactions', {
 // ─── STUDENT CREDITS ───────────────────────────────────────────────────────
 export const studentCredits = pgTable('student_credits', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
   studentId: integer('student_id'),
   transactionId: integer('transaction_id'),
   amount: doublePrecision('amount').notNull().default(0),

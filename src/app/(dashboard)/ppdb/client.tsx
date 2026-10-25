@@ -602,15 +602,15 @@ export default function PpdbPage({
                 </td></tr>
               ) : filtered.map((reg, i: number) => {
                 const genderBadge = reg.gender === "L"
-                  ? <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#6366f1", background: "#eef2ff" }}>Putra</span>
+                  ? <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#2563eb", background: "#eff6ff" }}>Putra</span>
                   : <span style={{ fontSize: "0.6875rem", fontWeight: 600, padding: "0.25rem 0.625rem", borderRadius: 999, color: "#ec4899", background: "#fdf2f8" }}>Putri</span>;
 
                 let statusBadge;
                 const s = reg.status;
-                if (s === "menunggu" || s === "pending") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>⏳ Menunggu</span>;
-                else if (s === "diterima") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>✓ Diterima</span>;
-                else if (s === "ditolak") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>✗ Ditolak</span>;
-                else if (s === "converted") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", borderRadius: 999 }}>⇌ Siswa</span>;
+                if (s === "menunggu" || s === "pending") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#d97706", background: "#fef3c7", borderRadius: 999 }}>Menunggu</span>;
+                else if (s === "diterima") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}>Diterima</span>;
+                else if (s === "ditolak") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#be123c", background: "#ffe4e6", borderRadius: 999 }}>Ditolak</span>;
+                else if (s === "converted") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", borderRadius: 999 }}>Siswa</span>;
                 else statusBadge = <span style={{ padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: 999 }}>{s}</span>;
 
                 return (
@@ -629,7 +629,7 @@ export default function PpdbPage({
                             title={`${p.paymentType}: Rp ${Number(p.nominal).toLocaleString('id-ID')} — klik untuk ${p.isPaid ? 'revert' : 'bayar'}`}
                             style={{ padding: "0.2rem 0.5rem", fontSize: "0.625rem", fontWeight: 700, borderRadius: 999, border: "none", cursor: "pointer",
                               background: p.isPaid ? "#d1fae5" : "#fef3c7", color: p.isPaid ? "#047857" : "#92400e" }}>
-                            {p.isPaid ? "✓" : "○"} {p.paymentType}
+                            {p.isPaid ? "Lunas" : "Belum"} - {p.paymentType}
                           </button>
                         )) : <span style={{ fontSize: "0.625rem", color: "#cbd5e1" }}>—</span>}
                       </div>
@@ -676,7 +676,7 @@ export default function PpdbPage({
 
                           {s === "diterima" && (
                             <>
-                              <button onClick={() => { setOpenActionId(null); openConvert(reg); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
+                              <button onClick={() => { setOpenActionId(null); openConvert(reg); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
                                 Konversi ke Siswa
                               </button>
                               <button onClick={() => { setOpenActionId(null); handleReset(reg); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
@@ -738,7 +738,7 @@ export default function PpdbPage({
 
             <div style={{ marginTop: "1.25rem", padding: "1rem", background: "#f0f9ff", borderRadius: "0.75rem", border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: "0.75rem", color: "#0284c7", margin: 0 }}>
-                📋 Data NISN, NIK, nama ortu, dan alamat akan otomatis disalin dari formulir PPDB.
+                Data NISN, NIK, nama ortu, dan alamat akan otomatis disalin dari formulir PPDB.
               </p>
             </div>
 
@@ -757,7 +757,7 @@ export default function PpdbPage({
 
             <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
               <button onClick={() => setShowConvert(false)} style={{ padding: "0.625rem 1.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Batal</button>
-              <button onClick={handleConvert} disabled={convertLoading} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: convertLoading ? "#94a3b8" : "linear-gradient(135deg,#6366f1,#4f46e5)", border: "none", borderRadius: "0.625rem", cursor: convertLoading ? "not-allowed" : "pointer" }}>
+              <button onClick={handleConvert} disabled={convertLoading} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: convertLoading ? "#94a3b8" : "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: "0.625rem", cursor: convertLoading ? "not-allowed" : "pointer" }}>
                 {convertLoading ? "Memproses..." : "Konversi Sekarang"}
               </button>
             </div>

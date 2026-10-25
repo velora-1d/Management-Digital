@@ -107,7 +107,7 @@ export default function CoopProductsPage() {
         title="Produk Koperasi"
         subtitle="Kelola stok dan harga produk"
         icon={<ShoppingBag />}
-        gradient="from-indigo-500 to-blue-600"
+        gradient="from-blue-500 to-blue-600"
         actions={
           <div className="flex gap-2">
             <button onClick={() => { setEditItem(null); setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" }); setShowModal(true); }}
@@ -144,16 +144,16 @@ export default function CoopProductsPage() {
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Total Produk</p><p className="text-2xl font-bold text-slate-800 mt-1">{pagination.total || data.length}</p></Card>
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Stok Rendah</p><p className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount}</p></Card>
         <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Habis</p><p className="text-2xl font-bold text-rose-600 mt-1">{outStockCount}</p></Card>
-        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Kategori</p><p className="text-2xl font-bold text-indigo-600 mt-1">{new Set(data.map(d => d.category).filter(Boolean)).size}</p></Card>
+        <Card className="p-4"><p className="text-[11px] text-slate-500 uppercase tracking-wider">Kategori</p><p className="text-2xl font-bold text-blue-600 mt-1">{new Set(data.map(d => d.category).filter(Boolean)).size}</p></Card>
       </div>
 
       {/* Search */}
       <Card className="p-4">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari produk..." className="w-full md:w-72 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari produk..." className="w-full md:w-72 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
       </Card>
 
       {loading ? (
-        <Card className="flex justify-center items-center h-64 border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></Card>
+        <Card className="flex justify-center items-center h-64 border-gray-100"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></Card>
       ) : filtered.length === 0 ? (
         <Card className="text-center py-12 border-dashed"><p className="text-sm text-slate-500">Tidak ada produk</p></Card>
       ) : (
@@ -180,12 +180,12 @@ export default function CoopProductsPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-semibold ${isOut ? "bg-rose-100 text-rose-700" : isLow ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
                             {item.stok}
                           </span>
-                          {isLow && <span className="ml-1 text-[9px] text-amber-500">⚠️ rendah</span>}
-                          {isOut && <span className="ml-1 text-[9px] text-rose-500">❌ habis</span>}
+                          {isLow && <span className="ml-1 text-[9px] text-amber-500 font-semibold">(rendah)</span>}
+                          {isOut && <span className="ml-1 text-[9px] text-rose-500 font-semibold">(habis)</span>}
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex justify-end gap-1">
-                            <button onClick={() => handleEdit(item)} className="px-2 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded text-[11px] font-semibold transition-colors">Edit</button>
+                            <button onClick={() => handleEdit(item)} className="px-2 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-[11px] font-semibold transition-colors">Edit</button>
                             <button onClick={() => handleDelete(item.id)} className="px-2 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded text-[11px] font-semibold transition-colors">Hapus</button>
                           </div>
                         </td>
@@ -217,28 +217,28 @@ export default function CoopProductsPage() {
             <h2 className="text-lg font-bold text-slate-800">{editItem ? "Edit Produk" : "Tambah Produk"}</h2>
             <div className="space-y-3">
               <div><label className="text-xs font-semibold text-slate-600">Nama Produk *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
               <div><label className="text-xs font-semibold text-slate-600">Kategori</label>
-                <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                   <option value="">— Pilih —</option>
                   {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-semibold text-slate-600">Harga Beli</label>
-                  <input type="number" value={form.hargaBeli} onChange={e => setForm({ ...form, hargaBeli: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+                  <input type="number" value={form.hargaBeli} onChange={e => setForm({ ...form, hargaBeli: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
                 <div><label className="text-xs font-semibold text-slate-600">Harga Jual</label>
-                  <input type="number" value={form.hargaJual} onChange={e => setForm({ ...form, hargaJual: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+                  <input type="number" value={form.hargaJual} onChange={e => setForm({ ...form, hargaJual: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-semibold text-slate-600">Stok</label>
-                  <input type="number" value={form.stok} onChange={e => setForm({ ...form, stok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+                  <input type="number" value={form.stok} onChange={e => setForm({ ...form, stok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
                 <div><label className="text-xs font-semibold text-slate-600">Min Stok (alert)</label>
-                  <input type="number" value={form.minStok} onChange={e => setForm({ ...form, minStok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+                  <input type="number" value={form.minStok} onChange={e => setForm({ ...form, minStok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm">Batal</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">Simpan</button>
+              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">Simpan</button>
             </div>
           </div>
         </div>

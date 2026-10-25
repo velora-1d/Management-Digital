@@ -34,7 +34,7 @@ const categoryColors: Record<string, string> = {
   akademik: "bg-blue-50 text-blue-600 border-blue-100", 
   perilaku: "bg-amber-50 text-amber-600 border-amber-100", 
   sosial: "bg-emerald-50 text-emerald-600 border-emerald-100", 
-  keluarga: "bg-purple-50 text-purple-600 border-purple-100" 
+  keluarga: "bg-cyan-50 text-cyan-600 border-cyan-100" 
 };
 const statusColors: Record<string, string> = { 
   aktif: "bg-rose-50 text-rose-600 border-rose-100", 
@@ -164,7 +164,7 @@ export default function CounselingPage() {
           <div className="flex gap-2">
             <button 
               onClick={() => { setEditItem(null); setForm({ studentId: "", counselorId: "", date: new Date().toISOString().split("T")[0], category: "akademik", description: "", followUp: "", status: "aktif" }); setShowModal(true); }}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Tambah Catatan
@@ -204,7 +204,7 @@ export default function CounselingPage() {
               <input 
                 type="text" 
                 placeholder="Masukkan nama siswa..."
-                className="w-full bg-slate-50 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full bg-slate-50 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function CounselingPage() {
               <select 
                 value={filterCategory} 
                 onChange={e => setFilterCategory(e.target.value)} 
-                className="bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 text-sm focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                className="bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
               >
                 <option value="">Semua Kategori</option>
                 {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
@@ -228,7 +228,7 @@ export default function CounselingPage() {
               <select 
                 value={filterStatus} 
                 onChange={e => setFilterStatus(e.target.value)} 
-                className="bg-slate-50 border-none rounded-xl py-2 px-4 pr-8 text-sm focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                className="bg-slate-50 border-none rounded-xl py-2 px-4 pr-8 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
               >
                 <option value="">Semua Status</option>
                 {statuses.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
@@ -241,7 +241,7 @@ export default function CounselingPage() {
       {loading ? (
         <Card>
           <div className="flex justify-center items-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         </Card>
       ) : data.length === 0 ? (
@@ -252,11 +252,11 @@ export default function CounselingPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {data.map(item => (
-            <div key={item.id} className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all p-5">
+            <div key={item.id} className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all p-5">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1 space-y-4">
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
                       <User className="w-5 h-5" />
                     </div>
                     <div>
@@ -284,7 +284,7 @@ export default function CounselingPage() {
                   </div>
 
                   <div className="bg-slate-50 rounded-2xl p-4 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-200"></div>
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-200"></div>
                     <div className="flex items-start gap-3">
                       <FileText className="w-4 h-4 text-slate-400 mt-0.5" />
                       <p className="text-sm text-slate-700 leading-relaxed font-medium">{item.description || "Tidak ada deskripsi"}</p>
@@ -305,7 +305,7 @@ export default function CounselingPage() {
                 <div className="flex md:flex-col items-center justify-center gap-2 border-t md:border-t-0 md:border-l border-slate-50 pt-4 md:pt-0 md:pl-6 px-2">
                   <button 
                     onClick={() => handleEdit(item)} 
-                    className="flex-1 md:w-10 md:h-10 flex items-center justify-center gap-2 md:gap-0 px-4 md:px-0 py-2 md:py-0 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all font-bold text-xs"
+                    className="flex-1 md:w-10 md:h-10 flex items-center justify-center gap-2 md:gap-0 px-4 md:px-0 py-2 md:py-0 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all font-bold text-xs"
                     title="Edit Catatan"
                   >
                     <Edit className="w-4 h-4" />
@@ -353,7 +353,7 @@ export default function CounselingPage() {
                     <select 
                       value={form.studentId} 
                       onChange={e => setForm({ ...form, studentId: e.target.value })} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
                     >
                       <option value="">— Pilih Siswa —</option>
                       {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.nisn})</option>)}
@@ -368,7 +368,7 @@ export default function CounselingPage() {
                     <select 
                       value={form.counselorId} 
                       onChange={e => setForm({ ...form, counselorId: e.target.value })} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
                     >
                       <option value="">— Pilih Konselor —</option>
                       {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -383,7 +383,7 @@ export default function CounselingPage() {
                     type="date" 
                     value={form.date} 
                     onChange={e => setForm({ ...form, date: e.target.value })} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
                   />
                 </div>
 
@@ -393,7 +393,7 @@ export default function CounselingPage() {
                     <select 
                       value={form.category} 
                       onChange={e => setForm({ ...form, category: e.target.value })} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
                     >
                       {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
                     </select>
@@ -407,7 +407,7 @@ export default function CounselingPage() {
                     <select 
                       value={form.status} 
                       onChange={e => setForm({ ...form, status: e.target.value })} 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
                     >
                       {statuses.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                     </select>
@@ -422,7 +422,7 @@ export default function CounselingPage() {
                     onChange={e => setForm({ ...form, description: e.target.value })} 
                     rows={4} 
                     placeholder="Ceritakan detail kejadian atau keluhan siswa secara lengkap..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm"
                   />
                 </div>
 
@@ -433,7 +433,7 @@ export default function CounselingPage() {
                     onChange={e => setForm({ ...form, followUp: e.target.value })} 
                     rows={3} 
                     placeholder="Apa langkah yang diambil setelah sesi konseling selesai?"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none shadow-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm"
                   />
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function CounselingPage() {
               </button>
               <button 
                 onClick={handleSubmit} 
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100 active:scale-95"
               >
                 {editItem ? "Simpan Perubahan" : "Simpan Catatan"}
               </button>

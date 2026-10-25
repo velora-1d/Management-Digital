@@ -12,6 +12,7 @@ export async function getStudentsList({
   status = "aktif",
   ageMin,
   ageMax,
+  tenantId,
 }: {
   page?: number;
   limit?: number;
@@ -22,14 +23,22 @@ export async function getStudentsList({
   status?: string;
   ageMin?: string | null;
   ageMax?: string | null;
+  tenantId?: number;
 }) {
   let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
 
   if (!targetAcademicYearId) {
+    const activeYearConditions = [
+      eq(academicYears.isActive, true),
+      isNull(academicYears.deletedAt),
+    ];
+    if (tenantId) {
+      activeYearConditions.push(eq(academicYears.tenantId, tenantId));
+    }
     const activeYearRes = await db
       .select({ id: academicYears.id })
       .from(academicYears)
-      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .where(and(...activeYearConditions))
       .limit(1);
 
     targetAcademicYearId = activeYearRes.length > 0 ? activeYearRes[0].id : null;
@@ -39,6 +48,10 @@ export async function getStudentsList({
     isNull(studentEnrollments.deletedAt),
     isNull(students.deletedAt),
   ];
+
+  if (tenantId) {
+    conditions.push(eq(students.tenantId, tenantId));
+  }
 
   if (targetAcademicYearId) {
     conditions.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));

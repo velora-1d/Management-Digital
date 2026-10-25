@@ -235,7 +235,7 @@ export default function AcademicYearsPage() {
                                 Swal.fire("Error", msg, "error"); 
                               }
                             }}
-                            style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}
+                            style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", cursor: "pointer" }}
                           >
                             Set Aktif/Nonaktif
                           </button>

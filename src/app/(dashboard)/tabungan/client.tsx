@@ -205,10 +205,10 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
       <Card>
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
             <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Siswa & Saldo</h4>
           </div>
-          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{total} Siswa</span>
+          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{total} Siswa</span>
         </div>
         {studentList.length > 0 && (
           <div className="px-6 py-3 border-b border-slate-100">
@@ -248,8 +248,8 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
               ) : studentList.length === 0 ? (
                 <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#e0e7ff)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
-                      <svg style={{ width: 28, height: 28, color: "#8b5cf6" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                      <svg style={{ width: 28, height: 28, color: "#3b82f6" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                     <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "0.9375rem", color: "#1e293b", margin: 0 }}>Belum Ada Data Siswa</p>
                   </div>
@@ -263,20 +263,20 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
                     <td style={{ padding: "1rem 1.5rem", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <div style={{ width: 36, height: 36, background: "linear-gradient(135deg,#ede9fe,#e0e7ff)", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#6366f1" }}>{initial}</div>
+                        <div style={{ width: 36, height: 36, background: "linear-gradient(135deg,#ede9fe,#dbeafe)", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#2563eb" }}>{initial}</div>
                         <div>
                           <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>{s.name}</p>
                           <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.125rem" }}>NISN: {s.nisn || "-"}</p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom || "-"}</span></td>
+                    <td style={{ padding: "1rem 1.5rem" }}><span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", padding: "0.25rem 0.625rem", borderRadius: 999 }}>{s.classroom || "-"}</span></td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
                       <span style={{ fontWeight: 700, fontSize: "0.875rem", color: saldoColor }}>{fmtRp(s.balance || 0)}</span>
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                       <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
-                        <button onClick={() => openHistory(s)} style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Mutasi</button>
+                        <button onClick={() => openHistory(s)} style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", cursor: "pointer" }}>Mutasi</button>
                         <button onClick={() => openTransaction(s, "setor")} style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#059669", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: "0.5rem", cursor: "pointer" }}>Setor</button>
                         <button onClick={() => openTransaction(s, "tarik")} style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Tarik</button>
                       </div>

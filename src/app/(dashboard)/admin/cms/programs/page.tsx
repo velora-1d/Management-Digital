@@ -40,10 +40,10 @@ const getIcon = (name: string) => {
 
 const COLOR_OPTIONS = [
   { name: "Emerald", value: "from-emerald-500 to-teal-600" },
-  { name: "Blue", value: "from-blue-500 to-indigo-600" },
+  { name: "Blue", value: "from-blue-500 to-blue-600" },
   { name: "Amber", value: "from-amber-500 to-orange-600" },
   { name: "Rose", value: "from-rose-500 to-pink-600" },
-  { name: "Purple", value: "from-purple-500 to-violet-600" },
+  { name: "Cyan", value: "from-cyan-500 to-blue-600" },
 ];
 
 export default function ProgramsCMS() {
@@ -179,7 +179,7 @@ export default function ProgramsCMS() {
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{prog.title}</h3>
                 <p className="text-slate-500 text-sm line-clamp-3 mb-6">{prog.description}</p>
                 <div className="flex gap-2 pt-4 border-t border-slate-100">
-                  <button onClick={() => openEdit(prog)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-bold transition-colors">
+                  <button onClick={() => openEdit(prog)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 font-bold transition-colors">
                     <Edit2 className="w-4 h-4" />
                     Edit
                   </button>

@@ -170,7 +170,7 @@ export default function FilterBar({
           <select
             value={filters.academicYearId}
             onChange={(e) => updateFilter("academicYearId", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="all">Semua Tahun</option>
             {academicYears.map((y) => (
@@ -188,7 +188,7 @@ export default function FilterBar({
           <select
             value={filters.semester}
             onChange={(e) => updateFilter("semester", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua</option>
             <option value="ganjil">Ganjil</option>
@@ -203,7 +203,7 @@ export default function FilterBar({
           <select
             value={filters.month}
             onChange={(e) => updateFilter("month", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua Bulan</option>
             {months.map((m) => (
@@ -219,7 +219,7 @@ export default function FilterBar({
           <select
             value={filters.classroomId}
             onChange={(e) => updateFilter("classroomId", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua Kelas</option>
             {classrooms
@@ -236,7 +236,7 @@ export default function FilterBar({
           <select
             value={filters.gender}
             onChange={(e) => updateFilter("gender", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua</option>
             <option value="L">Laki-laki</option>
@@ -251,7 +251,7 @@ export default function FilterBar({
           <select
             value={filters.status}
             onChange={(e) => updateFilter("status", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua Status</option>
             {customStatusOptions ? (
@@ -274,7 +274,7 @@ export default function FilterBar({
           <select
             value={filters.type}
             onChange={(e) => updateFilter("type", e.target.value)}
-            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
+            className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 font-semibold outline-none transition-all cursor-pointer"
           >
             <option value="">Semua Tipe</option>
             {customTypeOptions?.map(opt => (
@@ -293,7 +293,7 @@ export default function FilterBar({
               placeholder="Min"
               value={filters.ageMin}
               onChange={(e) => updateFilter("ageMin", e.target.value)}
-              className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-20 p-2.5 font-semibold outline-none transition-all"
+              className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-20 p-2.5 font-semibold outline-none transition-all"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -303,7 +303,7 @@ export default function FilterBar({
               placeholder="Max"
               value={filters.ageMax}
               onChange={(e) => updateFilter("ageMax", e.target.value)}
-              className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block w-20 p-2.5 font-semibold outline-none transition-all"
+              className="bg-slate-50/50 border border-slate-200 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-20 p-2.5 font-semibold outline-none transition-all"
             />
           </div>
         </>
@@ -316,7 +316,7 @@ export default function FilterBar({
           });
           router.push(pathname);
         }}
-        className="mt-4 px-4 py-2 text-xs font-bold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+        className="mt-4 px-4 py-2 text-xs font-bold text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
       >
         Reset Filter
       </button>

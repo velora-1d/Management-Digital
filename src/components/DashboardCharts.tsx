@@ -8,9 +8,9 @@ import {
 
 // --- CONSTANTS & TYPES ---
 
-const COLORS_GENDER = ["#6366f1", "#f59e0b"];
-const COLORS_PPDB = ["#f59e0b", "#10b981", "#f43f5e", "#6366f1"];
-const COLORS_SDM = ["#8b5cf6", "#0ea5e9"];
+const COLORS_GENDER = ["#2563eb", "#f59e0b"];
+const COLORS_PPDB = ["#f59e0b", "#10b981", "#f43f5e", "#2563eb"];
+const COLORS_SDM = ["#3b82f6", "#0ea5e9"];
 
 export interface DashboardMetrics {
   totalSiswa: number;
@@ -108,7 +108,7 @@ const ChartStatusPPDB = ({ data }: ChartProps) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
           <XAxis type="number" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} width={65} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.06)" }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(37, 99, 235,0.06)" }} />
           <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20}>
             {ppdbData.map((_, i) => <Cell key={i} fill={COLORS_PPDB[i]} />)}
           </Bar>
@@ -201,7 +201,7 @@ const ChartDistribusiTunggakan = ({ data }: ChartProps) => {
           <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={35} name="Siswa">
-            {tunggakanData.map((_, i) => <Cell key={i} fill={["#6366f1", "#f59e0b"][i]} />)}
+            {tunggakanData.map((_, i) => <Cell key={i} fill={["#2563eb", "#f59e0b"][i]} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -225,7 +225,7 @@ const ChartTabunganWakaf = ({ data }: ChartProps) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
           <XAxis type="number" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : v} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }} axisLine={false} tickLine={false} width={70} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.06)" }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(37, 99, 235,0.06)" }} />
           <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20} name="Nominal">
             {danaData.map((_, i) => <Cell key={i} fill={["#06b6d4", "#d97706"][i]} />)}
           </Bar>
@@ -237,7 +237,7 @@ const ChartTabunganWakaf = ({ data }: ChartProps) => {
 
 const ChartRingkasanKeuangan = ({ data }: ChartProps) => {
   return (
-    <div style={{ background: "linear-gradient(135deg,#312e81,#1e1b4b)", borderRadius: "1rem", padding: "1.25rem", color: "#fff", display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ background: "linear-gradient(135deg,#0f172a,#0f172a)", borderRadius: "1rem", padding: "1.25rem", color: "#fff", display: "flex", flexDirection: "column", height: "100%" }}>
       <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Ringkasan Keuangan</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", flex: 1, justifyContent: "center" }}>
         {[

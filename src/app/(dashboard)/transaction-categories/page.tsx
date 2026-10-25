@@ -184,8 +184,8 @@ export default function TransactionCategoriesPage() {
         title="Kategori Keuangan"
         subtitle="Kelola kategori pemasukan & pengeluaran madrasah."
         icon={
-          <div className="p-2 bg-purple-500/20 rounded-lg">
-             <Tag className="w-6 h-6 text-purple-200" />
+          <div className="p-2 bg-cyan-500/20 rounded-lg">
+             <Tag className="w-6 h-6 text-cyan-200" />
           </div>
         }
         actions={
@@ -219,7 +219,7 @@ export default function TransactionCategoriesPage() {
                 />
                 <button 
                   onClick={handleAdd} 
-                  className="inline-flex items-center px-4 py-2 bg-white text-purple-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50 active:scale-95 shadow-lg shadow-purple-900/20"
+                  className="inline-flex items-center px-4 py-2 bg-white text-cyan-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50 active:scale-95 shadow-lg shadow-cyan-900/20"
                 >
                   <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                   Tambah
@@ -268,7 +268,7 @@ export default function TransactionCategoriesPage() {
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", color: "#64748b" }}>{c.description || "-"}</td>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
-                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
+                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
                           <button onClick={() => handleDeleteCat(c.id, 'in')} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
                         </div>
                       </td>
@@ -335,7 +335,7 @@ export default function TransactionCategoriesPage() {
                       <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", color: "#64748b" }}>{c.description || "-"}</td>
                       <td style={{ padding: "0.875rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
-                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#6366f1", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
+                          <button onClick={() => handleEditCat(c)} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", cursor: "pointer" }}>Edit</button>
                           <button onClick={() => handleDeleteCat(c.id, 'out')} style={{ display: "inline-flex", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "0.5rem", cursor: "pointer" }}>Hapus</button>
                         </div>
                       </td>

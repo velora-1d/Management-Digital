@@ -373,7 +373,7 @@ function ReportsContent() {
             <p className="text-xs text-slate-500 m-0">Total Pengeluaran</p>
             <p className="font-extrabold text-lg text-rose-600 mt-1 mb-0">{fmtRp(pengeluaran)}</p>
           </div>
-          <div className="bg-linear-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 text-center">
+          <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-500 m-0">Saldo Bersih</p>
             <p className={`font-extrabold text-lg mt-1 mb-0 ${saldo >= 0 ? 'text-slate-800' : 'text-rose-500'}`}>
               {fmtRp(saldo)}
@@ -431,25 +431,25 @@ function ReportsContent() {
       <div className="flex gap-2 flex-wrap">
         <button 
           onClick={() => setActiveTab('infaq')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'infaq' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'infaq' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
         >
           Infaq & SPP
         </button>
         <button 
           onClick={() => setActiveTab('pendaftaran')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'pendaftaran' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'pendaftaran' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
         >
           Pendaftaran
         </button>
         <button 
           onClick={() => setActiveTab('tabungan')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'tabungan' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'tabungan' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
         >
           Tabungan
         </button>
         <button 
           onClick={() => setActiveTab('aruskas')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'aruskas' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+          className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${activeTab === 'aruskas' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
         >
           Arus Kas
         </button>

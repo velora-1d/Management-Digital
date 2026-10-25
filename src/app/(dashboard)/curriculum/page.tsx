@@ -130,8 +130,8 @@ function getCurriculumMeta(type: string) {
       return {
         label: "Kurikulum Merdeka",
         shortLabel: "KM",
-        badgeClass: "border-indigo-100 bg-indigo-50 text-indigo-700",
-        iconClass: "from-indigo-600 to-sky-500",
+        badgeClass: "border-blue-100 bg-blue-50 text-blue-700",
+        iconClass: "from-blue-600 to-sky-500",
       };
     case "K13":
       return {
@@ -540,7 +540,7 @@ export default function CurriculumPage() {
         title="Manajemen Kurikulum"
         subtitle="Atur standar kurikulum, komponen penilaian, dan KKM per periode secara lebih rapi dan konsisten."
         icon={<BookOpen className="h-5 w-5 text-white" />}
-        gradient="from-slate-900 via-indigo-800 to-sky-700"
+        gradient="from-slate-900 via-blue-800 to-sky-700"
         actions={
           <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-right backdrop-blur-md">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
@@ -633,7 +633,7 @@ export default function CurriculumPage() {
 
           <div className="grid gap-6 xl:grid-cols-12">
             <div className="space-y-6 xl:col-span-5">
-              <Card className="overflow-hidden border-none bg-linear-to-br from-white via-slate-50 to-indigo-50 shadow-xl shadow-indigo-100/40">
+              <Card className="overflow-hidden border-none bg-linear-to-br from-white via-slate-50 to-blue-50 shadow-xl shadow-blue-100/40">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div
@@ -749,7 +749,7 @@ export default function CurriculumPage() {
                     pagedComponents.map((component) => (
                       <div
                         key={component.id}
-                        className="group flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50/70 p-4 transition-all hover:border-indigo-100 hover:bg-white hover:shadow-lg hover:shadow-slate-200/70"
+                        className="group flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50/70 p-4 transition-all hover:border-blue-100 hover:bg-white hover:shadow-lg hover:shadow-slate-200/70"
                       >
                         <div className="flex items-center gap-4">
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-black text-slate-700 shadow-sm">
@@ -762,7 +762,7 @@ export default function CurriculumPage() {
                             <div className="mt-2 flex items-center gap-3">
                               <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-200">
                                 <div
-                                  className="h-full rounded-full bg-linear-to-r from-indigo-600 to-sky-500"
+                                  className="h-full rounded-full bg-linear-to-r from-blue-600 to-sky-500"
                                   style={{ width: `${Math.min(component.bobot, 100)}%` }}
                                 />
                               </div>
@@ -803,15 +803,15 @@ export default function CurriculumPage() {
                   />
 
                   {!curriculum.isLocked && (
-                    <div className="rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-50 to-sky-50 p-5">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">
+                    <div className="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50 to-sky-50 p-5">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">
                         Tambah Komponen Baru
                       </p>
                       <div className="mt-4 grid gap-3">
                         <input
                           type="text"
                           placeholder="Nama komponen, contoh: Sumatif Akhir"
-                          className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                          className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                           value={newComp.name}
                           onChange={(event) =>
                             setNewComp((previous) => ({
@@ -824,7 +824,7 @@ export default function CurriculumPage() {
                           <input
                             type="text"
                             placeholder="Kode"
-                            className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-sm font-semibold uppercase text-slate-700 outline-none transition-all focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                            className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-sm font-semibold uppercase text-slate-700 outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                             value={newComp.code}
                             onChange={(event) =>
                               setNewComp((previous) => ({
@@ -836,7 +836,7 @@ export default function CurriculumPage() {
                           <input
                             type="number"
                             placeholder="Bobot %"
-                            className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                            className="w-full rounded-2xl border border-white bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                             value={newComp.bobot}
                             onChange={(event) =>
                               setNewComp((previous) => ({
@@ -910,7 +910,7 @@ export default function CurriculumPage() {
                               }))
                             }
                             disabled={curriculum.isLocked}
-                            className="w-24 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-black text-indigo-600 outline-none focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                            className="w-24 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-black text-blue-600 outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                           />
                         </div>
                         <textarea
@@ -927,12 +927,12 @@ export default function CurriculumPage() {
                             }))
                           }
                           disabled={curriculum.isLocked}
-                          className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                          className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                         />
                         <button
                           onClick={() => handleSaveKkm(subject.id)}
                           disabled={curriculum.isLocked || draft.saving}
-                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Save className="h-4 w-4" />
                           {draft.saving ? "Menyimpan..." : "Simpan KKM"}
@@ -990,7 +990,7 @@ export default function CurriculumPage() {
                                   }))
                                 }
                                 disabled={curriculum.isLocked}
-                                className="w-24 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-black text-indigo-600 outline-none focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                                className="w-24 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-black text-blue-600 outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                               />
                             </td>
                             <td className="border-y border-slate-200 bg-white px-4 py-4">
@@ -1008,14 +1008,14 @@ export default function CurriculumPage() {
                                   }))
                                 }
                                 disabled={curriculum.isLocked}
-                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10"
+                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/10"
                               />
                             </td>
                             <td className="rounded-r-3xl border-y border-r border-slate-200 bg-white px-4 py-4 text-center">
                               <button
                                 onClick={() => handleSaveKkm(subject.id)}
                                 disabled={curriculum.isLocked || draft.saving}
-                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-black text-indigo-600 shadow-sm ring-1 ring-slate-200 transition-all hover:-translate-y-0.5 hover:bg-indigo-600 hover:text-white hover:ring-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-black text-blue-600 shadow-sm ring-1 ring-slate-200 transition-all hover:-translate-y-0.5 hover:bg-blue-600 hover:text-white hover:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 <Save className="h-4 w-4" />
                                 {draft.saving ? "Menyimpan..." : "Simpan"}
@@ -1059,7 +1059,7 @@ export default function CurriculumPage() {
           </div>
         </>
       ) : (
-        <Card className="overflow-hidden border-none bg-linear-to-br from-white via-slate-50 to-indigo-50 shadow-2xl shadow-indigo-100/60">
+        <Card className="overflow-hidden border-none bg-linear-to-br from-white via-slate-50 to-blue-50 shadow-2xl shadow-blue-100/60">
           <div className="mx-auto max-w-5xl py-10">
             <div className="text-center">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-slate-900 text-white shadow-2xl shadow-slate-300/50">
@@ -1081,8 +1081,8 @@ export default function CurriculumPage() {
                   type: "KURMER",
                   title: "Kurikulum Merdeka",
                   subtitle: "Fokus capaian pembelajaran yang fleksibel dan adaptif.",
-                  accent: "from-indigo-600 to-sky-500",
-                  surface: "bg-indigo-50 text-indigo-700",
+                  accent: "from-blue-600 to-sky-500",
+                  surface: "bg-blue-50 text-blue-700",
                 },
                 {
                   type: "K13",

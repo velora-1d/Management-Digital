@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="next-build-id" content={buildId} />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} antialiased text-gray-800 min-h-screen`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} antialiased bg-slate-50 text-slate-800 min-h-screen`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

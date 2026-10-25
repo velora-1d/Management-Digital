@@ -239,7 +239,7 @@ export default function PpdbNewPage() {
 
         {/* E. Catatan */}
         <Card className="p-8 mb-6">
-          <SectionHeader letter="E" label="Tambahan & Catatan" color="#8b5cf6" />
+          <SectionHeader letter="E" label="Tambahan & Catatan" color="#3b82f6" />
           <div>
             <label style={labelStyle}>Catatan Khusus (Riwayat Medis / Keadaan Tertentu)</label>
             <textarea name="notes" value={f.notes} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: "none" }} className="focus:border-sky-500 transition-colors" />

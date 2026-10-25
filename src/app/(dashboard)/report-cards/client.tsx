@@ -342,7 +342,7 @@ export default function ReportCardsPage({
       showCancelButton: true,
       confirmButtonText: "Ya, Publikasikan",
       cancelButtonText: "Batal",
-      confirmButtonColor: "#4f46e5",
+      confirmButtonColor: "#1d4ed8",
     });
 
     if (result.isConfirmed) {
@@ -523,7 +523,7 @@ export default function ReportCardsPage({
       <PageHeader
         title="Rapor Digital (E-Rapor)"
         subtitle="Generate dan kelola rapor semester peserta didik"
-        icon={<FileText className="w-5 h-5 text-indigo-600" />}
+        icon={<FileText className="w-5 h-5 text-blue-600" />}
       />
 
       <Card>
@@ -536,7 +536,7 @@ export default function ReportCardsPage({
                   onClick={() => setCurrentStep(step.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     currentStep === step.id
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
                       : currentStep > step.id
                       ? "bg-emerald-100 text-emerald-700"
                       : "bg-slate-100 text-slate-500"
@@ -561,7 +561,7 @@ export default function ReportCardsPage({
             <select
               value={selectedClassroom}
               onChange={(e) => { setSelectedClassroom(e.target.value); setPage(1); }}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kelas —</option>
               {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -572,7 +572,7 @@ export default function ReportCardsPage({
             <select
               value={selectedCurriculum}
               onChange={(e) => { setSelectedCurriculum(e.target.value); setPage(1); }}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="">— Pilih Kurikulum —</option>
               {curriculums.map(c => <option key={c.id} value={c.id}>{c.type} — {c.semester} {c.academicYear?.year || ""}</option>)}
@@ -583,7 +583,7 @@ export default function ReportCardsPage({
             <select
               value={selectedSemester}
               onChange={(e) => { setSelectedSemester(e.target.value); setPage(1); }}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none hover:border-slate-300 transition-colors"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none hover:border-slate-300 transition-colors"
             >
               <option value="ganjil">Ganjil</option>
               <option value="genap">Genap</option>
@@ -597,14 +597,14 @@ export default function ReportCardsPage({
         title={steps.find(s => s.id === currentStep)?.label}
         icon={steps.find(s => s.id === currentStep)?.icon && (() => {
           const Icon = steps.find(s => s.id === currentStep)!.icon;
-          return <Icon className="w-5 h-5 text-indigo-600" />;
+          return <Icon className="w-5 h-5 text-blue-600" />;
         })()}
         actions={
           currentStep === 1 ? (
              <button
               onClick={handleCheckCompleteness}
               disabled={loadingCheck || !selectedClassroom || !selectedCurriculum}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loadingCheck ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
               Periksa Kelengkapan
@@ -613,7 +613,7 @@ export default function ReportCardsPage({
             <button
               onClick={handleSaveNotes}
               disabled={savingNotes || notes.length === 0}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {savingNotes ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Simpan Semua Catatan
@@ -623,7 +623,7 @@ export default function ReportCardsPage({
               <button
                 onClick={handleGenerate}
                 disabled={generating || !selectedClassroom || !selectedCurriculum}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
               >
                 {generating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 Generate Data
@@ -659,7 +659,7 @@ export default function ReportCardsPage({
                       const status = getStudentStatus(st.id);
                       const checks = completionData[st.id] || [];
                       return (
-                        <div key={st.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                        <div key={st.id} className="border border-slate-100 rounded-xl p-4 hover:border-blue-100 hover:bg-slate-50/50 transition-all group">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-4">
                               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm ${
@@ -704,10 +704,10 @@ export default function ReportCardsPage({
                     })
                   ) : (
                     notes.map((item, idx) => (
-                      <div key={item.studentId} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all group">
+                      <div key={item.studentId} className="border border-slate-100 rounded-xl p-4 hover:border-blue-100 hover:bg-slate-50/50 transition-all group">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">{(page-1)*limit + idx + 1}</div>
+                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 transition-colors group-hover:bg-blue-100 group-hover:text-blue-700">{(page-1)*limit + idx + 1}</div>
                             <div>
                               <p className="font-bold text-sm text-slate-800">{item.studentName}</p>
                             </div>
@@ -716,7 +716,7 @@ export default function ReportCardsPage({
                           <button
                             onClick={() => handleGenerateAINote(item.studentId, item.studentName, idx)}
                             disabled={generatingAINoteId === item.studentId}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition-all border border-indigo-100 shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-bold transition-all border border-blue-100 shadow-sm"
                           >
                             {generatingAINoteId === item.studentId ? (
                               <RefreshCw className="w-3 h-3 animate-spin" />
@@ -735,7 +735,7 @@ export default function ReportCardsPage({
                           }}
                           placeholder="Tulis catatan wali kelas untuk siswa ini..."
                           rows={3}
-                          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-white transition-all hover:border-slate-300 shadow-sm"
+                          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white transition-all hover:border-slate-300 shadow-sm"
                         />
                       </div>
                     ))
@@ -765,13 +765,13 @@ export default function ReportCardsPage({
                 <div className="border border-slate-200 rounded-2xl p-4 bg-white">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-indigo-600" />
+                    <Upload className="w-4 h-4 text-blue-600" />
                     Upload Tanda Tangan
                   </h3>
                   <button
                     onClick={handleSaveSignatures}
                     disabled={savingSignatures}
-                    className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
                   >
                     {savingSignatures ? "Menyimpan..." : "Simpan"}
                   </button>
@@ -821,13 +821,13 @@ export default function ReportCardsPage({
               <div className="border border-slate-200 rounded-2xl p-4 bg-white">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-indigo-600" />
+                    <Upload className="w-4 h-4 text-blue-600" />
                     Pengaturan Kop Rapor
                   </h3>
                    <button
                     onClick={handleSaveSignatures}
                     disabled={savingSignatures}
-                    className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
                   >
                     {savingSignatures ? "Menyimpan..." : "Simpan"}
                   </button>
@@ -858,7 +858,7 @@ export default function ReportCardsPage({
                       <select
                         value={signatureSettings.reportLogoPosition}
                         onChange={(e) => setSignatureSettings({ ...signatureSettings, reportLogoPosition: e.target.value })}
-                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
                       >
                         <option value="left">Kiri (Samping Teks)</option>
                         <option value="center">Tengah (Atas Teks)</option>
@@ -869,7 +869,7 @@ export default function ReportCardsPage({
                       <select
                         value={signatureSettings.reportLogoSize}
                         onChange={(e) => setSignatureSettings({ ...signatureSettings, reportLogoSize: e.target.value })}
-                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
                       >
                         <option value="small">Kecil (15mm)</option>
                         <option value="medium">Sedang (20mm)</option>
@@ -882,7 +882,7 @@ export default function ReportCardsPage({
             </div>              <div className="border border-slate-200 rounded-2xl p-4 bg-linear-to-br from-slate-50 to-white">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-indigo-600" />
+                    <Eye className="w-4 h-4 text-blue-600" />
                     Preview E-Rapor Digital
                   </h3>
                   <select
@@ -945,9 +945,9 @@ export default function ReportCardsPage({
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 text-center shadow-sm">
-                    <p className="text-2xl font-black text-indigo-700">{generatedData.students?.length || 0}</p>
-                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Total Siswa</p>
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-center shadow-sm">
+                    <p className="text-2xl font-black text-blue-700">{generatedData.students?.length || 0}</p>
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-1">Total Siswa</p>
                   </div>
                   <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center shadow-sm">
                     <p className="text-xl font-bold text-emerald-700 truncate">{generatedData.classroom?.name || "-"}</p>
@@ -966,9 +966,9 @@ export default function ReportCardsPage({
                 <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {generatedData.students?.map((sd, idx: number) => (
-                      <div key={idx} className="border border-slate-100 rounded-2xl p-4 hover:border-indigo-100 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
+                      <div key={idx} className="border border-slate-100 rounded-2xl p-4 hover:border-blue-100 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-sm font-black text-indigo-700 group-hover:bg-indigo-100 transition-colors shadow-sm">{idx + 1}</div>
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-black text-blue-700 group-hover:bg-blue-100 transition-colors shadow-sm">{idx + 1}</div>
                           <div>
                             <p className="font-bold text-sm text-slate-800">{sd.student.name}</p>
                             <p className="text-[11px] text-slate-400 font-medium">{sd.finalGrades?.length || 0} Mata Pelajaran · {sd.attendanceSummary?.alpha || 0} Alpha</p>
@@ -976,14 +976,14 @@ export default function ReportCardsPage({
                         </div>
                         <div className="flex items-center gap-2">
                           {getStudentStatus(sd.student.id) === "PUBLISHED" ? (
-                             <div className="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold flex items-center gap-1 border border-indigo-100">
+                             <div className="px-2.5 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold flex items-center gap-1 border border-blue-100">
                                <Lock className="w-3 h-3" />
                                TERKUNCI
                              </div>
                           ) : (
                             <button
                               onClick={() => handlePublishPDF(idx)}
-                              className="p-2.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl transition-all border border-indigo-100 shadow-sm group/btn"
+                              className="p-2.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-xl transition-all border border-blue-100 shadow-sm group/btn"
                               title="Publikasikan & Kunci Data"
                             >
                               <CloudUpload className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
@@ -1026,13 +1026,13 @@ export default function ReportCardsPage({
         </button>
         <div className="flex gap-1.5">
           {steps.map(s => (
-            <div key={s.id} className={`w-2.5 h-1.5 rounded-full transition-all ${currentStep === s.id ? "w-8 bg-indigo-600" : "bg-slate-200"}`} />
+            <div key={s.id} className={`w-2.5 h-1.5 rounded-full transition-all ${currentStep === s.id ? "w-8 bg-blue-600" : "bg-slate-200"}`} />
           ))}
         </div>
         <button
           onClick={() => setCurrentStep(Math.min(3, currentStep + 1))}
           disabled={currentStep === 3}
-          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           Selanjutnya
           <ChevronRight className="w-4 h-4" />
@@ -1062,8 +1062,8 @@ export default function ReportCardsPage({
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-white">
               <div className="relative">
-                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                <Sparkles className="w-6 h-6 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                <Sparkles className="w-6 h-6 text-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-slate-800">Menyiapkan Preview...</p>
@@ -1073,16 +1073,16 @@ export default function ReportCardsPage({
           )}
         </div>
         
-        <div className="mt-4 flex items-center justify-between bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50">
+        <div className="mt-4 flex items-center justify-between bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
           <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-indigo-600" />
-            <p className="text-[11px] text-indigo-700 leading-tight">
+            <Info className="w-4 h-4 text-blue-600" />
+            <p className="text-[11px] text-blue-700 leading-tight">
                <span className="font-bold">Informasi:</span> Gunakan tombol download di bawah jika ingin menyimpan file secara permanen.
             </p>
           </div>
           <button
             onClick={() => handleDownloadPDF(previewStudentIndex)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-md"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md"
           >
             <Download className="w-3.5 h-3.5" />
             Download PDF
