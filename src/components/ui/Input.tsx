@@ -18,18 +18,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1.5">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-semibold text-slate-700">
+          <label htmlFor={inputId} className="block text-sm font-semibold text-slate-200">
             {label}
           </label>
         )}
         <div
           className={[
             "flex items-center rounded-xl border transition-all duration-200",
-            "focus-within:ring-2 focus-within:ring-offset-1",
+            "focus-within:ring-2 focus-within:ring-offset-0",
             hasError
-              ? "border-rose-300 focus-within:ring-rose-200 focus-within:border-rose-400"
-              : "border-slate-200 focus-within:ring-indigo-200 focus-within:border-indigo-400",
-            "bg-white",
+              ? "border-rose-500/80 focus-within:ring-rose-500/20 focus-within:border-rose-500"
+              : "border-[#2C2C2E] focus-within:ring-[#00E5FF]/20 focus-within:border-[#00E5FF]",
+            "bg-[#121212]",
           ].join(" ")}
         >
           {prefixText && (
@@ -44,7 +44,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={[
-              "flex-1 bg-transparent px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none",
+              "flex-1 bg-transparent px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none",
               prefixIcon || prefixText ? "pl-2" : "",
               suffixIcon ? "pr-2" : "",
               className,
@@ -56,7 +56,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {(helper || error) && (
-          <p className={`text-xs ${hasError ? "text-rose-500 font-medium" : "text-slate-400"}`}>
+          <p className={`text-xs ${hasError ? "text-rose-400 font-medium" : "text-slate-400"}`}>
             {error || helper}
           </p>
         )}

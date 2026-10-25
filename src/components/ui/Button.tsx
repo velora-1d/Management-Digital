@@ -14,15 +14,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
+    "bg-[#00E5FF] text-slate-900 font-bold shadow-md shadow-cyan-950/20 hover:brightness-110 hover:shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:-translate-y-0.5 active:translate-y-0 border-0",
   secondary:
-    "bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow",
+    "bg-[#2C2C2E] text-slate-100 border border-[#3A3A3C] shadow-sm hover:bg-[#3A3A3C] hover:text-white hover:border-[#48484A] hover:-translate-y-0.5 active:translate-y-0 font-medium",
   danger:
-    "bg-linear-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-200/50 hover:shadow-lg hover:shadow-rose-300/50 hover:-translate-y-0.5 active:translate-y-0 border-0",
+    "bg-linear-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-950/30 hover:brightness-110 hover:shadow-lg hover:shadow-rose-900/40 hover:-translate-y-0.5 active:translate-y-0 border-0 font-semibold",
   ghost:
-    "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-800 border-0",
+    "bg-transparent text-slate-300 hover:bg-white/10 hover:text-white border-0 font-medium",
   outline:
-    "bg-transparent text-indigo-600 border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300",
+    "bg-transparent text-[#00E5FF] border border-[#00E5FF]/40 hover:bg-[#00E5FF]/10 hover:border-[#00E5FF] hover:-translate-y-0.5 active:translate-y-0 font-semibold",
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -53,11 +53,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isDisabled}
         className={[
-          "inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer select-none",
+          "inline-flex items-center justify-center transition-all duration-200 cursor-pointer select-none",
           variantStyles[variant],
           sizeStyles[size],
           fullWidth ? "w-full" : "",
-          isDisabled ? "opacity-50 cursor-not-allowed translate-y-0! shadow-none!" : "",
+          isDisabled ? "opacity-50 cursor-not-allowed translate-y-0! shadow-none! pointer-events-none" : "",
           className,
         ]
           .filter(Boolean)

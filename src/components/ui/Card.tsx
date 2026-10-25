@@ -21,19 +21,23 @@ export default function Card({
 }: CardProps) {
   return (
     <div 
-      className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden ${className}`}
+      className={`bg-[#1E1E1E] text-white rounded-2xl border border-[#2C2C2E] shadow-xl overflow-hidden ${className}`}
     >
       {(title || actions) && (
         <div 
-          className={`${compact ? 'px-4 py-2' : 'px-8 py-5'} border-bottom border-slate-100 flex items-center justify-between gap-4 flex-wrap`} 
-          style={{ borderBottom: "1px solid #f1f5f9" }}
+          className={`${compact ? 'px-4 py-3' : 'px-8 py-5'} border-b border-[#2C2C2E] flex items-center justify-between gap-4 flex-wrap`} 
+          style={{ borderBottom: "1px solid #2C2C2E" }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {icon && (
-              <div className="w-2 h-2 rounded-full bg-linear-to-br from-indigo-500 to-violet-500" />
+              typeof icon === "boolean" ? (
+                <div className="w-2.5 h-2.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.6)]" />
+              ) : (
+                <span className="text-[#00E5FF] [&>svg]:w-4 [&>svg]:h-4 flex items-center">{icon}</span>
+              )
             )}
             {title && (
-              <h4 className="font-heading font-bold text-sm text-slate-800 m-0">
+              <h4 className="font-heading font-bold text-sm text-white m-0 tracking-wide">
                 {title}
               </h4>
             )}

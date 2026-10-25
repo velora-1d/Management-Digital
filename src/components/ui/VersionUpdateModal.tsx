@@ -26,14 +26,14 @@ export default function VersionUpdateModal({
       <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md transition-opacity duration-300" />
 
       {/* Modal Card dengan animasi fade-in-up */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 md:p-8 overflow-hidden animate-fade-in-up text-center select-none">
+      <div className="relative w-full max-w-md bg-[#1E1E1E] rounded-2xl shadow-2xl border border-[#2C2C2E] p-6 md:p-8 overflow-hidden animate-fade-in-up text-center select-none text-white">
         
         {/* Dekorasi Garis Gradient di Bagian Atas */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-indigo-500 to-violet-600" />
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600" />
 
         {/* Warning Icon dengan efek pulse dan ping */}
-        <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 mb-6 relative">
-          <div className="absolute inset-0 rounded-full bg-indigo-400/20 animate-ping" />
+        <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-cyan-500/10 text-[#00E5FF] mb-6 relative">
+          <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" />
           <svg
             className="w-8 h-8 relative z-10 animate-pulse"
             fill="none"
@@ -50,10 +50,10 @@ export default function VersionUpdateModal({
         </div>
 
         {/* Informasi Update */}
-        <h3 className="font-heading font-extrabold text-2xl text-slate-800 mb-3 tracking-tight">
+        <h3 className="font-heading font-extrabold text-2xl text-white mb-3 tracking-tight">
           Aplikasi Diperbarui!
         </h3>
-        <p className="text-sm text-slate-500 leading-relaxed mb-8">
+        <p className="text-sm text-slate-400 leading-relaxed mb-8">
           Versi baru aplikasi terdeteksi di server. Harap lakukan hard refresh 
           agar Anda dapat menggunakan fitur-fitur terbaru secara stabil dan menghindari error.
         </p>

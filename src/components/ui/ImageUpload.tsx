@@ -121,7 +121,7 @@ export default function ImageUpload({
           value={url}
           onChange={(e) => setUrl(ensureHttpsUrl(e.target.value))}
           placeholder={placeholder || "https://..."} 
-          className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-indigo-500 outline-none text-sm shadow-sm"
+          className="w-full h-11 border border-[#2C2C2E] bg-[#121212] text-white rounded-xl px-4 focus:ring-2 focus:ring-[#00E5FF]/20 focus:border-[#00E5FF] outline-none text-sm shadow-sm placeholder:text-slate-500"
         />
       )}
     </div>
