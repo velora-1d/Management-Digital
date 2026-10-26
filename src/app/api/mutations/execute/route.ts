@@ -95,7 +95,7 @@ export async function POST(request: Request) {
               studentId,
               classroomId: Number(targetClassroomId),
               academicYearId,
-              enrollmentType: "mutasi",
+              enrollmentType: action === "naik_kelas" ? "kenaikan" : "mutasi",
             }))
           );
         }
@@ -109,7 +109,9 @@ export async function POST(request: Request) {
 
     const actionLabel = resolvedStatus
       ? `Status ${result.count} siswa diubah ke "${resolvedStatus}"`
-      : `${result.count} siswa dipindahkan ke kelas baru`;
+      : action === "naik_kelas"
+        ? `${result.count} siswa berhasil dinaikkan ke kelas baru`
+        : `${result.count} siswa dipindahkan ke kelas baru`;
 
     return NextResponse.json({
       success: true,

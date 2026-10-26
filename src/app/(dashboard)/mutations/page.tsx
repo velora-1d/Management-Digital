@@ -161,9 +161,11 @@ export default function MutationsPage() {
 
   const handleExecute = async () => {
     if (selected.length === 0) return Swal.fire("Peringatan", "Pilih minimal 1 siswa", "warning");
-    if (action === "pindah_kelas" && !targetClass) return Swal.fire("Peringatan", "Pilih kelas tujuan", "warning");
+    const needsTargetClass = ["pindah_kelas", "naik_kelas"].includes(action);
+    if (needsTargetClass && !targetClass) return Swal.fire("Peringatan", "Pilih kelas tujuan", "warning");
 
     const actionLabels: Record<string, string> = {
+      naik_kelas: "Kenaikan Kelas",
       pindah_kelas: "Pindah Kelas",
       lulus: "Kelulusan",
       pindah: "Pindah Sekolah",
@@ -191,7 +193,7 @@ export default function MutationsPage() {
         body: JSON.stringify({
           studentIds: selected,
           action: action,
-          targetClassroomId: action === "pindah_kelas" ? Number(targetClass) : undefined,
+          targetClassroomId: needsTargetClass ? Number(targetClass) : undefined,
         }),
       });
       const json = await res.json();
@@ -282,22 +284,28 @@ export default function MutationsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Aksi Mutasi</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Aksi Mutasi & Kenaikan</label>
               <select
                 value={action}
-                onChange={(e) => setAction(e.target.value)}
+                onChange={(e) => {
+                  setAction(e.target.value);
+                  setTargetClass("");
+                }}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800 transition-colors font-medium"
               >
+                <option value="naik_kelas">Naik Kelas (Kenaikan Kelas)</option>
                 <option value="pindah_kelas">Pindah Kelas</option>
-                <option value="lulus">Kelulusan</option>
-                <option value="pindah">Pindah Sekolah</option>
-                <option value="nonaktif">Non-aktifkan</option>
+                <option value="lulus">Kelulusan (Alumni)</option>
+                <option value="pindah">Pindah Sekolah (Keluar)</option>
+                <option value="nonaktif">Non-aktifkan (Cuti / DO)</option>
               </select>
             </div>
 
-            {action === "pindah_kelas" && (
+            {["pindah_kelas", "naik_kelas"].includes(action) && (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Kelas Tujuan</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  {action === "naik_kelas" ? "Kelas Tujuan Kenaikan" : "Kelas Tujuan"}
+                </label>
                 <select
                   value={targetClass}
                   onChange={(e) => setTargetClass(e.target.value)}
