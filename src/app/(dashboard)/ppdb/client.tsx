@@ -374,11 +374,10 @@ export default function PpdbPage({
       <PageHeader
         title="Penerimaan Siswa Baru (PPDB)"
         subtitle="Kelola pendaftaran, penerimaan, dan konversi ke siswa."
-        icon={<UserPlus />}
-        gradient="from-sky-500 via-blue-600 to-sky-700"
+        icon={<UserPlus className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex items-center gap-3">
-            <Link href="/ppdb/new" className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all text-decoration-none">
+            <Link href="/ppdb/new" className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs tracking-wider transition-all shadow-xs cursor-pointer text-decoration-none">
               <Plus className="w-4 h-4 mr-1.5" /> Tambah Pendaftar
             </Link>
             <button onClick={async () => {
@@ -398,7 +397,7 @@ export default function PpdbPage({
                 if (json.success) { showToast(json.message); refreshData(); }
                 else showToast(json.message, "error");
               } catch { showToast("Gagal memperbaiki data", "error"); }
-            }} className="inline-flex items-center px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/20 transition-all cursor-pointer">
+            }} className="inline-flex items-center px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-xs tracking-wider border border-slate-200 transition-all shadow-xs cursor-pointer">
               <Wrench className="w-4 h-4 mr-1.5" /> Perbaiki Data
             </button>
           </div>

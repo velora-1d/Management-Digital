@@ -122,8 +122,7 @@ export default function CoopTransactionsPage() {
       <PageHeader
         title="Transaksi Koperasi"
         subtitle="Point of Sale & riwayat penjualan"
-        icon={<ShoppingCart />}
-        gradient="from-blue-500 to-blue-600"
+        icon={<ShoppingCart className="w-5 h-5 text-blue-600" />}
       />
 
       <Card className="p-1 flex gap-1 max-w-xs">

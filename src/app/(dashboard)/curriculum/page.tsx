@@ -539,14 +539,13 @@ export default function CurriculumPage() {
       <PageHeader
         title="Manajemen Kurikulum"
         subtitle="Atur standar kurikulum, komponen penilaian, dan KKM per periode secara lebih rapi dan konsisten."
-        icon={<BookOpen className="h-5 w-5 text-white" />}
-        gradient="from-slate-900 via-blue-800 to-sky-700"
+        icon={<BookOpen className="h-5 w-5 text-blue-600" />}
         actions={
-          <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-right backdrop-blur-md">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-right">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
               Periode Aktif
             </p>
-            <p className="mt-1 text-sm font-black text-white">
+            <p className="mt-1 text-sm font-bold text-slate-800">
               {academicYearLabel} • {getSemesterLabel(semester)}
             </p>
           </div>

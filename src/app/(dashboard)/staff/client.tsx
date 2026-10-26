@@ -84,14 +84,14 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
         title="Data Staf & Karyawan"
         subtitle="Kelola direktori staf tata usaha dan karyawan secara terpusat."
         icon={
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         }
         actions={
           <Link 
             href="/staff/new" 
-            className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-blue-950 rounded-lg text-xs font-bold border border-amber-400 shadow-lg shadow-amber-900/20 transition-all uppercase tracking-wider"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider"
           >
             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

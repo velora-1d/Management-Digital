@@ -152,8 +152,7 @@ export default function MutationsPage() {
       <PageHeader
         title="Mutasi Siswa"
         subtitle="Pindah kelas, kelulusan, atau perubahan status siswa."
-        icon={<ArrowRightLeft className="w-6 h-6 text-white" />}
-        gradient="from-red-600 via-rose-500 to-red-500"
+        icon={<ArrowRightLeft className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex items-center gap-2">
             <ExportButtons 

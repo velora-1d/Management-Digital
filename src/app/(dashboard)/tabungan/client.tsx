@@ -166,28 +166,28 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
       <PageHeader
         title="Tabungan Siswa"
         subtitle="Kelola setoran & penarikan tabungan seluruh siswa aktif."
-        icon={<Wallet />}
+        icon={<Wallet className="w-5 h-5 text-blue-600" />}
 
         actions={
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2">
-              <p className="text-[10px] font-semibold text-white/70 uppercase tracking-wider">Total Saldo Global</p>
-              <p className="font-heading text-lg font-extrabold text-white m-0 leading-tight">{fmtRp(totalBalanceGlobal)}</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2">
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total Saldo Global</p>
+              <p className="font-heading text-lg font-extrabold text-blue-600 m-0 leading-tight">{fmtRp(totalBalanceGlobal)}</p>
             </div>
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 group-focus-within:text-white transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
               <input
                 type="text"
                 placeholder="Cari siswa..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9 pr-4 py-2 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-xl text-sm font-medium placeholder:text-white/50 outline-none focus:ring-2 focus:ring-white/30 transition-all w-48 focus:w-64"
+                className="pl-9 pr-4 py-2 bg-white text-slate-800 border border-slate-200 rounded-xl text-sm font-medium placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-48 focus:w-64"
               />
             </div>
             <select
               value={classFilter}
               onChange={e => { setClassFilter(e.target.value); setPage(1); }}
-              className="px-3 py-2 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-xl text-sm font-medium cursor-pointer outline-none hover:bg-white/20 transition-colors focus:ring-2 focus:ring-white/30"
+              className="px-3 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm font-medium cursor-pointer outline-none hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               style={{ paddingRight: "2rem" }}
             >
               <option value="" className="text-slate-800">Semua Kelas</option>

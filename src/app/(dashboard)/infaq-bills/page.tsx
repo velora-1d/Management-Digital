@@ -498,7 +498,7 @@ function InfaqBillsContent() {
       <PageHeader
         title="Tagihan Infaq / SPP"
         subtitle="Monitor tagihan sesuai filter periode yang dipilih."
-        icon={<Wallet />}
+        icon={<Wallet className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex flex-wrap gap-2">
             <button

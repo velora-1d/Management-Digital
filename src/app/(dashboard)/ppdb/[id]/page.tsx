@@ -139,10 +139,9 @@ export default function PpdbEditPage(props: { params: Promise<{ id: string }> })
       <PageHeader
         title="Edit Detail PPDB"
         subtitle="Silakan ubah data pendaftar pada form di bawah ini"
-        icon={<UserPlus />}
-        gradient="from-blue-500 to-blue-600"
+        icon={<UserPlus className="w-5 h-5 text-blue-600" />}
         actions={
-          <Link href="/ppdb" className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all text-decoration-none">
+          <Link href="/ppdb" className="inline-flex items-center px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-xs tracking-wider border border-slate-200 transition-all shadow-xs text-decoration-none">
             <svg style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Kembali
           </Link>

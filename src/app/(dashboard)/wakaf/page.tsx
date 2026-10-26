@@ -520,8 +520,7 @@ function WakafContent() {
       <PageHeader
         title="Wakaf & Donasi"
         subtitle="Kelola penerimaan dan penyaluran dana wakaf madrasah."
-        icon={<Gift />}
-        gradient="from-emerald-600 via-teal-600 to-green-600"
+        icon={<Gift className="w-5 h-5 text-blue-600" />}
       />
 
       <FilterBar 

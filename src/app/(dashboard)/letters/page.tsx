@@ -262,7 +262,7 @@ export default function LettersPage() {
       <PageHeader
         title="Manajemen Surat"
         subtitle="Arsip surat masuk, surat keluar, dan disposisi"
-        icon={<Mail />}
+        icon={<Mail className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex gap-2">
             <button 

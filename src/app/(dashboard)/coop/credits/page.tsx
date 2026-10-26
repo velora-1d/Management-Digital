@@ -92,8 +92,7 @@ export default function CoopCreditsPage() {
       <PageHeader
         title="Piutang Siswa"
         subtitle="Kelola bon dan pelunasan"
-        icon={<ReceiptText />}
-        gradient="from-blue-500 to-blue-600"
+        icon={<ReceiptText className="w-5 h-5 text-blue-600" />}
         actions={
           <ExportButtons 
             options={{

@@ -113,12 +113,12 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
   };
 
   const actions = (
-    <>
-      <button onClick={() => window.location.href = "/api/students/template"} className="inline-flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-lg font-semibold text-xs border border-white/20 transition-colors">
+    <div className="flex items-center gap-2 flex-wrap">
+      <button onClick={() => window.location.href = "/api/students/template"} className="inline-flex items-center px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-xs border border-slate-200 transition-colors shadow-xs">
         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
         Template
       </button>
-      <label className="inline-flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-lg font-semibold text-xs border border-white/20 cursor-pointer transition-colors">
+      <label className="inline-flex items-center px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-xs border border-slate-200 cursor-pointer transition-colors shadow-xs">
         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
         Import
         <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
@@ -135,15 +135,15 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
           e.target.value = "";
         }} />
       </label>
-      <button onClick={() => window.location.href = `/api/students/export?${searchParams.toString()}`} className="inline-flex items-center px-3 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white rounded-lg font-semibold text-xs border border-white/25 transition-colors">
+      <button onClick={() => window.location.href = `/api/students/export?${searchParams.toString()}`} className="inline-flex items-center px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-xs border border-slate-200 transition-colors shadow-xs">
         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
         Export
       </button>
-      <Link href="/students/new" className="inline-flex items-center px-4 py-2 bg-white/25 hover:bg-white/35 backdrop-blur-md text-white rounded-lg font-bold text-xs uppercase tracking-wider border border-white/30 transition-all shadow-sm">
+      <Link href="/students/new" className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-xs">
         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
         Tambah
       </Link>
-    </>
+    </div>
   );
 
   return (
@@ -151,7 +151,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
       <PageHeader 
         title="Manajemen Siswa" 
         subtitle="Kelola data siswa, tahun ajaran, dan status akademik."
-        icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+        icon={<svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
         actions={actions}
       />
 

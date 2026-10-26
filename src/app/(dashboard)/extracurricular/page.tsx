@@ -174,7 +174,7 @@ export default function ExtracurricularPage() {
       <PageHeader 
         title="Ekstrakurikuler" 
         subtitle="Kelola kegiatan ekstrakurikuler, anggota, dan penilaian"
-        icon={<Trophy />}
+        icon={<Trophy className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex gap-2">
             <button 

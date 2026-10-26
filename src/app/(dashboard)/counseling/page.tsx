@@ -159,7 +159,7 @@ export default function CounselingPage() {
       <PageHeader 
         title="Bimbingan Konseling" 
         subtitle="Catatan bimbingan dan konseling siswa"
-        icon={<MessageSquare />}
+        icon={<MessageSquare className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex gap-2">
             <button 

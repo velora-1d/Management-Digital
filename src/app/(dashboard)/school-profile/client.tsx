@@ -66,7 +66,7 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
       <PageHeader
         title="Profil Sekolah"
         subtitle="Informasi dan profil resmi instansi / lembaga sekolah"
-        icon={<School />}
+        icon={<School className="w-5 h-5 text-blue-600" />}
         actions={
           <button onClick={handleSave} disabled={saving}
             className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50">

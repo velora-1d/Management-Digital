@@ -294,7 +294,7 @@ export default function AttendancePage({
         icon={<ClipboardList className="w-5 h-5 text-blue-600" />}
         actions={
           activeAcademicYear && (
-            <div className="bg-white/60 backdrop-blur-sm border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm border-slate-200">
+            <div className="bg-slate-50 border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-xs border-slate-200">
               T.A Aktif: <span className="text-blue-600 ml-1">{activeAcademicYear.year}</span>
             </div>
           )

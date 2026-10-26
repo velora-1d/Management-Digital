@@ -183,15 +183,11 @@ export default function TransactionCategoriesPage() {
       <PageHeader
         title="Kategori Keuangan"
         subtitle="Kelola kategori pemasukan & pengeluaran madrasah."
-        icon={
-          <div className="p-2 bg-cyan-500/20 rounded-lg">
-             <Tag className="w-6 h-6 text-cyan-200" />
-          </div>
-        }
+        icon={<Tag className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex items-center gap-4">
              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Cari kategori..."
@@ -201,7 +197,7 @@ export default function TransactionCategoriesPage() {
                     setInPage(1);
                     setOutPage(1);
                   }}
-                  className="pl-9 pr-4 py-2 text-xs bg-white/10 border border-white/20 text-white rounded-xl focus:ring-2 focus:ring-white/20 focus:bg-white/20 outline-none w-full sm:w-64 transition-all placeholder:text-white/40"
+                  className="pl-9 pr-4 py-2 text-xs bg-white border border-slate-200 text-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none w-full sm:w-64 transition-all placeholder:text-slate-400"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -219,7 +215,7 @@ export default function TransactionCategoriesPage() {
                 />
                 <button 
                   onClick={handleAdd} 
-                  className="inline-flex items-center px-4 py-2 bg-white text-cyan-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50 active:scale-95 shadow-lg shadow-cyan-900/20"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-xs"
                 >
                   <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                   Tambah

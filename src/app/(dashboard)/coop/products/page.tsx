@@ -106,12 +106,11 @@ export default function CoopProductsPage() {
       <PageHeader
         title="Produk Koperasi"
         subtitle="Kelola stok dan harga produk"
-        icon={<ShoppingBag />}
-        gradient="from-blue-500 to-blue-600"
+        icon={<ShoppingBag className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex gap-2">
             <button onClick={() => { setEditItem(null); setForm({ name: "", category: "", hargaJual: "", hargaBeli: "", stok: "", minStok: "" }); setShowModal(true); }}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-white/30 backdrop-blur-md cursor-pointer">
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               Tambah Produk
             </button>
