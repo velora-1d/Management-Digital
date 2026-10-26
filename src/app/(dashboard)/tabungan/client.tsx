@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import { Wallet, Search, CheckCircle2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import FilterBar from "@/components/FilterBar";
@@ -344,17 +345,17 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
         <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
       </Card>
 
-      {/* Modal Setor/Tarik */}
-      {showTransaction && selectedStudent && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowTransaction(false)} />
-          <div style={{ position: "relative", background: "#fff", borderRadius: "1rem", width: "100%", maxWidth: 440, padding: "2rem", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#1e293b", margin: 0 }}>
-              {txType === "setor" ? "Setor" : "Tarik"} Tabungan
-            </h3>
-            <p style={{ fontSize: "0.8125rem", color: "#64748b", marginTop: "0.375rem" }}>{selectedStudent.name} — Saldo: <strong>{fmtRp(selectedStudent.balance || 0)}</strong></p>
-
-            <div style={{ marginTop: "1.25rem" }}>
+      {/* Drawer Setor/Tarik (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={showTransaction && !!selectedStudent}
+        onClose={() => setShowTransaction(false)}
+        title={txType === "setor" ? "Setor Tabungan" : "Tarik Tabungan"}
+        subtitle={selectedStudent ? `${selectedStudent.name} — Saldo: ${fmtRp(selectedStudent.balance || 0)}` : ""}
+        width="max-w-md"
+      >
+        {selectedStudent && (
+          <div>
+            <div>
               <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Jumlah (Rp)</label>
               <input type="number" value={txAmount} onChange={e => setTxAmount(e.target.value)} placeholder="0" style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "1rem", fontWeight: 700, outline: "none" }} />
             </div>
@@ -377,50 +378,49 @@ function TabunganContent({ initialClassrooms }: { initialClassrooms: Classroom[]
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </LeftDrawer>
 
-      {/* Modal Riwayat Mutasi */}
-      {showHistory && historyStudent && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowHistory(false)} />
-          <div style={{ position: "relative", background: "#fff", borderRadius: "1rem", width: "100%", maxWidth: 560, maxHeight: "80vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-            <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid #e2e8f0" }}>
-              <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#1e293b", margin: 0 }}>Riwayat Mutasi</h3>
-              <p style={{ fontSize: "0.8125rem", color: "#64748b", marginTop: "0.25rem" }}>{historyStudent.name} — Saldo: <strong style={{ color: "#059669" }}>{fmtRp(historyBalance)}</strong></p>
-            </div>
-            <div style={{ overflowY: "auto", flex: 1, padding: "1rem 2rem" }}>
-              {historyLoading ? (
-                <p style={{ textAlign: "center", color: "#94a3b8", padding: "2rem 0" }}>Memuat...</p>
-              ) : historyData.length === 0 ? (
-                <p style={{ textAlign: "center", color: "#94a3b8", padding: "2rem 0" }}>Belum ada transaksi.</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {historyData.map((h: Transaction) => (
-                    <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderRadius: "0.625rem", background: h.type === "setor" ? "#f0fdf4" : "#fef2f2", border: `1px solid ${h.type === "setor" ? "#bbf7d0" : "#fecaca"}` }}>
-                      <div>
-                        <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>
-                          {h.type === "setor" ? "↓ Setoran" : "↑ Penarikan"}
-                        </p>
-                        <p style={{ fontSize: "0.6875rem", color: "#64748b", marginTop: "0.125rem" }}>{h.date} — {h.description || "-"}</p>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <p style={{ fontWeight: 700, fontSize: "0.875rem", color: h.type === "setor" ? "#059669" : "#e11d48", margin: 0 }}>
-                          {h.type === "setor" ? "+" : "-"}{fmtRp(h.amount)}
-                        </p>
-                        <p style={{ fontSize: "0.625rem", color: "#94a3b8", marginTop: "0.125rem" }}>Saldo: {fmtRp(h.balanceAfter)}</p>
-                      </div>
+      {/* Drawer Riwayat Mutasi (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={showHistory && !!historyStudent}
+        onClose={() => setShowHistory(false)}
+        title="Riwayat Mutasi"
+        subtitle={historyStudent ? `${historyStudent.name} — Saldo: ${fmtRp(historyBalance)}` : ""}
+        width="max-w-md"
+      >
+        {historyStudent && (
+          <div>
+            {historyLoading ? (
+              <p style={{ textAlign: "center", color: "#94a3b8", padding: "2rem 0" }}>Memuat...</p>
+            ) : historyData.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#94a3b8", padding: "2rem 0" }}>Belum ada transaksi.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {historyData.map((h: Transaction) => (
+                  <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderRadius: "0.625rem", background: h.type === "setor" ? "#f0fdf4" : "#fef2f2", border: `1px solid ${h.type === "setor" ? "#bbf7d0" : "#fecaca"}` }}>
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1e293b", margin: 0 }}>
+                        {h.type === "setor" ? "↓ Setoran" : "↑ Penarikan"}
+                      </p>
+                      <p style={{ fontSize: "0.6875rem", color: "#64748b", marginTop: "0.125rem" }}>{h.date} — {h.description || "-"}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ padding: "1rem 2rem", borderTop: "1px solid #e2e8f0" }}>
+                    <div style={{ textAlign: "right" }}>
+                      <p style={{ fontWeight: 700, fontSize: "0.875rem", color: h.type === "setor" ? "#059669" : "#e11d48", margin: 0 }}>
+                        {h.type === "setor" ? "+" : "-"}{fmtRp(h.amount)}
+                      </p>
+                      <p style={{ fontSize: "0.625rem", color: "#94a3b8", marginTop: "0.125rem" }}>Saldo: {fmtRp(h.balanceAfter)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop: "1.5rem" }}>
               <button onClick={() => setShowHistory(false)} style={{ width: "100%", padding: "0.625rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Tutup</button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </LeftDrawer>
     </div>
   );
 }

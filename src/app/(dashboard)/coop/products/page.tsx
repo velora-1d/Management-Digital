@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import { ShoppingBag, CheckCircle2, Trash2 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 
@@ -282,39 +283,52 @@ export default function CoopProductsPage() {
         </>
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-slate-800">{editItem ? "Edit Produk" : "Tambah Produk"}</h2>
-            <div className="space-y-3">
-              <div><label className="text-xs font-semibold text-slate-600">Nama Produk *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-              <div><label className="text-xs font-semibold text-slate-600">Kategori</label>
-                <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option value="">— Pilih —</option>
-                  {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                </select></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-semibold text-slate-600">Harga Beli</label>
-                  <input type="number" value={form.hargaBeli} onChange={e => setForm({ ...form, hargaBeli: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="text-xs font-semibold text-slate-600">Harga Jual</label>
-                  <input type="number" value={form.hargaJual} onChange={e => setForm({ ...form, hargaJual: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-semibold text-slate-600">Stok</label>
-                  <input type="number" value={form.stok} onChange={e => setForm({ ...form, stok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="text-xs font-semibold text-slate-600">Min Stok (alert)</label>
-                  <input type="number" value={form.minStok} onChange={e => setForm({ ...form, minStok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-              </div>
+      {/* Drawer Produk (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setEditItem(null); }}
+        title={editItem ? "Edit Produk Koperasi" : "Tambah Produk Koperasi"}
+        subtitle="Kelola data barang inventaris koperasi"
+        width="max-w-md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-600">Nama Produk *</label>
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600">Kategori</label>
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="">— Pilih —</option>
+              {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Harga Beli</label>
+              <input type="number" value={form.hargaBeli} onChange={e => setForm({ ...form, hargaBeli: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm">Batal</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">Simpan</button>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Harga Jual</label>
+              <input type="number" value={form.hargaJual} onChange={e => setForm({ ...form, hargaJual: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Stok</label>
+              <input type="number" value={form.stok} onChange={e => setForm({ ...form, stok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Min Stok (alert)</label>
+              <input type="number" value={form.minStok} onChange={e => setForm({ ...form, minStok: e.target.value })} className="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <button onClick={() => { setShowModal(false); setEditItem(null); }} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors">Batal</button>
+            <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">Simpan</button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

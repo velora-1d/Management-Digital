@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import FilterBar from "@/components/FilterBar";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -440,124 +441,110 @@ function CashAccountsContent() {
         </div>
       </div>
 
-      {/* Modal Overlay */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-500" 
-            onClick={() => setModalOpen(false)}
-          />
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 border border-slate-200">
-            {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 uppercase">{editingId ? "Update Akun" : "Registrasi Akun"}</h3>
-                <p className="text-sm text-slate-500 font-medium">Lengkapi parameter akun kas dengan benar.</p>
+      {/* Drawer Akun Kas (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? "Update Akun" : "Registrasi Akun"}
+        subtitle="Lengkapi parameter akun kas dengan benar."
+        width="max-w-lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Identitas Akun</label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <LayoutGrid className="w-5 h-5" />
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                 <CreditCard className="w-6 h-6" />
+              <input
+                type="text"
+                required
+                placeholder="Contoh: Kas Utama Bendahara"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
+                value={form.accountName}
+                onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Bank (Optional)</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="BSI / Mandiri / dll"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
+                  value={form.bankName}
+                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                />
               </div>
             </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Identitas Akun</label>
-                <div className="relative group">
-                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                      <LayoutGrid className="w-5 h-5" />
-                   </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Kas Utama Bendahara"
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
-                    value={form.accountName}
-                    onChange={(e) => setForm({ ...form, accountName: e.target.value })}
-                  />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nomor Rekening</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  <Hash className="w-5 h-5" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Masukan angka saja"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
+                  value={form.accountNumber}
+                  onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
+                />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Bank (Optional)</label>
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                        <Building2 className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="BSI / Mandiri / dll"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
-                      value={form.bankName}
-                      onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nomor Rekening</label>
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                        <Hash className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Masukan angka saja"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
-                      value={form.accountNumber}
-                      onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Status Operasi</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setForm({...form, status: 'active'})}
-                    className={`py-3 rounded-2xl font-black text-xs uppercase border-2 transition-all ${
-                      form.status === 'active' 
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700 ring-4 ring-emerald-50' 
-                      : 'bg-white border-slate-100 text-slate-400'
-                    }`}
-                  >
-                    Aktif
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({...form, status: 'inactive'})}
-                    className={`py-3 rounded-2xl font-black text-xs uppercase border-2 transition-all ${
-                      form.status === 'inactive' 
-                      ? 'bg-rose-50 border-rose-500 text-rose-700 ring-4 ring-rose-50' 
-                      : 'bg-white border-slate-100 text-slate-400'
-                    }`}
-                  >
-                    Non-Aktif
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-6 flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="flex-1 py-4 px-6 rounded-2xl text-slate-400 font-black text-xs uppercase hover:bg-slate-50 transition-all"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-4 px-6 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Status Operasi</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setForm({...form, status: 'active'})}
+                className={`py-3 rounded-2xl font-black text-xs uppercase border-2 transition-all ${
+                  form.status === 'active' 
+                  ? 'bg-emerald-50 border-emerald-500 text-emerald-700 ring-4 ring-emerald-50' 
+                  : 'bg-white border-slate-100 text-slate-400'
+                }`}
+              >
+                Aktif
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({...form, status: 'inactive'})}
+                className={`py-3 rounded-2xl font-black text-xs uppercase border-2 transition-all ${
+                  form.status === 'inactive' 
+                  ? 'bg-rose-50 border-rose-500 text-rose-700 ring-4 ring-rose-50' 
+                  : 'bg-white border-slate-100 text-slate-400'
+                }`}
+              >
+                Non-Aktif
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-4 flex gap-4">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="flex-1 py-3 px-6 rounded-xl text-slate-500 font-bold text-xs uppercase hover:bg-slate-100 transition-all border border-slate-200"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 px-6 rounded-xl bg-blue-600 text-white font-bold text-xs uppercase hover:bg-blue-700 transition-all shadow-md active:scale-95"
+            >
+              Simpan Perubahan
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

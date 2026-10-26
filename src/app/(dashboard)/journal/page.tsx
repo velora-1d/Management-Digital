@@ -9,6 +9,7 @@ import FilterBar from "@/components/FilterBar";
 import { ExportButtons, fmtRupiah as fmtRupiahExport } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import { BookOpen, CheckCircle2, Trash2 } from "lucide-react";
 
 type JournalEntryType = "in" | "out";
@@ -494,61 +495,61 @@ function JournalContent() {
         </div>
       </Card>
 
-      {/* Modal Catat Transaksi */}
-      {showCreate && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowCreate(false)} />
-          <div style={{ position: "relative", background: "#fff", borderRadius: "1rem", width: "100%", maxWidth: 480, padding: "2rem", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.125rem", color: "#1e293b", margin: 0 }}>Catat Transaksi Baru</h3>
-            <p style={{ fontSize: "0.8125rem", color: "#64748b", marginTop: "0.375rem" }}>Isi data transaksi pemasukan atau pengeluaran.</p>
+      {/* Drawer Catat Transaksi (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Catat Transaksi Baru"
+        subtitle="Isi data transaksi pemasukan atau pengeluaran."
+        width="max-w-md"
+      >
+        <div>
+          {/* Tipe Toggle */}
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button onClick={() => setForm(f => ({ ...f, type: "in" }))} style={{ flex: 1, padding: "0.75rem", borderRadius: "0.625rem", fontSize: "0.8125rem", fontWeight: 700, border: form.type === "in" ? "2px solid #059669" : "1.5px solid #e2e8f0", background: form.type === "in" ? "#ecfdf5" : "#fff", color: form.type === "in" ? "#059669" : "#64748b", cursor: "pointer" }}>
+              ↓ Pemasukan
+            </button>
+            <button onClick={() => setForm(f => ({ ...f, type: "out" }))} style={{ flex: 1, padding: "0.75rem", borderRadius: "0.625rem", fontSize: "0.8125rem", fontWeight: 700, border: form.type === "out" ? "2px solid #e11d48" : "1.5px solid #e2e8f0", background: form.type === "out" ? "#fff1f2" : "#fff", color: form.type === "out" ? "#e11d48" : "#64748b", cursor: "pointer" }}>
+              ↑ Pengeluaran
+            </button>
+          </div>
 
-            {/* Tipe Toggle */}
-            <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => setForm(f => ({ ...f, type: "in" }))} style={{ flex: 1, padding: "0.75rem", borderRadius: "0.625rem", fontSize: "0.8125rem", fontWeight: 700, border: form.type === "in" ? "2px solid #059669" : "1.5px solid #e2e8f0", background: form.type === "in" ? "#ecfdf5" : "#fff", color: form.type === "in" ? "#059669" : "#64748b", cursor: "pointer" }}>
-                ↓ Pemasukan
-              </button>
-              <button onClick={() => setForm(f => ({ ...f, type: "out" }))} style={{ flex: 1, padding: "0.75rem", borderRadius: "0.625rem", fontSize: "0.8125rem", fontWeight: 700, border: form.type === "out" ? "2px solid #e11d48" : "1.5px solid #e2e8f0", background: form.type === "out" ? "#fff1f2" : "#fff", color: form.type === "out" ? "#e11d48" : "#64748b", cursor: "pointer" }}>
-                ↑ Pengeluaran
-              </button>
+          <div style={{ marginTop: "1rem" }}>
+            <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Jumlah *</label>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", padding: "0 0.75rem", height: "2.75rem", background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRight: "none", borderRadius: "0.625rem 0 0 0.625rem", fontSize: "0.875rem", fontWeight: 700, color: "#2563eb" }}>Rp</span>
+              <input type="text" value={form.amountDisplay} onChange={e => handleAmountChange(e.target.value)} placeholder="0" style={{ flex: 1, padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderLeft: "none", borderRadius: "0 0.625rem 0.625rem 0", fontSize: "1rem", fontWeight: 700, outline: "none", height: "2.75rem", boxSizing: "border-box" }} />
             </div>
+            {form.amount > 0 && <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.25rem" }}>= {fmtRp(form.amount)}</p>}
+          </div>
 
-            <div style={{ marginTop: "1rem" }}>
-              <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Jumlah *</label>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", padding: "0 0.75rem", height: "2.75rem", background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRight: "none", borderRadius: "0.625rem 0 0 0.625rem", fontSize: "0.875rem", fontWeight: 700, color: "#2563eb" }}>Rp</span>
-                <input type="text" value={form.amountDisplay} onChange={e => handleAmountChange(e.target.value)} placeholder="0" style={{ flex: 1, padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderLeft: "none", borderRadius: "0 0.625rem 0.625rem 0", fontSize: "1rem", fontWeight: 700, outline: "none", height: "2.75rem", boxSizing: "border-box" }} />
-              </div>
-              {form.amount > 0 && <p style={{ fontSize: "0.6875rem", color: "#94a3b8", marginTop: "0.25rem" }}>= {fmtRp(form.amount)}</p>}
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Kategori</label>
+            <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
+              <option value="">— Tanpa Kategori —</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3" style={{ marginTop: "0.75rem" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Tanggal</label>
+              <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }} />
             </div>
-
-            <div style={{ marginTop: "0.75rem" }}>
-              <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Kategori</label>
-              <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }}>
-                <option value="">— Tanpa Kategori —</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3" style={{ marginTop: "0.75rem" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Tanggal</label>
-                <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Keterangan</label>
-                <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Catatan..." style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }} />
-              </div>
-            </div>
-
-            <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
-              <button onClick={() => setShowCreate(false)} style={{ padding: "0.625rem 1.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Batal</button>
-              <button onClick={handleCreate} disabled={formLoading} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: formLoading ? "#94a3b8" : form.type === "in" ? "linear-gradient(135deg,#059669,#047857)" : "linear-gradient(135deg,#e11d48,#be123c)", border: "none", borderRadius: "0.625rem", cursor: formLoading ? "not-allowed" : "pointer" }}>
-                {formLoading ? "Memproses..." : form.type === "in" ? "Catat Pemasukan" : "Catat Pengeluaran"}
-              </button>
+            <div>
+              <label style={{ display: "block", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>Keterangan</label>
+              <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Catatan..." style={{ width: "100%", padding: "0.625rem 1rem", border: "1.5px solid #e2e8f0", borderRadius: "0.625rem", fontSize: "0.875rem", outline: "none" }} />
             </div>
           </div>
+
+          <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+            <button onClick={() => setShowCreate(false)} style={{ padding: "0.625rem 1.25rem", fontSize: "0.8125rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", border: "none", borderRadius: "0.625rem", cursor: "pointer" }}>Batal</button>
+            <button onClick={handleCreate} disabled={formLoading} style={{ padding: "0.625rem 1.5rem", fontSize: "0.8125rem", fontWeight: 700, color: "#fff", background: formLoading ? "#94a3b8" : form.type === "in" ? "linear-gradient(135deg,#059669,#047857)" : "linear-gradient(135deg,#e11d48,#be123c)", border: "none", borderRadius: "0.625rem", cursor: formLoading ? "not-allowed" : "pointer" }}>
+              {formLoading ? "Memproses..." : form.type === "in" ? "Catat Pemasukan" : "Catat Pengeluaran"}
+            </button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

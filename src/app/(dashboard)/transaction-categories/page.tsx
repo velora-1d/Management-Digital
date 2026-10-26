@@ -7,6 +7,7 @@ import { Search, Tag, ArrowUpCircle, ArrowDownCircle, Trash2 } from "lucide-reac
 import PageHeader from "@/components/ui/PageHeader";
 import { ExportButtons } from "@/lib/export-utils";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 
 interface TransactionCategory {
   id: number;
@@ -23,6 +24,16 @@ export default function TransactionCategoriesPage() {
   const [limit] = useState(5);
   const [selectedInIds, setSelectedInIds] = useState<number[]>([]);
   const [selectedOutIds, setSelectedOutIds] = useState<number[]>([]);
+
+  // Drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<TransactionCategory | null>(null);
+  const [catForm, setCatForm] = useState<{ name: string; type: "in" | "out"; description: string }>({
+    name: "",
+    type: "in",
+    description: "",
+  });
+  const [catLoading, setCatLoading] = useState(false);
 
   const { data: inResult, isLoading: inLoading } = useQuery({
     queryKey: ["transaction-categories", "in", inPage, search],
@@ -54,97 +65,50 @@ export default function TransactionCategoriesPage() {
   };
 
   const handleAdd = () => {
-    Swal.fire({
-      title: "Tambah Kategori",
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <div><label style="font-size:0.75rem;font-weight:600;">Nama Kategori</label>
-          <input type="text" id="swal-cat-name" class="swal2-input" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
-            <select id="swal-cat-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="in">Pemasukan (In)</option>
-              <option value="out">Pengeluaran (Out)</option>
-            </select>
-          </div>
-          <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;"></textarea></div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      confirmButtonColor: "#10b981",
-      preConfirm: () => ({
-        name: (document.getElementById("swal-cat-name") as HTMLInputElement).value,
-        type: (document.getElementById("swal-cat-type") as HTMLSelectElement).value,
-        description: (document.getElementById("swal-cat-desc") as HTMLTextAreaElement).value
-      })
-    }).then(async (r) => {
-      if (r.isConfirmed) {
-        try {
-          const res = await fetch("/api/transaction-categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || "Gagal menghubungi server");
-          }
-          const json = await res.json();
-          if (json.success) { 
-            Swal.fire("Berhasil", "Kategori ditambahkan", "success"); 
-            refreshData(r.value.type); 
-          }
-          else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch (error: unknown) { 
-          const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
-        }
-      }
-    });
+    setEditingCat(null);
+    setCatForm({ name: "", type: "in", description: "" });
+    setDrawerOpen(true);
   };
 
   const handleEditCat = (cat: TransactionCategory) => {
-    Swal.fire({
-      title: "Edit Kategori",
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <div><label style="font-size:0.75rem;font-weight:600;">Nama Kategori</label>
-          <input type="text" id="swal-cat-name" class="swal2-input" value="${cat.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          <div><label style="font-size:0.75rem;font-weight:600;">Tipe</label>
-            <select id="swal-cat-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="in" ${cat.type === 'in' ? 'selected' : ''}>Pemasukan (In)</option>
-              <option value="out" ${cat.type === 'out' ? 'selected' : ''}>Pengeluaran (Out)</option>
-            </select>
-          </div>
-          <div><label style="font-size:0.75rem;font-weight:600;">Keterangan</label>
-          <textarea id="swal-cat-desc" class="swal2-textarea" style="margin:0;width:100%;height:4rem;padding:0.5rem;font-size:0.875rem;">${cat.description || ''}</textarea></div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      confirmButtonColor: "#10b981",
-      preConfirm: () => ({
-        name: (document.getElementById("swal-cat-name") as HTMLInputElement).value,
-        type: (document.getElementById("swal-cat-type") as HTMLSelectElement).value,
-        description: (document.getElementById("swal-cat-desc") as HTMLTextAreaElement).value
-      })
-    }).then(async (r) => {
-      if (r.isConfirmed) {
-        try {
-          const res = await fetch(`/api/transaction-categories?id=${cat.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || "Gagal menghubungi server");
-          }
-          const json = await res.json();
-          if (json.success) { 
-            Swal.fire("Berhasil", "Kategori diperbarui", "success"); 
-            refreshData(); 
-          }
-          else Swal.fire("Gagal", json.message || "Gagal", "error");
-        } catch (error: unknown) { 
-          const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
-        }
+    setEditingCat(cat);
+    setCatForm({ name: cat.name, type: cat.type, description: cat.description || "" });
+    setDrawerOpen(true);
+  };
+
+  const handleSubmitCat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catForm.name) {
+      Swal.fire("Error", "Nama kategori wajib diisi!", "error");
+      return;
+    }
+    setCatLoading(true);
+    try {
+      const url = editingCat ? `/api/transaction-categories?id=${editingCat.id}` : "/api/transaction-categories";
+      const method = editingCat ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(catForm),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
       }
-    });
+      const json = await res.json();
+      if (json.success) {
+        Swal.fire("Berhasil", editingCat ? "Kategori diperbarui" : "Kategori ditambahkan", "success");
+        setDrawerOpen(false);
+        refreshData(catForm.type);
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Server error";
+      Swal.fire("Error", msg, "error");
+    } finally {
+      setCatLoading(false);
+    }
   };
 
   const handleDeleteCat = async (id: number, type: string) => {
@@ -492,6 +456,85 @@ export default function TransactionCategoriesPage() {
           )}
         </Card>
       </div>
+
+      {/* Drawer Kategori (Muncul dari kiri) */}
+      <LeftDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editingCat ? "Edit Kategori" : "Tambah Kategori Baru"}
+        subtitle="Kelola pos kategori pemasukan & pengeluaran madrasah"
+        width="max-w-md"
+      >
+        <form onSubmit={handleSubmitCat} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kategori *</label>
+            <input
+              type="text"
+              required
+              value={catForm.name}
+              onChange={e => setCatForm({ ...catForm, name: e.target.value })}
+              placeholder="Contoh: SPP, Seragam, ATK Kantor..."
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Tipe Transaksi *</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setCatForm({ ...catForm, type: "in" })}
+                className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                  catForm.type === "in"
+                    ? "bg-emerald-50 border-emerald-500 text-emerald-700 ring-2 ring-emerald-100"
+                    : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                ↓ Pemasukan (In)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCatForm({ ...catForm, type: "out" })}
+                className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                  catForm.type === "out"
+                    ? "bg-rose-50 border-rose-500 text-rose-700 ring-2 ring-rose-100"
+                    : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                ↑ Pengeluaran (Out)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Keterangan</label>
+            <textarea
+              value={catForm.description}
+              onChange={e => setCatForm({ ...catForm, description: e.target.value })}
+              placeholder="Keterangan opsional..."
+              rows={3}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          <div className="pt-4 flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={catLoading}
+              className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+            >
+              {catLoading ? "Menyimpan..." : "Simpan Kategori"}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }
