@@ -96,13 +96,17 @@ body {
   transition: transform 0.25s ease;
 }
 
-/* Sidebar scrollbar */
-#sidebar-nav::-webkit-scrollbar {
-  width: 4px;
+/* Hide scrollbars (Zero-Scrollbar rule) */
+.scrollbar-none,
+#sidebar-nav {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
-#sidebar-nav::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 10px;
+.scrollbar-none::-webkit-scrollbar,
+#sidebar-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
 }
 
 /* Responsive */

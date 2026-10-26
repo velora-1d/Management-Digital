@@ -320,7 +320,11 @@ export default function Sidebar({
       </div>
 
       {/* ─── Navigation Items ─── */}
-      <div id="sidebar-nav" className="flex-1 overflow-y-auto overflow-x-hidden py-3 custom-scrollbar space-y-4">
+      <div
+        id="sidebar-nav"
+        className="flex-1 overflow-y-auto overflow-x-hidden py-3 scrollbar-none space-y-4"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {menuItems.map((group, gi) => {
           const visibleItems = group.items.filter((item) => {
             if (item.href === "/cash-accounts") return true;
