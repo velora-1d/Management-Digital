@@ -14,6 +14,7 @@ import {
   Save,
   ShieldCheck,
   Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -198,6 +199,7 @@ export default function CurriculumPage() {
     bobot: "",
   });
   const [kkmDrafts, setKkmDrafts] = useState<Record<number, KkmDraft>>({});
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
 
   useEffect(() => {
     setSubPage(1);
@@ -531,6 +533,40 @@ export default function CurriculumPage() {
           saving: false,
         },
       }));
+    }
+  }
+
+  async function handleBulkSaveKkm() {
+    if (!curriculum || selectedSubjectIds.length === 0) return;
+    try {
+      await Promise.all(
+        selectedSubjectIds.map(async (subjectId) => {
+          const draft = kkmDrafts[subjectId] || { nilai: 75, deskripsi: "" };
+          return fetchJson("/api/grades/kkm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              curriculumId: curriculum.id,
+              subjectId,
+              nilaiKKM: draft.nilai,
+              deskripsiKKTP: draft.deskripsi,
+            }),
+          });
+        })
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["curriculum-kkm", curriculum.id],
+      });
+      Swal.fire({
+        title: "KKM Masal Tersimpan",
+        text: `${selectedSubjectIds.length} mata pelajaran berhasil diperbarui`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      setSelectedSubjectIds([]);
+    } catch {
+      Swal.fire("Gagal", "Gagal menyimpan sebagian KKM", "error");
     }
   }
 
@@ -942,9 +978,46 @@ export default function CurriculumPage() {
                 </div>
 
                 <div className="mt-5 hidden overflow-x-auto md:block">
+                  {selectedSubjectIds.length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs animate-fade-in">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>{selectedSubjectIds.length} mata pelajaran dipilih</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleBulkSaveKkm}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          Simpan KKM Terpilih
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSubjectIds([])}
+                          className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <table className="min-w-full border-separate border-spacing-y-3">
                     <thead>
                       <tr>
+                        <th className="px-4 py-2 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={subjects.length > 0 && selectedSubjectIds.length === subjects.length}
+                            onChange={(e) => setSelectedSubjectIds(e.target.checked ? subjects.map((s) => s.id) : [])}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                            aria-label="Pilih semua mapel"
+                          />
+                        </th>
+                        <th className="px-4 py-2 text-center text-[11px] font-black uppercase tracking-[0.18em] text-slate-400 w-12">
+                          No
+                        </th>
                         <th className="px-4 py-2 text-left text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
                           Mata Pelajaran
                         </th>
@@ -960,16 +1033,32 @@ export default function CurriculumPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {subjects.map((subject) => {
+                      {subjects.map((subject, idx: number) => {
                         const draft = kkmDrafts[subject.id] || {
                           nilai: 75,
                           deskripsi: "",
                           saving: false,
                         };
+                        const isSubjectSelected = selectedSubjectIds.includes(subject.id);
 
                         return (
-                          <tr key={subject.id} className="align-top">
-                            <td className="rounded-l-3xl border-y border-l border-slate-200 bg-white px-4 py-4">
+                          <tr key={subject.id} className={`align-top ${isSubjectSelected ? "opacity-95 ring-2 ring-blue-500/30 rounded-3xl" : ""}`}>
+                            <td className="rounded-l-3xl border-y border-l border-slate-200 bg-white px-4 py-4 text-center align-middle">
+                              <input
+                                type="checkbox"
+                                checked={isSubjectSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) setSelectedSubjectIds(prev => [...prev, subject.id]);
+                                  else setSelectedSubjectIds(prev => prev.filter(id => id !== subject.id));
+                                }}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                aria-label={`Pilih ${subject.name}`}
+                              />
+                            </td>
+                            <td className="border-y border-slate-200 bg-white px-4 py-4 text-center align-middle text-xs font-mono font-medium text-slate-400">
+                              {((subPage - 1) * SUBJECTS_PER_PAGE) + idx + 1}
+                            </td>
+                            <td className="border-y border-slate-200 bg-white px-4 py-4">
                               <p className="text-sm font-black text-slate-800">{subject.name}</p>
                               <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
                                 {subject.code}

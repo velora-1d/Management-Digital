@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import ImageUpload from '@/components/ui/ImageUpload';
 import Swal from 'sweetalert2';
+import { CheckCircle2, Trash2 } from 'lucide-react';
 
 interface Post {
   id?: number;
@@ -22,6 +23,7 @@ interface Post {
 
 export default function PostsCMS() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Post | null>(null);
 
@@ -102,6 +104,28 @@ export default function PostsCMS() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedPostIds.length === 0) return;
+    const result = await Swal.fire({
+      title: `Hapus ${selectedPostIds.length} berita terpilih?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus Masal',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#e11d48'
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedPostIds.map(id => fetch(`/api/cms/posts?id=${id}`, { method: 'DELETE' })));
+        Swal.fire('Terhapus', `${selectedPostIds.length} berita berhasil dihapus`, 'success');
+        setSelectedPostIds([]);
+        fetchPosts();
+      } catch {
+        Swal.fire('Error', 'Gagal menghapus sebagian berita', 'error');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -115,9 +139,44 @@ export default function PostsCMS() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {selectedPostIds.length > 0 && (
+          <div className="m-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{selectedPostIds.length} berita dipilih</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Hapus Terpilih
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPostIds([])}
+                className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
+              <th className="py-4 px-3 w-10 text-center">
+                <input
+                  type="checkbox"
+                  checked={posts.length > 0 && selectedPostIds.length === posts.length}
+                  onChange={(e) => setSelectedPostIds(e.target.checked ? posts.map((p) => p.id!).filter(Boolean) : [])}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  aria-label="Pilih semua berita"
+                />
+              </th>
+              <th className="px-4 py-4 font-bold text-slate-700 text-center w-12">No</th>
               <th className="px-6 py-4 font-bold text-slate-700">Judul</th>
               <th className="px-6 py-4 font-bold text-slate-700">Kategori</th>
               <th className="px-6 py-4 font-bold text-slate-700">Status</th>
@@ -126,11 +185,26 @@ export default function PostsCMS() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
-              <tr><td colSpan={4} className="px-6 py-10 text-center text-slate-400 italic">Memuat data...</td></tr>
+              <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">Memuat data...</td></tr>
             ) : posts.length === 0 ? (
-              <tr><td colSpan={4} className="px-6 py-10 text-center text-slate-400 italic">Belum ada berita.</td></tr>
-            ) : posts.map((post) => (
-              <tr key={post.id} className="hover:bg-slate-50 transition-colors">
+              <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">Belum ada berita.</td></tr>
+            ) : posts.map((post, i: number) => {
+              const isSelected = selectedPostIds.includes(post.id!);
+              return (
+              <tr key={post.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                <td className="py-4 px-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedPostIds(prev => [...prev, post.id!]);
+                      else setSelectedPostIds(prev => prev.filter(id => id !== post.id));
+                    }}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label={`Pilih ${post.title}`}
+                  />
+                </td>
+                <td className="px-4 py-4 text-center text-xs font-mono font-medium text-slate-400">{i + 1}</td>
                 <td className="px-6 py-4 font-semibold text-slate-900">{post.title}</td>
                 <td className="px-6 py-4 text-slate-600">{post.category || '-'}</td>
                 <td className="px-6 py-4">
@@ -143,7 +217,8 @@ export default function PostsCMS() {
                   <button onClick={() => handleDelete(post.id!)} className="text-rose-600 hover:text-rose-900 font-bold">Hapus</button>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>

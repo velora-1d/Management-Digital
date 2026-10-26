@@ -7,7 +7,7 @@ import { ExportButtons } from "@/lib/export-utils";
 import Pagination from "@/components/Pagination";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { UserPlus, Plus, Wrench } from "lucide-react";
+import { UserPlus, Plus, Wrench, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type RegistrationStatus = "menunggu" | "pending" | "diterima" | "ditolak" | "converted";
@@ -150,6 +150,7 @@ export default function PpdbPage({
   const [convertInfaq, setConvertInfaq] = useState("");
   const [convertLoading, setConvertLoading] = useState(false);
   const [classrooms, setClassrooms] = useState<ClassroomItem[]>(initialClassrooms);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -179,6 +180,78 @@ export default function PpdbPage({
   const total = queryResult?.pagination?.total || 0;
 
   const refreshData = () => queryClient.invalidateQueries({ queryKey: ["ppdb"] });
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Terima Pendaftar Terpilih?",
+      text: `Anda akan menerima ${selectedIds.length} calon siswa terpilih. Item pembayaran akan otomatis dibuat.`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#059669",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Terima (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => fetch(`/api/ppdb/${id}/approve`, { method: "POST" })));
+        showToast(`${selectedIds.length} pendaftar berhasil diterima.`);
+        setSelectedIds([]);
+        refreshData();
+      } catch {
+        showToast("Gagal menerima beberapa pendaftar", "error");
+      }
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Tolak Pendaftar Terpilih?",
+      text: `Anda akan menolak ${selectedIds.length} calon siswa terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Tolak (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => fetch(`/api/ppdb/${id}/reject`, { method: "POST" })));
+        showToast(`${selectedIds.length} pendaftar ditolak.`);
+        setSelectedIds([]);
+        refreshData();
+      } catch {
+        showToast("Gagal menolak beberapa pendaftar", "error");
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Pendaftar Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} data pendaftar terpilih. Tindakan ini tidak dapat dibatalkan!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => fetch(`/api/ppdb/${id}`, { method: "DELETE" })));
+        showToast(`${selectedIds.length} pendaftar berhasil dihapus.`);
+        setSelectedIds([]);
+        refreshData();
+      } catch {
+        showToast("Gagal menghapus beberapa pendaftar", "error");
+      }
+    }
+  };
 
   async function loadClassrooms() {
     try {
@@ -540,6 +613,48 @@ export default function PpdbPage({
       </Card>
 
       {/* Tabel Pendaftar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} data pendaftar dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Terima Terpilih</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkReject}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Tolak Terpilih</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -578,6 +693,15 @@ export default function PpdbPage({
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
+                <th style={{ ...thS, textAlign: "center", width: 44, padding: "0.875rem 0.5rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? filtered.map(r => r.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua pendaftar"
+                  />
+                </th>
                 <th style={{ ...thS, textAlign: "center", width: 50 }}>No</th>
                 <th style={thS}>No. Reg</th>
                 <th style={thS}>Nama Calon Siswa</th>
@@ -589,9 +713,9 @@ export default function PpdbPage({
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat data pendaftar...</td></tr>
+                <tr><td colSpan={8} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat data pendaftar...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={8} style={{ padding: "3rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#0284c7" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -612,8 +736,22 @@ export default function PpdbPage({
                 else if (s === "converted") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 999 }}>Siswa</span>;
                 else statusBadge = <span style={{ padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#475569", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 999 }}>{s}</span>;
 
+                const isSelected = selectedIds.includes(reg.id);
+
                 return (
-                  <tr key={reg.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #e2e8f0", opacity: s === "ditolak" ? 0.5 : 1 }}>
+                  <tr key={reg.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #e2e8f0", opacity: s === "ditolak" ? 0.5 : 1 }}>
+                    <td style={{ padding: "0.875rem 0.5rem", textAlign: "center" }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, reg.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== reg.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih pendaftar ${reg.name}`}
+                      />
+                    </td>
                     <td className="font-mono" style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
                     <td className="font-mono" style={{ padding: "1rem", fontSize: "0.8125rem", fontWeight: 600, color: "#0284c7" }}>{reg.formNo || `#${reg.id}`}</td>
                     <td style={{ padding: "1rem" }}>

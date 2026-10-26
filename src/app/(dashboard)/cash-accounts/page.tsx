@@ -1,6 +1,6 @@
 "use client";
 import { useState, Suspense, useCallback } from "react";
-import { Plus, Search, Filter, Download, CreditCard, MoreHorizontal, Pencil, Trash2, Building2, Hash, ShieldCheck, LayoutGrid, ArrowUpRight, Wallet, Landmark, AlertCircle, RefreshCcw } from "lucide-react";
+import { Plus, Search, Filter, Download, CreditCard, MoreHorizontal, Pencil, Trash2, Building2, Hash, ShieldCheck, LayoutGrid, ArrowUpRight, Wallet, Landmark, AlertCircle, RefreshCcw, CheckCircle2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ function CashAccountsContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [form, setForm] = useState({
     accountName: "",
     accountNumber: "",
@@ -117,6 +118,38 @@ function CashAccountsContent() {
         }
       } catch {
         Toast.fire({ icon: 'error', title: "Gagal menghapus data" });
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: 'Hapus Akun Kas Terpilih?',
+      text: `${selectedIds.length} akun kas terpilih akan dihapus secara soft-delete.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: 'Batal',
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(
+          selectedIds.map(id =>
+            fetch("/api/cash-accounts", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id }),
+            })
+          )
+        );
+        Toast.fire({ icon: 'success', title: `${selectedIds.length} akun kas berhasil dihapus` });
+        setSelectedIds([]);
+        refreshCashAccounts();
+      } catch {
+        Toast.fire({ icon: 'error', title: "Gagal menghapus beberapa akun" });
       }
     }
   };
@@ -239,11 +272,48 @@ function CashAccountsContent() {
           </div>
         </div>
 
+        {/* Bulk Action Bar */}
+        {selectedIds.length > 0 && (
+          <div className="mx-6 my-3 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+            <div className="flex items-center gap-2 text-xs text-blue-700 font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{selectedIds.length} akun kas dipilih</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus Terpilih ({selectedIds.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Account Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50">
+                <th className="px-6 py-5 w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={filteredItems.length > 0 && selectedIds.length === filteredItems.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? filteredItems.map(i => i.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua akun"
+                  />
+                </th>
+                <th className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center w-14">No</th>
                 <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Detail Akun</th>
                 <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Rekening</th>
                 <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
@@ -255,7 +325,7 @@ function CashAccountsContent() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={5} className="px-8 py-6">
+                    <td colSpan={7} className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-slate-100 rounded-2xl"></div>
                         <div className="space-y-2 flex-1">
@@ -268,7 +338,7 @@ function CashAccountsContent() {
                 ))
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
+                  <td colSpan={7} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-400">
                       <div className="p-4 bg-slate-50 rounded-full">
                         <AlertCircle className="w-8 h-8" />
@@ -279,9 +349,24 @@ function CashAccountsContent() {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
+                filteredItems.map((item, i) => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                    <tr key={item.id} className={`hover:bg-slate-50/50 transition-colors group ${isSelected ? "bg-blue-50/40" : ""}`}>
+                      <td className="px-6 py-6 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                            else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                          aria-label={`Pilih akun ${item.accountName}`}
+                        />
+                      </td>
+                      <td className="px-4 py-6 text-center text-xs font-mono font-bold text-slate-400">{i + 1}</td>
+                      <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform shadow-sm">
                           {item.bankName ? <Landmark className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
@@ -348,7 +433,7 @@ function CashAccountsContent() {
                       </button>
                     </td>
                   </tr>
-                ))
+                ); })
               )}
             </tbody>
           </table>

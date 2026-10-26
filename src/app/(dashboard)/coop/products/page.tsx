@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, CheckCircle2, Trash2 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 
 interface Product { id: number; name: string; category: string; hargaJual: number; hargaBeli: number; stok: number; minStok: number; status: string; }
@@ -21,6 +21,7 @@ export default function CoopProductsPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -91,6 +92,28 @@ export default function CoopProductsPage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const r = await Swal.fire({
+      title: "Hapus Produk Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} produk koperasi terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      confirmButtonColor: "#ef4444",
+      cancelButtonText: "Batal",
+    });
+    if (!r.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/coop/products/${id}`, { method: "DELETE" })));
+      fetchData();
+      setSelectedIds([]);
+      Swal.fire("Berhasil", `${selectedIds.length} produk berhasil dihapus`, "success");
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa produk", "error");
+    }
+  };
+
   const handleEdit = (item: Product) => {
     setEditItem(item);
     setForm({ name: item.name, category: item.category, hargaJual: String(item.hargaJual), hargaBeli: String(item.hargaBeli), stok: String(item.stok), minStok: String(item.minStok) });
@@ -157,18 +180,68 @@ export default function CoopProductsPage() {
         <Card className="text-center py-12 border-dashed"><p className="text-sm text-slate-500">Tidak ada produk</p></Card>
       ) : (
         <>
+          {selectedIds.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+              <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{selectedIds.length} produk dipilih</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus ({selectedIds.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
+
           <Card className="p-0 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead><tr className="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
+                  <th className="py-3 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      onChange={(e) => setSelectedIds(e.target.checked ? filtered.map((d: Product) => d.id) : [])}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      aria-label="Pilih semua produk"
+                    />
+                  </th>
+                  <th className="py-3 px-3 w-12 text-center">No</th>
                   <th className="py-3 px-4">Produk</th><th className="py-3 px-4">Kategori</th><th className="py-3 px-4 text-right">H. Beli</th><th className="py-3 px-4 text-right">H. Jual</th><th className="py-3 px-4 text-center">Stok</th><th className="py-3 px-4"></th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filtered.map((item) => {
+                  {filtered.map((item, i: number) => {
                     const isLow = item.stok <= item.minStok && item.stok > 0;
                     const isOut = item.stok === 0;
+                    const isSelected = selectedIds.includes(item.id);
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={item.id} className={`hover:bg-slate-50/50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                              else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                            aria-label={`Pilih ${item.name}`}
+                          />
+                        </td>
+                        <td className="py-3 px-3 text-center text-xs font-mono font-medium text-slate-500">{((page - 1) * limit) + i + 1}</td>
                         <td className="py-3 px-4">
                           <p className="text-sm font-medium text-slate-800">{item.name}</p>
                         </td>

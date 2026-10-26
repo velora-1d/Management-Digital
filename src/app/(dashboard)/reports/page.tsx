@@ -205,6 +205,7 @@ function ReportsContent() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b-2 border-slate-200">
+                <th className="p-3 text-xs font-bold text-slate-500 text-center w-12">No</th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-left">Siswa</th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-left">Bulan</th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-right">Tagihan</th>
@@ -215,6 +216,7 @@ function ReportsContent() {
             <tbody>
               {infaqData.map((d, i) => (
                 <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td className="p-3 text-sm text-center text-slate-400 font-mono">{i + 1}</td>
                   <td className="p-3 text-sm font-semibold text-slate-800">{d.student_name || "-"}</td>
                   <td className="p-3 text-sm text-slate-600">{d.month || "-"}</td>
                   <td className="p-3 text-sm text-right">{fmtRp(d.amount)}</td>
@@ -386,6 +388,7 @@ function ReportsContent() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b-2 border-slate-200">
+                  <th className="p-3 text-xs font-bold text-slate-500 text-center w-12">No</th>
                   <th className="p-3 text-xs font-bold text-slate-500 text-left">Tanggal</th>
                   <th className="p-3 text-xs font-bold text-slate-500 text-left">Keterangan</th>
                   <th className="p-3 text-xs font-bold text-slate-500 text-left">Kategori</th>
@@ -398,6 +401,7 @@ function ReportsContent() {
                   const dt = t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
                   return (
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="p-3 text-sm text-center text-slate-400 font-mono">{i + 1}</td>
                       <td className="p-3 text-sm text-slate-600">{dt}</td>
                       <td className="p-3 text-sm font-semibold text-slate-800">{t.description || "-"}</td>
                       <td className="p-3 text-sm text-slate-500">{t.category || "-"}</td>

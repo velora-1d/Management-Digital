@@ -256,6 +256,7 @@ export default function MutationsPage() {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="bg-white border-b border-amber-200">
+                        <th className="px-4 py-2 text-center text-[11px] font-semibold text-slate-600 uppercase w-12">No</th>
                         <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-600 uppercase">Siswa</th>
                         <th className="px-4 py-2 text-center text-[11px] font-semibold text-slate-600 uppercase">Status</th>
                         <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-600 uppercase">Kelas Master</th>
@@ -263,8 +264,9 @@ export default function MutationsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {audit.samples.map((item) => (
+                      {audit.samples.map((item, idx: number) => (
                         <tr key={item.student_id} className="border-t border-amber-200/70">
+                          <td className="px-4 py-2 text-center text-xs font-mono text-slate-500">{idx + 1}</td>
                           <td className="px-4 py-2 text-sm font-medium text-slate-800">{item.student_name}</td>
                           <td className="px-4 py-2 text-center text-sm text-slate-600">{item.status}</td>
                           <td className="px-4 py-2 text-sm text-slate-600">{item.student_classroom_name || "-"}</td>

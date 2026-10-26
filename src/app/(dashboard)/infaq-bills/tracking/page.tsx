@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
+import { CheckCircle2 } from "lucide-react";
 
 type PaymentMethod = "tunai" | "transfer" | "tabungan";
 type TrackingStatus = "belum_digenerate" | "belum_lunas" | "sebagian" | "lunas" | "void";
@@ -79,6 +80,7 @@ export default function TrackingPerKelasPage() {
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [semester, setSemester] = useState("1");
   const [data, setData] = useState<TrackingResponse | null>(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [cashAccounts, setCashAccounts] = useState<CashAccountItem[]>([]);
@@ -380,38 +382,83 @@ export default function TrackingPerKelasPage() {
       ) : !data?.tracking?.length ? (
         <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Tidak ada siswa di kelas ini</div>
       ) : (
-        <div style={{ background: "#fff", borderRadius: "0.5rem", border: "1px solid #e2e8f0", overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", position: "sticky", left: 0, background: "#f8fafc", minWidth: 180 }}>Nama Siswa</th>
-                {months.map((m) => (
-                  <th key={m.month} style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 50 }}>{m.name}</th>
-                ))}
-                <th style={{ padding: "0.75rem 0.75rem", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 100 }}>Tunggakan</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.tracking.map((student) => (
-                <tr key={student.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "0.625rem 1rem", fontWeight: 500, color: "#1e293b", position: "sticky", left: 0, background: "#fff", borderRight: "1px solid #f1f5f9" }}>
-                    <p style={{ margin: 0, fontSize: "0.8125rem", fontWeight: 600 }}>{student.name}</p>
-                    <p style={{ margin: 0, fontSize: "0.6875rem", color: "#64748b" }}>
-                      NISN: <span className="font-mono font-medium text-slate-700">{student.nisn || "-"}</span>
-                    </p>
-                  </td>
-                  {student.months.map((m) => (
-                    <td key={m.month} style={{ padding: "0.375rem", textAlign: "center" }}>
-                      {renderBadge(student, m)}
-                    </td>
+        <div className="space-y-3">
+          {selectedStudentIds.length > 0 && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{selectedStudentIds.length} siswa dipilih</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedStudentIds([])}
+                className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          )}
+          <div style={{ background: "#fff", borderRadius: "0.5rem", border: "1px solid #e2e8f0", overflow: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", width: 40, borderBottom: "1px solid #e2e8f0", position: "sticky", left: 0, background: "#f8fafc", zIndex: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={data.tracking.length > 0 && selectedStudentIds.length === data.tracking.length}
+                      onChange={(e) => setSelectedStudentIds(e.target.checked ? data.tracking.map((s: StudentTracking) => s.id) : [])}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      aria-label="Pilih semua siswa"
+                    />
+                  </th>
+                  <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", width: 48, fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", position: "sticky", left: 40, background: "#f8fafc", zIndex: 10 }}>No</th>
+                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", position: "sticky", left: 88, background: "#f8fafc", minWidth: 180, zIndex: 10 }}>Nama Siswa</th>
+                  {months.map((m) => (
+                    <th key={m.month} style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 50 }}>{m.name}</th>
                   ))}
-                  <td className="font-mono" style={{ padding: "0.625rem 0.75rem", textAlign: "right", fontWeight: 600, color: student.totalRemaining > 0 ? "#e11d48" : "#16a34a", fontSize: "0.75rem" }}>
-                    {student.totalRemaining > 0 ? fmtRp(student.totalRemaining) : "Lunas"}
-                  </td>
+                  <th style={{ padding: "0.75rem 0.75rem", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: 100 }}>Tunggakan</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.tracking.map((student, i: number) => {
+                  const isSelected = selectedStudentIds.includes(student.id);
+                  return (
+                  <tr key={student.id} style={{ borderBottom: "1px solid #f1f5f9", background: isSelected ? "#eff6ff" : "transparent" }}>
+                    <td style={{ padding: "0.5rem", textAlign: "center", position: "sticky", left: 0, background: isSelected ? "#eff6ff" : "#fff", borderRight: "1px solid #f1f5f9", zIndex: 5 }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
+                          else setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih ${student.name}`}
+                      />
+                    </td>
+                    <td style={{ padding: "0.625rem 0.5rem", textAlign: "center", position: "sticky", left: 40, background: isSelected ? "#eff6ff" : "#fff", borderRight: "1px solid #f1f5f9", fontSize: "0.75rem", color: "#94a3b8", fontFamily: "monospace", zIndex: 5 }}>
+                      {i + 1}
+                    </td>
+                    <td style={{ padding: "0.625rem 1rem", fontWeight: 500, color: "#1e293b", position: "sticky", left: 88, background: isSelected ? "#eff6ff" : "#fff", borderRight: "1px solid #f1f5f9", zIndex: 5 }}>
+                      <p style={{ margin: 0, fontSize: "0.8125rem", fontWeight: 600 }}>{student.name}</p>
+                      <p style={{ margin: 0, fontSize: "0.6875rem", color: "#64748b" }}>
+                        NISN: <span className="font-mono font-medium text-slate-700">{student.nisn || "-"}</span>
+                      </p>
+                    </td>
+                    {student.months.map((m) => (
+                      <td key={m.month} style={{ padding: "0.375rem", textAlign: "center" }}>
+                        {renderBadge(student, m)}
+                      </td>
+                    ))}
+                    <td className="font-mono" style={{ padding: "0.625rem 0.75rem", textAlign: "right", fontWeight: 600, color: student.totalRemaining > 0 ? "#e11d48" : "#16a34a", fontSize: "0.75rem" }}>
+                      {student.totalRemaining > 0 ? fmtRp(student.totalRemaining) : "Lunas"}
+                    </td>
+                  </tr>
+                );
+              })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

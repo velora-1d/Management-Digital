@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { Trash2, CheckCircle2 } from "lucide-react";
 
 export interface InitialResult {
   data: StudentRecord[];
@@ -35,6 +36,7 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const queryString = searchParams.toString();
 
@@ -99,6 +101,30 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
     });
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Siswa Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} data siswa terpilih. Tindakan ini tidak dapat dibatalkan!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => fetch(`/api/students/${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedIds.length} data siswa berhasil dihapus`, "success");
+        setSelectedIds([]);
+        refreshStudents();
+      } catch {
+        Swal.fire("Error", "Gagal menghapus beberapa data siswa", "error");
+      }
+    }
+  };
+
   const catColors: Record<string, string[]> = {
     reguler: ["#f1f5f9", "#475569"],
     yatim: ["#fef3c7", "#92400e"],
@@ -157,6 +183,32 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
 
       <FilterBar visibleFilters={["academicYear", "classroom", "gender", "status", "ageRange"]} />
 
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} data siswa dipilih</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus Terpilih ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal Pilihan
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card title="Daftar Siswa" icon={true} noPadding>
         {data.length > 0 && (
           <div className="px-6 py-3 border-b border-slate-50">
@@ -183,7 +235,16 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#f8fafc" }}>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0", width: 50 }}>No</th>
+                <th style={{ padding: "0.875rem 1rem", textAlign: "center", borderBottom: "1px solid #e2e8f0", width: 44 }}>
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map(s => s.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua siswa"
+                  />
+                </th>
+                <th style={{ padding: "0.875rem 1rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0", width: 50 }}>No</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Siswa</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Kategorisasi</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #e2e8f0" }}>Kelas</th>
@@ -193,12 +254,12 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontStyle: "italic" }}>
+                <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontStyle: "italic" }}>
                   <svg className="animate-spin" style={{ width: 24, height: 24, margin: "0 auto 8px", display: "block" }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                   Memuat data...
                 </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#2563eb" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -215,9 +276,21 @@ function StudentsContent({ initialResult }: { initialResult?: InitialResult }) {
                   const sc = statusColors[s.status] || statusColors.nonaktif;
                   const catLabel = (s.category || "reguler").replace("_", " ").replace(/\b\w/g, (l:string) => l.toUpperCase());
 
+                  const isSelected = selectedIds.includes(s.id);
                   return (
-                    <tr key={s.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #e2e8f0" }}>
-                      <td className="font-mono" style={{ padding: "1rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600, verticalAlign: "middle" }}>{idx}</td>
+                    <tr key={s.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "1rem", textAlign: "center", width: 44, verticalAlign: "middle" }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds([...selectedIds, s.id]);
+                            else setSelectedIds(selectedIds.filter(id => id !== s.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        />
+                      </td>
+                      <td className="font-mono" style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600, verticalAlign: "middle", width: 50 }}>{idx}</td>
                       <td style={{ padding: "1rem 1.5rem", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                           <div style={{ width: 38, height: 38, background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#2563eb" }}>{(s.name || "?").charAt(0).toUpperCase()}</div>

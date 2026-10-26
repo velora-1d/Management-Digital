@@ -12,7 +12,8 @@ import {
   Edit, 
   Trash2, 
   ChevronDown, 
-  Trophy
+  Trophy,
+  CheckCircle2
 } from "lucide-react";
 
 interface Employee { id: number; name: string; }
@@ -31,6 +32,8 @@ export default function ExtracurricularPage() {
   const [showAssign, setShowAssign] = useState(false);
   const [assignTargetId, setAssignTargetId] = useState<number | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
+  const [selectedEkskulIds, setSelectedEkskulIds] = useState<number[]>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [form, setForm] = useState({ name: "", employeeId: "", schedule: "", status: "aktif" });
   const [paginationMeta, setPaginationMeta] = useState({
     total: 0,
@@ -169,6 +172,50 @@ export default function ExtracurricularPage() {
     Swal.fire("Berhasil", "Anggota dihapus dari ekskul", "success");
   };
 
+  const handleBulkDeleteEkskul = async () => {
+    if (selectedEkskulIds.length === 0) return;
+    const r = await Swal.fire({
+      title: `Hapus ${selectedEkskulIds.length} ekskul?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Ya, Hapus Masal",
+      cancelButtonText: "Batal"
+    });
+    if (r.isConfirmed) {
+      try {
+        await Promise.all(selectedEkskulIds.map(id => fetch(`/api/extracurricular/${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedEkskulIds.length} ekskul berhasil dihapus`, "success");
+        setSelectedEkskulIds([]);
+        fetchData();
+      } catch {
+        Swal.fire("Error", "Gagal menghapus sebagian ekskul", "error");
+      }
+    }
+  };
+
+  const handleBulkRemoveMembers = async () => {
+    if (selectedMemberIds.length === 0) return;
+    const r = await Swal.fire({
+      title: `Keluarkan ${selectedMemberIds.length} siswa terpilih?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Ya, Keluarkan",
+      cancelButtonText: "Batal"
+    });
+    if (r.isConfirmed) {
+      try {
+        await Promise.all(selectedMemberIds.map(id => fetch(`/api/extracurricular/members?id=${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedMemberIds.length} siswa dikeluarkan dari ekskul`, "success");
+        setSelectedMemberIds([]);
+        fetchData();
+      } catch {
+        Swal.fire("Error", "Gagal mengeluarkan sebagian siswa", "error");
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -217,6 +264,31 @@ export default function ExtracurricularPage() {
       />
 
       <Card noPadding>
+        {selectedEkskulIds.length > 0 && (
+          <div className="m-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{selectedEkskulIds.length} ekstrakurikuler dipilih</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleBulkDeleteEkskul}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Hapus Terpilih
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedEkskulIds([])}
+                className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -227,11 +299,26 @@ export default function ExtracurricularPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {data.map(item => (
-              <div key={item.id} className="group">
+            {data.map((item, idx: number) => {
+              const isEkskulSelected = selectedEkskulIds.includes(item.id);
+              return (
+              <div key={item.id} className={`group ${isEkskulSelected ? "bg-blue-50/30" : ""}`}>
                 <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isEkskulSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedEkskulIds(prev => [...prev, item.id]);
+                        else setSelectedEkskulIds(prev => prev.filter(id => id !== item.id));
+                      }}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      aria-label={`Pilih ekskul ${item.name}`}
+                    />
+                    <span className="text-xs font-mono font-medium text-slate-400 w-6 text-center">{((paginationMeta.page - 1) * paginationMeta.limit) + idx + 1}</span>
+                  </div>
                   <div 
-                    className="flex items-center gap-4 cursor-pointer flex-1" 
+                    className="flex items-center gap-4 cursor-pointer flex-1 ml-2" 
                     onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                   >
                     <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${item.status === "aktif" ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"}`}>
@@ -304,9 +391,40 @@ export default function ExtracurricularPage() {
                       </div>
                     ) : (
                       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        {selectedMemberIds.length > 0 && (
+                          <div className="p-3 bg-blue-50 border-b border-blue-200 flex flex-wrap items-center justify-between gap-3">
+                            <span className="text-xs font-semibold text-blue-700">{selectedMemberIds.length} anggota dipilih</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleBulkRemoveMembers}
+                                className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-semibold shadow-xs"
+                              >
+                                Keluarkan Terpilih
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedMemberIds([])}
+                                className="px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded text-xs font-semibold"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         <table className="w-full text-left">
                           <thead>
                             <tr className="bg-slate-50 text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                              <th className="py-3 px-3 w-10 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={item.members.length > 0 && selectedMemberIds.length === item.members.length}
+                                  onChange={(e) => setSelectedMemberIds(e.target.checked ? item.members.map((m: Member) => m.id) : [])}
+                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                  aria-label="Pilih semua anggota"
+                                />
+                              </th>
+                              <th className="py-3 px-3 text-center w-12 font-bold">No</th>
                               <th className="py-3 px-4 font-bold">Nama Siswa</th>
                               <th className="py-3 px-4 font-bold">NISN</th>
                               <th className="py-3 px-4 font-bold">Predikat / Nilai</th>
@@ -314,8 +432,23 @@ export default function ExtracurricularPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {item.members.map(m => (
-                              <tr key={m.id} className="hover:bg-slate-50/30 transition-colors">
+                            {item.members.map((m, mIdx: number) => {
+                              const isMemSelected = selectedMemberIds.includes(m.id);
+                              return (
+                              <tr key={m.id} className={`hover:bg-slate-50/30 transition-colors ${isMemSelected ? "bg-blue-50/40" : ""}`}>
+                                <td className="py-3 px-3 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={isMemSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) setSelectedMemberIds(prev => [...prev, m.id]);
+                                      else setSelectedMemberIds(prev => prev.filter(id => id !== m.id));
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                    aria-label={`Pilih ${m.student.name}`}
+                                  />
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs font-mono text-slate-400">{mIdx + 1}</td>
                                 <td className="py-3 px-4 text-sm font-semibold text-slate-800">{m.student.name}</td>
                                 <td className="py-3 px-4 text-xs font-mono text-slate-500">{m.student.nisn}</td>
                                 <td className="py-3 px-4">
@@ -341,7 +474,8 @@ export default function ExtracurricularPage() {
                                   </button>
                                 </td>
                               </tr>
-                            ))}
+                            );
+                          })}
                           </tbody>
                         </table>
                       </div>
@@ -349,7 +483,8 @@ export default function ExtracurricularPage() {
                   </div>
                 )}
               </div>
-            ))}
+            );
+          })}
             
             <div className="p-4 border-t border-slate-100 pb-10">
               <Pagination

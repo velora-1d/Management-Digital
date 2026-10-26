@@ -9,7 +9,7 @@ import FilterBar from "@/components/FilterBar";
 import { ExportButtons, fmtRupiah as fmtRupiahExport } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, CheckCircle2, Trash2 } from "lucide-react";
 
 type JournalEntryType = "in" | "out";
 type JournalEntryStatus = "active" | "void";
@@ -66,6 +66,7 @@ function JournalContent() {
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -245,6 +246,29 @@ function JournalContent() {
     });
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Transaksi Jurnal Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} transaksi jurnal terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/journal/${id}`, { method: "DELETE" })));
+      Swal.fire("Berhasil", `${selectedIds.length} transaksi berhasil dihapus`, "success");
+      setSelectedIds([]);
+      loadData();
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa transaksi", "error");
+    }
+  };
+
   const thStyle: React.CSSProperties = { padding: "0.875rem 1.5rem", fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" };
 
   return (
@@ -289,6 +313,33 @@ function JournalContent() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} transaksi jurnal dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter & Tabel */}
       <Card className="animate-fade-in">
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
@@ -329,6 +380,15 @@ function JournalContent() {
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
             <thead>
               <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                <th style={{ ...thStyle, width: 44, textAlign: "center", padding: "0.875rem 0.5rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map(entry => entry.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua transaksi"
+                  />
+                </th>
                 <th style={{ ...thStyle, width: 50, textAlign: "center" }}>No</th>
                 <th style={{ ...thStyle, width: 120 }}>Tgl</th>
                 <th style={thStyle}>Keterangan & Kategori</th>
@@ -339,9 +399,9 @@ function JournalContent() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{ padding: "3rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>Memuat...</td></tr>
+                <tr><td colSpan={7} style={{ padding: "3rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>Memuat...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: "3rem", textAlign: "center" }}>
+                <tr><td colSpan={7} style={{ padding: "3rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
                     <div style={{ width: 48, height: 48, background: "#f8fafc", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg style={{ width: 24, height: 24, color: "#cbd5e1" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -353,9 +413,22 @@ function JournalContent() {
                 const date = entry.date ? new Date(entry.date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "-";
                 const isIn = entry.type === "in";
                 const isVoid = entry.status === "void";
+                const isSelected = selectedIds.includes(entry.id);
 
                 return (
-                  <tr key={entry.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9", opacity: isVoid ? 0.4 : 1 }}>
+                  <tr key={entry.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #f1f5f9", opacity: isVoid ? 0.4 : 1 }}>
+                    <td style={{ padding: "0.875rem 0.5rem", textAlign: "center" }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, entry.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== entry.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih transaksi ${entry.description}`}
+                      />
+                    </td>
                     <td style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
                     <td style={{ padding: "0.875rem 1.5rem", fontSize: "0.8125rem", color: "#475569" }}>{date}</td>
                     <td style={{ padding: "0.875rem 1.5rem" }}>

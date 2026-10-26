@@ -7,7 +7,7 @@ import FilterBar from "@/components/FilterBar";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Wallet, Settings, RefreshCcw, Trash2 } from "lucide-react";
+import { Wallet, Settings, RefreshCcw, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const monthNames: Record<number, string> = {1:'Januari',2:'Februari',3:'Maret',4:'April',5:'Mei',6:'Juni',7:'Juli',8:'Agustus',9:'September',10:'Oktober',11:'November',12:'Desember'};
@@ -92,6 +92,7 @@ function InfaqBillsContent() {
   const [selectedBill, setSelectedBill] = useState<InfaqBillItem | null>(null);
   const [showReset, setShowReset] = useState(false);
   const [showBulkUpdate, setShowBulkUpdate] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -384,6 +385,52 @@ function InfaqBillsContent() {
     } catch { showToast("Gagal void tagihan", "error"); }
   }
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Tagihan Terpilih?",
+      text: `Hapus ${selectedIds.length} tagihan terpilih? Tagihan yang sudah ada pembayaran tidak bisa dihapus.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/infaq-bills/${id}`, { method: "DELETE" })));
+      showToast(`${selectedIds.length} tagihan berhasil diproses hapus`);
+      setSelectedIds([]);
+      refreshData();
+    } catch {
+      showToast("Gagal menghapus beberapa tagihan", "error");
+    }
+  };
+
+  const handleBulkVoid = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Void Tagihan Terpilih?",
+      text: `Batalkan (Void) ${selectedIds.length} tagihan terpilih?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d97706",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Void (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/infaq-bills/${id}/void`, { method: "POST" })));
+      showToast(`${selectedIds.length} tagihan berhasil divoid`);
+      setSelectedIds([]);
+      refreshData();
+    } catch {
+      showToast("Gagal void beberapa tagihan", "error");
+    }
+  };
+
   // === Revert Tagihan ===
   async function handleRevert(billId: number) {
     const result = await Swal.fire({
@@ -556,6 +603,41 @@ function InfaqBillsContent() {
         }
       />
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} tagihan dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkVoid}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Void Terpilih ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabel Tagihan */}
       <Card>
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -590,6 +672,15 @@ function InfaqBillsContent() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
+                <th style={{ ...thStyle, textAlign: "center", width: 44, padding: "0.875rem 0.5rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map(b => b.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua tagihan"
+                  />
+                </th>
                 <th style={thStyle}>No</th>
                 <th style={thStyle}>Siswa</th>
                 <th style={thStyle}>Kelas</th>
@@ -601,9 +692,9 @@ function InfaqBillsContent() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat...</td></tr>
+                <tr><td colSpan={8} style={{ padding: "4rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8" }}>Memuat...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={8} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#fef3c7,#fde68a)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#d97706" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -615,6 +706,7 @@ function InfaqBillsContent() {
               ) : data.map((b, i: number) => {
                 const idx = ((pagination.page - 1) * pagination.limit) + i + 1;
                 const initial = (b.student_name || "?").charAt(0).toUpperCase();
+                const isSelected = selectedIds.includes(b.id);
                 let statusBadge;
                 if (b.status === "lunas") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", border: "1px solid #a7f3d0", borderRadius: 999 }}>Lunas</span>;
                 else if (b.status === "sebagian") statusBadge = <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 999 }}>Sebagian</span>;
@@ -622,7 +714,19 @@ function InfaqBillsContent() {
                 else statusBadge = <span style={{ display: "inline-flex", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#475569", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 999 }}>Void</span>;
 
                 return (
-                  <tr key={b.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9", opacity: b.status === "void" ? 0.45 : 1 }}>
+                  <tr key={b.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #f1f5f9", opacity: b.status === "void" ? 0.45 : 1 }}>
+                    <td style={{ padding: "0.875rem 0.5rem", textAlign: "center" }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, b.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== b.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih tagihan ${b.student_name}`}
+                      />
+                    </td>
                     <td className="font-mono" style={{ padding: "1rem 1.5rem", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600 }}>{idx}</td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>

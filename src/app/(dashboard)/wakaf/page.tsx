@@ -9,7 +9,7 @@ import FilterBar from "@/components/FilterBar";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Gift, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Gift, ArrowUpRight, ArrowDownLeft, CheckCircle2, Trash2 } from "lucide-react";
 
 interface WakafTransaction {
   id: number;
@@ -65,6 +65,7 @@ function WakafContent() {
   const [activeTab, setActiveTab] = useState("riwayat"); // riwayat, donatur, tujuan
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const wakafParams = new URLSearchParams();
 
   SUPPORTED_WAKAF_FILTER_KEYS.forEach((key) => {
@@ -317,6 +318,29 @@ function WakafContent() {
         } catch { Swal.fire("Error", "Server error", "error"); }
       }
     });
+  };
+
+  const handleBulkDeleteWakaf = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Void Transaksi Terpilih?",
+      text: `${selectedIds.length} transaksi wakaf akan divoid dan saldo kas akan disesuaikan.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Void (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/wakaf/${id}`, { method: "DELETE" })));
+      Swal.fire("Berhasil", `${selectedIds.length} transaksi berhasil divoid.`, "success");
+      setSelectedIds([]);
+      refreshWakafData();
+    } catch {
+      Swal.fire("Error", "Gagal void beberapa transaksi", "error");
+    }
   };
 
   // Donatur & Purpose Actions... (Tetap sama seperti sebelumnya)
@@ -621,6 +645,31 @@ function WakafContent() {
       {/* Panel Riwayat */}
       {activeTab === "riwayat" && (
         <Card className="animate-fade-in overflow-hidden">
+          {selectedIds.length > 0 && (
+            <div className="mx-5 my-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in">
+              <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{selectedIds.length} transaksi wakaf dipilih</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleBulkDeleteWakaf}
+                  className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Void Terpilih ({selectedIds.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -638,6 +687,7 @@ function WakafContent() {
                   title: "Laporan Keuangan Wakaf",
                   filename: `wakaf_${new Date().toISOString().split("T")[0]}`,
                   columns: [
+                    { header: "No", key: "_no", width: 8, align: "center" },
                     { header: "Tanggal", key: "_date", width: 15 },
                     { header: "Tipe", key: "type", width: 10 },
                     { header: "Keterangan", key: "donor_name", width: 25 },
@@ -645,8 +695,9 @@ function WakafContent() {
                     { header: "Nominal", key: "amount", width: 20, align: "right", format: (v: unknown) => fmtRupiah(Number(v)) },
                     { header: "Status", key: "_status", width: 10, align: "center" },
                   ],
-                  data: data.map((t) => ({
+                  data: data.map((t, i) => ({
                     ...t,
+                    _no: ((page - 1) * limit) + i + 1,
                     _date: new Date(t.date).toLocaleDateString("id-ID"),
                     _status: t.status === 'void' ? 'VOID' : 'VALID',
                   })),
@@ -658,6 +709,16 @@ function WakafContent() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider">
+                  <th className="px-3 py-4 border-b border-slate-200 text-center w-10">
+                    <input
+                      type="checkbox"
+                      checked={data.length > 0 && selectedIds.length === data.length}
+                      onChange={(e) => setSelectedIds(e.target.checked ? data.map(t => t.id) : [])}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      aria-label="Pilih semua transaksi"
+                    />
+                  </th>
+                  <th className="px-3 py-4 border-b border-slate-200 text-center w-12">No</th>
                   <th className="px-6 py-4 border-b border-slate-200">Tanggal</th>
                   <th className="px-6 py-4 border-b border-slate-200">Keterangan</th>
                   <th className="px-6 py-4 border-b border-slate-200">Program</th>
@@ -668,11 +729,26 @@ function WakafContent() {
               <tbody>
                 {data.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400 border-b border-slate-100">Belum ada transaksi ditemukan</td>
+                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400 border-b border-slate-100">Belum ada transaksi ditemukan</td>
                   </tr>
                 )}
-                {data.slice((page - 1) * limit, page * limit).map((t) => (
-                  <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors" style={{ opacity: t.status === 'void' ? 0.5 : 1}}>
+                {data.slice((page - 1) * limit, page * limit).map((t, i) => {
+                  const isSelected = selectedIds.includes(t.id);
+                  return (
+                  <tr key={t.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ opacity: t.status === 'void' ? 0.5 : 1}}>
+                    <td className="px-3 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, t.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== t.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih transaksi ${t.donor_name}`}
+                      />
+                    </td>
+                    <td className="px-3 py-4 text-center text-xs font-mono font-medium text-slate-400">{((page - 1) * limit) + i + 1}</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{new Date(t.date).toLocaleDateString("id-ID")}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -715,7 +791,8 @@ function WakafContent() {
                       )}
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
@@ -739,6 +816,7 @@ function WakafContent() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-wider">
+                  <th className="px-4 py-4 border-b border-slate-200 text-center w-12">No</th>
                   <th className="px-6 py-4 border-b border-slate-200">Nama Lengkap</th>
                    <th className="px-6 py-4 border-b border-slate-200">No HP</th>
                   <th className="px-6 py-4 border-b border-slate-200">Alamat</th>
@@ -746,8 +824,9 @@ function WakafContent() {
                 </tr>
               </thead>
               <tbody>
-                {donors.map(d => (
+                {donors.map((d, i: number) => (
                    <tr key={d.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-4 text-center text-xs text-slate-400 font-mono">{i + 1}</td>
                     <td className="px-6 py-4 text-sm font-bold text-slate-700">{d.name}</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{d.phone || "-"}</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{d.address || "-"}</td>
@@ -780,14 +859,16 @@ function WakafContent() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-wider">
+                  <th className="px-4 py-4 border-b border-slate-200 text-center w-12">No</th>
                   <th className="px-6 py-4 border-b border-slate-200">Nama Program</th>
                   <th className="px-6 py-4 border-b border-slate-200">Deskripsi</th>
                   <th className="px-6 py-4 border-b border-slate-200 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {purposes.map(p => (
+                {purposes.map((p, i: number) => (
                   <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-4 text-center text-xs text-slate-400 font-mono">{i + 1}</td>
                     <td className="px-6 py-4 text-sm font-bold text-slate-700">{p.name}</td>
                     <td className="px-6 py-4 text-xs text-slate-500">{p.description || "-"}</td>
                      <td className="px-6 py-4 text-center flex items-center justify-center gap-2">

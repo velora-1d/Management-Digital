@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Calendar, Users, History, Save } from "lucide-react";
+import { Calendar, Users, History, Save, CheckCircle2 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 
@@ -16,6 +16,7 @@ export default function EmployeeAttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [records, setRecords] = useState<{ employeeId: number; status: string; note: string }[]>([]);
   const [existingRecords, setExistingRecords] = useState<AttendanceRecord[]>([]);
+  const [selectedEmpIds, setSelectedEmpIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -106,6 +107,17 @@ export default function EmployeeAttendancePage() {
     setRecords(prev => prev.map(r => r.employeeId === empId ? { ...r, [field]: value } : r));
   };
 
+  const handleBulkSetStatus = (status: string) => {
+    setRecords(prev => prev.map(r => selectedEmpIds.includes(r.employeeId) ? { ...r, status } : r));
+    Swal.fire({
+      title: "Status Diperbarui",
+      text: `${selectedEmpIds.length} pegawai diset menjadi ${status.toUpperCase()}`,
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
+
   const statusOpts = ["hadir", "sakit", "izin", "alpha"];
   const statusColors: Record<string, string> = { hadir: "bg-emerald-100 text-emerald-700 hover:bg-emerald-200", sakit: "bg-amber-100 text-amber-700 hover:bg-amber-200", izin: "bg-sky-100 text-sky-700 hover:bg-sky-200", alpha: "bg-rose-100 text-rose-700 hover:bg-rose-200" };
 
@@ -179,10 +191,67 @@ export default function EmployeeAttendancePage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {selectedEmpIds.length > 0 && (
+                <div className="m-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>{selectedEmpIds.length} pegawai dipilih</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStatus("hadir")}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                    >
+                      Set Hadir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStatus("sakit")}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                    >
+                      Set Sakit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStatus("izin")}
+                      className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                    >
+                      Set Izin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetStatus("alpha")}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                    >
+                      Set Alpha
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEmpIds([])}
+                      className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </div>
+              )}
               <table className="w-full text-left bg-white">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="py-3.5 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
+                    <th className="py-3.5 px-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={existingRecords.length > 0 && selectedEmpIds.length === existingRecords.length}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedEmpIds(existingRecords.map((item: AttendanceRecord) => item.employee.id));
+                          else setSelectedEmpIds([]);
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label="Pilih semua pegawai"
+                      />
+                    </th>
+                    <th className="py-3.5 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
                     <th className="py-3.5 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-1/4">Nama Pegawai</th>
                     <th className="py-3.5 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-1/4">Status Kehadiran</th>
                     <th className="py-3.5 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Catatan</th>
@@ -192,9 +261,22 @@ export default function EmployeeAttendancePage() {
                   {existingRecords.map((item, idx) => {
                     const emp = item.employee;
                     const rec = records.find(r => r.employeeId === emp.id);
+                    const isSelected = selectedEmpIds.includes(emp.id);
                     return (
-                      <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="py-3 px-6 text-sm text-slate-500 text-center">{((inputMeta.page - 1) * inputMeta.limit) + idx + 1}</td>
+                      <tr key={emp.id} className={`hover:bg-slate-50/50 transition-colors group ${isSelected ? "bg-blue-50/40" : ""}`}>
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedEmpIds(prev => [...prev, emp.id]);
+                              else setSelectedEmpIds(prev => prev.filter(id => id !== emp.id));
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                            aria-label={`Pilih ${emp.name}`}
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-500 text-center font-mono">{((inputMeta.page - 1) * inputMeta.limit) + idx + 1}</td>
                         <td className="py-3 px-6">
                           <div className="font-medium text-slate-800">{emp.name}</div>
                           <div className="text-xs text-slate-500">{emp.position}</div>

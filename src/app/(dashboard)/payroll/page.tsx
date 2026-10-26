@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Banknote } from "lucide-react";
+import { Banknote, CheckCircle2, Trash2 } from "lucide-react";
 
 type PayrollComponentType = "earning" | "deduction";
 type EmployeeType = "guru" | "staff";
@@ -56,6 +56,7 @@ export default function PayrollPage() {
 
   // States for Riwayat
   const [payrolls, setPayrolls] = useState<PayrollItem[]>([]);
+  const [selectedPayIds, setSelectedPayIds] = useState<number[]>([]);
   const [genMonth, setGenMonth] = useState((new Date().getMonth() + 1).toString());
   const [genYear, setGenYear] = useState(new Date().getFullYear().toString());
   
@@ -64,6 +65,7 @@ export default function PayrollPage() {
   
   // States for Komponen
   const [components, setComponents] = useState<SalaryComponent[]>([]);
+  const [selectedCompIds, setSelectedCompIds] = useState<number[]>([]);
   const [compName, setCompName] = useState("");
   const [compType, setCompType] = useState<PayrollComponentType>("earning");
 
@@ -165,6 +167,29 @@ export default function PayrollPage() {
         }
       }
     });
+  };
+
+  const handleBulkDeletePayroll = async () => {
+    if (selectedPayIds.length === 0) return;
+    const r = await Swal.fire({
+      title: `Hapus ${selectedPayIds.length} slip gaji?`,
+      text: "Slip yang dipilih akan dihapus permanen.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Ya, Hapus Masal",
+      cancelButtonText: "Batal"
+    });
+    if (r.isConfirmed) {
+      try {
+        await Promise.all(selectedPayIds.map((id) => fetch(`/api/payroll/${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedPayIds.length} slip gaji berhasil dihapus`, "success");
+        setSelectedPayIds([]);
+        loadPayrolls();
+      } catch {
+        Swal.fire("Error", "Gagal menghapus sebagian slip", "error");
+      }
+    }
   };
 
   const printPayroll = async (id: number) => {
@@ -366,7 +391,29 @@ export default function PayrollPage() {
         }
       }
     });
-  }
+  };
+
+  const handleBulkDeleteComponents = async () => {
+    if (selectedCompIds.length === 0) return;
+    const r = await Swal.fire({
+      title: `Hapus ${selectedCompIds.length} komponen gaji?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Ya, Hapus Masal",
+      cancelButtonText: "Batal"
+    });
+    if (r.isConfirmed) {
+      try {
+        await Promise.all(selectedCompIds.map((id) => fetch(`/api/payroll/components/${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedCompIds.length} komponen berhasil dihapus`, "success");
+        setSelectedCompIds([]);
+        loadComponents();
+      } catch {
+        Swal.fire("Error", "Gagal menghapus sebagian komponen", "error");
+      }
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -444,10 +491,45 @@ export default function PayrollPage() {
                 }} />
               )}
             </div>
+            {selectedPayIds.length > 0 && (
+              <div className="m-5 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+                <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>{selectedPayIds.length} slip gaji dipilih</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleBulkDeletePayroll}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus Terpilih
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPayIds([])}
+                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50">
+                    <th className="py-3 px-3 w-10 text-center border-b border-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={payrolls.length > 0 && selectedPayIds.length === payrolls.length}
+                        onChange={(e) => setSelectedPayIds(e.target.checked ? payrolls.map((p: PayrollItem) => p.id) : [])}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label="Pilih semua slip gaji"
+                      />
+                    </th>
+                    <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center w-12">No</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Kode / Tanggal</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Pegawai</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Gaji Bersih (THP)</th>
@@ -456,12 +538,29 @@ export default function PayrollPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500 border-b border-slate-100">Memuat...</td></tr>
+                    <tr><td colSpan={6} className="p-8 text-center text-sm text-slate-500 border-b border-slate-100">Memuat...</td></tr>
                   ) : payrolls.length === 0 ? (
-                    <tr><td colSpan={4} className="p-12 text-center text-slate-500 text-sm border-b border-slate-100">Belum ada riwayat penggajian.</td></tr>
+                    <tr><td colSpan={6} className="p-12 text-center text-slate-500 text-sm border-b border-slate-100">Belum ada riwayat penggajian.</td></tr>
                   ) : (
-                    payrolls.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                    payrolls.map((p, i: number) => {
+                      const isSelected = selectedPayIds.includes(p.id);
+                      return (
+                      <tr key={p.id} className={`hover:bg-slate-50 transition-colors border-b border-slate-100 ${isSelected ? "bg-blue-50/40" : ""}`}>
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedPayIds(prev => [...prev, p.id]);
+                              else setSelectedPayIds(prev => prev.filter(id => id !== p.id));
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                            aria-label={`Pilih slip ${p.code}`}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center text-xs font-mono font-medium text-slate-400">
+                          {((payPage - 1) * payLimit) + i + 1}
+                        </td>
                         <td className="px-6 py-3">
                           <p className="text-sm font-semibold text-slate-700">{p.code}</p>
                           <p className="text-xs text-slate-500">{new Date(p.created_at).toLocaleDateString("id-ID")}</p>
@@ -501,11 +600,13 @@ export default function PayrollPage() {
                           )}
                         </td>
                       </tr>
-                    ))
-                  )}
+                    );
+                  }))}
                   {!loading && payrolls.length > 0 && payrolls.length < payLimit && (
                     Array.from({ length: payLimit - payrolls.length }).map((_, i) => (
                       <tr key={`filler-pay-${i}`} style={{ height: "57px" }} className="bg-white border-b border-slate-100">
+                        <td className="px-3 py-3">&nbsp;</td>
+                        <td className="px-4 py-3">&nbsp;</td>
                         <td className="px-6 py-3">&nbsp;</td>
                         <td className="px-6 py-3">&nbsp;</td>
                         <td className="px-6 py-3">&nbsp;</td>
@@ -605,13 +706,48 @@ export default function PayrollPage() {
           </Card>
 
           <Card className="md:col-span-2">
-            <div className="p-5 border-b border-slate-100">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <h4 className="font-heading font-bold text-[15px] text-slate-800 m-0">Daftar Master Komponen</h4>
             </div>
+            {selectedCompIds.length > 0 && (
+              <div className="m-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+                <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>{selectedCompIds.length} komponen dipilih</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleBulkDeleteComponents}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus Terpilih
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCompIds([])}
+                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50">
+                    <th className="py-3 px-3 w-10 text-center border-b border-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={components.length > 0 && selectedCompIds.length === components.length}
+                        onChange={(e) => setSelectedCompIds(e.target.checked ? components.map((c: SalaryComponent) => c.id) : [])}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label="Pilih semua komponen"
+                      />
+                    </th>
+                    <th className="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center w-12">No</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Nama Komponen</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Jenis</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-right">Aksi</th>
@@ -619,12 +755,27 @@ export default function PayrollPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={3} className="p-8 text-center text-sm text-slate-500 border-b border-slate-100">Memuat...</td></tr>
+                    <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500 border-b border-slate-100">Memuat...</td></tr>
                   ) : components.length === 0 ? (
-                    <tr><td colSpan={3} className="p-12 text-center text-slate-500 text-sm border-b border-slate-100">Belum ada komponen terdaftar.</td></tr>
+                    <tr><td colSpan={5} className="p-12 text-center text-slate-500 text-sm border-b border-slate-100">Belum ada komponen terdaftar.</td></tr>
                   ) : (
-                    components.map(c => (
-                      <tr key={c.id} className="hover:bg-slate-50 border-b border-slate-100">
+                    components.map((c, i: number) => {
+                      const isSelected = selectedCompIds.includes(c.id);
+                      return (
+                      <tr key={c.id} className={`hover:bg-slate-50 border-b border-slate-100 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedCompIds(prev => [...prev, c.id]);
+                              else setSelectedCompIds(prev => prev.filter(id => id !== c.id));
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                            aria-label={`Pilih ${c.name}`}
+                          />
+                        </td>
+                        <td className="px-4 py-4 text-center text-xs font-mono font-medium text-slate-400">{i + 1}</td>
                         <td className="px-6 py-4 font-semibold text-sm text-slate-800">{c.name}</td>
                         <td className="px-6 py-4">
                           {c.type === "earning" ? (
@@ -639,8 +790,8 @@ export default function PayrollPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  )}
+                    );
+                  }))}
                 </tbody>
               </table>
             </div>

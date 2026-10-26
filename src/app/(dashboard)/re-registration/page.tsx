@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { UserCheck } from "lucide-react";
+import { UserCheck, CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react";
 
 type ReRegistrationStatus = "pending" | "confirmed" | "not_registered";
 type PaymentField = "is_fee_paid" | "is_books_paid" | "is_books_received";
@@ -53,6 +53,7 @@ export default function ReRegistrationPage() {
   const [paymentStats, setPaymentStats] = useState<ReRegistrationPaymentStats>({});
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<string | null>(null);
@@ -221,6 +222,41 @@ export default function ReRegistrationPage() {
         }
       }
     });
+  };
+
+  const handleBulkStatus = async (status: ReRegistrationStatus) => {
+    if (selectedIds.length === 0) return;
+    const label = status === "confirmed" ? "Konfirmasi" : status === "pending" ? "Set Menunggu" : "Tandai Tidak Daftar";
+    const res = await Swal.fire({
+      title: `${label} Siswa Terpilih?`,
+      text: `Anda akan mengubah status ${selectedIds.length} siswa terpilih menjadi "${label}".`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: status === "confirmed" ? "#059669" : status === "pending" ? "#d97706" : "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, ${label} (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (res.isConfirmed) {
+      Swal.fire({ title: "Memproses...", didOpen: () => Swal.showLoading() });
+      try {
+        await Promise.all(
+          selectedIds.map((id) =>
+            fetch(`/api/reregistration/${id}/status`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status }),
+            })
+          )
+        );
+        Swal.fire({ icon: "success", title: "Berhasil", text: `${selectedIds.length} siswa berhasil diperbarui`, toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
+        setSelectedIds([]);
+        loadData();
+        loadPaymentStats();
+      } catch {
+        Swal.fire("Error", "Gagal memperbarui status sebagian siswa", "error");
+      }
+    }
   };
 
   // Field yang melibatkan uang (butuh modal konfirmasi)
@@ -432,6 +468,49 @@ export default function ReRegistrationPage() {
         </Card>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} siswa dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleBulkStatus("confirmed")}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Konfirmasi ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkStatus("pending")}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Set Menunggu</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkStatus("not_registered")}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Tidak Daftar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table Daftar Ulang */}
       <Card className="p-0 overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -462,6 +541,15 @@ export default function ReRegistrationPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b-2 border-slate-200">
+                <th className="p-3 text-center w-10">
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map((d) => d.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua data"
+                  />
+                </th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-center w-12">No</th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-left">Nama Siswa</th>
                 <th className="p-3 text-xs font-bold text-slate-500 text-center">Kelas</th>
@@ -473,14 +561,27 @@ export default function ReRegistrationPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-10 text-center text-slate-400 text-sm">Memuat data...</td></tr>
+                <tr><td colSpan={8} className="p-10 text-center text-slate-400 text-sm">Memuat data...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={7} className="p-10 text-center text-slate-400 text-sm">Belum ada data. Silakan Generate Batch.</td></tr>
+                <tr><td colSpan={8} className="p-10 text-center text-slate-400 text-sm">Belum ada data. Silakan Generate Batch.</td></tr>
               ) : (
                 data.slice((page - 1) * limit, page * limit).map((item, i) => {
                   const p = item.payment || {};
+                  const isSelected = selectedIds.includes(item.id);
                   return (
-                    <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <tr key={item.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                      <td className="p-3 text-center align-top">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                            else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                          aria-label={`Pilih ${item.student_name}`}
+                        />
+                      </td>
                       <td className="p-3 text-sm text-slate-400 font-semibold text-center align-top">{(page - 1) * limit + i + 1}</td>
                       <td className="p-3 text-sm font-bold text-slate-800 align-top">{item.student_name}</td>
                       <td className="p-3 align-top text-center"><span className="px-3 py-1 bg-sky-100 text-cyan-700 text-xs font-bold rounded-full">{item.classroom}</span></td>

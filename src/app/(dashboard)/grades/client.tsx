@@ -11,7 +11,8 @@ import {
   FileText, 
   AlertCircle,
   Save,
-  Zap
+  Zap,
+  CheckCircle2
 } from "lucide-react";
 
 interface Option { id: number; name?: string; year?: string; isActive?: boolean; code?: string; type?: string; }
@@ -55,10 +56,12 @@ export default function GradesPage({
   const [selectedComponentId, setSelectedComponentId] = useState("");
 
   const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
   const [grades, setGrades] = useState<Record<number, GradeInput>>({});
   const [kkm, setKkm] = useState(75);
 
   const [finalGrades, setFinalGrades] = useState<FinalGradeItem[]>([]);
+  const [selectedFinalIds, setSelectedFinalIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Memuat kurikulum setiap kali tahun ajaran atau semester berubah
@@ -144,6 +147,28 @@ export default function GradesPage({
       ...prev,
       [studentId]: { studentId, nilaiAngka: nilai, predikat: p }
     }));
+  };
+
+  const handleBulkSetGrade = async () => {
+    if (selectedStudentIds.length === 0) return;
+    const { value: val } = await Swal.fire({
+      title: `Set Nilai untuk ${selectedStudentIds.length} Siswa`,
+      input: "number",
+      inputLabel: "Nilai (0 - 100)",
+      inputPlaceholder: "Contoh: 85",
+      showCancelButton: true,
+      confirmButtonText: "Terapkan",
+      cancelButtonText: "Batal",
+      inputValidator: (v) => {
+        const num = Number(v);
+        if (isNaN(num) || num < 0 || num > 100) return "Nilai harus antara 0 dan 100";
+      }
+    });
+    if (val !== undefined && val !== null) {
+      const num = Number(val);
+      selectedStudentIds.forEach((id) => handleGradeChange(id, num));
+      Swal.fire("Berhasil", `Nilai ${num} diterapkan ke ${selectedStudentIds.length} siswa`, "success");
+    }
   };
 
   const saveGrades = async () => {
@@ -334,10 +359,44 @@ export default function GradesPage({
                   <div className="py-12 text-center text-blue-600 font-medium animate-pulse">Memuat data penilaian...</div>
                 ) : (
                   <div className="space-y-6">
+                    {selectedStudentIds.length > 0 && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xs animate-fade-in">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>{selectedStudentIds.length} siswa dipilih</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleBulkSetGrade}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+                          >
+                            Set Nilai Masal
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedStudentIds([])}
+                            className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
                       <table className="w-full text-left text-sm text-slate-600">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="py-3 px-3 w-10 text-center">
+                              <input
+                                type="checkbox"
+                                checked={students.length > 0 && selectedStudentIds.length === students.length}
+                                onChange={(e) => setSelectedStudentIds(e.target.checked ? students.map((s: Student) => s.id) : [])}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                aria-label="Pilih semua siswa"
+                              />
+                            </th>
+                            <th className="px-3 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-12">No</th>
                             <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">NIS</th>
                             <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">Nama Lengkap</th>
                             <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-40">Nilai (0-100)</th>
@@ -345,13 +404,27 @@ export default function GradesPage({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {students.map(student => {
+                          {students.map((student, idx: number) => {
                             const g = grades[student.id];
                             const nilai = g?.nilaiAngka ?? 0;
                             const isUnderKkm = nilai > 0 && nilai < kkm;
+                            const isSelected = selectedStudentIds.includes(student.id);
                             
                             return (
-                              <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                              <tr key={student.id} className={`hover:bg-slate-50/50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                                <td className="py-3 px-3 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
+                                      else setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                    aria-label={`Pilih ${student.name}`}
+                                  />
+                                </td>
+                                <td className="px-3 py-3.5 text-center text-xs font-mono font-medium text-slate-400">{idx + 1}</td>
                                 <td className="px-4 py-3.5 font-mono text-xs text-slate-400">{student.nis}</td>
                                 <td className="px-4 py-3.5 font-semibold text-slate-800">{student.name}</td>
                                 <td className="px-4 py-3.5 text-center">
@@ -419,45 +492,88 @@ export default function GradesPage({
                     <p className="text-sm italic">Klik tombol &quot;Proses Sekarang&quot; untuk memulai perhitungan.</p>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
-                    <table className="w-full text-left text-sm text-slate-600">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">Peserta Didik</th>
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Pgt</th>
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Ket</th>
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Akhir</th>
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Predikat</th>
-                          <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {finalGrades.map((f) => (
-                          <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-4 font-bold text-slate-800">{f.student?.name}</td>
-                            <td className="px-4 py-4 text-center font-medium">{f.nilaiPengetahuan}</td>
-                            <td className="px-4 py-4 text-center font-medium">{f.nilaiKeterampilan}</td>
-                            <td className="px-4 py-4 text-center">
-                              <span className="text-lg font-black text-blue-600">{f.nilaiAkhir}</span>
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              <span className="px-2 py-1 bg-slate-100 rounded font-black text-slate-700">{f.predikat}</span>
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              {f.nilaiAkhir >= kkm ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold ring-1 ring-emerald-100">
-                                  Tuntas
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-bold ring-1 ring-rose-100">
-                                  Belum Tuntas
-                                </span>
-                              )}
-                            </td>
+                  <div className="space-y-4">
+                    {selectedFinalIds.length > 0 && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xs animate-fade-in">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>{selectedFinalIds.length} hasil kalkulasi dipilih</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFinalIds([])}
+                          className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    )}
+                    <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+                      <table className="w-full text-left text-sm text-slate-600">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="py-3 px-3 w-10 text-center">
+                              <input
+                                type="checkbox"
+                                checked={finalGrades.length > 0 && selectedFinalIds.length === finalGrades.length}
+                                onChange={(e) => setSelectedFinalIds(e.target.checked ? finalGrades.map((f: FinalGradeItem) => f.id) : [])}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                aria-label="Pilih semua hasil"
+                              />
+                            </th>
+                            <th className="px-3 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-12">No</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs">Peserta Didik</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Pgt</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Ket</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center w-32">Akhir</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Predikat</th>
+                            <th className="px-4 py-4 font-bold text-slate-700 uppercase tracking-wider text-xs text-center">Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {finalGrades.map((f, fIdx: number) => {
+                            const isFinSelected = selectedFinalIds.includes(f.id);
+                            return (
+                            <tr key={f.id} className={`hover:bg-slate-50/50 transition-colors ${isFinSelected ? "bg-blue-50/40" : ""}`}>
+                              <td className="py-3 px-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isFinSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSelectedFinalIds(prev => [...prev, f.id]);
+                                    else setSelectedFinalIds(prev => prev.filter(id => id !== f.id));
+                                  }}
+                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                  aria-label={`Pilih ${f.student?.name}`}
+                                />
+                              </td>
+                              <td className="px-3 py-4 text-center text-xs font-mono font-medium text-slate-400">{fIdx + 1}</td>
+                              <td className="px-4 py-4 font-bold text-slate-800">{f.student?.name}</td>
+                              <td className="px-4 py-4 text-center font-medium">{f.nilaiPengetahuan}</td>
+                              <td className="px-4 py-4 text-center font-medium">{f.nilaiKeterampilan}</td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="text-lg font-black text-blue-600">{f.nilaiAkhir}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="px-2 py-1 bg-slate-100 rounded font-black text-slate-700">{f.predikat}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                {f.nilaiAkhir >= kkm ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold ring-1 ring-emerald-100">
+                                    Tuntas
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-bold ring-1 ring-rose-100">
+                                    Belum Tuntas
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>

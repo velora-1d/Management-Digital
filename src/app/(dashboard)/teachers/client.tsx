@@ -7,6 +7,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { Trash2, CheckCircle2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Teacher {
@@ -23,6 +24,7 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -80,6 +82,30 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
         }
       }
     });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Guru Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} data guru terpilih. Tindakan ini tidak dapat dibatalkan!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (result.isConfirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => fetch(`/api/teachers/${id}`, { method: "DELETE" })));
+        Swal.fire("Berhasil", `${selectedIds.length} data guru berhasil dihapus`, "success");
+        setSelectedIds([]);
+        refreshTeachers();
+      } catch {
+        Swal.fire("Error", "Gagal menghapus beberapa data guru", "error");
+      }
+    }
   };
 
   return (
@@ -144,6 +170,32 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
         }
       />
 
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} data guru dipilih</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus Terpilih ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal Pilihan
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card
         title="Daftar Guru"
         icon={
@@ -198,7 +250,16 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
-                <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>No</th>
+                <th style={{ padding: "0.875rem 1rem", textAlign: "center", borderBottom: "1.5px solid #e2e8f0", width: 44 }}>
+                  <input
+                    type="checkbox"
+                    checked={paginatedData.length > 0 && selectedIds.length === paginatedData.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? paginatedData.map(t => t.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua guru"
+                  />
+                </th>
+                <th style={{ padding: "0.875rem 1rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0", width: 50 }}>No</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Profil Guru</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Tugas Pokok & Fungsi</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Status</th>
@@ -207,7 +268,7 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={6} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#eff6ff,#bfdbfe)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#1d4ed8" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -216,7 +277,7 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
                   </div>
                 </td></tr>
               ) : filteredData.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={6} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#eff6ff,#bfdbfe)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#1d4ed8" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -231,9 +292,21 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
                     ? <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#047857", background: "#d1fae5", borderRadius: 999 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669" }}></div>Aktif</span>
                     : <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.25rem 0.625rem", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: 999 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#94a3b8" }}></div>Non-Aktif</span>;
 
+                  const isSelected = selectedIds.includes(t.id);
                   return (
-                    <tr key={t.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "1rem 1.5rem", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * limit + i + 1}</td>
+                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "0.875rem 1rem", textAlign: "center", width: 44, verticalAlign: "middle" }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds([...selectedIds, t.id]);
+                            else setSelectedIds(selectedIds.filter(id => id !== t.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        />
+                      </td>
+                      <td style={{ padding: "1rem", textAlign: "center", fontSize: "0.8125rem", color: "#64748b", fontWeight: 600, width: 50 }} className="font-mono">{(page - 1) * limit + i + 1}</td>
                       <td style={{ padding: "1rem 1.5rem" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                           <div style={{ width: 36, height: 36, background: "linear-gradient(135deg,#eff6ff,#bfdbfe)", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8125rem", color: "#1d4ed8" }}>{initial}</div>

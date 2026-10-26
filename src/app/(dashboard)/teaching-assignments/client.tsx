@@ -5,6 +5,7 @@ import { exportCSV } from "@/lib/csv-export";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
+import { CheckCircle2, Trash2 } from "lucide-react";
 
 interface TAItem { 
   id: number; 
@@ -39,6 +40,7 @@ export default function TeachingAssignmentsClient({
   // States untuk data utama dengan initialData dari server
   const [data, setData] = useState<TAItem[]>(initialResult?.data || []);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [paginationMeta, setPaginationMeta] = useState(
     initialResult?.pagination || { total: 0, page: 1, limit: 10, totalPages: 0 }
   );
@@ -275,6 +277,29 @@ export default function TeachingAssignmentsClient({
     });
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Penugasan Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} penugasan guru terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/teaching-assignments/${id}`, { method: "DELETE" })));
+      Swal.fire("Berhasil", `${selectedIds.length} penugasan berhasil dihapus`, "success");
+      setSelectedIds([]);
+      loadData();
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa penugasan", "error");
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in-up">
       <PageHeader
@@ -343,6 +368,33 @@ export default function TeachingAssignmentsClient({
         </div>
       </Card>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} penugasan dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card
         title="Daftar Penugasan"
         icon={<div className="w-2 h-2 rounded-full bg-amber-500" />}
@@ -356,6 +408,15 @@ export default function TeachingAssignmentsClient({
           <table className="w-full border-collapse text-left bg-white">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr className="bg-linear-to-b from-slate-50 to-slate-100/50">
+                <th className="py-3 px-4 text-center border-b-[1.5px] border-slate-200 w-10">
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map(d => d.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua penugasan"
+                  />
+                </th>
                 <th className="py-3 px-4 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200 w-[50px]">No</th>
                 <th className="py-3 px-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Guru</th>
                 <th className="py-3 px-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Mata Pelajaran</th>
@@ -366,12 +427,26 @@ export default function TeachingAssignmentsClient({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-[13px] text-slate-400">Memuat data penugasan...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-[13px] text-slate-400">Memuat data penugasan...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-[13px] text-slate-400">Belum ada data penugasan.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-[13px] text-slate-400">Belum ada data penugasan.</td></tr>
               ) : (
-                data.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 border-dashed last:border-0">
+                data.map((item, index) => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                  <tr key={item.id} className={`hover:bg-slate-50/80 transition-colors border-b border-slate-100 border-dashed last:border-0 ${isSelected ? "bg-blue-50/40" : ""}`}>
+                    <td className="py-2.5 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih penugasan ${item.employee?.name}`}
+                      />
+                    </td>
                     <td className="py-2.5 px-4 text-center text-[13px] font-semibold text-slate-400">{((paginationMeta.page - 1) * paginationMeta.limit) + index + 1}</td>
                     <td className="py-2.5 px-4 text-[13px] font-semibold text-slate-800">
                       {item.employee?.name}
@@ -390,7 +465,7 @@ export default function TeachingAssignmentsClient({
                       </div>
                     </td>
                   </tr>
-                ))
+                ); })
               )}
               {!loading && data.length > 0 && data.length < (paginationMeta?.limit || 10) && (
                 Array.from({ length: (paginationMeta?.limit || 10) - data.length }).map((_, i) => (

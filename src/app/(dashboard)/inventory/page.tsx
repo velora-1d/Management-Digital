@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Package } from "lucide-react";
+import { Package, CheckCircle2, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface InventoryItem {
@@ -32,6 +32,7 @@ export default function InventoryPage() {
   const [conditionFilter, setConditionFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
@@ -240,6 +241,29 @@ export default function InventoryPage() {
     });
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Aset Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} data aset inventaris terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/inventory/${id}`, { method: "DELETE" })));
+      Swal.fire("Terhapus", `${selectedIds.length} data aset berhasil dihapus.`, "success");
+      setSelectedIds([]);
+      refreshInventory();
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa aset", "error");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -254,6 +278,33 @@ export default function InventoryPage() {
           <span className="text-xl font-extrabold text-blue-700">Rp {totalValue.toLocaleString("id-ID")}</span>
         </div>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} aset dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tabel Inventaris */}
       <Card
@@ -305,6 +356,15 @@ export default function InventoryPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)" }}>
+                <th style={{ padding: "0.875rem 0.5rem", textAlign: "center", borderBottom: "1.5px solid #e2e8f0", width: 44 }}>
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map(item => item.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua aset"
+                  />
+                </th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "center", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0", width: 50 }}>No</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Nama Barang</th>
                 <th style={{ padding: "0.875rem 1.5rem", textAlign: "left", fontSize: "0.6875rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1.5px solid #e2e8f0" }}>Kategori</th>
@@ -315,9 +375,9 @@ export default function InventoryPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Memuat data...</td></tr>
+                <tr><td colSpan={7} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Memuat data...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
+                <tr><td colSpan={7} style={{ padding: "4rem 1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>Aset Inventaris Kosong.</td></tr>
               ) : (
                 data.map((item, i) => {
                   let badge = "";
@@ -328,9 +388,22 @@ export default function InventoryPage() {
                   } else {
                     badge = '<span class="px-3 py-1 bg-red-50 text-red-700 font-bold text-xs rounded-full border border-red-100">Rusak Berat</span>';
                   }
+                  const isSelected = selectedIds.includes(item.id);
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "0.875rem 0.5rem", textAlign: "center", verticalAlign: "middle" }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                            else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                          aria-label={`Pilih aset ${item.name}`}
+                        />
+                      </td>
                       <td style={{ padding: "1.25rem 1.5rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontWeight: 600, verticalAlign: "middle" }}>{(page - 1) * limit + i + 1}</td>
                       <td style={{ padding: "1.25rem 1.5rem", verticalAlign: "middle" }}>
                         <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#1e293b", margin: 0 }}>{item.name}</p>

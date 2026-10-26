@@ -6,7 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, CheckCircle2, Trash2 } from "lucide-react";
 
 export interface SubjectItem {
   id: number;
@@ -26,6 +26,7 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [limit] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["subjects", page, search],
@@ -225,6 +226,29 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
     });
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Mapel Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} mata pelajaran terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/subjects/${id}`, { method: "DELETE" })));
+      Swal.fire("Berhasil", `${selectedIds.length} mata pelajaran berhasil dihapus`, "success");
+      setSelectedIds([]);
+      refreshData();
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa mapel", "error");
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in-up">
       <PageHeader
@@ -267,6 +291,33 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
         }
       />
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} mata pelajaran dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card noPadding>
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -292,6 +343,15 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
           <table className="w-full border-collapse text-left bg-white">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr className="bg-linear-to-b from-slate-50 to-slate-100/50">
+                <th className="py-3 px-4 text-center border-b-[1.5px] border-slate-200 w-10">
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map((d: SubjectItem) => d.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua mata pelajaran"
+                  />
+                </th>
                 <th className="py-3 px-4 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200 w-[50px]">No</th>
                 <th className="py-3 px-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Kode</th>
                 <th className="py-3 px-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Nama Mata Pelajaran</th>
@@ -302,22 +362,36 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <tr><td colSpan={6} className="p-12 text-center">
+                <tr><td colSpan={7} className="p-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-slate-400">
                     <svg className="animate-spin w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     <span className="text-xs font-medium">Memuat data...</span>
                   </div>
                 </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} className="p-12 text-center">
+                <tr><td colSpan={7} className="p-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-slate-400">
                     <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                     <span className="text-xs font-medium">{search ? "Hasil tidak ditemukan" : "Belum ada data mata pelajaran"}</span>
                   </div>
                 </td></tr>
               ) : (
-                data.map((item: SubjectItem, index: number) => (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 border-dashed last:border-0">
+                data.map((item: SubjectItem, index: number) => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                  <tr key={item.id} className={`hover:bg-slate-50/80 transition-colors border-b border-slate-100 border-dashed last:border-0 ${isSelected ? "bg-blue-50/40" : ""}`}>
+                    <td className="py-2.5 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, item.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== item.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih mapel ${item.name}`}
+                      />
+                    </td>
                     <td className="py-2.5 px-4 text-center text-[13px] font-semibold text-slate-400">{((paginationMeta.page - 1) * paginationMeta.limit) + index + 1}</td>
                     <td className="py-2.5 px-4 text-[13px] text-slate-600">{item.code || '-'}</td>
                     <td className="py-2.5 px-4 text-[13px] font-semibold text-slate-800">{item.name}</td>
@@ -338,7 +412,7 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
                       </div>
                     </td>
                   </tr>
-                ))
+                ); })
               )}
               {!isLoading && data.length > 0 && data.length < (limit || 10) && (
                 Array.from({ length: (limit || 10) - data.length }).map((_, i) => (

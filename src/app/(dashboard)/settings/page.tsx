@@ -4,7 +4,7 @@ import Image from "next/image";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Settings, UserPlus, Save } from "lucide-react";
+import { Settings, UserPlus, Save, CheckCircle2, Trash2 } from "lucide-react";
 import { ensureHttpsUrl } from "@/lib/url";
 
 interface UserItem {
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profil');
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -262,6 +263,54 @@ export default function SettingsPage() {
         }
       }
     });
+  };
+
+  const deleteUser = async (userId: number, userName: string) => {
+    const r = await Swal.fire({
+      title: 'Hapus Pengguna?',
+      text: `Pengguna "${userName}" akan dinonaktifkan / dihapus.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      confirmButtonText: 'Ya, Hapus',
+      cancelButtonText: 'Batal'
+    });
+    if (r.isConfirmed) {
+      try {
+        const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (res.ok && json.success) {
+          Swal.fire('Berhasil', json.message || 'Pengguna berhasil dihapus', 'success');
+          loadUsers();
+        } else {
+          Swal.fire('Gagal', json.error || 'Gagal menghapus pengguna', 'error');
+        }
+      } catch {
+        Swal.fire('Error', 'Gagal menghubungi server', 'error');
+      }
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    if (selectedUserIds.length === 0) return;
+    const r = await Swal.fire({
+      title: `Hapus ${selectedUserIds.length} pengguna terpilih?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      confirmButtonText: 'Ya, Hapus Masal',
+      cancelButtonText: 'Batal'
+    });
+    if (r.isConfirmed) {
+      try {
+        await Promise.all(selectedUserIds.map(id => fetch(`/api/users/${id}`, { method: 'DELETE' })));
+        Swal.fire('Berhasil', `${selectedUserIds.length} pengguna berhasil dihapus`, 'success');
+        setSelectedUserIds([]);
+        loadUsers();
+      } catch {
+        Swal.fire('Error', 'Gagal menghapus sebagian pengguna', 'error');
+      }
+    }
   };
 
   const wipeAllData = async () => {
@@ -560,10 +609,45 @@ export default function SettingsPage() {
               Tambah Akun
             </button>
           </div>
+          {selectedUserIds.length > 0 && (
+            <div className="m-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs animate-fade-in">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{selectedUserIds.length} pengguna dipilih</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleBulkDeleteUsers}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus Terpilih
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserIds([])}
+                  className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-white border-b-2 border-slate-200">
+                  <th className="py-4 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={users.length > 0 && selectedUserIds.length === users.length}
+                      onChange={(e) => setSelectedUserIds(e.target.checked ? users.map((u: UserItem) => u.id) : [])}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      aria-label="Pilih semua pengguna"
+                    />
+                  </th>
+                  <th className="p-4 text-xs tracking-wider text-slate-500 font-bold uppercase text-center w-12">No</th>
                   <th className="p-4 text-xs tracking-wider text-slate-500 font-bold uppercase text-left">Detail Pengguna</th>
                   <th className="p-4 text-xs tracking-wider text-slate-500 font-bold uppercase text-left">Privilege</th>
                   <th className="p-4 text-xs tracking-wider text-slate-500 font-bold uppercase text-center">Status</th>
@@ -572,12 +656,27 @@ export default function SettingsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={4} className="p-10 text-center text-slate-400 text-sm">Memuat data pengguna...</td></tr>
+                  <tr><td colSpan={6} className="p-10 text-center text-slate-400 text-sm">Memuat data pengguna...</td></tr>
                 ) : users.length === 0 ? (
-                  <tr><td colSpan={4} className="p-10 text-center text-slate-400 text-sm">Belum ada akun pengguna.</td></tr>
+                  <tr><td colSpan={6} className="p-10 text-center text-slate-400 text-sm">Belum ada akun pengguna.</td></tr>
                 ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  users.map((u, i: number) => {
+                    const isSelected = selectedUserIds.includes(u.id);
+                    return (
+                    <tr key={u.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                      <td className="py-4 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedUserIds(prev => [...prev, u.id]);
+                            else setSelectedUserIds(prev => prev.filter(id => id !== u.id));
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                          aria-label={`Pilih ${u.name}`}
+                        />
+                      </td>
+                      <td className="p-4 text-center text-xs font-mono font-medium text-slate-400">{i + 1}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
@@ -615,11 +714,14 @@ export default function SettingsPage() {
                           <button onClick={() => resetPassword(u.id, u.username)} className="inline-flex px-3 py-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors">
                             Reset Pass
                           </button>
+                          <button onClick={() => deleteUser(u.id, u.name)} className="inline-flex px-2 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors" title="Hapus Akun">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                }))}
               </tbody>
             </table>
           </div>

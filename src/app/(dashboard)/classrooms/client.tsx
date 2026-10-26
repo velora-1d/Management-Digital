@@ -7,7 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, CheckCircle2, Trash2 } from "lucide-react";
 
 export interface ClassroomRecord {
   id: number;
@@ -42,6 +42,7 @@ export default function ClassroomsClient({
   const [search, setSearch] = useState("");
   const [limit] = useState(10);
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', level: '1', infaqNominal: '0', academicYearId: '', waliKelasId: '' });
@@ -81,6 +82,29 @@ export default function ClassroomsClient({
 
   const refreshData = () => {
     queryClient.invalidateQueries({ queryKey: ["classrooms"] });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await Swal.fire({
+      title: "Hapus Kelas Terpilih?",
+      text: `Anda akan menghapus ${selectedIds.length} ruang kelas terpilih.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: `Ya, Hapus (${selectedIds.length})`,
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/classrooms/${id}`, { method: "DELETE" })));
+      Swal.fire("Berhasil", `${selectedIds.length} kelas berhasil diproses hapus`, "success");
+      setSelectedIds([]);
+      refreshData();
+    } catch {
+      Swal.fire("Error", "Gagal menghapus beberapa kelas", "error");
+    }
   };
 
   useEffect(() => {
@@ -140,6 +164,33 @@ export default function ClassroomsClient({
         }
       />
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{selectedIds.length} ruang kelas dipilih</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       <Card noPadding>
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -164,6 +215,15 @@ export default function ClassroomsClient({
           <table className="w-full border-collapse text-left bg-white whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr className="bg-linear-to-b from-slate-50 to-slate-100/50">
+                <th className="py-3 px-4 text-center border-b-[1.5px] border-slate-200 w-10">
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedIds.length === data.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? data.map((c: ClassroomRecord) => c.id) : [])}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                    aria-label="Pilih semua kelas"
+                  />
+                </th>
                 <th className="py-3 px-6 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200 w-[50px]">No</th>
                 <th className="py-3 px-6 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Tingkat</th>
                 <th className="py-3 px-6 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b-[1.5px] border-slate-200">Nama Kelas</th>
@@ -175,14 +235,14 @@ export default function ClassroomsClient({
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontStyle: "italic" }}>
+                <tr><td colSpan={8} style={{ padding: "3rem 2rem", textAlign: "center", fontSize: "0.8125rem", color: "#94a3b8", fontStyle: "italic" }}>
                   <div className="flex flex-col items-center gap-2">
                     <svg className="animate-spin w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     <span>Memuat data kelas...</span>
                   </div>
                 </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+                <tr><td colSpan={8} style={{ padding: "4rem 2rem", textAlign: "center" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#fef3c7,#fde68a)", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                       <svg style={{ width: 28, height: 28, color: "#d97706" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
@@ -192,8 +252,22 @@ export default function ClassroomsClient({
                   </div>
                 </td></tr>
               ) : (
-                data.map((c: ClassroomRecord, i: number) => (
-                  <tr key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                data.map((c: ClassroomRecord, i: number) => {
+                  const isSelected = selectedIds.includes(c.id);
+                  return (
+                  <tr key={c.id} className={`hover:bg-slate-50 transition-colors border-b border-slate-100 ${isSelected ? "bg-blue-50/40" : ""}`}>
+                    <td className="py-4 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, c.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== c.id));
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        aria-label={`Pilih kelas ${c.name}`}
+                      />
+                    </td>
                     <td className="py-4 px-6 text-center text-xs text-slate-500 font-medium">{(page - 1) * limit + i + 1}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -365,7 +439,7 @@ export default function ClassroomsClient({
                       )}
                     </td>
                   </tr>
-                ))
+                ); })
               )}
               {!isLoading && data.length > 0 && data.length < (limit || 10) && (
                 Array.from({ length: (limit || 10) - data.length }).map((_, i) => (
