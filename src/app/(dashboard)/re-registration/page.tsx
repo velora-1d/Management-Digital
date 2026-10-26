@@ -5,7 +5,8 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { UserCheck, CheckCircle2, XCircle, Clock } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { UserCheck, CheckCircle2, XCircle, Clock, Pencil, DollarSign, BookOpen } from "lucide-react";
 
 type ReRegistrationStatus = "pending" | "confirmed" | "not_registered";
 type PaymentField = "is_fee_paid" | "is_books_paid" | "is_books_received";
@@ -80,6 +81,7 @@ export default function ReRegistrationPage() {
   const [payAmount, setPayAmount] = useState("");
   const [payCashId, setPayCashId] = useState("");
   const [payLoading, setPayLoading] = useState(false);
+  const [verifyDrawerItem, setVerifyDrawerItem] = useState<ReRegistrationItem | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -213,6 +215,16 @@ export default function ReRegistrationPage() {
           const json = await res.json();
           if (res.ok && json.success) {
             Swal.fire({ icon: "success", title: "Berhasil", text: "Status diperbarui", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
+            setData(prev => prev.map(item => {
+              if (item.id === id) {
+                const updated = { ...item, status };
+                if (verifyDrawerItem && verifyDrawerItem.id === id) {
+                  setVerifyDrawerItem(updated);
+                }
+                return updated;
+              }
+              return item;
+            }));
             loadData();
           } else {
             Swal.fire("Gagal", json.error || "Error", "error");
@@ -311,13 +323,17 @@ export default function ReRegistrationPage() {
         // Fast UI update
         setData(prev => prev.map(item => {
           if (item.id.toString() === regId) {
-            return {
+            const updated = {
               ...item,
               payment: {
                 ...item.payment,
                 [field]: json.newState
               }
             };
+            if (verifyDrawerItem && verifyDrawerItem.id.toString() === regId) {
+              setVerifyDrawerItem(updated);
+            }
+            return updated;
           }
           return item;
         }));
@@ -628,19 +644,29 @@ export default function ReRegistrationPage() {
                         </div>
                       </td>
                       <td className="p-3 align-top text-center relative">
-                        <button 
-                          onClick={(ev) => { 
-                            ev.stopPropagation(); 
-                            ev.nativeEvent.stopImmediatePropagation();
-                            setOpenActionId(openActionId === item.id.toString() ? null : item.id.toString()); 
-                          }}
-                          style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
-                          className="hover:bg-slate-100 transition-colors"
-                        >
-                          <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setVerifyDrawerItem(item)}
+                            title="Verifikasi & Kelola Siswa"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={(ev) => { 
+                              ev.stopPropagation(); 
+                              ev.nativeEvent.stopImmediatePropagation();
+                              setOpenActionId(openActionId === item.id.toString() ? null : item.id.toString()); 
+                            }}
+                            style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
+                            className="hover:bg-slate-100 transition-colors"
+                          >
+                            <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                          </button>
+                        </div>
 
                         {openActionId === item.id.toString() && (
                           <div 
@@ -650,6 +676,18 @@ export default function ReRegistrationPage() {
                             <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem", textAlign: "left" }}>
                               Opsi Registrasi
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                setVerifyDrawerItem(item);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                              Verifikasi (Drawer)
+                            </button>
                             
                             {item.status === 'pending' ? (
                               <>
@@ -677,38 +715,258 @@ export default function ReRegistrationPage() {
         </div>
         <Pagination page={page} totalPages={Math.ceil(data.length / limit) || 1} total={data.length} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
       </Card>
-      {/* Modal Konfirmasi Bayar */}
-      {showPayModal && payTarget && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowPayModal(false)} />
-          <div className="relative bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl">
-            <h3 className="font-heading font-bold text-lg text-slate-800 m-0">Konfirmasi Pembayaran Daftar Ulang</h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Bayar <strong>{payTarget.field.replace('is_', '').replace('_paid', '')}</strong>
-            </p>
 
-            <div className="mt-5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nominal (Rp)</label>
-              <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="w-full px-4 py-2.5 border-2 border-slate-200 bg-white text-slate-800 rounded-xl text-sm font-semibold outline-none focus:border-cyan-400 transition-colors" min="0" />
+      {/* LeftDrawer Verifikasi Siswa */}
+      <LeftDrawer
+        isOpen={!!verifyDrawerItem}
+        onClose={() => setVerifyDrawerItem(null)}
+        title="Verifikasi Daftar Ulang"
+        subtitle={verifyDrawerItem ? `${verifyDrawerItem.student_name} (${verifyDrawerItem.classroom})` : undefined}
+        width="max-w-xl"
+      >
+        {verifyDrawerItem && (
+          <div className="space-y-5">
+            {/* Profil Siswa */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Profil Siswa</span>
+                <span className={`px-2 py-0.5 text-[11px] font-bold rounded-full ${
+                  verifyDrawerItem.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                  verifyDrawerItem.status === 'not_registered' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                  'bg-amber-100 text-amber-700 border border-amber-200'
+                }`}>
+                  {verifyDrawerItem.status === 'confirmed' ? 'Terkonfirmasi' : verifyDrawerItem.status === 'not_registered' ? 'Tidak Daftar' : 'Menunggu'}
+                </span>
+              </div>
+              <p className="text-base font-bold text-slate-900">{verifyDrawerItem.student_name}</p>
+              <div className="flex items-center gap-3 text-xs text-slate-600">
+                <span>Kelas: <strong className="text-slate-800">{verifyDrawerItem.classroom}</strong></span>
+                <span>•</span>
+                <span>Jenis Kelamin: <strong className="text-slate-800">{verifyDrawerItem.gender === 'L' ? 'Putra' : 'Putri'}</strong></span>
+              </div>
             </div>
 
-            <div className="mt-3">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Akun Kas</label>
-              <select value={payCashId} onChange={e => setPayCashId(e.target.value)} className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-cyan-400 transition-colors">
-                <option value="">— Tanpa Akun Kas —</option>
-                {cashAccounts.map((ca) => <option key={ca.id} value={ca.id}>{ca.name} (Rp {Number(ca.balance).toLocaleString("id-ID")})</option>)}
-              </select>
+            {/* Aksi Status Verifikasi */}
+            <div className="space-y-2 pb-3 border-b border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Ubah Status Pendaftaran
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateStatus(verifyDrawerItem.id, 'confirmed')}
+                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-colors flex flex-col items-center gap-1 cursor-pointer ${
+                    verifyDrawerItem.status === 'confirmed'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Konfirmasi</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateStatus(verifyDrawerItem.id, 'pending')}
+                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-colors flex flex-col items-center gap-1 cursor-pointer ${
+                    verifyDrawerItem.status === 'pending'
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                      : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>Menunggu</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateStatus(verifyDrawerItem.id, 'not_registered')}
+                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-colors flex flex-col items-center gap-1 cursor-pointer ${
+                    verifyDrawerItem.status === 'not_registered'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                      : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                  }`}
+                >
+                  <XCircle className="w-4 h-4" />
+                  <span>Tidak Daftar</span>
+                </button>
+              </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setShowPayModal(false)} className="px-5 py-2.5 text-sm font-semibold text-slate-500 bg-slate-100 border-none rounded-xl cursor-pointer hover:bg-slate-200 transition-colors">Batal</button>
-              <button onClick={handlePayConfirm} disabled={payLoading} className={`px-6 py-2.5 text-sm font-bold text-white rounded-xl border-none cursor-pointer transition-all ${payLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-linear-to-r from-cyan-500 to-blue-600 hover:shadow-lg hover:-translate-y-0.5'}`}>
-                {payLoading ? "Memproses..." : "Bayar Sekarang"}
+            {/* Administrasi & Pembayaran */}
+            <div className="space-y-3 pb-3 border-b border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Administrasi & Pembayaran
+              </label>
+
+              {/* 1. Biaya Daftar Ulang */}
+              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-slate-800">Biaya Daftar Ulang</p>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                      verifyDrawerItem.payment?.is_fee_paid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {verifyDrawerItem.payment?.is_fee_paid ? 'Lunas' : 'Belum Lunas'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    {fmtRp(settings.re_registration_fee)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPayModal(verifyDrawerItem.id.toString(), 'is_fee_paid', settings.re_registration_fee)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                    verifyDrawerItem.payment?.is_fee_paid
+                      ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                      : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {verifyDrawerItem.payment?.is_fee_paid ? 'Batalkan Bayar' : 'Bayar Sekarang'}
+                </button>
+              </div>
+
+              {/* 2. Biaya Buku */}
+              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-slate-800">Biaya Buku / LKS</p>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                      verifyDrawerItem.payment?.is_books_paid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {verifyDrawerItem.payment?.is_books_paid ? 'Lunas' : 'Belum Lunas'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    {fmtRp(settings.books_fee)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPayModal(verifyDrawerItem.id.toString(), 'is_books_paid', settings.books_fee)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                    verifyDrawerItem.payment?.is_books_paid
+                      ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                      : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {verifyDrawerItem.payment?.is_books_paid ? 'Batalkan Bayar' : 'Bayar Sekarang'}
+                </button>
+              </div>
+
+              {/* 3. Pengambilan Buku */}
+              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-slate-800">Status Pengambilan Buku</p>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                      verifyDrawerItem.payment?.is_books_received ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {verifyDrawerItem.payment?.is_books_received ? 'Sudah Diambil' : 'Belum Diambil'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">Penyerahan fisik buku paket siswa</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => togglePayment(verifyDrawerItem.id.toString(), 'is_books_received', 0, undefined)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                    verifyDrawerItem.payment?.is_books_received
+                      ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                      : 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
+                  }`}
+                >
+                  {verifyDrawerItem.payment?.is_books_received ? 'Batal Ambil' : 'Tandai Diambil'}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setVerifyDrawerItem(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Selesai & Tutup
               </button>
             </div>
           </div>
+        )}
+      </LeftDrawer>
+
+      {/* LeftDrawer Konfirmasi Bayar */}
+      <LeftDrawer
+        isOpen={showPayModal && !!payTarget}
+        onClose={() => {
+          setShowPayModal(false);
+          setPayTarget(null);
+        }}
+        title="Konfirmasi Pembayaran Daftar Ulang"
+        subtitle={payTarget ? `Bayar ${payTarget.field === 'is_fee_paid' ? 'Biaya Daftar Ulang' : 'Biaya Buku'} — ID #${payTarget.regId}` : undefined}
+        width="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-xs font-bold text-blue-900">
+              {payTarget?.field === 'is_fee_paid' ? 'Biaya Daftar Ulang' : 'Biaya Buku & LKS'}
+            </p>
+            <p className="text-[11px] text-blue-700 mt-0.5">
+              Catatan transaksi akan dibukukan ke akun kas yang dipilih.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              Nominal (Rp)
+            </label>
+            <input
+              type="number"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-200 bg-white text-slate-800 rounded-lg text-sm font-semibold outline-none focus:border-blue-500 transition-colors"
+              min="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              Akun Kas
+            </label>
+            <select
+              value={payCashId}
+              onChange={(e) => setPayCashId(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-200 bg-white text-slate-800 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+            >
+              <option value="">— Tanpa Akun Kas —</option>
+              {cashAccounts.map((ca) => (
+                <option key={ca.id} value={ca.id}>
+                  {ca.name} (Rp {Number(ca.balance).toLocaleString("id-ID")})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowPayModal(false);
+                setPayTarget(null);
+              }}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={handlePayConfirm}
+              disabled={payLoading}
+              className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {payLoading ? "Memproses..." : "Bayar Sekarang"}
+            </button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

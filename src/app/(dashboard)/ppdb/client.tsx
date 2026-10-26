@@ -7,7 +7,8 @@ import { ExportButtons } from "@/lib/export-utils";
 import Pagination from "@/components/Pagination";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { UserPlus, Plus, Wrench, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { UserPlus, Plus, Wrench, Trash2, CheckCircle2, XCircle, Pencil, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type RegistrationStatus = "menunggu" | "pending" | "diterima" | "ditolak" | "converted";
@@ -151,6 +152,125 @@ export default function PpdbPage({
   const [convertLoading, setConvertLoading] = useState(false);
   const [classrooms, setClassrooms] = useState<ClassroomItem[]>(initialClassrooms);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // LeftDrawer Tambah/Edit state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const emptyFormData = {
+    name: "",
+    gender: "L",
+    birthPlace: "",
+    birthDate: "",
+    nik: "",
+    noKk: "",
+    nisn: "",
+    religion: "Islam",
+    phone: "",
+    studentPhone: "",
+    address: "",
+    village: "",
+    district: "",
+    previousSchool: "",
+    targetClassroom: "",
+    fatherName: "",
+    fatherOccupation: "",
+    motherName: "",
+    motherOccupation: "",
+    parentIncome: "",
+    notes: "",
+  };
+
+  const [formData, setFormData] = useState(emptyFormData);
+
+  const openAddDrawer = () => {
+    setFormData(emptyFormData);
+    setEditingId(null);
+    setDrawerMode("add");
+    setDrawerOpen(true);
+  };
+
+  const openEditDrawer = async (id: number) => {
+    setEditingId(id);
+    setDrawerMode("edit");
+    setDrawerOpen(true);
+    setDrawerLoading(true);
+    try {
+      const res = await fetch(`/api/ppdb/${id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const d = json.data;
+        setFormData({
+          name: d.name || "",
+          gender: d.gender || "L",
+          birthPlace: d.birthPlace || "",
+          birthDate: d.birthDate ? String(d.birthDate).split("T")[0] : "",
+          nik: d.nik || "",
+          noKk: d.noKk || "",
+          nisn: d.nisn || "",
+          religion: d.religion || "Islam",
+          phone: d.phone || "",
+          studentPhone: d.studentPhone || "",
+          address: d.address || "",
+          village: d.village || "",
+          district: d.district || "",
+          previousSchool: d.previousSchool || "",
+          targetClassroom: d.targetClassroom || "",
+          fatherName: d.fatherName || "",
+          fatherOccupation: d.fatherOccupation || "",
+          motherName: d.motherName || "",
+          motherOccupation: d.motherOccupation || "",
+          parentIncome: d.parentIncome || "",
+          notes: d.notes || "",
+        });
+      } else {
+        showToast(json.message || "Gagal memuat detail pendaftar", "error");
+        setDrawerOpen(false);
+      }
+    } catch {
+      showToast("Gagal mengambil data dari server", "error");
+      setDrawerOpen(false);
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleDrawerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      Swal.fire("Peringatan", "Nama lengkap calon siswa wajib diisi", "warning");
+      return;
+    }
+    setFormSubmitting(true);
+    try {
+      const url = drawerMode === "add" ? "/api/ppdb" : `/api/ppdb/${editingId}`;
+      const method = drawerMode === "add" ? "POST" : "PUT";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message || (drawerMode === "add" ? "Pendaftar berhasil ditambahkan" : "Data pendaftar berhasil diperbarui"));
+        setDrawerOpen(false);
+        refreshData();
+      } else {
+        Swal.fire("Gagal", json.message || "Terjadi kesalahan", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -450,9 +570,13 @@ export default function PpdbPage({
         icon={<UserPlus className="w-5 h-5 text-blue-600" />}
         actions={
           <div className="flex items-center gap-3">
-            <Link href="/ppdb/new" className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs tracking-wider transition-all shadow-xs cursor-pointer text-decoration-none">
+            <button
+              type="button"
+              onClick={openAddDrawer}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs tracking-wider transition-all shadow-xs cursor-pointer"
+            >
               <Plus className="w-4 h-4 mr-1.5" /> Tambah Pendaftar
-            </Link>
+            </button>
             <button onClick={async () => {
               const result = await Swal.fire({
                 title: "Perbaiki Data?",
@@ -773,19 +897,29 @@ export default function PpdbPage({
                     </td>
                     <td style={{ padding: "1rem", textAlign: "center" }}>{statusBadge}</td>
                     <td style={{ padding: "1rem", textAlign: "center", position: "relative" }}>
-                      <button 
-                        onClick={(ev) => { 
-                          ev.stopPropagation(); 
-                          ev.nativeEvent.stopImmediatePropagation();
-                          setOpenActionId(openActionId === reg.id ? null : reg.id); 
-                        }}
-                        style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
-                        className="hover:bg-slate-100 transition-colors"
-                      >
-                        <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditDrawer(reg.id)}
+                          title="Edit Data Pendaftar"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={(ev) => { 
+                            ev.stopPropagation(); 
+                            ev.nativeEvent.stopImmediatePropagation();
+                            setOpenActionId(openActionId === reg.id ? null : reg.id); 
+                          }}
+                          style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
+                          className="hover:bg-slate-100 transition-colors"
+                        >
+                          <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </button>
+                      </div>
 
                       {openActionId === reg.id && (
                         <div 
@@ -795,6 +929,18 @@ export default function PpdbPage({
                           <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem", textAlign: "left" }}>
                             Aksi PPDB
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenActionId(null);
+                              openEditDrawer(reg.id);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                            Edit Pendaftar
+                          </button>
                           
                           <button onClick={() => { setOpenActionId(null); router.push(`/ppdb/${reg.id}`); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
                             Detail & Berkas
@@ -934,6 +1080,354 @@ export default function PpdbPage({
           </div>
         </div>
       )}
+      {/* LeftDrawer Tambah / Edit Pendaftar */}
+      <LeftDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={drawerMode === "add" ? "Tambah Calon Siswa (PPDB)" : "Edit Data Calon Siswa"}
+        subtitle={drawerMode === "add" ? "Formulir pendaftaran calon peserta didik baru" : `Pendaftar #${editingId} — ${formData.name}`}
+        width="max-w-2xl"
+      >
+        {drawerLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <p className="text-xs">Memuat data pendaftar...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleDrawerSubmit} className="space-y-5">
+            {/* Bagian 1: Identitas Calon Siswa */}
+            <div className="space-y-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Identitas Calon Siswa</h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Nama Lengkap <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleFormChange}
+                  required
+                  placeholder="Contoh: Muhammad Fatih"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Jenis Kelamin</label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800 font-medium"
+                  >
+                    <option value="L">Laki-laki (Putra)</option>
+                    <option value="P">Perempuan (Putri)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Agama</label>
+                  <select
+                    name="religion"
+                    value={formData.religion}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800 font-medium"
+                  >
+                    <option value="Islam">Islam</option>
+                    <option value="Kristen">Kristen</option>
+                    <option value="Katolik">Katolik</option>
+                    <option value="Hindu">Hindu</option>
+                    <option value="Buddha">Buddha</option>
+                    <option value="Konghucu">Konghucu</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tempat Lahir</label>
+                  <input
+                    type="text"
+                    name="birthPlace"
+                    value={formData.birthPlace}
+                    onChange={handleFormChange}
+                    placeholder="Kota kelahiran"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tanggal Lahir</label>
+                  <input
+                    type="date"
+                    name="birthDate"
+                    value={formData.birthDate}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NISN</label>
+                  <input
+                    type="text"
+                    name="nisn"
+                    value={formData.nisn}
+                    onChange={handleFormChange}
+                    placeholder="10 digit NISN"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NIK</label>
+                  <input
+                    type="text"
+                    name="nik"
+                    value={formData.nik}
+                    onChange={handleFormChange}
+                    placeholder="16 digit NIK"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">No. KK</label>
+                  <input
+                    type="text"
+                    name="noKk"
+                    value={formData.noKk}
+                    onChange={handleFormChange}
+                    placeholder="16 digit No KK"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Asal Sekolah</label>
+                  <input
+                    type="text"
+                    name="previousSchool"
+                    value={formData.previousSchool}
+                    onChange={handleFormChange}
+                    placeholder="Nama TK/SD asal"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">No HP Siswa</label>
+                  <input
+                    type="text"
+                    name="studentPhone"
+                    value={formData.studentPhone}
+                    onChange={handleFormChange}
+                    placeholder="08xxxxxxxxxx"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bagian 2: Alamat & Kontak Utama */}
+            <div className="space-y-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Alamat & Kontak Utama</h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Alamat Lengkap</label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleFormChange}
+                  rows={2}
+                  placeholder="Jalan, RT/RW, Dusun"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Desa/Kelurahan</label>
+                  <input
+                    type="text"
+                    name="village"
+                    value={formData.village}
+                    onChange={handleFormChange}
+                    placeholder="Kelurahan"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Kecamatan</label>
+                  <input
+                    type="text"
+                    name="district"
+                    value={formData.district}
+                    onChange={handleFormChange}
+                    placeholder="Kecamatan"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">No HP Ortu / WhatsApp</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleFormChange}
+                    placeholder="08xxxxxxxxxx"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bagian 3: Data Orang Tua */}
+            <div className="space-y-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">3</span>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Data Orang Tua</h4>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Ayah</label>
+                  <input
+                    type="text"
+                    name="fatherName"
+                    value={formData.fatherName}
+                    onChange={handleFormChange}
+                    placeholder="Nama ayah kandung"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Pekerjaan Ayah</label>
+                  <input
+                    type="text"
+                    name="fatherOccupation"
+                    value={formData.fatherOccupation}
+                    onChange={handleFormChange}
+                    placeholder="PNS / Swasta / Wiraswasta"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Ibu</label>
+                  <input
+                    type="text"
+                    name="motherName"
+                    value={formData.motherName}
+                    onChange={handleFormChange}
+                    placeholder="Nama ibu kandung"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Pekerjaan Ibu</label>
+                  <input
+                    type="text"
+                    name="motherOccupation"
+                    value={formData.motherOccupation}
+                    onChange={handleFormChange}
+                    placeholder="Ibu Rumah Tangga / Guru / etc"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Penghasilan Orang Tua</label>
+                <select
+                  name="parentIncome"
+                  value={formData.parentIncome}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800 font-medium"
+                >
+                  <option value="">— Pilih Rentang Penghasilan —</option>
+                  <option value="< 1 Juta">&lt; Rp 1.000.000</option>
+                  <option value="1 - 3 Juta">Rp 1.000.000 - Rp 3.000.000</option>
+                  <option value="3 - 5 Juta">Rp 3.000.000 - Rp 5.000.000</option>
+                  <option value="> 5 Juta">&gt; Rp 5.000.000</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Bagian 4: Kelas Tujuan & Catatan */}
+            <div className="space-y-3 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">4</span>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Kelas Tujuan & Catatan</h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Kelas Tujuan</label>
+                <select
+                  name="targetClassroom"
+                  value={formData.targetClassroom}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800 font-medium"
+                >
+                  <option value="">— Belum Ditentukan —</option>
+                  {classrooms.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleFormChange}
+                  rows={2}
+                  placeholder="Catatan pendaftaran khusus / riwayat kesehatan..."
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-slate-800"
+                />
+              </div>
+            </div>
+
+            {/* Form Footer Action */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={formSubmitting}
+                className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {formSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <span>{drawerMode === "add" ? "Daftarkan Calon Siswa" : "Simpan Perbarui"}</span>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </LeftDrawer>
     </div>
   );
 }
