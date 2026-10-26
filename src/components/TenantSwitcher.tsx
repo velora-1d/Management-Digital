@@ -125,12 +125,14 @@ export default function TenantSwitcher() {
           icon: "success",
           title: data.message || `Beralih ke jenjang ${level.name}`,
           showConfirmButton: false,
-          timer: 2500,
+          timer: 1500,
           timerProgressBar: true,
         });
 
-        // Refresh rute untuk menyelaraskan filter data
-        router.refresh();
+        // Full browser reload agar semua server component, query client, dan cookie tersinkronisasi 100%
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
       } else {
         if (pinModalOpen) {
           setPinError(data.message || "PIN otorisasi tidak valid.");

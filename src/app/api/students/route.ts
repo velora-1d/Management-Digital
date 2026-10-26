@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { students, studentEnrollments, academicYears } from "@/db/schema";
 import { and, eq, or, isNull } from "drizzle-orm";
@@ -87,6 +88,11 @@ export async function GET(request: Request) {
   const headerTenantId = request.headers.get("x-tenant-id");
   const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
 
+  const cookieStore = await cookies();
+  const activeLevelCookie = cookieStore.get("active_school_level_id")?.value;
+  const reqSchoolLevelId = searchParams.get("schoolLevelId");
+  const schoolLevelId = reqSchoolLevelId ? Number(reqSchoolLevelId) : (activeLevelCookie ? Number(activeLevelCookie) : 1);
+
   try {
     const result = await getStudentsList({
       page,
@@ -99,6 +105,7 @@ export async function GET(request: Request) {
       ageMin,
       ageMax,
       tenantId,
+      schoolLevelId,
     });
 
     const response = NextResponse.json({

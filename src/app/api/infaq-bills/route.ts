@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { infaqBills, students, academicYears, classrooms, infaqPayments, studentEnrollments } from "@/db/schema";
 import { isNull, and, eq, ilike, desc, sql, inArray } from "drizzle-orm";
@@ -34,6 +35,14 @@ export async function GET(request: Request) {
     if (targetAcademicYearId) conditions.push(eq(infaqBills.academicYearId, targetAcademicYearId));
     if (month) conditions.push(eq(infaqBills.month, month));
     if (statusFilter) conditions.push(eq(infaqBills.status, statusFilter));
+
+    const cookieStore = await cookies();
+    const activeLevelCookie = cookieStore.get("active_school_level_id")?.value;
+    const reqSchoolLevelId = searchParams.get("schoolLevelId");
+    const schoolLevelId = reqSchoolLevelId ? Number(reqSchoolLevelId) : (activeLevelCookie ? Number(activeLevelCookie) : 1);
+    if (schoolLevelId) {
+      conditions.push(eq(students.schoolLevelId, schoolLevelId));
+    }
 
     // Filter Semester
     if (semester) {

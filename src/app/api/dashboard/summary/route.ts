@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
-import { academicYears, studentEnrollments, employees, classrooms, infaqBills, ppdbRegistrations, generalTransactions, studentSavings, students, transactionCategories } from "@/db/schema";
+import { academicYears, studentEnrollments, employees, classrooms, infaqBills, ppdbRegistrations, generalTransactions, studentSavings, students, transactionCategories, schoolLevels } from "@/db/schema";
 import { requireAuth, AuthError } from "@/lib/rbac";
 import { eq, and, isNull, ilike, gte, lte, sql, inArray, isNotNull, or } from "drizzle-orm";
 
@@ -66,8 +67,19 @@ export async function GET(request: Request) {
       dateEnd = new Date(endYear, 6, 0, 23, 59, 59);
     }
 
+    // Ambil jenjang aktif dari Cookie atau Param
+    const cookieStore = await cookies();
+    const activeLevelCookie = cookieStore.get("active_school_level_id")?.value;
+    const reqSchoolLevelId = searchParams.get("schoolLevelId");
+    const activeSchoolLevelId = reqSchoolLevelId ? Number(reqSchoolLevelId) : (activeLevelCookie ? Number(activeLevelCookie) : 1);
+
     // 3. Build conditions
-    const enrollmentConds = [isNull(studentEnrollments.deletedAt), isNull(students.deletedAt), eq(students.status, "aktif")];
+    const enrollmentConds = [
+      isNull(studentEnrollments.deletedAt), 
+      isNull(students.deletedAt), 
+      eq(students.status, "aktif"),
+      eq(students.schoolLevelId, activeSchoolLevelId)
+    ];
     if (targetAcademicYearId) enrollmentConds.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));
     if (classroomId) enrollmentConds.push(eq(studentEnrollments.classroomId, classroomId));
     if (gender) enrollmentConds.push(eq(students.gender, gender));
@@ -81,6 +93,12 @@ export async function GET(request: Request) {
       billConds.push(inArray(infaqBills.month, semester.toLowerCase() === "ganjil" ? ganjilMonths : genapMonths));
     }
 
+    const classroomConds = [
+      isNull(classrooms.deletedAt),
+      eq(classrooms.schoolLevelId, activeSchoolLevelId)
+    ];
+    if (targetAcademicYearId) classroomConds.push(eq(classrooms.academicYearId, targetAcademicYearId));
+
     // Hitung paralel
     const [
       [resSiswa],
@@ -92,6 +110,7 @@ export async function GET(request: Request) {
       [resIncomeMonth], [resExpenseMonth],
       [resTabungan],
       [resWakaf],
+      [activeLevelRes],
     ] = await Promise.all([
       db.select({ count: sql<number>`count(distinct ${students.id})`.mapWith(Number) })
         .from(studentEnrollments)
@@ -105,12 +124,15 @@ export async function GET(request: Request) {
 
       db.select({ count: sql<number>`count(*)`.mapWith(Number) })
         .from(classrooms)
-        .where(and(isNull(classrooms.deletedAt), targetAcademicYearId ? eq(classrooms.academicYearId, targetAcademicYearId) : undefined)),
+        .where(and(...classroomConds)),
 
       db.select({ 
         count: sql<number>`count(*)`.mapWith(Number), 
         total: sql<number>`coalesce(sum(${infaqBills.nominal}), 0)`.mapWith(Number) 
-      }).from(infaqBills).where(and(...billConds)),
+      })
+      .from(infaqBills)
+      .innerJoin(students, eq(infaqBills.studentId, students.id))
+      .where(and(...billConds, eq(students.schoolLevelId, activeSchoolLevelId))),
 
       db.select({ status: ppdbRegistrations.status, count: sql<number>`count(*)`.mapWith(Number) })
         .from(ppdbRegistrations)
@@ -141,6 +163,11 @@ export async function GET(request: Request) {
             ilike(generalTransactions.description, "%waqaf%")
           )
         )),
+
+      db.select({ id: schoolLevels.id, code: schoolLevels.code, name: schoolLevels.name })
+        .from(schoolLevels)
+        .where(eq(schoolLevels.id, activeSchoolLevelId))
+        .limit(1),
     ]);
 
     const ppdbMap: Record<string, number> = {};
@@ -149,6 +176,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
+        activeLevel: activeLevelRes || { id: activeSchoolLevelId, code: "MTS", name: "Madrasah Tsanawiyah" },
         siswaAktif: resSiswa.count,
         totalGuru: employeesGroup.find(e => e.type === "guru")?.count || 0,
         totalStaff: employeesGroup.find(e => e.type === "staf")?.count || 0,

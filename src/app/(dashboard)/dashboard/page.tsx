@@ -2,11 +2,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { db } from "@/db";
+import { cookies } from "next/headers";
 import { 
   academicYears, studentEnrollments, students, employees, classrooms, 
   ppdbRegistrations, generalTransactions, studentSavings, infaqBills, 
   coopTransactions, studentCredits, counselingRecords, announcements, letters,
-  transactionCategories
+  transactionCategories, schoolLevels
 } from "@/db/schema";
 import { getAuthUser, JwtPayload } from "@/lib/auth";
 import FilterBar from "@/components/FilterBar";
@@ -19,7 +20,10 @@ import { and, eq, ilike, gte, lte, isNull, inArray, isNotNull, not, or, sql } fr
 // Halaman berjalan full dynamic SSR — tidak ada ISR/caching
 // untuk menghindari tekanan koneksi database berlebih.
 
-const getCachedDashboardData = async (searchParams: { [key: string]: string | undefined }) => {
+const getCachedDashboardData = async (
+  searchParams: { [key: string]: string | undefined },
+  activeSchoolLevelId: number
+) => {
   const academicYearId = searchParams.academicYearId ? Number(searchParams.academicYearId) : null;
   const semester = searchParams.semester;
   const month = searchParams.month;
@@ -76,13 +80,22 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     dateEnd = new Date(endYear, 6, 0, 23, 59, 59);
   }
 
-  // 3. Filter Query
-  const enrollmentConds = [isNull(studentEnrollments.deletedAt), isNull(students.deletedAt), eq(students.status, "aktif")];
+  // 3. Filter Query (Tersinkronisasi dengan jenjang aktif)
+  const enrollmentConds = [
+    isNull(studentEnrollments.deletedAt), 
+    isNull(students.deletedAt), 
+    eq(students.status, "aktif"),
+    eq(students.schoolLevelId, activeSchoolLevelId)
+  ];
   if (targetAcademicYearId) enrollmentConds.push(eq(studentEnrollments.academicYearId, targetAcademicYearId));
   if (classroomId) enrollmentConds.push(eq(studentEnrollments.classroomId, classroomId));
   const enrollmentWhere = and(...enrollmentConds);
 
-  const billConds = [eq(infaqBills.status, "belum_lunas"), isNull(infaqBills.deletedAt)];
+  const billConds = [
+    eq(infaqBills.status, "belum_lunas"), 
+    isNull(infaqBills.deletedAt),
+    eq(students.schoolLevelId, activeSchoolLevelId)
+  ];
   if (targetAcademicYearId) billConds.push(eq(infaqBills.academicYearId, targetAcademicYearId));
   if (month) billConds.push(eq(infaqBills.month, month));
   if (semester) {
@@ -92,6 +105,12 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
   }
   const billWhere = and(...billConds);
 
+  const classroomConds = [
+    isNull(classrooms.deletedAt),
+    eq(classrooms.schoolLevelId, activeSchoolLevelId)
+  ];
+  if (targetAcademicYearId) classroomConds.push(eq(classrooms.academicYearId, targetAcademicYearId));
+
   // --- EKSEKUSI ---
   const [
     enrollmentCounts, employeesGroup, classroomsCountRes, ppdbGroup,
@@ -100,7 +119,7 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     savingsAggRes, billAggRes, wakafAggRes,
     coopTrxAggRes, coopCreditAggRes,
     counselingCountRes, announcementsCountRes, lettersCountRes,
-    recentBillsRes, recentTxRes,
+    recentBillsRes, recentTxRes, activeLevelRes,
   ] = await Promise.all([
     db.select({ 
       total: sql<number>`count(distinct ${students.id})`.mapWith(Number),
@@ -118,7 +137,7 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
 
     db.select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(classrooms)
-      .where(and(isNull(classrooms.deletedAt), targetAcademicYearId ? eq(classrooms.academicYearId, targetAcademicYearId) : undefined)),
+      .where(and(...classroomConds)),
 
     db.select({ status: ppdbRegistrations.status, count: sql<number>`count(*)`.mapWith(Number) })
       .from(ppdbRegistrations)
@@ -204,7 +223,11 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     })
     .from(infaqBills)
     .innerJoin(students, eq(infaqBills.studentId, students.id))
-    .where(and(eq(infaqBills.status, "belum_lunas"), isNull(infaqBills.deletedAt)))
+    .where(and(
+      eq(infaqBills.status, "belum_lunas"), 
+      isNull(infaqBills.deletedAt),
+      eq(students.schoolLevelId, activeSchoolLevelId)
+    ))
     .orderBy(sql`${infaqBills.id} desc`)
     .limit(5),
 
@@ -219,13 +242,24 @@ const getCachedDashboardData = async (searchParams: { [key: string]: string | un
     .where(and(eq(generalTransactions.status, "valid"), isNull(generalTransactions.deletedAt)))
     .orderBy(sql`${generalTransactions.createdAt} desc`)
     .limit(5),
+
+    db.select({
+      id: schoolLevels.id,
+      code: schoolLevels.code,
+      name: schoolLevels.name,
+    })
+    .from(schoolLevels)
+    .where(eq(schoolLevels.id, activeSchoolLevelId))
+    .limit(1),
   ]);
 
   const stats = enrollmentCounts[0];
   const totalSiswa = stats.total || 0;
   const billStats = billAggRes[0];
+  const activeLevel = activeLevelRes?.[0] || { id: activeSchoolLevelId, code: "MTS", name: "Madrasah Tsanawiyah" };
 
   return {
+    activeLevel,
     totalSiswa,
     totalSiswaPa: stats.putra || 0,
     totalSiswaPi: stats.putri || 0,
@@ -267,6 +301,10 @@ export default async function DashboardPage(props: { searchParams: Promise<{ [ke
   const searchParams = await props.searchParams;
   const user = await getAuthUser();
 
+  const cookieStore = await cookies();
+  const activeLevelCookie = cookieStore.get("active_school_level_id")?.value;
+  const activeSchoolLevelId = activeLevelCookie ? Number(activeLevelCookie) : 1;
+
   const roleTabs: Record<string, string[]> = {
     superadmin: ["overview", "finance", "academic", "hr"],
     admin: ["overview", "finance", "academic", "hr"],
@@ -283,7 +321,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ [ke
     activeTab = allowedTabs[0];
   }
 
-  const suspenseKey = `${activeTab}-${searchParams.academicYearId || 'all'}-${searchParams.month || 'all'}-${searchParams.classroomId || 'all'}`;
+  const suspenseKey = `${activeSchoolLevelId}-${activeTab}-${searchParams.academicYearId || 'all'}-${searchParams.month || 'all'}-${searchParams.classroomId || 'all'}`;
 
   return (
     <div className="space-y-6">
@@ -296,7 +334,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ [ke
       </Suspense>
       
       <Suspense key={suspenseKey} fallback={<DashboardContentLoading />}>
-        <DashboardContent searchParams={searchParams} activeTab={activeTab} user={user} />
+        <DashboardContent searchParams={searchParams} activeTab={activeTab} user={user} activeSchoolLevelId={activeSchoolLevelId} />
       </Suspense>
     </div>
   );
@@ -322,8 +360,8 @@ function DashboardContentLoading() {
   );
 }
 
-async function DashboardContent({ searchParams, activeTab, user }: { searchParams: { [key: string]: string | undefined }, activeTab: string, user: JwtPayload | null }) {
-  const data = await getCachedDashboardData(searchParams);
+async function DashboardContent({ searchParams, activeTab, user, activeSchoolLevelId }: { searchParams: { [key: string]: string | undefined }, activeTab: string, user: JwtPayload | null, activeSchoolLevelId: number }) {
+  const data = await getCachedDashboardData(searchParams, activeSchoolLevelId);
 
   return (
     <div className="space-y-6">
@@ -337,9 +375,17 @@ async function DashboardContent({ searchParams, activeTab, user }: { searchParam
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight font-heading">
-                Halo, {user?.name || "Administrator"}!
-              </h2>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-bold text-slate-800 tracking-tight font-heading">
+                  Halo, {user?.name || "Administrator"}!
+                </h2>
+                {data.activeLevel && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {data.activeLevel.name} ({data.activeLevel.code})
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 Ringkasan Data Panel: <span className="font-medium text-slate-700">{
                   activeTab === 'overview' ? 'Utama / General' : 

@@ -13,6 +13,7 @@ export async function getStudentsList({
   ageMin,
   ageMax,
   tenantId,
+  schoolLevelId,
 }: {
   page?: number;
   limit?: number;
@@ -24,6 +25,7 @@ export async function getStudentsList({
   ageMin?: string | null;
   ageMax?: string | null;
   tenantId?: number;
+  schoolLevelId?: number | null;
 }) {
   let targetAcademicYearId = academicYearId ? Number(academicYearId) : null;
 
@@ -51,6 +53,10 @@ export async function getStudentsList({
 
   if (tenantId) {
     conditions.push(eq(students.tenantId, tenantId));
+  }
+
+  if (schoolLevelId) {
+    conditions.push(eq(students.schoolLevelId, schoolLevelId));
   }
 
   if (targetAcademicYearId) {

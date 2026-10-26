@@ -77,6 +77,7 @@ export const academicYears = pgTable('academic_years', {
 export const classrooms = pgTable('classrooms', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull().default(1),
+  schoolLevelId: integer('school_level_id'),
   name: text('name').notNull(),
   level: integer('level').notNull().default(1),
   academicYearId: integer('academic_year_id'),
@@ -91,6 +92,7 @@ export const classrooms = pgTable('classrooms', {
 export const students = pgTable('students', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull().default(1),
+  schoolLevelId: integer('school_level_id'),
   nisn: text('nisn'),
   nis: text('nis'),
   nik: text('nik'),

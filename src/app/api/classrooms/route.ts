@@ -18,6 +18,10 @@ export async function GET(req: NextRequest) {
     const headerTenantId = req.headers.get("x-tenant-id");
     const tenantId = authUser?.tenantId || (headerTenantId ? parseInt(headerTenantId, 10) : 1);
 
+    const activeLevelCookie = req.cookies.get("active_school_level_id")?.value;
+    const reqSchoolLevelId = searchParams.get("schoolLevelId");
+    const schoolLevelId = reqSchoolLevelId ? Number(reqSchoolLevelId) : (activeLevelCookie ? Number(activeLevelCookie) : 1);
+
     // Tentukan tahun ajaran: gunakan query param jika ada, jika tidak → tahun aktif
     // Kirim "all" untuk tampilkan semua tahun ajaran
     let academicYearId: number | null = null;
@@ -41,6 +45,9 @@ export async function GET(req: NextRequest) {
         isNull(classrooms.deletedAt),
         eq(classrooms.tenantId, tenantId),
       ];
+      if (schoolLevelId) {
+        conditions.push(eq(classrooms.schoolLevelId, schoolLevelId));
+      }
       if (q) {
         conditions.push(ilike(classrooms.name, `%${q}%`));
       }
@@ -66,7 +73,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const result = await getClassroomsList({ page, limit, q, academicYearId, tenantId });
+    const result = await getClassroomsList({ page, limit, q, academicYearId, tenantId, schoolLevelId });
 
     return NextResponse.json(
       {

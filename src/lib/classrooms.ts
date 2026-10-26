@@ -8,18 +8,24 @@ export async function getClassroomsList({
   q = "",
   academicYearId,
   tenantId,
+  schoolLevelId,
 }: {
   page?: number;
   limit?: number;
   q?: string;
   academicYearId?: number | null;
   tenantId?: number | null;
+  schoolLevelId?: number | null;
 }) {
   const skip = (page - 1) * limit;
   const conditions = [isNull(classrooms.deletedAt)];
 
   if (tenantId) {
     conditions.push(eq(classrooms.tenantId, tenantId));
+  }
+
+  if (schoolLevelId) {
+    conditions.push(eq(classrooms.schoolLevelId, schoolLevelId));
   }
 
   if (q) {
