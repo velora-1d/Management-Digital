@@ -15,7 +15,6 @@ import {
   ClipboardList,
   BarChart3,
   CheckCircle2,
-  Trash2
 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import { generateAttendancePDF } from "@/lib/attendance-report-template";

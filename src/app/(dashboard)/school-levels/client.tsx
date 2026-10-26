@@ -15,7 +15,6 @@ import {
   RotateCcw,
   Download,
   Lock,
-  X,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import LeftDrawer from "@/components/ui/LeftDrawer";

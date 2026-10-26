@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import LeftDrawer from "@/components/ui/LeftDrawer";
-import { Settings, UserPlus, Save, CheckCircle2, Trash2, Building2, Users, Wrench, Shield, KeyRound, Loader2 } from "lucide-react";
+import { Settings, UserPlus, Save, CheckCircle2, Trash2, Building2, Users, Wrench, Loader2 } from "lucide-react";
 import { ensureHttpsUrl } from "@/lib/url";
 
 interface UserItem {

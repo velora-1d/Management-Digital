@@ -6,7 +6,7 @@ import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import LeftDrawer from "@/components/ui/LeftDrawer";
-import { UserCheck, CheckCircle2, XCircle, Clock, Pencil, DollarSign, BookOpen } from "lucide-react";
+import { UserCheck, CheckCircle2, XCircle, Clock, Pencil } from "lucide-react";
 
 type ReRegistrationStatus = "pending" | "confirmed" | "not_registered";
 type PaymentField = "is_fee_paid" | "is_books_paid" | "is_books_received";

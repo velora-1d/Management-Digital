@@ -103,19 +103,6 @@ export default function TeachingAssignmentsClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterYear, filterClass]);
 
-  const getEmpOptions = (selectedId?: number) => {
-    return employees.map(e => `<option value="${e.id}" ${selectedId === e.id ? 'selected' : ''}>${e.name}</option>`).join('');
-  };
-  const getSubjOptions = (selectedId?: number) => {
-    return subjects.map(s => `<option value="${s.id}" ${selectedId === s.id ? 'selected' : ''}>${s.name} (${s.type})</option>`).join('');
-  };
-  const getClsOptions = (selectedId?: number) => {
-    return classrooms.map(c => `<option value="${c.id}" ${selectedId === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-  };
-  const getYrOptions = (selectedId?: number) => {
-    return academicYears.map(y => `<option value="${y.id}" ${selectedId === y.id ? 'selected' : ''}>${y.year} - ${y.isActive ? 'Aktif' : 'Tidak Aktif'}</option>`).join('');
-  };
-
   const currentActiveYear = academicYears.find(y => y.isActive)?.id;
 
   const handleOpenAdd = () => {

@@ -70,7 +70,6 @@ export default function MutationsPage() {
       setPagination({ total: 0, page: 1, limit: 20, totalPages: 0 });
     }
     setSelected([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClass, page]);
 
   const loadClassrooms = async () => {

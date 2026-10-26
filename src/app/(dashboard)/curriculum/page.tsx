@@ -202,7 +202,6 @@ export default function CurriculumPage() {
   const [kkmDrafts, setKkmDrafts] = useState<Record<number, KkmDraft>>({});
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
   const [isComponentDrawerOpen, setIsComponentDrawerOpen] = useState(false);
-  const [isCurriculumDrawerOpen, setIsCurriculumDrawerOpen] = useState(false);
 
   useEffect(() => {
     setSubPage(1);
@@ -361,7 +360,6 @@ export default function CurriculumPage() {
       });
 
       await Swal.fire("Berhasil", "Kurikulum aktif berhasil dibuat.", "success");
-      setIsCurriculumDrawerOpen(false);
       await refetchCurriculumSection();
     } catch (error) {
       const message =
