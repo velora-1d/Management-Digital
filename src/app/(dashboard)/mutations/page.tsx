@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import Modal from "@/components/ui/Modal";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import { ArrowRightLeft, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -605,33 +605,13 @@ export default function MutationsPage() {
         </div>
       </div>
 
-      {/* Modal Popup Detail Audit (Hanya muncul jika tombol Lihat Detail diklik) */}
-      <Modal
-        open={showAuditModal}
+      {/* Drawer Detail Audit (Hanya muncul jika tombol Lihat Detail diklik) */}
+      <LeftDrawer
+        isOpen={showAuditModal}
         onClose={() => setShowAuditModal(false)}
         title="Detail Audit Konsistensi Siswa"
-        subtitle={audit?.activeYear ? `Tahun Aktif: ${audit.activeYear.year} — Total Sampel Anomali: ${audit.samples.length}` : undefined}
-        size="lg"
-        footer={
-          <div className="flex items-center justify-between w-full">
-            <button
-              onClick={() => setShowAuditModal(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-            >
-              Tutup
-            </button>
-            <button
-              onClick={() => {
-                setShowAuditModal(false);
-                handleAutoSync();
-              }}
-              disabled={syncLoading}
-              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <span>⚡ Sinkronkan Otomatis (1-Klik)</span>
-            </button>
-          </div>
-        }
+        subtitle={audit?.activeYear ? `Tahun Aktif: ${audit.activeYear.year} — Total Sampel: ${audit.samples.length}` : undefined}
+        width="max-w-2xl"
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-500">
@@ -665,8 +645,27 @@ export default function MutationsPage() {
           ) : (
             <div className="p-6 text-center text-xs text-slate-400">Tidak ada sampel data anomali.</div>
           )}
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <button
+              onClick={() => setShowAuditModal(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+            <button
+              onClick={() => {
+                setShowAuditModal(false);
+                handleAutoSync();
+              }}
+              disabled={syncLoading}
+              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              <span>⚡ Sinkronkan Otomatis (1-Klik)</span>
+            </button>
+          </div>
         </div>
-      </Modal>
+      </LeftDrawer>
     </div>
   );
 }
