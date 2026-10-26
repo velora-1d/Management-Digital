@@ -4,15 +4,19 @@ import { students, academicYears, reRegistrations, schoolSettings, registrationP
 import { requireAuth } from "@/lib/rbac";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const user = await requireAuth();
 
-    // Cari siswa aktif
+    const cookieHeader = req.headers.get("cookie") || "";
+    const activeLevelCookie = cookieHeader.split(";").find(c => c.trim().startsWith("active_school_level_id="))?.split("=")[1];
+    const schoolLevelId = activeLevelCookie ? parseInt(activeLevelCookie) : 1;
+
+    // Cari siswa aktif pada jenjang aktif
     const activeStudents = await db
       .select({ id: students.id, name: students.name })
       .from(students)
-      .where(and(eq(students.status, "aktif"), isNull(students.deletedAt)));
+      .where(and(eq(students.status, "aktif"), isNull(students.deletedAt), eq(students.schoolLevelId, schoolLevelId)));
 
     if (activeStudents.length === 0) {
       return NextResponse.json({ success: true, count: 0, message: "Tidak ada siswa aktif ditemukan" });

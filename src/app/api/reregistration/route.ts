@@ -1,15 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { reRegistrations, students, academicYears } from "@/db/schema";
-import { eq, isNull, desc } from "drizzle-orm";
+import { eq, isNull, desc, and } from "drizzle-orm";
 import { requireAuth } from "@/lib/rbac";
 
 /**
  * GET /api/reregistration — Ambil daftar konfirmasi daftar ulang siswa lama
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await requireAuth();
+
+    const activeLevelCookie = req.cookies.get("active_school_level_id")?.value;
+    const schoolLevelId = activeLevelCookie ? parseInt(activeLevelCookie) : 1;
 
     const data = await db
       .select({
@@ -29,9 +32,9 @@ export async function GET() {
         }
       })
       .from(reRegistrations)
-      .leftJoin(students, eq(reRegistrations.studentId, students.id))
+      .innerJoin(students, eq(reRegistrations.studentId, students.id))
       .leftJoin(academicYears, eq(reRegistrations.academicYearId, academicYears.id))
-      .where(isNull(reRegistrations.deletedAt))
+      .where(and(isNull(reRegistrations.deletedAt), eq(students.schoolLevelId, schoolLevelId)))
       .orderBy(desc(reRegistrations.createdAt));
 
     return NextResponse.json({

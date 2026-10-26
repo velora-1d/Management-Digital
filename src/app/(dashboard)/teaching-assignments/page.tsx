@@ -3,12 +3,16 @@ export const revalidate = 0;
 
 import { db } from "@/db";
 import { teachingAssignments, employees, subjects, classrooms, academicYears } from "@/db/schema";
-import { isNull, eq, desc, sql } from "drizzle-orm";
+import { isNull, eq, desc, sql, and } from "drizzle-orm";
+import { cookies } from "next/headers";
 import TeachingAssignmentsClient from "./client";
 import type { ComponentProps } from "react";
 
 export default async function TeachingAssignmentsPage() {
   const limit = 10;
+  const cookieStore = await cookies();
+  const activeLevelCookie = cookieStore.get("active_school_level_id")?.value;
+  const activeSchoolLevelId = activeLevelCookie ? Number(activeLevelCookie) : 1;
 
   // Ambil data paralel: tugas mengajar page-1 + semua dropdown metadata
   const [initialData, [{ total }], allTeachers, allSubjects, allClassrooms, allAcademicYears] =
@@ -30,17 +34,18 @@ export default async function TeachingAssignmentsPage() {
         .leftJoin(subjects, eq(teachingAssignments.subjectId, subjects.id))
         .leftJoin(classrooms, eq(teachingAssignments.classroomId, classrooms.id))
         .leftJoin(academicYears, eq(teachingAssignments.academicYearId, academicYears.id))
-        .where(isNull(teachingAssignments.deletedAt))
+        .where(and(isNull(teachingAssignments.deletedAt), eq(classrooms.schoolLevelId, activeSchoolLevelId)))
         .orderBy(desc(teachingAssignments.createdAt))
         .limit(limit)
         .offset(0),
       db
         .select({ total: sql<number>`count(*)`.mapWith(Number) })
         .from(teachingAssignments)
-        .where(isNull(teachingAssignments.deletedAt)),
+        .leftJoin(classrooms, eq(teachingAssignments.classroomId, classrooms.id))
+        .where(and(isNull(teachingAssignments.deletedAt), eq(classrooms.schoolLevelId, activeSchoolLevelId))),
       db.select({ id: employees.id, name: employees.name }).from(employees).where(isNull(employees.deletedAt)).limit(1000),
       db.select({ id: subjects.id, name: subjects.name, code: subjects.code }).from(subjects).where(isNull(subjects.deletedAt)).limit(500),
-      db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(isNull(classrooms.deletedAt)).limit(100),
+      db.select({ id: classrooms.id, name: classrooms.name }).from(classrooms).where(and(isNull(classrooms.deletedAt), eq(classrooms.schoolLevelId, activeSchoolLevelId))).limit(100),
       db.select({ id: academicYears.id, year: academicYears.year, isActive: academicYears.isActive }).from(academicYears).where(isNull(academicYears.deletedAt)).limit(50),
     ]);
 

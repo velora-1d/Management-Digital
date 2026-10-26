@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { registrationPayments, reRegistrations, students, academicYears } from "@/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const activeLevelCookie = req.cookies.get("active_school_level_id")?.value;
+    const schoolLevelId = activeLevelCookie ? parseInt(activeLevelCookie) : 1;
+
     // 1. Dapatkan Tahun Ajaran Aktif
     const activeYearRes = await db.select({ id: academicYears.id })
       .from(academicYears)
@@ -25,6 +28,7 @@ export async function GET() {
           isNull(reRegistrations.deletedAt),
           isNull(students.deletedAt),
           eq(students.status, 'aktif'),
+          eq(students.schoolLevelId, schoolLevelId),
           activeYearId ? eq(reRegistrations.academicYearId, activeYearId) : undefined
         )
       )
@@ -62,6 +66,7 @@ export async function GET() {
           isNull(reRegistrations.deletedAt),
           isNull(students.deletedAt),
           eq(students.status, 'aktif'),
+          eq(students.schoolLevelId, schoolLevelId),
           activeYearId ? eq(reRegistrations.academicYearId, activeYearId) : undefined
         )
       );
