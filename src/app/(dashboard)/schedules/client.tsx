@@ -364,7 +364,7 @@ export default function ScheduleClient({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {conflicts.map((c, i) => (
-                  <div key={i} className="text-[11px] bg-white/50 p-2 rounded border border-rose-100 text-rose-700">
+                  <div key={i} className="text-[11px] bg-white p-2 rounded-lg border border-rose-200 text-rose-700 shadow-xs">
                     <span className="font-bold">{c.schedA.employee.name}</span>: {c.schedA.subject.name} <span className="font-semibold">({c.schedA.startTime}-{c.schedA.endTime})</span> vs {c.schedB.subject.name} <span className="font-semibold">({c.schedB.startTime}-{c.schedB.endTime})</span>
                   </div>
                 ))}
@@ -383,7 +383,7 @@ export default function ScheduleClient({
                 <div className="p-3 space-y-2.5">
                   {getSchedulesByDay(day.id).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-6 opacity-40">
-                      <svg className="w-8 h-8 mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      <svg className="w-8 h-8 mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Kosong</p>
                     </div>
                   ) : (
@@ -395,7 +395,7 @@ export default function ScheduleClient({
                           </span>
                           <button
                             onClick={() => handleDelete(sched.id)}
-                            className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
+                            className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
                             title="Hapus Jadwal"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

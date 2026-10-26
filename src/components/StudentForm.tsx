@@ -207,7 +207,7 @@ export default function StudentForm({ initialData }: { initialData?: Partial<Stu
   return (
     <div className="space-y-6 animate-fade-in-up" style={{ maxWidth: "100%" }}>
       {/* Header */}
-      <div style={{ background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#a78bfa 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
+      <div style={{ background: "linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0284c7 100%)", borderRadius: "1rem", overflow: "hidden", position: "relative" }}>
         <div style={{ position: "absolute", right: -20, top: -20, width: 200, height: 200, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }}></div>
         <div style={{ padding: "2rem", position: "relative", zIndex: 10, display: "flex", alignItems: "center", gap: "1rem" }}>
           <Link href="/students" style={{ width: 40, height: 40, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }} className="hover:bg-white/30">

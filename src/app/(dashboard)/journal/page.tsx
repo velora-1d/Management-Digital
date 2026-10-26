@@ -264,8 +264,8 @@ function JournalContent() {
         icon={<BookOpen />}
         gradient="from-blue-800 via-blue-900 to-blue-600"
         actions={
-          <button onClick={() => setShowCreate(true)} className="inline-flex items-center px-4 py-2 bg-white text-blue-900 rounded-lg text-sm font-bold shadow hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Catat Jurnal Baru
+          <button onClick={() => setShowCreate(true)} className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold tracking-wider transition-all shadow-xs cursor-pointer">
+            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>Catat Jurnal Baru
           </button>
         }
       />

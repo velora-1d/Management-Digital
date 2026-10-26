@@ -163,10 +163,10 @@ export default function FilterBar({
   const isVisible = (type: FilterType) => visibleFilters.includes(type);
 
   return (
-    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-slate-200/60 mb-6 flex flex-wrap items-center gap-4 transition-all hover:shadow-md">
+    <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200 mb-6 flex flex-wrap items-center gap-4 transition-all">
       {isVisible("academicYear") && (
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Tahun Ajaran</label>
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Tahun Ajaran</label>
           <select
             value={filters.academicYearId}
             onChange={(e) => updateFilter("academicYearId", e.target.value)}
@@ -316,7 +316,7 @@ export default function FilterBar({
           });
           router.push(pathname);
         }}
-        className="mt-4 px-4 py-2 text-xs font-bold text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+        className="self-end px-3 py-2 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-all shadow-xs cursor-pointer"
       >
         Reset Filter
       </button>

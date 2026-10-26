@@ -255,11 +255,11 @@ export default function MutationsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-white/70">
-                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase">Siswa</th>
-                        <th className="px-4 py-2 text-center text-[11px] font-semibold text-slate-500 uppercase">Status</th>
-                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase">Kelas Master</th>
-                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase">Kelas Enrollment</th>
+                      <tr className="bg-white border-b border-amber-200">
+                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-600 uppercase">Siswa</th>
+                        <th className="px-4 py-2 text-center text-[11px] font-semibold text-slate-600 uppercase">Status</th>
+                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-600 uppercase">Kelas Master</th>
+                        <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-600 uppercase">Kelas Enrollment</th>
                       </tr>
                     </thead>
                     <tbody>

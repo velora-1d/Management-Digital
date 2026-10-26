@@ -661,32 +661,32 @@ export default function CurriculumPage() {
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-3xl border border-white bg-white/80 p-4 shadow-sm shadow-slate-200/60">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                       Tahun Ajaran
                     </p>
                     <p className="mt-2 text-lg font-black tracking-tight text-slate-800">
                       {academicYearLabel}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-white bg-white/80 p-4 shadow-sm shadow-slate-200/60">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                       Semester
                     </p>
                     <p className="mt-2 text-lg font-black tracking-tight text-slate-800">
                       {getSemesterLabel(curriculum.semester)}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-white bg-white/80 p-4 shadow-sm shadow-slate-200/60">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                       Komponen Aktif
                     </p>
                     <p className="mt-2 text-lg font-black tracking-tight text-slate-800">
                       {allComponents.length} item
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-white bg-white/80 p-4 shadow-sm shadow-slate-200/60">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                       KKM Tersimpan
                     </p>
                     <p className="mt-2 text-lg font-black tracking-tight text-slate-800">
@@ -774,7 +774,7 @@ export default function CurriculumPage() {
                         <button
                           onClick={() => handleDeleteComponent(component.id)}
                           disabled={curriculum.isLocked}
-                          className="rounded-2xl p-3 text-slate-300 transition-all hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
                           aria-label={`Hapus komponen ${component.name}`}
                         >
                           <Trash2 className="h-4 w-4" />

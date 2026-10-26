@@ -235,7 +235,7 @@ export default function CalendarPage() {
             </div>
           ) : upcomingEvents.length === 0 ? (
             <div className="bg-white rounded-3xl p-8 border border-dashed border-slate-200 text-center">
-              <CalendarIcon className="w-8 h-8 text-slate-200 mx-auto mb-3" />
+              <CalendarIcon className="w-8 h-8 text-slate-400 mx-auto mb-3" />
               <p className="text-xs text-slate-400 font-medium">Tidak ada event terdekat</p>
             </div>
           ) : (

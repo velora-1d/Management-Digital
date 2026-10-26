@@ -83,7 +83,7 @@ export default function EmployeeForm({ initialData, employeeType = "guru" }: { i
   };
 
   const gradientColor = isGuru
-    ? "linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#a78bfa 100%)"
+    ? "linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0284c7 100%)"
     : "linear-gradient(135deg,#0ea5e9 0%,#0284c7 50%,#0369a1 100%)";
 
   return (

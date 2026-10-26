@@ -303,13 +303,13 @@ export default function AttendancePage({
 
       {/* Navigation Card */}
       <Card compact>
-        <div className="flex p-1 bg-slate-100/50 rounded-xl w-fit border border-slate-200/50">
+        <div className="flex p-1 bg-slate-100 rounded-xl w-fit border border-slate-200">
           <button
             onClick={() => setActiveTab("input")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm transition-all cursor-pointer ${
               activeTab === "input"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                ? "bg-white text-blue-600 shadow-xs font-semibold border border-slate-200/80"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 font-medium"
             }`}
           >
             <ClipboardList className="w-4 h-4" />
@@ -317,10 +317,10 @@ export default function AttendancePage({
           </button>
           <button
             onClick={() => setActiveTab("recap")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm transition-all cursor-pointer ${
               activeTab === "recap"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                ? "bg-white text-blue-600 shadow-xs font-semibold border border-slate-200/80"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 font-medium"
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -421,7 +421,7 @@ export default function AttendancePage({
                                 <input
                                   type="text"
                                   placeholder="Opsional"
-                                  className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
+                                  className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                                   value={item.notes}
                                   onChange={(e) => handleNoteChange(item.studentId, e.target.value)}
                                   // Auto focus styling
@@ -463,7 +463,7 @@ export default function AttendancePage({
                 ) : (
                   <div className="text-center py-16 px-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                      <Users className="w-8 h-8 text-slate-300" />
+                      <Users className="w-8 h-8 text-slate-400" />
                     </div>
                     <h3 className="text-slate-800 font-semibold mb-1 relative z-10">Data Murid Kosong</h3>
                     <p className="text-slate-500 text-sm max-w-sm mx-auto relative z-10">
@@ -474,7 +474,7 @@ export default function AttendancePage({
               ) : (
                 <div className="text-center py-16 px-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <Search className="w-8 h-8 text-slate-300" />
+                    <Search className="w-8 h-8 text-slate-400" />
                   </div>
                   <h3 className="text-slate-800 font-semibold mb-1 relative z-10">Pilih Kelas</h3>
                   <p className="text-slate-500 text-sm max-w-sm mx-auto relative z-10">

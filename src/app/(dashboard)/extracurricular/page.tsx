@@ -247,7 +247,7 @@ export default function ExtracurricularPage() {
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-2 uppercase tracking-tight">
                         <span className="font-semibold text-slate-700">Pembina:</span> {item.employee?.name || "—"} 
-                        <span className="text-slate-300">|</span>
+                        <span className="text-slate-400">|</span>
                         <span className="font-semibold text-slate-700">Jadwal:</span> {item.schedule || "Belum dijadwalkan"}
                       </p>
                     </div>
@@ -293,7 +293,7 @@ export default function ExtracurricularPage() {
                     
                     {item.members.length === 0 ? (
                       <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-                        <Users className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                        <Users className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                         <p className="text-sm text-slate-400">Belum ada anggota terdaftar</p>
                         <button 
                           onClick={() => openAssign(item.id)}

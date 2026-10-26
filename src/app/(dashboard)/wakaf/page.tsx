@@ -531,7 +531,7 @@ function WakafContent() {
         ]}
       />
 
-      <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm">
+      <div className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
         <div className="min-w-[220px] flex-1">
           <label className="ml-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Donatur
@@ -704,7 +704,7 @@ function WakafContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                           </svg>
                         </button>
-                      ) : <span className="text-[10px] font-bold text-slate-300">VOID</span>}
+                      ) : <span className="inline-block px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded">VOID</span>}
 
                       {openActionId === t.id && (
                         <div className="absolute top-10 right-10 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-1 min-w-[120px]">

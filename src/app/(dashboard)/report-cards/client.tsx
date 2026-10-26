@@ -645,7 +645,7 @@ export default function ReportCardsPage({
           <div className="space-y-4">
             {!selectedClassroom || !selectedCurriculum ? (
               <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
-                <Info className="mx-auto h-12 w-12 text-slate-300 mb-2" />
+                <Info className="mx-auto h-12 w-12 text-slate-400 mb-2" />
                 <p className="text-sm text-slate-500">Pilih kelas dan kurikulum untuk melanjutkan</p>
               </div>
             ) : students.length === 0 ? (
@@ -939,7 +939,7 @@ export default function ReportCardsPage({
 
             {!generatedData ? (
               <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-slate-200 border-dashed">
-                <FileText className="mx-auto h-12 w-12 text-slate-300 mb-2" />
+                <FileText className="mx-auto h-12 w-12 text-slate-400 mb-2" />
                 <p className="text-sm text-slate-500 px-4">Pastikan kelengkapan nilai & catatan wali kelas sudah sesuai, lalu klik &quot;Generate Data&quot; untuk memproses rapor.</p>
               </div>
             ) : (

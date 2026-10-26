@@ -343,7 +343,7 @@ function CashAccountsContent() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <button className="p-2 text-slate-300 group-hover:hidden">
+                      <button className="p-2 text-slate-400 group-hover:hidden">
                          <MoreHorizontal className="w-5 h-5" />
                       </button>
                     </td>
@@ -362,12 +362,12 @@ function CashAccountsContent() {
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-500" 
             onClick={() => setModalOpen(false)}
           />
-          <div className="bg-white rounded-4xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 animate-in zoom-in-95 duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 border border-slate-200">
             {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-black text-slate-900 uppercase">{editingId ? "Update Akun" : "Registrasi Akun"}</h3>
-                <p className="text-sm text-slate-400 font-medium">Lengkapi parameter akun kas dengan benar.</p>
+                <p className="text-sm text-slate-500 font-medium">Lengkapi parameter akun kas dengan benar.</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
                  <CreditCard className="w-6 h-6" />
@@ -377,16 +377,16 @@ function CashAccountsContent() {
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Identitas Akun</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Identitas Akun</label>
                 <div className="relative group">
-                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
+                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                       <LayoutGrid className="w-5 h-5" />
                    </div>
                   <input
                     type="text"
                     required
                     placeholder="Contoh: Kas Utama Bendahara"
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
                     value={form.accountName}
                     onChange={(e) => setForm({ ...form, accountName: e.target.value })}
                   />
@@ -395,30 +395,30 @@ function CashAccountsContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Bank (Optional)</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nama Bank (Optional)</label>
                   <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                         <Building2 className="w-5 h-5" />
                     </div>
                     <input
                       type="text"
                       placeholder="BSI / Mandiri / dll"
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
                       value={form.bankName}
                       onChange={(e) => setForm({ ...form, bankName: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nomor Rekening</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nomor Rekening</label>
                   <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-400 transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                         <Hash className="w-5 h-5" />
                     </div>
                     <input
                       type="text"
                       placeholder="Masukan angka saja"
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-300"
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-slate-700 font-bold transition-all placeholder:text-slate-400"
                       value={form.accountNumber}
                       onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
                     />

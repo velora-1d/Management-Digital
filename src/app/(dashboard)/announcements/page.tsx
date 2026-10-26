@@ -253,7 +253,7 @@ export default function AnnouncementsPage() {
       ) : data.length === 0 ? (
         <Card className="py-16 flex flex-col items-center justify-center text-center border-dashed border-2 border-slate-200">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-            <Bell className="w-8 h-8 text-slate-300" />
+            <Bell className="w-8 h-8 text-slate-400" />
           </div>
           <h3 className="text-slate-800 font-semibold">Tidak ada pengumuman</h3>
           <p className="text-slate-500 text-sm max-w-sm mt-1 px-4">

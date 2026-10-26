@@ -228,11 +228,11 @@ export default function TransactionCategoriesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card Pemasukan */}
         <Card>
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
-               <ArrowUpCircle className="w-5 h-5 text-emerald-400" />
-               <h3 className="font-heading font-bold text-white">Pemasukan</h3>
-               <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full">{inPagination.total}</span>
+               <ArrowUpCircle className="w-5 h-5 text-emerald-600" />
+               <h3 className="font-heading font-bold text-slate-800">Pemasukan</h3>
+               <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-full">{inPagination.total}</span>
             </div>
           </div>
           <div style={{ overflowX: "auto" }}>
@@ -295,11 +295,11 @@ export default function TransactionCategoriesPage() {
 
         {/* Card Pengeluaran */}
         <Card>
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
-               <ArrowDownCircle className="w-5 h-5 text-rose-400" />
-               <h3 className="font-heading font-bold text-white">Pengeluaran</h3>
-               <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 text-[10px] font-bold rounded-full">{outPagination.total}</span>
+               <ArrowDownCircle className="w-5 h-5 text-rose-600" />
+               <h3 className="font-heading font-bold text-slate-800">Pengeluaran</h3>
+               <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold rounded-full">{outPagination.total}</span>
             </div>
           </div>
           <div style={{ overflowX: "auto" }}>

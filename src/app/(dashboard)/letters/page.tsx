@@ -377,7 +377,7 @@ export default function LettersPage() {
             <div className="relative mb-6">
               <div className="absolute inset-0 bg-slate-100 blur-2xl rounded-full"></div>
               <div className="relative w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center border border-slate-100 shadow-inner">
-                <FileText className="w-10 h-10 text-slate-300" />
+                <FileText className="w-10 h-10 text-slate-400" />
               </div>
             </div>
             <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">Surat tidak ditemukan</h3>

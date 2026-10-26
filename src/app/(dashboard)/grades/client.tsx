@@ -364,7 +364,7 @@ export default function GradesPage({
                                   />
                                 </td>
                                 <td className="px-4 py-3.5 text-center">
-                                  <span className={`px-2 py-1 rounded text-xs font-black ${g?.predikat ? "bg-blue-50 text-blue-700" : "text-slate-300"}`}>
+                                  <span className={`px-2 py-1 rounded text-xs font-black ${g?.predikat ? "bg-blue-50 text-blue-700 border border-blue-200" : "text-slate-400 font-semibold"}`}>
                                     {g?.predikat || "-"}
                                   </span>
                                 </td>
@@ -413,7 +413,7 @@ export default function GradesPage({
                     <p className="text-slate-500 font-medium">Mengkalkulasi nilai akhir...</p>
                   </div>
                 ) : finalGrades.length === 0 ? (
-                  <div className="py-20 flex flex-col items-center justify-center text-slate-300 grayscale opacity-50">
+                  <div className="py-20 flex flex-col items-center justify-center text-slate-400 grayscale opacity-50">
                     <Calculator className="w-16 h-16 mb-4" />
                     <p className="font-bold text-lg">Belum Ada Data Hasil Kalkulasi</p>
                     <p className="text-sm italic">Klik tombol &quot;Proses Sekarang&quot; untuk memulai perhitungan.</p>
@@ -473,7 +473,7 @@ export default function GradesPage({
                 </div>
 
                 {finalGrades.length === 0 ? (
-                  <div className="py-20 flex flex-col items-center justify-center text-slate-300">
+                  <div className="py-20 flex flex-col items-center justify-center text-slate-400">
                     <FileText className="w-16 h-16 mb-4 opacity-20" />
                     <p className="italic text-sm">Lakukan kalkulasi nilai akhir terlebih dahulu untuk melihat deskripsi.</p>
                   </div>

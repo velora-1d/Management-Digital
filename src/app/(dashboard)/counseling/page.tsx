@@ -246,7 +246,7 @@ export default function CounselingPage() {
         </Card>
       ) : data.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
-          <MessageSquare className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+          <MessageSquare className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-400 text-sm font-medium">Belum ada catatan bimbingan konseling</p>
         </div>
       ) : (

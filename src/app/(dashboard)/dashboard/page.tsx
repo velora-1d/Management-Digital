@@ -325,11 +325,11 @@ export default async function DashboardPage(props: { searchParams: Promise<{ [ke
 
   return (
     <div className="space-y-6">
-      <Suspense fallback={<div className="h-16 bg-white/50 rounded-2xl animate-pulse" />}>
+      <Suspense fallback={<div className="h-16 bg-slate-100 rounded-2xl animate-pulse" />}>
         <FilterBar />
       </Suspense>
       
-      <Suspense fallback={<div className="h-12 bg-white/50 rounded-xl animate-pulse" />}>
+      <Suspense fallback={<div className="h-12 bg-slate-100 rounded-xl animate-pulse" />}>
         <DashboardTabs initialTab={activeTab} allowedTabs={allowedTabs} />
       </Suspense>
       
