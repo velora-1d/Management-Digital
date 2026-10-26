@@ -306,12 +306,17 @@ export default function TenantSwitcher() {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                router.push("/settings");
+                router.push("/school-levels");
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-blue-600 hover:bg-blue-50 cursor-pointer rounded-lg font-medium transition-colors text-left"
+              className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-blue-600 hover:bg-blue-50 cursor-pointer rounded-lg font-medium transition-colors text-left"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
-              <span>Kelola Jenjang di Pengaturan</span>
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+                <span>Kelola Tingkatan Sekolah (CRUD)</span>
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-mono font-semibold">
+                + Tambah
+              </span>
             </button>
           </div>
         )}

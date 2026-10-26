@@ -2,19 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { schoolLevels } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/tenant";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const { tenantId } = await getTenantContext();
+    const { searchParams } = new URL(req.url);
+    const includeAll = searchParams.get("all") === "true";
     const cookieStore = await cookies();
     const savedActiveId = cookieStore.get("active_school_level_id")?.value;
 
+    const conditions = [eq(schoolLevels.tenantId, tenantId)];
+    if (!includeAll) {
+      conditions.push(eq(schoolLevels.isActive, true));
+    }
+
     const levels = await db
-      .select()
+      .select({
+        id: schoolLevels.id,
+        tenantId: schoolLevels.tenantId,
+        code: schoolLevels.code,
+        name: schoolLevels.name,
+        orderNumber: schoolLevels.orderNumber,
+        isActive: schoolLevels.isActive,
+        pin: schoolLevels.pin,
+        class_rooms_count: sql<number>`(
+          SELECT count(*) FROM classrooms c 
+          WHERE c.school_level_id = ${schoolLevels.id} AND c.deleted_at IS NULL
+        )`.mapWith(Number),
+        students_count: sql<number>`(
+          SELECT count(*) FROM students s 
+          WHERE s.school_level_id = ${schoolLevels.id} AND s.deleted_at IS NULL AND s.status = 'aktif'
+        )`.mapWith(Number),
+      })
       .from(schoolLevels)
-      .where(and(eq(schoolLevels.tenantId, tenantId), eq(schoolLevels.isActive, true)))
+      .where(and(...conditions))
       .orderBy(asc(schoolLevels.orderNumber), asc(schoolLevels.id));
 
     // Fallback seed jika tenant belum memiliki data jenjang di DB
@@ -25,11 +48,27 @@ export async function GET() {
         { tenantId, code: "MA", name: "Madrasah Aliyah (MA)", orderNumber: 2, isActive: true },
         { tenantId, code: "PONDOK", name: "Pondok Pesantren", orderNumber: 3, isActive: true },
       ];
-      effectiveLevels = await db.insert(schoolLevels).values(defaultSeeds).returning();
+      await db.insert(schoolLevels).values(defaultSeeds);
+      effectiveLevels = await db
+        .select({
+          id: schoolLevels.id,
+          tenantId: schoolLevels.tenantId,
+          code: schoolLevels.code,
+          name: schoolLevels.name,
+          orderNumber: schoolLevels.orderNumber,
+          isActive: schoolLevels.isActive,
+          pin: schoolLevels.pin,
+          class_rooms_count: sql<number>`0`.mapWith(Number),
+          students_count: sql<number>`0`.mapWith(Number),
+        })
+        .from(schoolLevels)
+        .where(and(...conditions))
+        .orderBy(asc(schoolLevels.orderNumber), asc(schoolLevels.id));
     }
 
     const activeLevel =
       (savedActiveId && effectiveLevels.find((l) => String(l.id) === savedActiveId)) ||
+      effectiveLevels.find((l) => l.isActive) ||
       effectiveLevels[0] ||
       null;
 
@@ -40,7 +79,10 @@ export async function GET() {
         code: l.code,
         name: l.name,
         orderNumber: l.orderNumber,
+        isActive: l.isActive,
         hasPin: Boolean(l.pin && l.pin.trim() !== ""),
+        class_rooms_count: l.class_rooms_count || 0,
+        students_count: l.students_count || 0,
       })),
       activeLevelId: activeLevel?.id ?? null,
       activeLevel: activeLevel
@@ -49,6 +91,7 @@ export async function GET() {
             code: activeLevel.code,
             name: activeLevel.name,
             orderNumber: activeLevel.orderNumber,
+            isActive: activeLevel.isActive,
             hasPin: Boolean(activeLevel.pin && activeLevel.pin.trim() !== ""),
           }
         : null,

@@ -8,6 +8,7 @@ import TenantSwitcher from "@/components/TenantSwitcher";
 // Comprehensive Breadcrumb label mapping
 const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
+  "school-levels": "Tingkatan Sekolah",
   ppdb: "PPDB",
   "re-registration": "Daftar Ulang",
   students: "Data Siswa",
@@ -52,6 +53,7 @@ const labelMap: Record<string, string> = {
 const searchableNavigation = [
   { name: "Dashboard", href: "/dashboard", group: "Utama" },
   { name: "Penerimaan PPDB", href: "/ppdb", group: "Penerimaan" },
+  { name: "Tingkatan Sekolah", href: "/school-levels", group: "Data Master" },
   { name: "Daftar Ulang Siswa", href: "/re-registration", group: "Penerimaan" },
   { name: "Data Siswa", href: "/students", group: "Data Master" },
   { name: "Mutasi & Kenaikan", href: "/mutations", group: "Data Master" },
