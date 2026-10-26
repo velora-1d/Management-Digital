@@ -4,7 +4,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Wallet, Search, CheckCircle2, Download } from "lucide-react";
+import { Wallet, Search, CheckCircle2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import FilterBar from "@/components/FilterBar";
 import { useSearchParams } from "next/navigation";

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Tag, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { Search, Tag, ArrowUpCircle, ArrowDownCircle, Trash2 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { ExportButtons } from "@/lib/export-utils";
 import Card from "@/components/ui/Card";

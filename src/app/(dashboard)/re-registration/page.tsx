@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { UserCheck, CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react";
+import { UserCheck, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 type ReRegistrationStatus = "pending" | "confirmed" | "not_registered";
 type PaymentField = "is_fee_paid" | "is_books_paid" | "is_books_received";
