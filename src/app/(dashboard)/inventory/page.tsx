@@ -5,7 +5,8 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Package, CheckCircle2, Trash2 } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { Package, CheckCircle2, Trash2, Plus, Save, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface InventoryItem {
@@ -72,145 +73,92 @@ export default function InventoryPage() {
     0
   );
 
-  const handleAdd = () => {
-    Swal.fire({
-      title: "Tambah Aset",
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
-          <input id="swal-inv-name" class="swal2-input" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
-          <input id="swal-inv-cat" class="swal2-input" placeholder="Mebel, Elektronik..." style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
-          <input id="swal-inv-qty" type="number" class="swal2-input" value="1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
-          <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
-            <option value="Baik">Baik</option>
-            <option value="Rusak Ringan">Rusak Ringan</option>
-            <option value="Rusak Berat">Rusak Berat</option>
-          </select></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
-          <input id="swal-inv-loc" class="swal2-input" placeholder="Ruang Kelas 1" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
+  // LeftDrawer States
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    quantity: 1,
+    condition: "Baik" as "Baik" | "Rusak Ringan" | "Rusak Berat",
+    location: "",
+    acquisitionCost: 0,
+  });
+  const [formLoading, setFormLoading] = useState(false);
 
-          <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan (Per item)</label>
-          <input id="swal-inv-cost" type="number" class="swal2-input" value="0" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#3b82f6",
-      preConfirm: () => {
-        return {
-          name: (document.getElementById("swal-inv-name") as HTMLInputElement).value,
-          category: (document.getElementById("swal-inv-cat") as HTMLInputElement).value,
-          quantity: parseInt((document.getElementById("swal-inv-qty") as HTMLInputElement).value) || 1,
-          condition: (document.getElementById("swal-inv-cond") as HTMLSelectElement).value,
-          location: (document.getElementById("swal-inv-loc") as HTMLInputElement).value,
-          acquisitionCost: parseInt((document.getElementById("swal-inv-cost") as HTMLInputElement).value) || 0,
-        };
-      },
-    }).then(async (r) => {
-      if (r.isConfirmed) {
-        try {
-          const res = await fetch("/api/inventory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(r.value),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            Swal.fire("Berhasil", "Aset ditambahkan.", "success");
-            refreshInventory();
-          } else {
-            Swal.fire("Gagal", data.error || "Gagal menyimpan aset", "error");
-          }
-        } catch {
-          Swal.fire("Error", "Gagal menghubungi server", "error");
-        }
-      }
+  const handleOpenAdd = () => {
+    setDrawerMode("add");
+    setEditingId(null);
+    setFormData({
+      name: "",
+      category: "",
+      quantity: 1,
+      condition: "Baik",
+      location: "",
+      acquisitionCost: 0,
     });
+    setIsDrawerOpen(true);
   };
 
-  const handleEdit = async (id: number) => {
-    Swal.fire({ title: "Memuat...", didOpen: () => Swal.showLoading() });
+  const handleOpenEdit = async (id: number) => {
+    setDrawerMode("edit");
+    setEditingId(id);
+    setIsDrawerOpen(true);
+    setFormLoading(true);
     try {
       const res = await fetch(`/api/inventory/${id}`);
       const item = await res.json();
-      Swal.close();
-
-      if (item.error) {
-        Swal.fire("Error", item.error, "error");
-        return;
+      if (item && !item.error) {
+        setFormData({
+          name: item.name || "",
+          category: item.category || "",
+          quantity: item.quantity || 1,
+          condition: item.condition || "Baik",
+          location: item.location || "",
+          acquisitionCost: item.acquisitionCost || 0,
+        });
       }
-
-      Swal.fire({
-        title: "Edit Aset",
-        html: `
-          <div style="text-align:left;display:grid;gap:0.75rem;">
-            <div><label style="font-size:0.75rem;font-weight:600;">Nama Barang</label>
-            <input id="swal-inv-name" class="swal2-input" value="${item.name || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
-            <div><label style="font-size:0.75rem;font-weight:600;">Kategori</label>
-            <input id="swal-inv-cat" class="swal2-input" value="${item.category || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
-            <div><label style="font-size:0.75rem;font-weight:600;">Jumlah</label>
-            <input id="swal-inv-qty" type="number" class="swal2-input" value="${item.quantity || 1}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-            
-            <div><label style="font-size:0.75rem;font-weight:600;">Kondisi</label>
-            <select id="swal-inv-cond" class="swal2-select" style="margin:0;height:2.5rem;font-size:0.875rem;width:100%;padding:0 0.5rem;">
-              <option value="Baik" ${item.condition === "Baik" ? "selected" : ""}>Baik</option>
-              <option value="Rusak Ringan" ${item.condition === "Rusak Ringan" ? "selected" : ""}>Rusak Ringan</option>
-              <option value="Rusak Berat" ${item.condition === "Rusak Berat" ? "selected" : ""}>Rusak Berat</option>
-            </select></div>
-            
-            <div><label style="font-size:0.75rem;font-weight:600;">Lokasi</label>
-            <input id="swal-inv-loc" class="swal2-input" value="${item.location || ""}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-
-            <div><label style="font-size:0.75rem;font-weight:600;">Harga Perolehan</label>
-            <input id="swal-inv-cost" type="number" class="swal2-input" value="${item.acquisitionCost || 0}" style="margin:0;height:2.5rem;font-size:0.875rem;"></div>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: "Simpan",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#3b82f6",
-        preConfirm: () => {
-          return {
-            name: (document.getElementById("swal-inv-name") as HTMLInputElement).value,
-            category: (document.getElementById("swal-inv-cat") as HTMLInputElement).value,
-            quantity: parseInt((document.getElementById("swal-inv-qty") as HTMLInputElement).value) || 1,
-            condition: (document.getElementById("swal-inv-cond") as HTMLSelectElement).value,
-            location: (document.getElementById("swal-inv-loc") as HTMLInputElement).value,
-            acquisitionCost: parseInt((document.getElementById("swal-inv-cost") as HTMLInputElement).value) || 0,
-          };
-        },
-      }).then(async (r) => {
-        if (r.isConfirmed) {
-          try {
-            const resUpdate = await fetch(`/api/inventory/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(r.value),
-            });
-            const dataUpdate = await resUpdate.json();
-            if (resUpdate.ok) {
-              Swal.fire("Berhasil", "Aset diperbarui.", "success");
-              refreshInventory();
-            } else {
-              Swal.fire("Gagal", dataUpdate.error || "Gagal update aset", "error");
-            }
-          } catch {
-            Swal.fire("Error", "Gagal menghubungi server", "error");
-          }
-        }
-      });
     } catch {
       Swal.fire("Error", "Gagal memuat detail aset", "error");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      Swal.fire("Perhatian", "Nama barang wajib diisi", "warning");
+      return;
+    }
+    setFormLoading(true);
+    try {
+      const url = drawerMode === "edit" ? `/api/inventory/${editingId}` : "/api/inventory";
+      const method = drawerMode === "edit" ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire({
+          title: "Berhasil",
+          text: drawerMode === "edit" ? "Aset berhasil diperbarui" : "Aset berhasil ditambahkan",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setIsDrawerOpen(false);
+        refreshInventory();
+      } else {
+        Swal.fire("Gagal", data.error || "Gagal menyimpan aset", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -311,8 +259,8 @@ export default function InventoryPage() {
         title="Daftar Aset"
         icon={<Package className="w-5 h-5 text-blue-600" />}
         actions={
-          <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+          <button onClick={handleOpenAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-xs">
+            <Plus className="w-4 h-4" />
             Tambah Aset
           </button>
         }
@@ -437,7 +385,7 @@ export default function InventoryPage() {
                             <div style={{ padding: "0.375rem 0.75rem", fontSize: "0.625rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #f1f5f9", marginBottom: "0.25rem" }}>
                               Aksi Barang
                             </div>
-                            <button onClick={() => { setOpenActionId(null); handleEdit(item.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
+                            <button onClick={() => { setOpenActionId(null); handleOpenEdit(item.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-blue-50">
                               Edit Barang
                             </button>
                             <button onClick={() => { setOpenActionId(null); handleDelete(item.id); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", padding: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#ef4444", background: "transparent", border: "none", cursor: "pointer", borderRadius: "0.5rem", textAlign: "left" }} className="hover:bg-rose-50">
@@ -467,6 +415,131 @@ export default function InventoryPage() {
         </div>
         <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
       </Card>
+
+      {/* LeftDrawer Tambah / Edit Aset */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title={drawerMode === "add" ? "Tambah Aset Inventaris" : "Edit Aset Inventaris"}
+        subtitle="Formulir pendataan sarana & prasarana madrasah"
+        width="max-w-lg"
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Nama Barang / Aset <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Contoh: Proyektor Epson EB-X500 / Meja Guru"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Kategori Barang
+              </label>
+              <input
+                type="text"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder="Mebel, Elektronik, dll"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Jumlah Unit
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Kondisi Barang
+              </label>
+              <select
+                value={formData.condition}
+                onChange={(e) => setFormData({ ...formData, condition: e.target.value as "Baik" | "Rusak Ringan" | "Rusak Berat" })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 cursor-pointer"
+              >
+                <option value="Baik">Baik</option>
+                <option value="Rusak Ringan">Rusak Ringan</option>
+                <option value="Rusak Berat">Rusak Berat</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Lokasi / Ruangan
+              </label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Ruang Lab IPA / Kelas 7A"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Harga Perolehan (Per Unit)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">Rp</span>
+              <input
+                type="number"
+                value={formData.acquisitionCost || ""}
+                onChange={(e) => setFormData({ ...formData, acquisitionCost: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+                className="w-full pl-10 pr-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              {formLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{drawerMode === "add" ? "Simpan Aset" : "Perbarui Aset"}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

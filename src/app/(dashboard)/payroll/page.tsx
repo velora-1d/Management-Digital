@@ -5,7 +5,8 @@ import Pagination from "@/components/Pagination";
 import { ExportButtons, fmtRupiah } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Banknote, CheckCircle2, Trash2 } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { Banknote, CheckCircle2, Trash2, Save, Loader2 } from "lucide-react";
 
 type PayrollComponentType = "earning" | "deduction";
 type EmployeeType = "guru" | "staff";
@@ -62,6 +63,11 @@ export default function PayrollPage() {
   
   // States for Atur Gaji
   const [employees, setEmployees] = useState<EmployeeItem[]>([]);
+  const [salaryDrawerOpen, setSalaryDrawerOpen] = useState(false);
+  const [selectedEmp, setSelectedEmp] = useState<EmployeeItem | null>(null);
+  const [drawerComponents, setDrawerComponents] = useState<SalaryComponent[]>([]);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [savingSalary, setSavingSalary] = useState(false);
   
   // States for Komponen
   const [components, setComponents] = useState<SalaryComponent[]>([]);
@@ -288,61 +294,54 @@ export default function PayrollPage() {
   }, [activeTab, loadComponents, loadEmployees, loadPayrolls]);
 
   const setupSalary = async (empId: number, empName: string) => {
-    Swal.fire({title: "Memuat...", allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+    const emp = employees.find((e) => e.id === empId) || { id: empId, name: empName, type: "guru" as EmployeeType };
+    setSelectedEmp(emp);
+    setSalaryDrawerOpen(true);
+    setDrawerLoading(true);
     try {
       const res = await fetch(`/api/payroll/employees/${empId}/salary`);
       const detail: SalaryDetailResponse = await res.json();
-      Swal.close();
-
-      const comps = detail.components || [];
-      let formHtml = '<div style="text-align:left;display:grid;gap:0.75rem;max-height:350px;overflow-y:auto;">';
-      if (comps.length === 0) formHtml += '<p style="color:#94a3b8;font-size:0.8125rem;">Belum ada komponen gaji.</p>';
-      
-      comps.forEach((c: SalaryComponent, i: number) => {
-        const color = c.type === 'earning' ? '#059669' : '#e11d48';
-        const prefix = c.type === 'earning' ? '+' : '−';
-        formHtml += `<div><label style="font-size:0.75rem;font-weight:600;color:${color};">${prefix} ${c.name}</label><input id="swal-sal-${i}" type="number" class="swal2-input" value="${c.amount || 0}" data-comp-id="${c.id}" style="margin:0; height: 2.5rem; padding: 0.5rem; display:block; width:100%; font-size: 0.875rem; border:1px solid #e2e8f0; border-radius:0.5rem; outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'"></div>`;
-      });
-      formHtml += '</div>';
-
-      Swal.fire({
-        title: 'Atur Gaji: ' + empName,
-        html: formHtml,
-        showCancelButton: true,
-        confirmButtonText: 'Simpan',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#3b82f6',
-        preConfirm: () => {
-          const result: SalaryAssignmentPayload[] = [];
-          comps.forEach((c: SalaryComponent, i: number) => {
-            const el = document.getElementById('swal-sal-' + i) as HTMLInputElement;
-            result.push({ component_id: c.id, amount: Number(el?.value) || 0 });
-          });
-          return result;
-        }
-      }).then(async (r) => {
-        if (r.isConfirmed) {
-          try {
-            const saveRes = await fetch(`/api/payroll/employees/${empId}/salary`, {
-              method: "PUT",
-              headers: {"Content-Type": "application/json"},
-              body: JSON.stringify(r.value)
-            });
-            const saveData = await saveRes.json();
-            if (saveRes.ok && saveData.success) {
-              Swal.fire("Berhasil", "Gaji diperbarui", "success");
-            } else {
-              Swal.fire("Gagal", saveData.error, "error");
-            }
-          } catch {
-            Swal.fire("Error", "Gagal menyimpan", "error");
-          }
-        }
-      });
+      setDrawerComponents(detail.components || []);
     } catch {
-      Swal.fire("Error", "Gagal menghubungi server", "error");
+      Swal.fire("Error", "Gagal memuat komponen gaji", "error");
+    } finally {
+      setDrawerLoading(false);
     }
-  }
+  };
+
+  const handleSaveSalaryDrawer = async () => {
+    if (!selectedEmp) return;
+    setSavingSalary(true);
+    try {
+      const payload: SalaryAssignmentPayload[] = drawerComponents.map((c) => ({
+        component_id: c.id,
+        amount: Number(c.amount) || 0,
+      }));
+
+      const saveRes = await fetch(`/api/payroll/employees/${selectedEmp.id}/salary`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const saveData = await saveRes.json();
+      if (saveRes.ok && saveData.success) {
+        Swal.fire({
+          title: "Berhasil",
+          text: `Gaji ${selectedEmp.name} berhasil diperbarui`,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setSalaryDrawerOpen(false);
+      } else {
+        Swal.fire("Gagal", saveData.error || "Gagal menyimpan", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menyimpan konfigurasi gaji", "error");
+    } finally {
+      setSavingSalary(false);
+    }
+  };
 
   const addComponent = async () => {
     if (!compName) {
@@ -644,31 +643,14 @@ export default function PayrollPage() {
                       <h5 className="font-bold text-slate-800 text-sm">{e.name}</h5>
                       <p className="text-xs text-slate-500 capitalize">{e.type === 'guru' ? 'Guru' : 'Staff'} · {e.position || 'Tanpa Posisi'}</p>
                     </div>
-                    <div className="relative flex justify-end">
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                      <span className="text-[11px] text-slate-500 font-medium">Pengaturan Gaji</span>
                       <button 
-                        onClick={(ev) => { 
-                          ev.stopPropagation(); 
-                          ev.nativeEvent.stopImmediatePropagation();
-                          setOpenActionId(openActionId === e.id ? null : e.id); 
-                        }}
-                        style={{ padding: "0.375rem", borderRadius: "0.5rem", background: "transparent", border: "none", cursor: "pointer", color: "#64748b" }}
-                        className="hover:bg-white transition-colors"
+                        onClick={() => setupSalary(e.id, e.name)}
+                        className="px-3 py-1 bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                       >
-                        <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                        </svg>
+                        Atur Gaji
                       </button>
-
-                      {openActionId === e.id && (
-                        <div 
-                          style={{ position: "absolute", bottom: "100%", right: 0, zIndex: 50, background: "#fff", border: "1px solid #e2e8f0", borderRadius: "0.75rem", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", minWidth: "140px", overflow: "hidden", display: "flex", flexDirection: "column", padding: "0.375rem" }}
-                          onClick={(ev) => ev.stopPropagation()}
-                        >
-                          <button onClick={() => { setOpenActionId(null); setupSalary(e.id, e.name); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-left border-none bg-transparent cursor-pointer">
-                            Atur Gaji
-                          </button>
-                        </div>
-                      )}
                     </div>
 
                   </div>
@@ -798,6 +780,86 @@ export default function PayrollPage() {
           </Card>
         </div>
       )}
+      {/* LeftDrawer Atur Gaji */}
+      <LeftDrawer
+        isOpen={salaryDrawerOpen}
+        onClose={() => setSalaryDrawerOpen(false)}
+        title={`Atur Gaji: ${selectedEmp?.name || ""}`}
+        subtitle={`${selectedEmp?.type === 'guru' ? 'Guru' : 'Staf'} · ${selectedEmp?.position || 'Pegawai'}`}
+        width="max-w-md"
+      >
+        {drawerLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mb-2" />
+            <p className="text-xs">Memuat komponen gaji...</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {drawerComponents.length === 0 ? (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+                Belum ada master komponen gaji. Tambahkan di tab &apos;Master Komponen&apos;.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {drawerComponents.map((c, i) => {
+                  const isEarn = c.type === "earning";
+                  return (
+                    <div key={c.id} className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold ${isEarn ? "text-emerald-700" : "text-rose-600"}`}>
+                          {isEarn ? "+ Pendapatan" : "- Potongan"}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-700">{c.name}</span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">Rp</span>
+                        <input
+                          type="number"
+                          value={c.amount ?? ""}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setDrawerComponents(prev => prev.map((item, idx) => idx === i ? { ...item, amount: val } : item));
+                          }}
+                          placeholder="0"
+                          className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSalaryDrawerOpen(false)}
+                className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSalaryDrawer}
+                disabled={savingSalary || drawerComponents.length === 0}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                {savingSalary ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Simpan Pengaturan</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </LeftDrawer>
     </div>
   );
 }

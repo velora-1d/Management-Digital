@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import ImageUpload from '@/components/ui/ImageUpload';
+import LeftDrawer from '@/components/ui/LeftDrawer';
 import { ensureHttpsUrl } from '@/lib/url';
 import Swal from 'sweetalert2';
 
@@ -159,55 +160,53 @@ export default function HeroesCMS() {
         ))}
       </div>
 
-      {editing && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold font-display">{editing.id ? 'Edit Banner' : 'Tambah Banner Baru'}</h2>
-              <button onClick={() => setEditing(null)} className="text-slate-400 hover:text-slate-900">✕</button>
+      <LeftDrawer
+        isOpen={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing?.id ? 'Edit Banner' : 'Tambah Banner Baru'}
+        subtitle="Formulir konfigurasi banner slideshow beranda madrasah"
+        width="max-w-xl"
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Judul Utama <span className="text-rose-500">*</span></label>
+              <Input name="title" defaultValue={editing?.title} required placeholder="Contoh: Selamat Datang" />
             </div>
-            <form onSubmit={handleSave} className="p-8 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">Judul Utama</label>
-                  <Input name="title" defaultValue={editing.title} required placeholder="Contoh: Selamat Datang" />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">Urutan Tampil</label>
-                  <Input type="number" name="order" defaultValue={editing.order} required />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700">Subtitle / Penjelasan</label>
-                <textarea 
-                  name="subtitle" 
-                  defaultValue={editing.subtitle} 
-                  rows={2} 
-                  className="w-full border border-slate-300 rounded-xl p-4 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700">Gambar Banner</label>
-                <ImageUpload name="image_url" defaultValue={editing.image_url} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">Teks Tombol (Opsional)</label>
-                  <Input name="action_text" defaultValue={editing.action_text} placeholder="Contoh: Daftar Sekarang" />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">URL Tujuan Tombol</label>
-                  <Input name="action_url" defaultValue={editing.action_url} placeholder="Contoh: /daftar" />
-                </div>
-              </div>
-              <div className="pt-6 flex justify-end gap-3 border-t border-slate-50">
-                <Button variant="ghost" type="button" onClick={() => setEditing(null)}>Batal</Button>
-                <Button type="submit">Simpan Banner</Button>
-              </div>
-            </form>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Urutan Tampil</label>
+              <Input type="number" name="order" defaultValue={editing?.order ?? 1} required />
+            </div>
           </div>
-        </div>
-      )}
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Subtitle / Penjelasan</label>
+            <textarea 
+              name="subtitle" 
+              defaultValue={editing?.subtitle} 
+              rows={2} 
+              className="w-full border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm bg-white text-slate-800 resize-none" 
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Gambar Banner</label>
+            <ImageUpload name="image_url" defaultValue={editing?.image_url || editing?.mediaUrl} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Teks Tombol (Opsional)</label>
+              <Input name="action_text" defaultValue={editing?.action_text || editing?.ctaText} placeholder="Contoh: Daftar Sekarang" />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">URL Tujuan Tombol</label>
+              <Input name="action_url" defaultValue={editing?.action_url || editing?.ctaUrl} placeholder="Contoh: /daftar" />
+            </div>
+          </div>
+          <div className="pt-4 flex justify-end gap-2.5 border-t border-slate-100">
+            <Button variant="ghost" type="button" onClick={() => setEditing(null)}>Batal</Button>
+            <Button type="submit">Simpan Banner</Button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

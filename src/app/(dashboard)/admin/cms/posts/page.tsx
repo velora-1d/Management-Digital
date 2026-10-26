@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import ImageUpload from '@/components/ui/ImageUpload';
+import LeftDrawer from '@/components/ui/LeftDrawer';
 import Swal from 'sweetalert2';
 import { CheckCircle2, Trash2 } from 'lucide-react';
 
@@ -223,65 +224,65 @@ export default function PostsCMS() {
         </table>
       </div>
 
-      {editing && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold">{editing.id ? 'Edit Berita' : 'Buat Berita Baru'}</h2>
-              <button onClick={() => setEditing(null)} className="text-slate-400 hover:text-slate-900">✕</button>
-            </div>
-            <form onSubmit={handleSave} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Judul Berita</label>
-                <Input name="title" defaultValue={editing.title} required placeholder="Contoh: Kegiatan Pondok Ramadhan" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Slug (URL)</label>
-                  <Input name="slug" defaultValue={editing.slug} required placeholder="kegiatan-pondok-ramadhan" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Kategori</label>
-                  <select name="category" defaultValue={editing.category} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="Berita">Berita</option>
-                    <option value="Pengumuman">Pengumuman</option>
-                    <option value="Artikel">Artikel</option>
-                    <option value="Kesiswaan">Kesiswaan</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Status</label>
-                  <select name="status" defaultValue={editing.status} className="w-full h-11 border border-slate-300 rounded-xl px-4 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Thumbnail Gambar</label>
-                  <ImageUpload name="thumbnail_url" defaultValue={editing.thumbnail_url} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Konten Berita</label>
-                <textarea 
-                  name="content" 
-                  defaultValue={editing.content} 
-                  required 
-                  rows={8}
-                  className="w-full border border-slate-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Tulis berita di sini (suport Markdown)..."
-                />
-              </div>
-              <div className="pt-4 flex justify-end gap-3">
-                <Button variant="ghost" type="button" onClick={() => setEditing(null)}>Batal</Button>
-                <Button type="submit">Simpan Berita</Button>
-              </div>
-            </form>
+      <LeftDrawer
+        isOpen={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing?.id ? 'Edit Berita' : 'Buat Berita Baru'}
+        subtitle="Formulir publikasi berita dan artikel website madrasah"
+        width="max-w-xl"
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Judul Berita <span className="text-rose-500">*</span>
+            </label>
+            <Input name="title" defaultValue={editing?.title} required placeholder="Contoh: Kegiatan Pondok Ramadhan" />
           </div>
-        </div>
-      )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Slug (URL)</label>
+              <Input name="slug" defaultValue={editing?.slug} required placeholder="kegiatan-pondok-ramadhan" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kategori</label>
+              <select name="category" defaultValue={editing?.category || "Berita"} className="w-full h-10 border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white text-slate-800 text-sm">
+                <option value="Berita">Berita</option>
+                <option value="Pengumuman">Pengumuman</option>
+                <option value="Artikel">Artikel</option>
+                <option value="Kesiswaan">Kesiswaan</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Status</label>
+              <select name="status" defaultValue={editing?.status || "published"} className="w-full h-10 border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white text-slate-800 text-sm">
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Thumbnail Gambar</label>
+              <ImageUpload name="thumbnail_url" defaultValue={editing?.thumbnail_url || editing?.thumbnailUrl} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Konten Berita</label>
+            <textarea 
+              name="content" 
+              defaultValue={editing?.content} 
+              required 
+              rows={8}
+              className="w-full border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white text-slate-800 text-sm resize-none"
+              placeholder="Tulis berita di sini (suport Markdown)..."
+            />
+          </div>
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-2.5">
+            <Button variant="ghost" type="button" onClick={() => setEditing(null)}>Batal</Button>
+            <Button type="submit">Simpan Berita</Button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

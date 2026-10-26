@@ -1,13 +1,12 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Trash2, CheckCircle2 } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { Trash2, CheckCircle2, UserPlus, Save, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Teacher {
@@ -17,7 +16,21 @@ interface Teacher {
   position?: string;
   phone?: string;
   status: 'aktif' | 'nonaktif';
+  address?: string;
+  joinDate?: string;
+  baseSalary?: number;
 }
+
+const initialFormState = {
+  name: "",
+  nip: "",
+  position: "",
+  status: "aktif" as "aktif" | "nonaktif",
+  phone: "",
+  address: "",
+  joinDate: "",
+  baseSalary: 0,
+};
 
 export default function TeachersClient({ initialData }: { initialData: Teacher[] }) {
   const [search, setSearch] = useState("");
@@ -25,10 +38,16 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+
+  // LeftDrawer Form States
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const [formLoading, setFormLoading] = useState(false);
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["teachers", search, statusFilter],
@@ -44,16 +63,97 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
   });
 
   const data: Teacher[] = (result?.data as Teacher[]) || [];
-
   const refreshTeachers = () => queryClient.invalidateQueries({ queryKey: ["teachers"] });
-
   const filteredData = data;
 
   const totalPages = Math.ceil(filteredData.length / limit) || 1;
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
 
-  const handleEdit = (t: Teacher) => {
-    router.push(`/teachers/${t.id}/edit`);
+  const handleOpenAdd = () => {
+    setDrawerMode("add");
+    setEditingId(null);
+    setFormData(initialFormState);
+    setIsDrawerOpen(true);
+  };
+
+  const handleEdit = async (t: Teacher) => {
+    setDrawerMode("edit");
+    setEditingId(t.id);
+    setFormData({
+      name: t.name || "",
+      nip: t.nip || "",
+      position: t.position || "",
+      status: t.status || "aktif",
+      phone: t.phone || "",
+      address: t.address || "",
+      joinDate: t.joinDate ? t.joinDate.substring(0, 10) : "",
+      baseSalary: t.baseSalary || 0,
+    });
+    setIsDrawerOpen(true);
+
+    // Fetch full details if necessary
+    try {
+      const res = await fetch(`/api/teachers/${t.id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const d = json.data;
+        setFormData({
+          name: d.name || "",
+          nip: d.nip || "",
+          position: d.position || "",
+          status: d.status || "aktif",
+          phone: d.phone || "",
+          address: d.address || "",
+          joinDate: d.joinDate ? String(d.joinDate).substring(0, 10) : "",
+          baseSalary: d.baseSalary || 0,
+        });
+      }
+    } catch {
+      // keep fallback
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      Swal.fire("Perhatian", "Nama guru wajib diisi!", "warning");
+      return;
+    }
+
+    setFormLoading(true);
+    try {
+      const url = drawerMode === "edit" ? `/api/teachers/${editingId}` : "/api/teachers";
+      const method = drawerMode === "edit" ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          type: "guru",
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        Swal.fire({
+          title: "Berhasil",
+          text: json.message || (drawerMode === "edit" ? "Data guru diperbarui" : "Data guru berhasil ditambahkan"),
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setIsDrawerOpen(false);
+        refreshTeachers();
+      } else {
+        Swal.fire("Gagal", json.message || "Terjadi kesalahan", "error");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menghubungi server";
+      Swal.fire("Error", msg, "error");
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleDelete = (t: Teacher) => {
@@ -74,8 +174,12 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
             throw new Error(err.message || "Gagal menghubungi server");
           }
           const json = await res.json();
-          if (json.success) { Swal.fire("Terhapus", json.message, "success"); refreshTeachers(); }
-          else Swal.fire("Gagal", json.message || "Gagal", "error");
+          if (json.success) { 
+            Swal.fire("Terhapus", json.message, "success"); 
+            refreshTeachers(); 
+          } else {
+            Swal.fire("Gagal", json.message || "Gagal", "error");
+          }
         } catch (error: unknown) { 
           const msg = error instanceof Error ? error.message : "Gagal menghubungi server";
           Swal.fire("Error", msg, "error"); 
@@ -157,15 +261,14 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
               </svg>
               Export
             </button>
-            <Link 
-              href="/teachers/new" 
-              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider"
+            <button 
+              type="button"
+              onClick={handleOpenAdd} 
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider cursor-pointer"
             >
-              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+              <UserPlus className="w-3.5 h-3.5 mr-1.5" />
               Tambah Guru
-            </Link>
+            </button>
           </div>
         }
       />
@@ -208,12 +311,12 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Cari nama, nip, posisi..."
-              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-48 transition-all"
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-48 transition-all bg-white text-slate-700"
             />
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 cursor-pointer transition-all"
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-700 cursor-pointer transition-all"
             >
               <option value="">Semua Status</option>
               <option value="aktif">Aktif</option>
@@ -364,6 +467,7 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
                     <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
                     <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
                     <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
                   </tr>
                 ))
               )}
@@ -379,6 +483,153 @@ export default function TeachersClient({ initialData }: { initialData: Teacher[]
           onLimitChange={(l) => { setLimit(l); setPage(1); }} 
         />
       </Card>
+
+      {/* LeftDrawer Form Tambah/Edit Guru */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title={drawerMode === "add" ? "Tambah Data Guru" : "Edit Data Guru"}
+        subtitle="Formulir pendataan guru dan tenaga pendidik"
+        width="max-w-lg"
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Nama Lengkap & Gelar <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Contoh: Dra. Hj. Siti Aminah, M.Pd"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                NIP / NUPTK
+              </label>
+              <input
+                type="text"
+                value={formData.nip}
+                onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                placeholder="19850101..."
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Status Keaktifan
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as "aktif" | "nonaktif" })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 cursor-pointer"
+              >
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Non-Aktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Jabatan / Mata Pelajaran
+              </label>
+              <input
+                type="text"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                placeholder="Guru Bahasa Indonesia"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                No. WhatsApp / Telepon
+              </label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="08123456789"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Tanggal Bergabung
+              </label>
+              <input
+                type="date"
+                value={formData.joinDate}
+                onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Gaji Pokok (Rp)
+              </label>
+              <input
+                type="number"
+                value={formData.baseSalary || ""}
+                onChange={(e) => setFormData({ ...formData, baseSalary: Number(e.target.value) || 0 })}
+                placeholder="0"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Alamat Tinggal
+            </label>
+            <textarea
+              rows={3}
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Alamat lengkap domisili..."
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400 resize-none"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              {formLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{drawerMode === "add" ? "Simpan Data Guru" : "Perbarui Data"}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }
+

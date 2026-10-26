@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import Pagination from "@/components/Pagination";
 import { 
   Plus, 
@@ -324,105 +325,100 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <Card className="relative w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">{editItem ? "Edit Pengumuman" : "Buat Pengumuman Baru"}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Lengkapi detail pengumuman di bawah ini</p>
-              </div>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <Plus className="w-5 h-5 text-slate-400 rotate-45" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-5 bg-white max-h-[70vh] overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Judul Pengumuman *</label>
-                <input 
-                  value={form.title} 
-                  onChange={e => setForm({ ...form, title: e.target.value })} 
-                  placeholder="Contoh: Libur Nasional Idul Fitri"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400" 
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Isi Pengumuman</label>
-                <textarea 
-                  value={form.content} 
-                  onChange={e => setForm({ ...form, content: e.target.value })} 
-                  rows={5} 
-                  placeholder="Tuliskan isi pengumuman secara detail di sini..."
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none transition-all placeholder:text-slate-400" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Target Penerima</label>
-                  <div className="relative">
-                    <select 
-                      value={form.target} 
-                      onChange={e => setForm({ ...form, target: e.target.value })} 
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 outline-none"
-                    >
-                      {Object.entries(targetLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Kanal Pengiriman</label>
-                  <div className="relative">
-                    <select 
-                      value={form.channel} 
-                      onChange={e => setForm({ ...form, channel: e.target.value })} 
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 outline-none"
-                    >
-                      {Object.entries(channelLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Jadwal Pengiriman</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="datetime-local" 
-                    value={form.scheduledAt} 
-                    onChange={e => setForm({ ...form, scheduledAt: e.target.value })} 
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" 
-                  />
-                </div>
-                <p className="text-[10px] text-slate-400 mt-1.5 italic">* Kosongkan untuk mengirim sekarang sebagai dashboard announcement</p>
+      {/* LeftDrawer Buat / Edit Pengumuman */}
+      <LeftDrawer
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editItem ? "Edit Pengumuman" : "Buat Pengumuman Baru"}
+        subtitle="Lengkapi informasi dan target penerima pengumuman"
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Judul Pengumuman <span className="text-rose-500">*</span>
+            </label>
+            <input 
+              value={form.title} 
+              onChange={e => setForm({ ...form, title: e.target.value })} 
+              placeholder="Contoh: Libur Nasional Idul Fitri"
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 text-slate-800" 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Isi Pengumuman</label>
+            <textarea 
+              value={form.content} 
+              onChange={e => setForm({ ...form, content: e.target.value })} 
+              rows={5} 
+              placeholder="Tuliskan isi pengumuman secara detail di sini..."
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none transition-all placeholder:text-slate-400 text-slate-800" 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Target Penerima</label>
+              <div className="relative">
+                <select 
+                  value={form.target} 
+                  onChange={e => setForm({ ...form, target: e.target.value })} 
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 outline-none text-slate-800 cursor-pointer"
+                >
+                  {Object.entries(targetLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
             </div>
-            
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="px-5 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-xl text-sm font-semibold transition-all"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handleSubmit} 
-                className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-200 transition-all flex items-center gap-2"
-              >
-                {itemSentStatus(form.scheduledAt) ? <Clock className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-                <span>{editItem ? "Simpan Perbaikan" : itemSentStatus(form.scheduledAt) ? "Jadwalkan" : "Kirim Sekarang"}</span>
-              </button>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Kanal Pengiriman</label>
+              <div className="relative">
+                <select 
+                  value={form.channel} 
+                  onChange={e => setForm({ ...form, channel: e.target.value })} 
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 outline-none text-slate-800 cursor-pointer"
+                >
+                  {Object.entries(channelLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
             </div>
-          </Card>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Jadwal Pengiriman</label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="datetime-local" 
+                value={form.scheduledAt} 
+                onChange={e => setForm({ ...form, scheduledAt: e.target.value })} 
+                className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-800" 
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1.5 italic">* Kosongkan untuk langsung tayang di dashboard</p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button 
+              type="button"
+              onClick={() => setShowModal(false)} 
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+            <button 
+              type="button"
+              onClick={handleSubmit} 
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              {itemSentStatus(form.scheduledAt) ? <Clock className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+              <span>{editItem ? "Simpan Perbaikan" : itemSentStatus(form.scheduledAt) ? "Jadwalkan" : "Kirim Sekarang"}</span>
+            </button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

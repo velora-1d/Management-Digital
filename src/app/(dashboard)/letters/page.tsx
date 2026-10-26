@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import Pagination from "@/components/Pagination";
 import FilterBar from "@/components/FilterBar";
 import { useSearchParams } from "next/navigation";
@@ -479,144 +480,136 @@ export default function LettersPage() {
         )}
       </div>
 
-      {/* Modal Cerdik */}
-      {showModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <Card className="relative w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${tab === "masuk" ? "bg-sky-50 text-sky-600" : "bg-cyan-50 text-cyan-600"}`}>
-                  {tab === "masuk" ? <Inbox className="w-5 h-5" /> : <Send className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">
-                    {editItem ? "Edit Surat" : tab === "masuk" ? "Catat Surat Masuk" : "Buat Surat Keluar"}
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Isi formulir dengan detail surat yang benar</p>
-                </div>
-              </div>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 text-slate-400 rounded-full transition-colors">
-                <Plus className="w-5 h-5 rotate-45" />
-              </button>
-            </div>
-            
-            <div className="p-6 bg-white space-y-4 max-h-[70vh] overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Perihal / Subjek Surat *</label>
+      {/* LeftDrawer Manajemen Surat Masuk & Keluar */}
+      <LeftDrawer
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editItem ? "Edit Surat" : tab === "masuk" ? "Catat Surat Masuk" : "Buat Surat Keluar"}
+        subtitle="Isi formulir dengan detail arsip surat yang akurat"
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Perihal / Subjek Surat <span className="text-rose-500">*</span>
+            </label>
+            <input 
+              value={form.subject} 
+              onChange={e => setForm({ ...form, subject: e.target.value })} 
+              placeholder="Contoh: Undangan Rapat Wali Murid"
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400 text-slate-800" 
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                {tab === "masuk" ? "Asal Pengirim" : "Tujuan / Penerima"}
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
-                  value={form.subject} 
-                  onChange={e => setForm({ ...form, subject: e.target.value })} 
-                  placeholder="Contoh: Undangan Rapat Wali Murid"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
+                  value={tab === "masuk" ? form.sender : form.receiver} 
+                  onChange={e => setForm(tab === "masuk" ? { ...form, sender: e.target.value } : { ...form, receiver: e.target.value })} 
+                  placeholder={tab === "masuk" ? "Kementerian Pendidikan" : "Wali Murid Kelas 10"}
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400 text-slate-800" 
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">{tab === "masuk" ? "Asal Pengirim" : "Tujuan / Penerima"}</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      value={tab === "masuk" ? form.sender : form.receiver} 
-                      onChange={e => setForm(tab === "masuk" ? { ...form, sender: e.target.value } : { ...form, receiver: e.target.value })} 
-                      placeholder={tab === "masuk" ? "Kementerian Pendidikan" : "Wali Murid Kelas 10"}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal Surat</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      type="date" 
-                      value={form.date} 
-                      onChange={e => {
-                        const newDate = e.target.value;
-                        const monthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(new Date(newDate));
-                        setForm({ ...form, date: newDate, month: monthName });
-                      }} 
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all" 
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Semester</label>
-                  <select 
-                    value={form.semester}
-                    onChange={e => setForm({ ...form, semester: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
-                  >
-                    <option value="">Pilih Semester</option>
-                    <option value="ganjil">Ganjil</option>
-                    <option value="genap">Genap</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bulan</label>
-                  <select 
-                    value={form.month}
-                    onChange={e => setForm({ ...form, month: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
-                  >
-                    {[
-                      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-                    ].map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nomor Surat</label>
-                <input 
-                  value={form.number} 
-                  onChange={e => setForm({ ...form, number: e.target.value })} 
-                  placeholder={tab === "keluar" ? "Boleh dikosongkan untuk auto-generate" : "Masukkan nomor surat masuk"}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
-                />
-              </div>
-
-              {editItem && (
-                 <div>
-                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Status Saat Ini</label>
-                 <select 
-                   value={form.status} 
-                   onChange={e => setForm({ ...form, status: e.target.value })} 
-                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm appearance-none focus:ring-2 focus:ring-sky-500/20 outline-none"
-                 >
-                   {Object.entries(statusLabels).map(([k, v]) => (
-                     <option key={k} value={k}>{v}</option>
-                   ))}
-                 </select>
-               </div>
-              )}
             </div>
             
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="px-5 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-xl text-sm font-semibold transition-all"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handleSubmit} 
-                className="px-8 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold shadow-md shadow-sky-200 transition-all"
-              >
-                {editItem ? "Simpan Perubahan" : "Simpan Surat"}
-              </button>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Tanggal Surat
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="date" 
+                  value={form.date} 
+                  onChange={e => {
+                    const newDate = e.target.value;
+                    const monthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(new Date(newDate));
+                    setForm({ ...form, date: newDate, month: monthName });
+                  }} 
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all text-slate-800" 
+                />
+              </div>
             </div>
-          </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Semester</label>
+              <select 
+                value={form.semester}
+                onChange={e => setForm({ ...form, semester: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 outline-none text-slate-800 cursor-pointer"
+              >
+                <option value="">Pilih Semester</option>
+                <option value="ganjil">Ganjil</option>
+                <option value="genap">Genap</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bulan</label>
+              <select 
+                value={form.month}
+                onChange={e => setForm({ ...form, month: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 outline-none text-slate-800 cursor-pointer"
+              >
+                {[
+                  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ].map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nomor Surat</label>
+            <input 
+              value={form.number} 
+              onChange={e => setForm({ ...form, number: e.target.value })} 
+              placeholder={tab === "keluar" ? "Boleh dikosongkan untuk auto-generate" : "Masukkan nomor surat masuk"}
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400 text-slate-800" 
+            />
+          </div>
+
+          {editItem && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Status Saat Ini</label>
+              <select 
+                value={form.status} 
+                onChange={e => setForm({ ...form, status: e.target.value })} 
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/20 outline-none text-slate-800 cursor-pointer"
+              >
+                {Object.entries(statusLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button 
+              type="button"
+              onClick={() => setShowModal(false)} 
+              className="px-4 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+            <button 
+              type="button"
+              onClick={handleSubmit} 
+              className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer"
+            >
+              {editItem ? "Simpan Perubahan" : "Simpan Surat"}
+            </button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

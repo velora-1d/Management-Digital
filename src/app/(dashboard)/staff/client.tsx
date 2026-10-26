@@ -1,13 +1,12 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import Pagination from "@/components/Pagination";
 import { ExportButtons } from "@/lib/export-utils";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Trash2, CheckCircle2 } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { Trash2, CheckCircle2, UserPlus, Save, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface StaffItem {
@@ -17,7 +16,21 @@ interface StaffItem {
   position: string | null;
   status: 'aktif' | 'nonaktif';
   phone: string | null;
+  address?: string | null;
+  joinDate?: string | null;
+  baseSalary?: number | null;
 }
+
+const initialFormState = {
+  name: "",
+  nip: "",
+  position: "",
+  status: "aktif" as "aktif" | "nonaktif",
+  phone: "",
+  address: "",
+  joinDate: "",
+  baseSalary: 0,
+};
 
 export default function StaffClient({ initialData = [] }: { initialData?: StaffItem[] }) {
   const [search, setSearch] = useState("");
@@ -25,11 +38,17 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   // Row Action Dropdown state
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+
+  // LeftDrawer Form States
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const [formLoading, setFormLoading] = useState(false);
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["staff", search, statusFilter],
@@ -41,7 +60,6 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
       return res.json();
     },
     staleTime: 1000 * 60 * 5,
-    // Gunakan data dari server untuk render awal — tidak buang request ke API
     initialData: initialData.length > 0 ? { success: true, data: initialData } : undefined,
   });
 
@@ -49,14 +67,93 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
   const refreshStaff = () => queryClient.invalidateQueries({ queryKey: ["staff"] });
 
   const filteredData = data;
-
   const totalPages = Math.ceil(filteredData.length / limit) || 1;
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
 
+  const handleOpenAdd = () => {
+    setDrawerMode("add");
+    setEditingId(null);
+    setFormData(initialFormState);
+    setIsDrawerOpen(true);
+  };
 
+  const handleEdit = async (s: StaffItem) => {
+    setDrawerMode("edit");
+    setEditingId(s.id);
+    setFormData({
+      name: s.name || "",
+      nip: s.nip || "",
+      position: s.position || "",
+      status: s.status || "aktif",
+      phone: s.phone || "",
+      address: s.address || "",
+      joinDate: s.joinDate ? s.joinDate.substring(0, 10) : "",
+      baseSalary: s.baseSalary || 0,
+    });
+    setIsDrawerOpen(true);
 
-  const handleEdit = (s: StaffItem) => {
-    router.push(`/staff/${s.id}/edit`);
+    try {
+      const res = await fetch(`/api/staff/${s.id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const d = json.data;
+        setFormData({
+          name: d.name || "",
+          nip: d.nip || "",
+          position: d.position || "",
+          status: d.status || "aktif",
+          phone: d.phone || "",
+          address: d.address || "",
+          joinDate: d.joinDate ? String(d.joinDate).substring(0, 10) : "",
+          baseSalary: d.baseSalary || 0,
+        });
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      Swal.fire("Perhatian", "Nama staf wajib diisi!", "warning");
+      return;
+    }
+
+    setFormLoading(true);
+    try {
+      const url = drawerMode === "edit" ? `/api/staff/${editingId}` : "/api/staff";
+      const method = drawerMode === "edit" ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          type: "staf",
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        Swal.fire({
+          title: "Berhasil",
+          text: json.message || (drawerMode === "edit" ? "Data staf diperbarui" : "Data staf berhasil ditambahkan"),
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setIsDrawerOpen(false);
+        refreshStaff();
+      } else {
+        Swal.fire("Gagal", json.message || "Terjadi kesalahan", "error");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menghubungi server";
+      Swal.fire("Error", msg, "error");
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleDelete = (s: StaffItem) => {
@@ -73,9 +170,15 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
         try {
           const res = await fetch(`/api/staff/${s.id}`, { method: "DELETE" });
           const json = await res.json();
-          if (json.success) { Swal.fire("Terhapus", json.message, "success"); refreshStaff(); }
-          else Swal.fire("Gagal", json.message, "error");
-        } catch { Swal.fire("Error", "Gagal menghubungi server", "error"); }
+          if (json.success) { 
+            Swal.fire("Terhapus", json.message, "success"); 
+            refreshStaff(); 
+          } else {
+            Swal.fire("Gagal", json.message || "Gagal", "error");
+          }
+        } catch { 
+          Swal.fire("Error", "Gagal menghubungi server", "error"); 
+        }
       }
     });
   };
@@ -115,15 +218,14 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
           </svg>
         }
         actions={
-          <Link 
-            href="/staff/new" 
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider"
+          <button 
+            type="button"
+            onClick={handleOpenAdd}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider cursor-pointer"
           >
-            <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <UserPlus className="w-3.5 h-3.5 mr-1.5" />
             Tambah Staf
-          </Link>
+          </button>
         }
       />
 
@@ -165,12 +267,12 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Cari nama, nik, jabatan..."
-              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-48 transition-all"
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-48 transition-all bg-white text-slate-700"
             />
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 cursor-pointer transition-all"
+              className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-700 cursor-pointer transition-all"
             >
               <option value="">Semua Status</option>
               <option value="aktif">Aktif</option>
@@ -314,6 +416,17 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
                   )
                 })
               )}
+              {!isLoading && paginatedData.length > 0 && paginatedData.length < limit && (
+                Array.from({ length: limit - paginatedData.length }).map((_, i) => (
+                  <tr key={`filler-${i}`} style={{ height: "69px" }} className="bg-white">
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                    <td style={{ padding: "1rem 1.5rem" }}>&nbsp;</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -326,6 +439,152 @@ export default function StaffClient({ initialData = [] }: { initialData?: StaffI
           onLimitChange={(l) => { setLimit(l); setPage(1); }} 
         />
       </Card>
+
+      {/* LeftDrawer Form Tambah/Edit Staf */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title={drawerMode === "add" ? "Tambah Data Staf" : "Edit Data Staf"}
+        subtitle="Formulir pendataan staf tata usaha & karyawan"
+        width="max-w-lg"
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Nama Lengkap & Gelar <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Contoh: Budi Santoso, S.Kom"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                NIK / No. Pegawai
+              </label>
+              <input
+                type="text"
+                value={formData.nip}
+                onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                placeholder="3201..."
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Status Keaktifan
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as "aktif" | "nonaktif" })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 cursor-pointer"
+              >
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Non-Aktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Posisi / Jabatan
+              </label>
+              <input
+                type="text"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                placeholder="Staf Tata Usaha / Keuangan"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                No. WhatsApp / Telepon
+              </label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="08123456789"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Tanggal Bergabung
+              </label>
+              <input
+                type="date"
+                value={formData.joinDate}
+                onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Gaji Pokok (Rp)
+              </label>
+              <input
+                type="number"
+                value={formData.baseSalary || ""}
+                onChange={(e) => setFormData({ ...formData, baseSalary: Number(e.target.value) || 0 })}
+                placeholder="0"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Alamat Domisili
+            </label>
+            <textarea
+              rows={3}
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Alamat tempat tinggal staf..."
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-slate-800 placeholder:text-slate-400 resize-none"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              {formLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{drawerMode === "add" ? "Simpan Data Staf" : "Perbarui Data"}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

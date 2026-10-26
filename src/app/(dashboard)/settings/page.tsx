@@ -4,7 +4,8 @@ import Image from "next/image";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
-import { Settings, UserPlus, Save, CheckCircle2, Trash2 } from "lucide-react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
+import { Settings, UserPlus, Save, CheckCircle2, Trash2, Building2, Users, Wrench, Shield, KeyRound, Loader2 } from "lucide-react";
 import { ensureHttpsUrl } from "@/lib/url";
 
 interface UserItem {
@@ -119,122 +120,94 @@ export default function SettingsPage() {
     }
   };
 
-  const addUser = () => {
-    Swal.fire({
-      title: 'Tambah Akun',
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <label style="font-size:0.75rem;font-weight:600;">Nama</label>
-          <input id="swal-u-name" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
-          <label style="font-size:0.75rem;font-weight:600;">Username (Email)</label>
-          <input id="swal-u-user" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
-          <label style="font-size:0.75rem;font-weight:600;">Password</label>
-          <input id="swal-u-pass" type="password" class="swal2-input focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
-          <label style="font-size:0.75rem;font-weight:600;">Role</label>
-          <select id="swal-u-role" class="swal2-select focus:ring-2 ring-blue-500 border-slate-300 rounded" style="margin:0;">
-            <option value="admin">Admin</option>
-            <option value="operator">Operator</option>
-            <option value="kepsek">Kepsek</option>
-            <option value="bendahara">Bendahara</option>
-          </select>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Simpan',
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#1d4ed8',
-      preConfirm: () => {
-        return {
-          name: (document.getElementById('swal-u-name') as HTMLInputElement).value,
-          username: (document.getElementById('swal-u-user') as HTMLInputElement).value,
-          password: (document.getElementById('swal-u-pass') as HTMLInputElement).value,
-          role: (document.getElementById('swal-u-role') as HTMLSelectElement).value
-        };
-      }
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        Swal.fire({ title: "Memproses...", didOpen: () => Swal.showLoading() });
-        try {
-          const res = await fetch("/api/users", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(result.value)
-          });
-          const json = await res.json();
-          Swal.close();
-          if (res.ok && json.success) {
-            Swal.fire('Berhasil', 'Akun baru ditambahkan.', 'success');
-            loadUsers();
-          } else {
-            Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
-          }
-        } catch {
-          Swal.fire("Error", "Gagal menghubungi server", "error");
-        }
-      }
+  // User LeftDrawer states
+  const [userDrawerOpen, setUserDrawerOpen] = useState(false);
+  const [userDrawerMode, setUserDrawerMode] = useState<"add" | "edit">("add");
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [userFormData, setUserFormData] = useState({
+    name: "",
+    username: "",
+    role: "operator",
+    status: "aktif",
+    password: "",
+  });
+  const [userFormLoading, setUserFormLoading] = useState(false);
+
+  const handleOpenAddUser = () => {
+    setUserDrawerMode("add");
+    setEditingUser(null);
+    setUserFormData({
+      name: "",
+      username: "",
+      role: "operator",
+      status: "aktif",
+      password: "",
     });
+    setUserDrawerOpen(true);
   };
 
-  const editUser = async (user: UserItem) => {
-    Swal.fire({
-      title: 'Edit Pengguna',
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <label style="font-size:0.75rem;font-weight:600;">Nama</label>
-          <input id="swal-e-name" class="swal2-input" value="${user.name || ''}" style="margin:0;">
-          <label style="font-size:0.75rem;font-weight:600;">Username (Email)</label>
-          <input id="swal-e-user" class="swal2-input" value="${user.username || ''}" style="margin:0;">
-          <label style="font-size:0.75rem;font-weight:600;">Role</label>
-          <select id="swal-e-role" class="swal2-select" style="margin:0;">
-            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-            <option value="operator" ${user.role === 'operator' ? 'selected' : ''}>Operator</option>
-            <option value="kepsek" ${user.role === 'kepsek' ? 'selected' : ''}>Kepsek</option>
-            <option value="bendahara" ${user.role === 'bendahara' ? 'selected' : ''}>Bendahara</option>
-          </select>
-          <label style="font-size:0.75rem;font-weight:600;">Status</label>
-          <select id="swal-e-stat" class="swal2-select" style="margin:0;">
-            <option value="aktif" ${user.status === 'aktif' ? 'selected' : ''}>Aktif</option>
-            <option value="nonaktif" ${user.status === 'nonaktif' ? 'selected' : ''}>Nonaktif</option>
-          </select>
-          <label style="font-size:0.75rem;font-weight:600;">Password Baru <span style="color:#94a3b8;">(kosongkan jika tak diubah)</span></label>
-          <input id="swal-e-pass" type="password" class="swal2-input" placeholder="••••••" style="margin:0;">
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Simpan',
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#1d4ed8',
-      preConfirm: () => {
-        return {
-          name: (document.getElementById('swal-e-name') as HTMLInputElement).value,
-          username: (document.getElementById('swal-e-user') as HTMLInputElement).value,
-          role: (document.getElementById('swal-e-role') as HTMLSelectElement).value,
-          status: (document.getElementById('swal-e-stat') as HTMLSelectElement).value,
-          password: (document.getElementById('swal-e-pass') as HTMLInputElement).value,
-        };
-      }
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        Swal.fire({ title: "Memproses...", didOpen: () => Swal.showLoading() });
-        try {
-          const res = await fetch(`/api/users/${user.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(result.value)
-          });
-          const json = await res.json();
-          Swal.close();
-          if (res.ok && json.success) {
-            Swal.fire({ icon: "success", title: "Berhasil", text: "Data user diperbarui.", toast: true, position: "top-end", timer: 3000, showConfirmButton: false });
-            loadUsers();
-          } else {
-            Swal.fire('Gagal', json.error || 'Terjadi kesalahan', 'error');
-          }
-        } catch {
-          Swal.fire("Error", "Gagal menghubungi server", "error");
-        }
-      }
+  const handleOpenEditUser = (user: UserItem) => {
+    setUserDrawerMode("edit");
+    setEditingUser(user);
+    setUserFormData({
+      name: user.name || "",
+      username: user.username || "",
+      role: user.role || "operator",
+      status: user.status || "aktif",
+      password: "",
     });
+    setUserDrawerOpen(true);
+  };
+
+  const handleUserFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userFormData.name.trim() || !userFormData.username.trim()) {
+      Swal.fire("Perhatian", "Nama dan Username wajib diisi", "warning");
+      return;
+    }
+    if (userDrawerMode === "add" && !userFormData.password) {
+      Swal.fire("Perhatian", "Password wajib diisi untuk akun baru", "warning");
+      return;
+    }
+
+    setUserFormLoading(true);
+    try {
+      const url = userDrawerMode === "edit" ? `/api/users/${editingUser?.id}` : "/api/users";
+      const method = userDrawerMode === "edit" ? "PUT" : "POST";
+      const payload: Record<string, string> = {
+        name: userFormData.name.trim(),
+        username: userFormData.username.trim(),
+        role: userFormData.role,
+        status: userFormData.status,
+      };
+      if (userFormData.password) {
+        payload.password = userFormData.password;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        Swal.fire({
+          title: "Berhasil",
+          text: userDrawerMode === "edit" ? "Data pengguna berhasil diperbarui" : "Pengguna baru berhasil ditambahkan",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setUserDrawerOpen(false);
+        loadUsers();
+      } else {
+        Swal.fire("Gagal", json.error || json.message || "Terjadi kesalahan", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    } finally {
+      setUserFormLoading(false);
+    }
   };
 
   const resetPassword = (userId: number, userName: string) => {
@@ -474,6 +447,12 @@ export default function SettingsPage() {
     reader.readAsText(file);
   };
 
+  const settingsTabs = [
+    { id: "profil", label: "Profil Madrasah", desc: "Identitas, logo, kontak & pimpinan", icon: Building2 },
+    { id: "users", label: "Manajemen User", desc: "Kelola akun & privilege akses", icon: Users },
+    { id: "tools", label: "Alat Lanjut & DB", desc: "Pencadangan, restore & reset", icon: Wrench },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <PageHeader
@@ -482,45 +461,42 @@ export default function SettingsPage() {
         icon={<Settings />}
       />
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 flex-wrap">
-        <button 
-          onClick={() => setActiveTab('profil')} 
-          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
-            activeTab === 'profil' 
-              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-          }`}
-        >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'profil' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          Profil Madrasah
-        </button>
-        <button 
-          onClick={() => setActiveTab('users')} 
-          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
-            activeTab === 'users' 
-              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-          }`}
-        >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'users' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          Manajemen User
-        </button>
-        <button 
-          onClick={() => setActiveTab('tools')} 
-          className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
-            activeTab === 'tools' 
-              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-          }`}
-        >
-          <svg className={`w-4 h-4 mr-1.5 ${activeTab === 'tools' ? 'text-blue-200' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
-          Alat Lanjut
-        </button>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Panel Sisi Kiri: Navigasi Pengaturan */}
+        <div className="lg:col-span-3 space-y-2 bg-white border border-slate-200 rounded-2xl p-3 shadow-xs">
+          <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+            Menu Pengaturan
+          </div>
+          {settingsTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 cursor-pointer ${
+                  isActive
+                    ? "bg-blue-50 border border-blue-200 text-blue-700 shadow-2xs"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent"
+                }`}
+              >
+                <div className={`p-2 rounded-lg ${isActive ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold block">{tab.label}</span>
+                  <span className="text-[11px] text-slate-400 font-normal leading-tight block mt-0.5">{tab.desc}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Tab 1: Profil */}
-      {activeTab === 'profil' && (
+        {/* Konten Tab Aktif */}
+        <div className="lg:col-span-9 space-y-6">
+          {/* Tab 1: Profil */}
+          {activeTab === 'profil' && (
         <Card noPadding>
           <div className="p-5 border-b border-slate-100 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -604,7 +580,7 @@ export default function SettingsPage() {
               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
               <h4 className="font-heading font-bold text-sm text-slate-800 m-0">Akses & Manajemen Pengguna</h4>
             </div>
-            <button onClick={addUser} className="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            <button onClick={handleOpenAddUser} className="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
               <UserPlus className="w-4 h-4 mr-2" />
               Tambah Akun
             </button>
@@ -708,7 +684,7 @@ export default function SettingsPage() {
                       </td>
                       <td className="p-4 align-middle text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => editUser(u)} className="inline-flex px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
+                          <button onClick={() => handleOpenEditUser(u)} className="inline-flex px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
                             Edit
                           </button>
                           <button onClick={() => resetPassword(u.id, u.username)} className="inline-flex px-3 py-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors">
@@ -787,6 +763,110 @@ export default function SettingsPage() {
            </div>
         </Card>
       )}
+        </div>
+      </div>
+
+      {/* LeftDrawer Form Tambah / Edit Pengguna */}
+      <LeftDrawer
+        isOpen={userDrawerOpen}
+        onClose={() => setUserDrawerOpen(false)}
+        title={userDrawerMode === "add" ? "Tambah Akun Pengguna" : "Edit Akun Pengguna"}
+        subtitle={userDrawerMode === "add" ? "Buat kredensial login dan hak akses user baru" : `Perbarui data akun @${editingUser?.username || ""}`}
+        width="max-w-md"
+      >
+        <form onSubmit={handleUserFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Nama Lengkap <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={userFormData.name}
+              onChange={(e) => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Contoh: Ahmad Dahlan, S.Pd."
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Username / Akun Login <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={userFormData.username}
+              onChange={(e) => setUserFormData(prev => ({ ...prev, username: e.target.value }))}
+              placeholder="Contoh: ahmad_operator"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-800"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Hak Akses (Role) <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={userFormData.role}
+                onChange={(e) => setUserFormData(prev => ({ ...prev, role: e.target.value }))}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-800 cursor-pointer"
+              >
+                <option value="admin">Admin / Pimpinan</option>
+                <option value="operator">Operator Madrasah</option>
+                <option value="bendahara">Bendahara</option>
+                <option value="guru">Guru Pengajar</option>
+                <option value="staf">Staf TU</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Status Akun
+              </label>
+              <select
+                value={userFormData.status}
+                onChange={(e) => setUserFormData(prev => ({ ...prev, status: e.target.value }))}
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-800 cursor-pointer"
+              >
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Password {userDrawerMode === "add" ? <span className="text-rose-500">*</span> : <span className="text-slate-400 font-normal lowercase">(kosongkan jika tidak diubah)</span>}
+            </label>
+            <input
+              type="password"
+              value={userFormData.password}
+              onChange={(e) => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
+              placeholder={userDrawerMode === "add" ? "Minimal 6 karakter" : "Ketik untuk ganti password"}
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-slate-800"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setUserDrawerOpen(false)}
+              className="px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={userFormLoading}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            >
+              {userFormLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {userDrawerMode === "add" ? "Simpan Pengguna" : "Simpan Perubahan"}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
 
     </div>
   );
