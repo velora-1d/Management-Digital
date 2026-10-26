@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import Pagination from "@/components/Pagination";
-import Modal from "@/components/ui/Modal";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import { ensureHttpsUrl } from "@/lib/url";
 
 interface Classroom { id: number; name: string; }
@@ -1041,9 +1041,9 @@ export default function ReportCardsPage({
         </button>
       </div>
 
-      {/* PDF PREVIEW MODAL (Phase 3) */}
-      <Modal
-        open={isPreviewOpen}
+      {/* PDF PREVIEW LEFT DRAWER (Phase 3) */}
+      <LeftDrawer
+        isOpen={isPreviewOpen}
         onClose={() => {
           setIsPreviewOpen(false);
           if (previewUrl) {
@@ -1052,7 +1052,8 @@ export default function ReportCardsPage({
           }
         }}
         title={`Preview Rapor: ${generatedData?.students?.[previewStudentIndex]?.student?.name || "..."}`}
-        size="xl"
+        subtitle="Dokumen E-Rapor Digital Siswa"
+        width="max-w-4xl"
       >
         <div className="w-full h-[75vh] min-h-[500px] bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
           {previewUrl ? (
@@ -1090,7 +1091,7 @@ export default function ReportCardsPage({
             Download PDF
           </button>
         </div>
-      </Modal>
+      </LeftDrawer>
     </div>
   );
 }

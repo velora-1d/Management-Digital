@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
@@ -71,6 +72,15 @@ export default function ScheduleClient({
     totalPages: 0
   });
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    subjectId: "",
+    employeeId: "",
+    day: "1",
+    startTime: "",
+    endTime: "",
+  });
+
   const fetchSchedules = useCallback(async () => {
     if (!selectedClassroom || !selectedAcademicYear) {
       setSchedules([]);
@@ -135,98 +145,54 @@ export default function ScheduleClient({
     fetchSchedules();
   }, [fetchSchedules]);
 
-  const handleCreate = () => {
+  const handleOpenCreate = () => {
     if (!selectedClassroom || !selectedAcademicYear) {
       Swal.fire("Peringatan", "Pilih Tahun Ajaran dan Kelas terlebih dahulu", "warning");
       return;
     }
+    setFormData({
+      subjectId: "",
+      employeeId: "",
+      day: "1",
+      startTime: "",
+      endTime: "",
+    });
+    setIsDrawerOpen(true);
+  };
 
-    const subjectOptions = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
-    const employeeOptions = employees.map(e => `<option value="${e.id}">${e.name}</option>`).join("");
-    const dayOptions = days.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.subjectId || !formData.employeeId || !formData.day || !formData.startTime || !formData.endTime) {
+      Swal.fire("Peringatan", "Semua field wajib diisi", "warning");
+      return;
+    }
 
-    Swal.fire({
-      title: "Tambah Jadwal Pelajaran",
-      html: `
-        <div class="space-y-4 text-left">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran <span class="text-red-500">*</span></label>
-            <select id="swal-subject" class="w-full border-gray-300 rounded-md shadow-sm p-2 border">
-              <option value="">-- Pilih Mapel --</option>
-              ${subjectOptions}
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Guru Pengajar <span class="text-red-500">*</span></label>
-            <select id="swal-employee" class="w-full border-gray-300 rounded-md shadow-sm p-2 border">
-              <option value="">-- Pilih Guru --</option>
-              ${employeeOptions}
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Hari <span class="text-red-500">*</span></label>
-            <select id="swal-day" class="w-full border-gray-300 rounded-md shadow-sm p-2 border">
-              ${dayOptions}
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai <span class="text-red-500">*</span></label>
-              <input id="swal-startTime" type="time" class="w-full border-gray-300 rounded-md shadow-sm p-2 border" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai <span class="text-red-500">*</span></label>
-              <input id="swal-endTime" type="time" class="w-full border-gray-300 rounded-md shadow-sm p-2 border" />
-            </div>
-          </div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      cancelButtonText: "Batal",
-      preConfirm: () => {
-        const subjectId = (document.getElementById("swal-subject") as HTMLSelectElement).value;
-        const employeeId = (document.getElementById("swal-employee") as HTMLSelectElement).value;
-        const day = (document.getElementById("swal-day") as HTMLSelectElement).value;
-        const startTime = (document.getElementById("swal-startTime") as HTMLInputElement).value;
-        const endTime = (document.getElementById("swal-endTime") as HTMLInputElement).value;
-
-        if (!subjectId || !employeeId || !day || !startTime || !endTime) {
-          Swal.showValidationMessage("Semua field wajib diisi");
-          return false;
-        }
-
-        return {
+    try {
+      const res = await fetch("/api/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           classroomId: selectedClassroom,
           academicYearId: selectedAcademicYear,
-          subjectId,
-          employeeId,
-          day,
-          startTime,
-          endTime
-        };
-      }
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const res = await fetch("/api/schedules", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(result.value),
-          });
-          const data = await res.json();
+          subjectId: formData.subjectId,
+          employeeId: formData.employeeId,
+          day: formData.day,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+        }),
+      });
+      const data = await res.json();
 
-          if (data.success) {
-            Swal.fire("Berhasil", "Jadwal berhasil ditambahkan", "success");
-            fetchSchedules();
-          } else {
-            Swal.fire("Gagal", data.error, "error");
-          }
-        } catch {
-          Swal.fire("Error", "Gagal menghubungi server", "error");
-        }
+      if (data.success) {
+        setIsDrawerOpen(false);
+        Swal.fire("Berhasil", "Jadwal berhasil ditambahkan", "success");
+        fetchSchedules();
+      } else {
+        Swal.fire("Gagal", data.error || "Gagal menyimpan jadwal", "error");
       }
-    });
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -291,9 +257,9 @@ export default function ScheduleClient({
               Export
             </button>
             <button 
-              onClick={handleCreate}
+              onClick={handleOpenCreate}
               disabled={!selectedClassroom || !selectedAcademicYear}
-              className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold border border-blue-400 shadow-lg shadow-blue-900/20 transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-xs cursor-pointer"
             >
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -432,6 +398,116 @@ export default function ScheduleClient({
           )}
         </>
       )}
+
+      {/* LeftDrawer Form Input Jadwal Pelajaran */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title="Tambah Jadwal Pelajaran"
+        subtitle={`Kelas: ${classrooms.find(c => c.id.toString() === selectedClassroom)?.name || "-"} | Periode Aktif`}
+        width="max-w-md"
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Mata Pelajaran <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.subjectId}
+              onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            >
+              <option value="">-- Pilih Mata Pelajaran --</option>
+              {subjects.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Guru Pengajar <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.employeeId}
+              onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            >
+              <option value="">-- Pilih Guru Pengajar --</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Hari <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.day}
+              onChange={(e) => setFormData({ ...formData, day: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            >
+              {days.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Jam Mulai <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Jam Selesai <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              Simpan Jadwal
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

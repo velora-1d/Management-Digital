@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { 
@@ -63,6 +64,8 @@ export default function GradesPage({
   const [finalGrades, setFinalGrades] = useState<FinalGradeItem[]>([]);
   const [selectedFinalIds, setSelectedFinalIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isBulkGradeDrawerOpen, setIsBulkGradeDrawerOpen] = useState(false);
+  const [bulkGradeValue, setBulkGradeValue] = useState("85");
 
   // Memuat kurikulum setiap kali tahun ajaran atau semester berubah
   useEffect(() => {
@@ -149,26 +152,21 @@ export default function GradesPage({
     }));
   };
 
-  const handleBulkSetGrade = async () => {
+  const handleBulkSetGrade = () => {
     if (selectedStudentIds.length === 0) return;
-    const { value: val } = await Swal.fire({
-      title: `Set Nilai untuk ${selectedStudentIds.length} Siswa`,
-      input: "number",
-      inputLabel: "Nilai (0 - 100)",
-      inputPlaceholder: "Contoh: 85",
-      showCancelButton: true,
-      confirmButtonText: "Terapkan",
-      cancelButtonText: "Batal",
-      inputValidator: (v) => {
-        const num = Number(v);
-        if (isNaN(num) || num < 0 || num > 100) return "Nilai harus antara 0 dan 100";
-      }
-    });
-    if (val !== undefined && val !== null) {
-      const num = Number(val);
-      selectedStudentIds.forEach((id) => handleGradeChange(id, num));
-      Swal.fire("Berhasil", `Nilai ${num} diterapkan ke ${selectedStudentIds.length} siswa`, "success");
+    setIsBulkGradeDrawerOpen(true);
+  };
+
+  const handleApplyBulkGrade = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = Number(bulkGradeValue);
+    if (isNaN(num) || num < 0 || num > 100) {
+      Swal.fire("Peringatan", "Nilai harus berupa angka antara 0 dan 100", "warning");
+      return;
     }
+    selectedStudentIds.forEach((id) => handleGradeChange(id, num));
+    setIsBulkGradeDrawerOpen(false);
+    Swal.fire("Berhasil", `Nilai ${num} berhasil diterapkan ke ${selectedStudentIds.length} siswa`, "success");
   };
 
   const saveGrades = async () => {
@@ -630,6 +628,78 @@ export default function GradesPage({
           </div>
         </Card>
       )}
+
+      {/* LeftDrawer Panel Set Nilai Masal */}
+      <LeftDrawer
+        isOpen={isBulkGradeDrawerOpen}
+        onClose={() => setIsBulkGradeDrawerOpen(false)}
+        title="Input Nilai Masal"
+        subtitle={`Terapkan nilai serentak untuk ${selectedStudentIds.length} siswa terpilih`}
+        width="max-w-md"
+      >
+        <form onSubmit={handleApplyBulkGrade} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Input Nilai (0 - 100) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="number"
+              min="0"
+              max="100"
+              value={bulkGradeValue}
+              onChange={(e) => setBulkGradeValue(e.target.value)}
+              placeholder="Contoh: 85"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold text-slate-800 text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-2">Preset Cepat:</label>
+            <div className="grid grid-cols-4 gap-2">
+              {["75", "80", "85", "90"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setBulkGradeValue(preset)}
+                  className={`py-2 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                    bulkGradeValue === preset
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-700">
+            <p className="font-semibold">Estimasi Predikat:</p>
+            <p className="text-sm font-bold mt-0.5">
+              {curriculum?.type === "KURMER"
+                ? calcPredikatKurmer(Number(bulkGradeValue) || 0)
+                : calcPredikatK13(Number(bulkGradeValue) || 0)}
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setIsBulkGradeDrawerOpen(false)}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              Terapkan ke {selectedStudentIds.length} Siswa
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

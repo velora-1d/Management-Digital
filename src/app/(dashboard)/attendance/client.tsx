@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { exportCSV } from "@/lib/csv-export";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { 
@@ -12,7 +13,9 @@ import {
   Search, 
   Download,
   ClipboardList,
-  BarChart3
+  BarChart3,
+  CheckCircle2,
+  Trash2
 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import { generateAttendancePDF } from "@/lib/attendance-report-template";
@@ -94,6 +97,7 @@ export default function AttendancePage({
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loadingInput, setLoadingInput] = useState(false);
   const [savingInput, setSavingInput] = useState(false);
+  const [isInputDrawerOpen, setIsInputDrawerOpen] = useState(false);
 
   // Filters Recap
   const [recapClassroom, setRecapClassroom] = useState("");
@@ -104,6 +108,7 @@ export default function AttendancePage({
   
   // State Recap
   const [recapData, setRecapData] = useState<RecapRecord[]>([]);
+  const [selectedRecapIds, setSelectedRecapIds] = useState<number[]>([]);
   const [recapMeta, setRecapMeta] = useState({ page: 1, totalPages: 1, total: 0, limit: 10 });
   const [loadingRecap, setLoadingRecap] = useState(false);
   const [filterAlpha, setFilterAlpha] = useState(false);
@@ -293,11 +298,20 @@ export default function AttendancePage({
         subtitle="Kelola data kehadiran harian dan cetak rekapitulasi absensi siswa."
         icon={<ClipboardList className="w-5 h-5 text-blue-600" />}
         actions={
-          activeAcademicYear && (
-            <div className="bg-slate-50 border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-xs border-slate-200">
-              T.A Aktif: <span className="text-blue-600 ml-1">{activeAcademicYear.year}</span>
-            </div>
-          )
+          <div className="flex items-center gap-3">
+            {activeAcademicYear && (
+              <div className="bg-slate-50 border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-xs border-slate-200">
+                T.A Aktif: <span className="text-blue-600 ml-1">{activeAcademicYear.year}</span>
+              </div>
+            )}
+            <button
+              onClick={() => setIsInputDrawerOpen(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer uppercase tracking-wider"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Catat Absensi (Panel Kiri)
+            </button>
+          </div>
         }
       />
 
@@ -667,10 +681,38 @@ export default function AttendancePage({
                {recapData.length > 0 && !loadingRecap && (
                   recapDisplayData.length > 0 ? (
                     <>
+                      {/* Bulk Action Bar */}
+                      {selectedRecapIds.length > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in mb-4">
+                          <div className="flex items-center gap-2 text-xs text-blue-700 font-semibold">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>{selectedRecapIds.length} data siswa dipilih</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRecapIds([])}
+                              className="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="bg-white border rounded-lg overflow-x-auto shadow-sm">
                         <table className="w-full text-left border-collapse">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
+                              <th className="py-3 px-3 text-center border-b border-slate-200 w-10">
+                                <input
+                                  type="checkbox"
+                                  checked={recapDisplayData.length > 0 && selectedRecapIds.length === recapDisplayData.length}
+                                  onChange={(e) => setSelectedRecapIds(e.target.checked ? recapDisplayData.map(r => r.id) : [])}
+                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                  aria-label="Pilih semua data rekap"
+                                />
+                              </th>
                               <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
                               <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Nama Siswa</th>
                               <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Hadir</th>
@@ -681,8 +723,22 @@ export default function AttendancePage({
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {recapDisplayData.map((item, index) => (
-                              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                            {recapDisplayData.map((item, index) => {
+                              const isSelected = selectedRecapIds.includes(item.id);
+                              return (
+                              <tr key={item.id} className={`hover:bg-slate-50/50 transition-colors ${isSelected ? "bg-blue-50/40" : ""}`}>
+                                <td className="py-3 px-3 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) setSelectedRecapIds(prev => [...prev, item.id]);
+                                      else setSelectedRecapIds(prev => prev.filter(id => id !== item.id));
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                                    aria-label={`Pilih ${item.name}`}
+                                  />
+                                </td>
                                 <td className="py-3 px-4 text-sm font-medium text-slate-400 text-center">{((recapMeta.page - 1) * recapMeta.limit) + index + 1}</td>
                                 <td className="py-3 px-4">
                                   <div className="text-sm font-semibold text-slate-800">{item.name}</div>
@@ -716,7 +772,7 @@ export default function AttendancePage({
                                   </span>
                                 </td>
                               </tr>
-                            ))}
+                            );})}
                             {recapDisplayData.length > 0 && recapDisplayData.length < (recapMeta.limit || 10) && (
                               Array.from({ length: (recapMeta.limit || 10) - recapDisplayData.length }).map((_, i) => (
                                 <tr key={`filler-recap-${i}`} style={{ height: "61px" }} className="bg-white">
@@ -753,6 +809,152 @@ export default function AttendancePage({
           )}
         </div>
       </Card>
+
+      {/* LeftDrawer Panel Input Absensi */}
+      <LeftDrawer
+        isOpen={isInputDrawerOpen}
+        onClose={() => setIsInputDrawerOpen(false)}
+        title="Input Absensi Siswa"
+        subtitle="Catat kehadiran harian siswa per kelas"
+        width="max-w-3xl"
+      >
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="w-full sm:w-1/2">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">Kelas</label>
+              <select
+                className="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                value={selectedClassroom}
+                onChange={(e) => setSelectedClassroom(e.target.value)}
+              >
+                <option value="">Pilih Kelas...</option>
+                {classrooms.map(c => (
+                  <option key={c.id} value={c.id.toString()}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full sm:w-1/2">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">Tanggal</label>
+              <div className="relative">
+                <Calendar className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="date"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {loadingInput ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : selectedClassroom ? (
+            attendances.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-600 uppercase">Daftar Kehadiran Siswa ({attendances.length})</span>
+                  <button 
+                    onClick={handleMarkAllPresent}
+                    type="button"
+                    className="text-xs font-semibold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+                  >
+                    Hadirkan Semua
+                  </button>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-xs">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="py-2.5 px-3 font-bold text-slate-500 uppercase w-10 text-center">No</th>
+                        <th className="py-2.5 px-3 font-bold text-slate-500 uppercase min-w-[160px]">Siswa</th>
+                        <th className="py-2.5 px-3 font-bold text-slate-500 uppercase min-w-[240px]">Status Kehadiran</th>
+                        <th className="py-2.5 px-3 font-bold text-slate-500 uppercase min-w-[160px]">Catatan</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {attendances.map((item, index) => (
+                        <tr key={item.studentId} className="hover:bg-slate-50/50">
+                          <td className="py-2.5 px-3 text-slate-400 font-mono text-center">{index + 1}</td>
+                          <td className="py-2.5 px-3">
+                            <p className="font-semibold text-slate-800">{item.student?.name}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">{item.student?.nisn || "-"}</p>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex items-center gap-1.5">
+                              {(["hadir", "sakit", "izin", "alpha"] as AttendanceStatus[]).map(statusValue => (
+                                <button
+                                  key={statusValue}
+                                  type="button"
+                                  onClick={() => handleStatusChange(item.studentId, statusValue)}
+                                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border cursor-pointer ${
+                                    item.status === statusValue 
+                                      ? (statusValue === "hadir" ? "bg-emerald-100 text-emerald-700 border-emerald-300" :
+                                         statusValue === "sakit" ? "bg-amber-100 text-amber-700 border-amber-300" :
+                                         statusValue === "izin" ? "bg-blue-100 text-blue-700 border-blue-300" :
+                                         "bg-rose-100 text-rose-700 border-rose-300")
+                                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {statusValue.charAt(0).toUpperCase() + statusValue.slice(1)}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <input
+                              type="text"
+                              placeholder="Keterangan..."
+                              className="w-full px-2.5 py-1 text-xs border border-slate-200 rounded-lg outline-none focus:border-blue-500"
+                              value={item.notes}
+                              onChange={(e) => handleNoteChange(item.studentId, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsInputDrawerOpen(false)}
+                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleSaveInput();
+                      setIsInputDrawerOpen(false);
+                    }}
+                    disabled={savingInput}
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    {savingInput ? "Menyimpan..." : "Simpan Absensi"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 px-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+                <p className="text-sm font-bold text-slate-700">Belum Ada Siswa</p>
+                <p className="text-xs text-slate-500 mt-1">Tidak ada siswa terdaftar pada kelas yang dipilih.</p>
+              </div>
+            )
+          ) : (
+            <div className="text-center py-12 px-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+              <p className="text-sm font-bold text-slate-700">Pilih Kelas Terlebih Dahulu</p>
+              <p className="text-xs text-slate-500 mt-1">Tentukan ruang kelas untuk memuat daftar siswa.</p>
+            </div>
+          )}
+        </div>
+      </LeftDrawer>
     </div>
   );
 }

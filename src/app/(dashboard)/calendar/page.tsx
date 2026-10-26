@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { 
@@ -264,110 +265,110 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-xl font-bold text-slate-800">{editItem ? "Edit Event" : "Tambah Event"}</h2>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors text-2xl font-light">&times;</button>
+      {/* Form Drawer */}
+      <LeftDrawer
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editItem ? "Edit Event" : "Tambah Event"}
+        subtitle="Kelola agenda kegiatan dan kalender akademik sekolah"
+        width="max-w-lg"
+      >
+        <div className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Judul Event <span className="text-rose-500">*</span></label>
+            <input 
+              type="text" 
+              value={form.title} 
+              onChange={e => setForm({ ...form, title: e.target.value })} 
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              placeholder="Nama kegiatan atau acara..."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Mulai <span className="text-rose-500">*</span></label>
+              <input 
+                type="date" 
+                value={form.dateStart} 
+                onChange={e => setForm({ ...form, dateStart: e.target.value })} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+              />
             </div>
-            
-            <div className="p-8 space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Judul Event <span className="text-rose-500">*</span></label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Selesai</label>
+              <input 
+                type="date" 
+                value={form.dateEnd} 
+                onChange={e => setForm({ ...form, dateEnd: e.target.value })} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Jenis Event</label>
+              <select 
+                value={form.type} 
+                onChange={e => {
+                  const opt = typeOptions.find(t => t.value === e.target.value);
+                  setForm({ ...form, type: e.target.value, color: opt?.color || form.color });
+                }} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+              >
+                {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Warna Label</label>
+              <div className="flex items-center gap-3">
                 <input 
-                  type="text" 
-                  value={form.title} 
-                  onChange={e => setForm({ ...form, title: e.target.value })} 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="Nama kegiatan atau acara..."
+                  type="color" 
+                  value={form.color} 
+                  onChange={e => setForm({ ...form, color: e.target.value })} 
+                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-2xl p-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Mulai <span className="text-rose-500">*</span></label>
-                  <input 
-                    type="date" 
-                    value={form.dateStart} 
-                    onChange={e => setForm({ ...form, dateStart: e.target.value })} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Selesai</label>
-                  <input 
-                    type="date" 
-                    value={form.dateEnd} 
-                    onChange={e => setForm({ ...form, dateEnd: e.target.value })} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Jenis Event</label>
-                  <select 
-                    value={form.type} 
-                    onChange={e => {
-                      const opt = typeOptions.find(t => t.value === e.target.value);
-                      setForm({ ...form, type: e.target.value, color: opt?.color || form.color });
-                    }} 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
-                  >
-                    {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Warna Label</label>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={form.color} 
-                      onChange={e => setForm({ ...form, color: e.target.value })} 
-                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-2xl p-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Keterangan Tambahan</label>
-                <textarea 
-                  value={form.description} 
-                  onChange={e => setForm({ ...form, description: e.target.value })} 
-                  rows={3} 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm"
-                  placeholder="Detail acara, lokasi, atau informasi lainnya..."
-                />
-              </div>
-            </div>
-
-            <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95"
-              >
-                Batal
-              </button>
-              {editItem && (
-                <button 
-                  onClick={() => handleDelete(editItem.id)} 
-                  className="px-6 py-3 bg-rose-50 text-rose-600 rounded-2xl text-sm font-bold hover:bg-rose-600 hover:text-white transition-all active:scale-95 border border-rose-100"
-                >
-                  Hapus
-                </button>
-              )}
-              <button 
-                onClick={handleSubmit} 
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100 active:scale-95"
-              >
-                {editItem ? "Simpan Perubahan" : "Simpan Event"}
-              </button>
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Keterangan Tambahan</label>
+            <textarea 
+              value={form.description} 
+              onChange={e => setForm({ ...form, description: e.target.value })} 
+              rows={3} 
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm"
+              placeholder="Detail acara, lokasi, atau informasi lainnya..."
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button 
+              type="button"
+              onClick={() => setShowModal(false)} 
+              className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95"
+            >
+              Batal
+            </button>
+            {editItem && (
+              <button 
+                type="button"
+                onClick={() => handleDelete(editItem.id)} 
+                className="px-6 py-3 bg-rose-50 text-rose-600 rounded-2xl text-sm font-bold hover:bg-rose-600 hover:text-white transition-all active:scale-95 border border-rose-100"
+              >
+                Hapus
+              </button>
+            )}
+            <button 
+              type="button"
+              onClick={handleSubmit} 
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100 active:scale-95"
+            >
+              {editItem ? "Simpan Perubahan" : "Simpan Event"}
+            </button>
+          </div>
         </div>
-      )}
+      </LeftDrawer>
     </div>
   );
 }

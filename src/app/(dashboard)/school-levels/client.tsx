@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 
 export interface SchoolLevelItem {
   id: number;
@@ -646,167 +647,149 @@ export default function SchoolLevelsClient({ initialLevels }: SchoolLevelsClient
         </div>
       </div>
 
-      {/* 5. Modal Dialog Form Tambah / Ubah Jenjang */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl relative animate-scale-in">
+      {/* 5. LeftDrawer Form Tambah / Ubah Jenjang */}
+      <LeftDrawer
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingLevel(null);
+        }}
+        title={editingLevel ? "Ubah Tingkatan Jenjang" : "Tambah Tingkatan Jenjang"}
+        subtitle={
+          editingLevel
+            ? "Perbarui kode, nama, atau PIN pengaman jenjang."
+            : "Daftarkan jenjang pendidikan baru pada sistem yayasan."
+        }
+        width="max-w-md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Kode Jenjang */}
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
+              Kode Jenjang <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              maxLength={15}
+              placeholder="Contoh: MI, MTs, MA, SMK, PONDOK"
+              value={formData.code}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value.toUpperCase() })
+              }
+              className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs uppercase focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+            <span className="text-[10px] text-slate-400 font-mono">
+              Singkatan unik pengenal tingkatan (maks. 15 karakter).
+            </span>
+          </div>
+
+          {/* Nama Jenjang */}
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
+              Nama Lengkap Jenjang <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              maxLength={100}
+              placeholder="Contoh: Madrasah Tsanawiyah Terpadu"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          {/* Grid: Urutan & Status */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
+                Urutan Tampilan
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={formData.orderNumber}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    orderNumber: parseInt(e.target.value, 10) || 1,
+                  })
+                }
+                className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
+                Status Operasional
+              </label>
+              <div className="flex items-center h-9">
+                <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isActive: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Aktif</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* PIN Proteksi Opsional */}
+          <div className="pt-2 border-t border-slate-100">
+            <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>PIN Proteksi (Opsional)</span>
+            </label>
+            <input
+              type="password"
+              maxLength={6}
+              inputMode="numeric"
+              placeholder="Kosongkan jika bebas beralih"
+              value={formData.pin}
+              onChange={(e) =>
+                setFormData({ ...formData, pin: e.target.value.replace(/\D/g, "") })
+              }
+              className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs tracking-widest focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+            <span className="text-[10px] text-slate-400">
+              {editingLevel
+                ? "Isi hanya jika ingin mengganti 6-digit PIN keamanan peralihan."
+                : "Wajibkan 6 digit angka saat beralih ke jenjang ini."}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-3 border-t border-slate-100 flex gap-2.5">
             <button
+              type="button"
+              disabled={isSubmitting}
               onClick={() => {
                 setIsModalOpen(false);
                 setEditingLevel(null);
               }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
-              aria-label="Tutup"
+              className="flex-1 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              Batal
             </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                <School className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-800">
-                  {editingLevel ? "Ubah Tingkatan Jenjang" : "Tambah Tingkatan Jenjang"}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {editingLevel
-                    ? "Perbarui kode, nama, atau PIN pengaman jenjang."
-                    : "Daftarkan jenjang pendidikan baru pada sistem yayasan."}
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-              {/* Kode Jenjang */}
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
-                  Kode Jenjang <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  maxLength={15}
-                  placeholder="Contoh: MI, MTs, MA, SMK, PONDOK"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                  }
-                  className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs uppercase focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Singkatan unik pengenal tingkatan (maks. 15 karakter).
-                </span>
-              </div>
-
-              {/* Nama Jenjang */}
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
-                  Nama Lengkap Jenjang <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  maxLength={100}
-                  placeholder="Contoh: Madrasah Tsanawiyah Terpadu"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-
-              {/* Grid: Urutan & Status */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
-                    Urutan Tampilan
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={formData.orderNumber}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        orderNumber: parseInt(e.target.value, 10) || 1,
-                      })
-                    }
-                    className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1">
-                    Status Operasional
-                  </label>
-                  <div className="flex items-center h-9">
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={formData.isActive}
-                        onChange={(e) =>
-                          setFormData({ ...formData, isActive: e.target.checked })
-                        }
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
-                      />
-                      <span>Aktif</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* PIN Proteksi Opsional */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold mb-1 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>PIN Proteksi (Opsional)</span>
-                </label>
-                <input
-                  type="password"
-                  maxLength={6}
-                  inputMode="numeric"
-                  placeholder="Kosongkan jika bebas beralih"
-                  value={formData.pin}
-                  onChange={(e) =>
-                    setFormData({ ...formData, pin: e.target.value.replace(/\D/g, "") })
-                  }
-                  className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-mono text-xs tracking-widest focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-                <span className="text-[10px] text-slate-400">
-                  {editingLevel
-                    ? "Isi hanya jika ingin mengganti 6-digit PIN keamanan peralihan."
-                    : "Wajibkan 6 digit angka saat beralih ke jenjang ini."}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-3 flex gap-2.5">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEditingLevel(null);
-                  }}
-                  className="flex-1 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
-                >
-                  {isSubmitting ? "Menyimpan..." : editingLevel ? "Simpan Perubahan" : "Daftarkan Jenjang"}
-                </button>
-              </div>
-            </form>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
+            >
+              {isSubmitting ? "Menyimpan..." : editingLevel ? "Simpan Perubahan" : "Daftarkan Jenjang"}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

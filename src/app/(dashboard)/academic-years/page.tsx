@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
@@ -33,6 +34,9 @@ export default function AcademicYearsPage() {
   const [search, setSearch] = useState("");
   const [limit] = useState(10);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingYear, setEditingYear] = useState<AcademicYear | null>(null);
+  const [formData, setFormData] = useState({ year: "", isActive: false });
 
   const { data: result, isLoading } = useQuery<ApiResponse>({
     queryKey: ["academic-years", page, search],
@@ -46,6 +50,49 @@ export default function AcademicYearsPage() {
   const pagination = result?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
   const refreshData = () => queryClient.invalidateQueries({ queryKey: ["academic-years"] });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.year.trim()) {
+      Swal.fire("Error", "Tahun ajaran tidak boleh kosong", "error");
+      return;
+    }
+
+    try {
+      const url = editingYear ? `/api/academic-years/${editingYear.id}` : "/api/academic-years";
+      const method = editingYear ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: formData.year.trim(),
+          isActive: formData.isActive,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Gagal menghubungi server");
+      }
+      const json = await res.json();
+      if (json.success) {
+        setIsDrawerOpen(false);
+        setEditingYear(null);
+        setFormData({ year: "", isActive: false });
+        Swal.fire(
+          "Berhasil",
+          editingYear ? "Tahun ajaran berhasil diperbarui" : "Tahun ajaran berhasil ditambahkan",
+          "success"
+        );
+        refreshData();
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal menyimpan", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+      Swal.fire("Error", msg, "error");
+    }
+  };
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
@@ -98,56 +145,12 @@ export default function AcademicYearsPage() {
               }}
             />
             <button 
-              onClick={async () => {
-                const result = await Swal.fire({
-                  title: "Tambah Tahun Ajaran",
-                  html: `
-                    <div style="text-align: left; margin-bottom: 10px;">
-                      <label style="font-size: 14px; font-weight: 600;">Tahun (Contoh: 2023/2024)</label>
-                      <input id="swal-input1" class="swal2-input" placeholder="2023/2024" style="margin-top: 5px;">
-                    </div>
-                  `,
-                  focusConfirm: false,
-                  showCancelButton: true,
-                  confirmButtonText: "Simpan",
-                  cancelButtonText: "Batal",
-                  preConfirm: () => {
-                    const input1 = document.getElementById('swal-input1') as HTMLInputElement;
-                    return {
-                      year: input1 ? input1.value : '',
-                    }
-                  }
-                });
-
-                if (!result.isConfirmed) return;
-                const { year } = result.value || {};
-                if (!year) {
-                  Swal.fire("Error", "Tahun ajaran tidak boleh kosong", "error");
-                  return;
-                }
-
-                try {
-                  const res = await fetch("/api/academic-years", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ year }),
-                  });
-                  if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.message || "Gagal menghubungi server");
-                  }
-                  const json = await res.json();
-                  if (json.success) { 
-                    Swal.fire("Berhasil", "Tahun ajaran berhasil ditambahkan", "success"); 
-                    refreshData(); 
-                  } else {
-                    Swal.fire("Gagal", json.message, "error");
-                  }
-                } catch (error: unknown) { 
-                  const msg = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
-                  Swal.fire("Error", msg, "error"); 
-                }
+              onClick={() => {
+                setEditingYear(null);
+                setFormData({ year: "", isActive: false });
+                setIsDrawerOpen(true);
               }}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider cursor-pointer"
             >
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -278,6 +281,16 @@ export default function AcademicYearsPage() {
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.375rem" }}>
                           <button 
+                            onClick={() => {
+                              setEditingYear(y);
+                              setFormData({ year: y.year || "", isActive: Boolean(y.isActive) });
+                              setIsDrawerOpen(true);
+                            }}
+                            style={{ display: "inline-flex", alignItems: "center", padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600, color: "#0284c7", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "0.5rem", cursor: "pointer" }}
+                          >
+                            Edit
+                          </button>
+                          <button 
                             onClick={async () => {
                               const result = await Swal.fire({
                                 title: "Update Status?",
@@ -367,6 +380,68 @@ export default function AcademicYearsPage() {
           </div>
         )}
       </Card>
+
+      {/* LeftDrawer Form Tambah & Edit Tahun Ajaran */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setEditingYear(null);
+        }}
+        title={editingYear ? "Edit Tahun Ajaran" : "Tambah Tahun Ajaran"}
+        subtitle="Kelola konfigurasi periode tahun ajaran aktif sistem"
+        width="max-w-md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Tahun Ajaran <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Contoh: 2024/2025"
+              value={formData.year}
+              onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            />
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Format umum: YYYY/YYYY (misal: 2024/2025)
+            </span>
+          </div>
+
+          <div>
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+              />
+              <span>Jadikan Tahun Ajaran Aktif</span>
+            </label>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setEditingYear(null);
+              }}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              {editingYear ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }

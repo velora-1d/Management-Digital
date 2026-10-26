@@ -124,3 +124,64 @@ export async function GET() {
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
+
+export async function POST() {
+  try {
+    await requireAuth();
+
+    const activeYear = await db
+      .select({ id: academicYears.id, year: academicYears.year })
+      .from(academicYears)
+      .where(and(eq(academicYears.isActive, true), isNull(academicYears.deletedAt)))
+      .limit(1);
+
+    const activeYearId = activeYear[0]?.id;
+    if (!activeYearId) {
+      return NextResponse.json({ success: false, message: "Tidak ada tahun ajaran aktif" }, { status: 400 });
+    }
+
+    // 1. Sync student_enrollments.classroom_id with students.classroom_id where mismatch exists
+    await db.execute(sql`
+      UPDATE ${studentEnrollments} se
+      SET classroom_id = s.classroom_id,
+          updated_at = NOW()
+      FROM ${students} s
+      WHERE se.student_id = s.id
+        AND se.academic_year_id = ${activeYearId}
+        AND se.deleted_at IS NULL
+        AND s.deleted_at IS NULL
+        AND s.status = 'aktif'
+        AND s.classroom_id IS NOT NULL
+        AND s.classroom_id IS DISTINCT FROM se.classroom_id
+    `);
+
+    // 2. Insert missing enrollments for active students that have classroom_id but no active enrollment
+    await db.execute(sql`
+      INSERT INTO ${studentEnrollments} (student_id, classroom_id, academic_year_id, enrollment_type, created_at, updated_at)
+      SELECT s.id, s.classroom_id, ${activeYearId}, 'reguler', NOW(), NOW()
+      FROM ${students} s
+      WHERE s.deleted_at IS NULL
+        AND s.status = 'aktif'
+        AND s.classroom_id IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM ${studentEnrollments} se
+          WHERE se.student_id = s.id
+            AND se.academic_year_id = ${activeYearId}
+            AND se.deleted_at IS NULL
+        )
+    `);
+
+    return NextResponse.json({
+      success: true,
+      message: "Data enrollment dan kelas master siswa berhasil disinkronkan!",
+    });
+  } catch (error) {
+    console.error("Enrollment sync error:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+    }
+    const message = error instanceof Error ? error.message : "Gagal menyinkronkan data";
+    return NextResponse.json({ success: false, message }, { status: 500 });
+  }
+}
+

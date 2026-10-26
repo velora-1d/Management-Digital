@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { ExportButtons } from "@/lib/export-utils";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
@@ -499,149 +500,140 @@ export default function ExtracurricularPage() {
         )}
       </Card>
 
-      {/* Modal Tambah/Edit */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">{editItem ? "Edit Ekskul" : "Tambah Ekskul"}</h2>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors text-xl font-light">&times;</button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Nama Ekskul <span className="text-rose-500">*</span></label>
-                  <input 
-                    value={form.name} 
-                    onChange={e => setForm({ ...form, name: e.target.value })} 
-                    placeholder="Contoh: Pramuka, Basket"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Guru Pembina</label>
-                  <select 
-                    value={form.employeeId} 
-                    onChange={e => setForm({ ...form, employeeId: e.target.value })} 
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm bg-white"
-                  >
-                    <option value="">— Pilih Guru Pembina —</option>
-                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Jadwal Latihan</label>
-                  <input 
-                    value={form.schedule} 
-                    onChange={e => setForm({ ...form, schedule: e.target.value })} 
-                    placeholder="Contoh: Jumat 15:00-17:00" 
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Status</label>
-                  <div className="flex gap-2">
-                    {["aktif", "nonaktif"].map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setForm({ ...form, status: s })}
-                        className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl border transition-all ${
-                          form.status === s 
-                            ? "bg-blue-600 border-blue-600 text-white" 
-                            : "bg-white border-slate-200 text-slate-400 hover:border-blue-200"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 -mx-6 px-6 mt-4">
-                <button 
-                  onClick={() => setShowModal(false)} 
-                  className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
-                >
-                  Batal
-                </button>
-                <button 
-                  onClick={handleSubmit} 
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-200"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </div>
+      {/* LeftDrawer Tambah/Edit Ekskul */}
+      <LeftDrawer
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editItem ? "Edit Ekskul" : "Tambah Ekskul"}
+        subtitle="Kelola nama, pembina, jadwal, dan status ekstrakurikuler"
+        width="max-w-md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Nama Ekskul <span className="text-rose-500">*</span></label>
+            <input 
+              value={form.name} 
+              onChange={e => setForm({ ...form, name: e.target.value })} 
+              placeholder="Contoh: Pramuka, Basket"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
+            />
           </div>
-        </div>
-      )}
-
-      {/* Modal Assign Anggota */}
-      {showAssign && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">Assign Anggota</h2>
-                <p className="text-sm text-slate-500">Pilih siswa yang akan mengikuti ekstrakurikuler</p>
-              </div>
-              <div className="bg-blue-100 px-3 py-1.5 rounded-full">
-                <span className="text-xs font-bold text-blue-700">{selectedStudents.length} Terpilih</span>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-8 space-y-2 bg-white">
-              <div className="sticky top-0 pb-4 bg-white z-10">
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Cari nama atau NISN..." 
-                    className="w-full bg-slate-50 border-none rounded-2xl py-3 px-5 pl-12 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                </div>
-              </div>
-
-              {students.map(s => (
-                <label key={s.id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                  selectedStudents.includes(s.id) 
-                    ? "bg-blue-50/50 border-blue-200" 
-                    : "bg-white border-transparent hover:bg-slate-50"
-                }`}>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedStudents.includes(s.id)} 
-                    onChange={(e) => {
-                      setSelectedStudents(e.target.checked ? [...selectedStudents, s.id] : selectedStudents.filter(id => id !== s.id));
-                    }} 
-                    className="w-5 h-5 rounded-lg border-2 border-slate-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-800">{s.name}</p>
-                    <p className="text-[11px] font-mono text-slate-500 uppercase tracking-tighter mt-0.5">{s.nisn}</p>
-                  </div>
-                </label>
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Guru Pembina</label>
+            <select 
+              value={form.employeeId} 
+              onChange={e => setForm({ ...form, employeeId: e.target.value })} 
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm bg-white"
+            >
+              <option value="">— Pilih Guru Pembina —</option>
+              {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Jadwal Latihan</label>
+            <input 
+              value={form.schedule} 
+              onChange={e => setForm({ ...form, schedule: e.target.value })} 
+              placeholder="Contoh: Jumat 15:00-17:00" 
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" 
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Status</label>
+            <div className="flex gap-2">
+              {["aktif", "nonaktif"].map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setForm({ ...form, status: s })}
+                  className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl border transition-all cursor-pointer ${
+                    form.status === s 
+                      ? "bg-blue-600 border-blue-600 text-white" 
+                      : "bg-white border-slate-200 text-slate-400 hover:border-blue-200"
+                  }`}
+                >
+                  {s}
+                </button>
               ))}
             </div>
+          </div>
 
-            <div className="p-8 border-t border-slate-100 bg-slate-50/30 flex justify-end gap-3">
-              <button 
-                onClick={() => setShowAssign(false)} 
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-colors"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handleAssign} 
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-100"
-              >
-                Simpan ({selectedStudents.length} Siswa)
-              </button>
-            </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+            <button 
+              onClick={() => setShowModal(false)} 
+              className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button 
+              onClick={handleSubmit} 
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-200 cursor-pointer"
+            >
+              {editItem ? "Simpan Perubahan" : "Simpan Ekskul"}
+            </button>
           </div>
         </div>
-      )}
+      </LeftDrawer>
+
+      {/* LeftDrawer Assign Anggota */}
+      <LeftDrawer
+        isOpen={showAssign}
+        onClose={() => setShowAssign(false)}
+        title="Assign Anggota Ekskul"
+        subtitle={`Pilih siswa yang akan mengikuti ekstrakurikuler (${selectedStudents.length} terpilih)`}
+        width="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div className="sticky top-0 pb-2 bg-white z-10">
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Cari nama atau NISN..." 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 pl-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {students.map(s => (
+              <label key={s.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                selectedStudents.includes(s.id) 
+                  ? "bg-blue-50/50 border-blue-200" 
+                  : "bg-white border-slate-100 hover:bg-slate-50"
+              }`}>
+                <input 
+                  type="checkbox" 
+                  checked={selectedStudents.includes(s.id)} 
+                  onChange={(e) => {
+                    setSelectedStudents(e.target.checked ? [...selectedStudents, s.id] : selectedStudents.filter(id => id !== s.id));
+                  }} 
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                />
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-slate-800">{s.name}</p>
+                  <p className="text-[10px] font-mono text-slate-500 uppercase tracking-tighter mt-0.5">{s.nisn}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-4">
+            <button 
+              onClick={() => setShowAssign(false)} 
+              className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button 
+              onClick={handleAssign} 
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-100 cursor-pointer"
+            >
+              Simpan ({selectedStudents.length} Siswa)
+            </button>
+          </div>
+        </div>
+      </LeftDrawer>
     </div>
   );
 }

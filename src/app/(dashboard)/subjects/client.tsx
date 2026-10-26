@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import { ExportButtons } from "@/lib/export-utils";
+import LeftDrawer from "@/components/ui/LeftDrawer";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/Pagination";
@@ -27,6 +28,14 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
   const [search, setSearch] = useState("");
   const [limit] = useState(10);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<SubjectItem | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    type: "wajib" as "wajib" | "mulok" | "muatan_khusus",
+    tingkatKelas: "",
+  });
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["subjects", page, search],
@@ -45,148 +54,66 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
     queryClient.invalidateQueries({ queryKey: ["subjects"] });
   };
 
-  const handleAdd = () => {
-    Swal.fire({
-      title: "Tambah Mata Pelajaran",
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <div><label style="font-size:0.75rem;font-weight:600;">Nama Mapel *</label>
-          <input type="text" id="swal-add-subject-name" class="swal2-input" placeholder="Mis: Bahasa Indonesia" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Kode / Singkatan</label>
-          <input type="text" id="swal-add-subject-code" class="swal2-input" placeholder="Mis: BIND" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Jenis *</label>
-            <select id="swal-add-subject-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="wajib">Wajib</option>
-              <option value="mulok">Muatan Lokal</option>
-              <option value="muatan_khusus">Muatan Khusus / Peminatan</option>
-            </select>
-          </div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Tingkat Kelas</label>
-          <input type="text" id="swal-add-subject-tingkat" class="swal2-input" placeholder="Mis: VII, VIII, IX" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      confirmButtonColor: "#10b981",
-      preConfirm: () => {
-        const name = (document.getElementById("swal-add-subject-name") as HTMLInputElement).value;
-        if (!name) {
-          Swal.showValidationMessage('Nama Mapel wajib diisi');
-          return false;
-        }
-        return {
-          name,
-          code: (document.getElementById("swal-add-subject-code") as HTMLInputElement).value,
-          type: (document.getElementById("swal-add-subject-type") as HTMLSelectElement).value,
-          tingkatKelas: (document.getElementById("swal-add-subject-tingkat") as HTMLInputElement).value
-        };
-      }
-    }).then(async (r) => {
-      if (r.isConfirmed) {
-        try {
-          const res = await fetch("/api/subjects", { 
-            method: "POST", 
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify(r.value) 
-          });
-
-          if (!res.ok) {
-            let errorMsg = `HTTP error! status: ${res.status}`;
-            try {
-              const errorData = await res.json();
-              if (errorData.message) errorMsg = errorData.message;
-            } catch {}
-            throw new Error(errorMsg);
-          }
-
-          const json = await res.json();
-          if (json.success !== false) { 
-            Swal.fire("Berhasil", "Mata pelajaran ditambahkan", "success"); 
-            refreshData(); 
-          } else {
-            Swal.fire("Gagal", json.message || "Gagal", "error");
-          }
-        } catch (error: unknown) { 
-          const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
-        }
-      }
-    });
+  const handleOpenAdd = () => {
+    setEditingSubject(null);
+    setFormData({ name: "", code: "", type: "wajib", tingkatKelas: "" });
+    setIsDrawerOpen(true);
   };
 
-  const handleEdit = (sub: SubjectItem) => {
-    Swal.fire({
-      title: "Edit Mata Pelajaran",
-      html: `
-        <div style="text-align:left;display:grid;gap:0.75rem;">
-          <div><label style="font-size:0.75rem;font-weight:600;">Nama Mapel *</label>
-          <input type="text" id="swal-edit-subject-name" class="swal2-input" value="${sub.name}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Kode / Singkatan</label>
-          <input type="text" id="swal-edit-subject-code" class="swal2-input" value="${sub.code || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Jenis *</label>
-            <select id="swal-edit-subject-type" class="swal2-select" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;">
-              <option value="wajib" ${sub.type === 'wajib' ? 'selected' : ''}>Wajib</option>
-              <option value="mulok" ${sub.type === 'mulok' ? 'selected' : ''}>Muatan Lokal</option>
-              <option value="muatan_khusus" ${sub.type === 'muatan_khusus' ? 'selected' : ''}>Muatan Khusus / Peminatan</option>
-            </select>
-          </div>
-          
-          <div><label style="font-size:0.75rem;font-weight:600;">Tingkat Kelas</label>
-          <input type="text" id="swal-edit-subject-tingkat" class="swal2-input" value="${sub.tingkatKelas || ''}" style="margin:0;width:100%;height:2.5rem;padding:0.5rem;font-size:0.875rem;"></div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Simpan",
-      confirmButtonColor: "#10b981",
-      preConfirm: () => {
-        const name = (document.getElementById("swal-edit-subject-name") as HTMLInputElement).value;
-        if (!name) {
-          Swal.showValidationMessage('Nama Mapel wajib diisi');
-          return false;
-        }
-        return {
-          name,
-          code: (document.getElementById("swal-edit-subject-code") as HTMLInputElement).value,
-          type: (document.getElementById("swal-edit-subject-type") as HTMLSelectElement).value,
-          tingkatKelas: (document.getElementById("swal-edit-subject-tingkat") as HTMLInputElement).value
-        };
-      }
-    }).then(async (r) => {
-      if (r.isConfirmed) {
-        try {
-          const res = await fetch(`/api/subjects/${sub.id}`, { 
-            method: "PUT", 
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify(r.value) 
-          });
-
-          if (!res.ok) {
-            let errorMsg = `HTTP error! status: ${res.status}`;
-            try {
-              const errorData = await res.json();
-              if (errorData.message) errorMsg = errorData.message;
-            } catch {}
-            throw new Error(errorMsg);
-          }
-
-          const json = await res.json();
-          if (json.success !== false) { 
-            Swal.fire("Berhasil", "Mata pelajaran diperbarui", "success"); 
-            refreshData(); 
-          } else {
-            Swal.fire("Gagal", json.message || "Gagal", "error");
-          }
-        } catch (error: unknown) { 
-          const msg = error instanceof Error ? error.message : "Server error";
-          Swal.fire("Error", msg, "error"); 
-        }
-      }
+  const handleOpenEdit = (sub: SubjectItem) => {
+    setEditingSubject(sub);
+    setFormData({
+      name: sub.name,
+      code: sub.code || "",
+      type: sub.type,
+      tingkatKelas: sub.tingkatKelas || "",
     });
+    setIsDrawerOpen(true);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      Swal.fire("Error", "Nama Mapel wajib diisi", "error");
+      return;
+    }
+
+    try {
+      const url = editingSubject ? `/api/subjects/${editingSubject.id}` : "/api/subjects";
+      const method = editingSubject ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        let errorMsg = `HTTP error! status: ${res.status}`;
+        try {
+          const errorData = await res.json();
+          if (errorData.message) errorMsg = errorData.message;
+        } catch {}
+        throw new Error(errorMsg);
+      }
+
+      const json = await res.json();
+      if (json.success !== false) {
+        setIsDrawerOpen(false);
+        setEditingSubject(null);
+        setFormData({ name: "", code: "", type: "wajib", tingkatKelas: "" });
+        Swal.fire(
+          "Berhasil",
+          editingSubject ? "Mata pelajaran diperbarui" : "Mata pelajaran ditambahkan",
+          "success"
+        );
+        refreshData();
+      } else {
+        Swal.fire("Gagal", json.message || "Gagal", "error");
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Server error";
+      Swal.fire("Error", msg, "error");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -279,8 +206,8 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
               }}
             />
             <button 
-              onClick={handleAdd}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs uppercase tracking-wider cursor-pointer"
             >
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -407,8 +334,8 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
                     <td className="py-2.5 px-4 text-[13px] text-slate-600">{item.tingkatKelas || 'Semua'}</td>
                     <td className="py-2.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <button onClick={() => handleEdit(item)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-blue-600 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 hover:border-blue-200 rounded text-center transition-colors">Edit</button>
-                        <button onClick={() => handleDelete(item.id)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-50 border border-rose-100/50 hover:border-rose-200 rounded text-center transition-colors">Hapus</button>
+                        <button onClick={() => handleOpenEdit(item)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-blue-600 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 hover:border-blue-200 rounded text-center transition-colors cursor-pointer">Edit</button>
+                        <button onClick={() => handleDelete(item.id)} className="inline-flex py-1 px-2.5 text-[11px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-50 border border-rose-100/50 hover:border-rose-200 rounded text-center transition-colors cursor-pointer">Hapus</button>
                       </div>
                     </td>
                   </tr>
@@ -440,6 +367,94 @@ export default function SubjectsClient({ initialResult }: { initialResult?: Init
           </div>
         </div>
       </Card>
+
+      {/* LeftDrawer Tambah & Edit Mata Pelajaran */}
+      <LeftDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setEditingSubject(null);
+        }}
+        title={editingSubject ? "Edit Mata Pelajaran" : "Tambah Mata Pelajaran"}
+        subtitle={editingSubject ? `Perbarui data mapel ${editingSubject.name}` : "Tambahkan mata pelajaran baru ke kurikulum"}
+        width="max-w-md"
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Nama Mata Pelajaran <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Mis: Bahasa Indonesia"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Kode / Singkatan
+            </label>
+            <input
+              type="text"
+              placeholder="Mis: BIND"
+              value={formData.code}
+              onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none uppercase"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Jenis Mata Pelajaran <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as "wajib" | "mulok" | "muatan_khusus" })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            >
+              <option value="wajib">Wajib</option>
+              <option value="mulok">Muatan Lokal</option>
+              <option value="muatan_khusus">Muatan Khusus / Peminatan</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Tingkat Kelas
+            </label>
+            <input
+              type="text"
+              placeholder="Mis: VII, VIII, IX (kosongkan jika semua tingkat)"
+              value={formData.tingkatKelas}
+              onChange={(e) => setFormData({ ...formData, tingkatKelas: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setEditingSubject(null);
+              }}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              {editingSubject ? "Simpan Perubahan" : "Simpan Mapel"}
+            </button>
+          </div>
+        </form>
+      </LeftDrawer>
     </div>
   );
 }
