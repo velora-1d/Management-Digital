@@ -79,7 +79,6 @@ const menuItems: MenuGroup[] = [
   {
     group: "DATA MASTER",
     items: [
-      { name: "Tingkatan Sekolah", short: "Jenjang", href: "/school-levels", icon: School },
       { name: "Data Siswa", short: "Siswa", href: "/students", icon: Users },
       { name: "Mutasi & Kenaikan", short: "Mutasi", href: "/mutations", icon: ArrowLeftRight },
       { name: "Kelas", short: "Kelas", href: "/classrooms", icon: Building2 },
