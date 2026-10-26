@@ -175,12 +175,37 @@ export default function Sidebar({
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<{ name: string; logo: string } | null>(null);
+  const [activeLevelName, setActiveLevelName] = useState<string>("Tingkat Aktif");
 
   useEffect(() => {
     fetch("/api/settings/profile")
       .then((res) => res.json())
       .then((data) => setProfile({ name: data.name, logo: ensureHttpsUrl(data.logo) }))
       .catch(console.error);
+
+    fetch("/api/school-levels")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.activeLevel?.name) {
+          setActiveLevelName(data.activeLevel.name);
+        }
+      })
+      .catch(() => {});
+
+    const handleLevelChange = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail?.name) {
+        setActiveLevelName(custom.detail.name);
+      }
+    };
+
+    window.addEventListener("school-level-changed", handleLevelChange);
+    window.addEventListener("school-level-synced", handleLevelChange);
+
+    return () => {
+      window.removeEventListener("school-level-changed", handleLevelChange);
+      window.removeEventListener("school-level-synced", handleLevelChange);
+    };
   }, []);
 
   // Close mobile sidebar on route change
@@ -310,9 +335,9 @@ export default function Sidebar({
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
               <span
                 className="text-[11.5px] text-[#8CB4C8] font-medium truncate max-w-[190px]"
-                title="Management Digital"
+                title={activeLevelName}
               >
-                Management Digital
+                {activeLevelName}
               </span>
             </div>
           </div>

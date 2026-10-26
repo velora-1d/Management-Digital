@@ -29,6 +29,22 @@ export const tenants = pgTable('tenants', {
 export type Tenant = typeof tenants.$inferSelect;
 export type NewTenant = typeof tenants.$inferInsert;
 
+// ─── SCHOOL LEVELS (JENJANG PENDIDIKAN) ──────────────────────────────────────
+export const schoolLevels = pgTable('school_levels', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().default(1),
+  code: text('code').notNull(), // e.g. 'MI', 'MTS', 'MA', 'SMP', 'SMA', 'SMK', 'PONDOK'
+  name: text('name').notNull(), // e.g. 'Madrasah Tsanawiyah', 'Madrasah Aliyah'
+  orderNumber: integer('order_number').notNull().default(1),
+  isActive: boolean('is_active').notNull().default(true),
+  pin: text('pin'), // Optional security PIN for protected switching
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type SchoolLevel = typeof schoolLevels.$inferSelect;
+export type NewSchoolLevel = typeof schoolLevels.$inferInsert;
+
 // ─── USERS ─────────────────────────────────────────────────────────────────
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),

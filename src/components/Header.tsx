@@ -3,6 +3,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Swal from "sweetalert2";
+import TenantSwitcher from "@/components/TenantSwitcher";
 
 // Comprehensive Breadcrumb label mapping
 const labelMap: Record<string, string> = {
@@ -96,22 +97,11 @@ export default function Header({ user }: HeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [schoolName, setSchoolName] = useState<string>("Madrasah Digital");
 
   const searchRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-
-  // Fetch tenant info
-  useEffect(() => {
-    fetch("/api/settings/profile")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.name) setSchoolName(data.name);
-      })
-      .catch(() => {});
-  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -225,12 +215,8 @@ export default function Header({ user }: HeaderProps) {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2.5">
-        {/* Tenant Indicator */}
-        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-          <span className="text-slate-500 font-medium">Tenant:</span>
-          <span className="font-semibold text-slate-800 truncate max-w-[160px]">{schoolName}</span>
-        </div>
+        {/* Switch Jenjang / Tingkatan Sekolah (1:1 Edu-sistem) */}
+        <TenantSwitcher />
 
         {/* Quick Search */}
         <div ref={searchContainerRef} className="relative">
