@@ -81,11 +81,11 @@ export default async function CMSPage() {
     <div className="space-y-6">
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-linear-to-br from-blue-600 to-blue-700 p-6 rounded-2xl text-white shadow-lg shadow-blue-200">
-          <p className="text-blue-100 text-sm font-medium uppercase tracking-wider">Total Pendaftar PPDB</p>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-blue-600">
+          <p className="text-slate-500 text-sm font-medium uppercase tracking-wider">Total Pendaftar PPDB</p>
           <div className="mt-2 flex items-end gap-2">
-            <span className="text-4xl font-black">{stats.ppdb.total}</span>
-            <span className="text-blue-200 text-sm mb-1">Siswa</span>
+            <span className="text-4xl font-black text-slate-900">{stats.ppdb.total}</span>
+            <span className="text-slate-500 text-sm mb-1 font-semibold">Siswa</span>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">

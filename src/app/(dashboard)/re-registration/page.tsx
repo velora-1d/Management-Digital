@@ -415,20 +415,20 @@ export default function ReRegistrationPage() {
       {/* Stats Line */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-5 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Total Siswa</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0">Total Siswa</p>
           <p className="font-heading font-extrabold text-3xl text-slate-800 mt-2 m-0">{stats.total || 0}</p>
         </Card>
         <Card className="p-5 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Terkonfirmasi</p>
-          <p className="font-heading font-extrabold text-3xl text-emerald-500 mt-2 m-0">{stats.confirmed || 0}</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0">Terkonfirmasi</p>
+          <p className="font-heading font-extrabold text-3xl text-emerald-600 mt-2 m-0">{stats.confirmed || 0}</p>
         </Card>
         <Card className="p-5 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Menunggu</p>
-          <p className="font-heading font-extrabold text-3xl text-amber-500 mt-2 m-0">{stats.pending || 0}</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0">Menunggu</p>
+          <p className="font-heading font-extrabold text-3xl text-amber-600 mt-2 m-0">{stats.pending || 0}</p>
         </Card>
         <Card className="p-5 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider m-0">Tidak Daftar</p>
-          <p className="font-heading font-extrabold text-3xl text-rose-500 mt-2 m-0">{stats.not_registered || 0}</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider m-0">Tidak Daftar</p>
+          <p className="font-heading font-extrabold text-3xl text-rose-600 mt-2 m-0">{stats.not_registered || 0}</p>
         </Card>
       </div>
 

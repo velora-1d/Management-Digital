@@ -198,15 +198,15 @@ function CashAccountsContent() {
           </div>
         </div>
 
-        <div className="bg-linear-to-br from-cyan-600 to-blue-700 p-6 rounded-3xl shadow-xl shadow-blue-100 relative overflow-hidden text-white">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Landmark className="w-24 h-24" />
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
+            <Landmark className="w-24 h-24 text-slate-900" />
           </div>
-          <p className="text-blue-100 font-medium mb-1 truncate">Akun Teraktif</p>
-          <h3 className="text-2xl font-bold truncate">
+          <p className="text-slate-500 font-medium mb-1 truncate">Akun Teraktif</p>
+          <h3 className="text-2xl font-bold text-slate-900 truncate">
             {items.length > 0 ? items.sort((a,b) => b.transactionCount - a.transactionCount)[0].accountName : 'N/A'}
           </h3>
-          <p className="mt-4 text-white/80 text-sm font-medium">
+          <p className="mt-4 text-slate-600 text-sm font-medium">
             Mencatat {items.length > 0 ? items.sort((a,b) => b.transactionCount - a.transactionCount)[0].transactionCount : 0} transaksi
           </p>
         </div>

@@ -123,9 +123,9 @@ export default function CoopCreditsPage() {
 
       {/* Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-linear-to-br from-rose-500 to-rose-600 rounded-2xl shadow-sm p-5 text-white">
-          <p className="text-xs opacity-80 uppercase tracking-wider">Total Piutang Aktif</p>
-          <p className="text-2xl font-bold mt-1">Rp {totalPiutang.toLocaleString("id-ID")}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 border-l-4 border-l-rose-500">
+          <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Total Piutang Aktif</p>
+          <p className="text-2xl font-bold text-rose-600 mt-1">Rp {totalPiutang.toLocaleString("id-ID")}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
           <p className="text-[11px] text-slate-500 uppercase tracking-wider">Siswa Berhutang</p>

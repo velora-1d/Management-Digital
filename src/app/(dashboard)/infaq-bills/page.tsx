@@ -462,25 +462,25 @@ function InfaqBillsContent() {
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Total Tagihan</p>
           <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalNominal) : "Rp 0"}</h3>
-          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
+          <p className="text-xs text-slate-500 mt-2.5 font-medium flex items-center">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
-            <span className="font-mono">{stats ? stats.totalBills : 0}</span>&nbsp;item tagihan
+            <span className="font-mono font-semibold">{stats ? stats.totalBills : 0}</span>&nbsp;item tagihan
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Terkumpul</p>
           <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalPaid) : "Rp 0"}</h3>
-          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
-            <span className="font-mono">{stats ? stats.lunasCount + stats.sebagianCount : 0}</span>&nbsp;tagihan terbayar
+          <p className="text-xs text-slate-500 mt-2.5 font-medium flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+            <span className="font-mono font-semibold">{stats ? stats.lunasCount + stats.sebagianCount : 0}</span>&nbsp;tagihan terbayar
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-rose-500 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-[0.6875rem] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tunggakan</p>
           <h3 className="text-2xl font-bold font-mono text-slate-800">{stats ? fmtRupiah(stats.totalUnpaid) : "Rp 0"}</h3>
-          <p className="text-xs text-slate-400 mt-2.5 font-medium flex items-center">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span>
-            <span className="font-mono">{stats ? stats.belumLunasCount : 0}</span>&nbsp;tagihan belum lunas
+          <p className="text-xs text-slate-500 mt-2.5 font-medium flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+            <span className="font-mono font-semibold">{stats ? stats.belumLunasCount : 0}</span>&nbsp;tagihan belum lunas
           </p>
         </Card>
         <Card className="p-5 flex flex-col justify-center border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
