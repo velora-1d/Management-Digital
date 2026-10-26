@@ -9,6 +9,7 @@ interface LeftDrawerProps {
   subtitle?: string;
   children: React.ReactNode;
   width?: string;
+  position?: "left" | "right";
 }
 
 export default function LeftDrawer({
@@ -18,6 +19,7 @@ export default function LeftDrawer({
   subtitle,
   children,
   width = "max-w-md",
+  position = "right",
 }: LeftDrawerProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -39,17 +41,21 @@ export default function LeftDrawer({
 
   if (!isOpen) return null;
 
+  const isRight = position === "right";
+
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className={`fixed inset-0 z-50 flex ${isRight ? "justify-end" : "justify-start"}`}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
-      {/* Drawer Body - Slides in from LEFT */}
+      {/* Drawer Body - Slides in from RIGHT by default */}
       <div
-        className={`relative z-10 w-full ${width} bg-white h-full shadow-2xl flex flex-col border-r border-slate-200 transform transition-transform duration-300 ease-in-out animate-slide-in-left`}
+        className={`relative z-10 w-full ${width} bg-white h-full shadow-2xl flex flex-col ${
+          isRight ? "border-l animate-slide-in-right" : "border-r animate-slide-in-left"
+        } border-slate-200 transform transition-transform duration-300 ease-in-out`}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">

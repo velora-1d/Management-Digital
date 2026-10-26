@@ -248,8 +248,8 @@ export default function MutationsPage() {
         }
       />
 
-      {/* Main Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      {/* Main Two-Column Layout (Form di Kanan, Tabel di Kiri) */}
+      <div className="flex flex-col lg:flex-row-reverse gap-6 items-start">
         {/* Left Side Panel: Form Aksi & Audit Konsistensi */}
         <div className="w-full lg:w-80 shrink-0 space-y-4">
           {/* Card Form Aksi Mutasi */}
@@ -325,7 +325,7 @@ export default function MutationsPage() {
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
                 {selected.length === 0
-                  ? "Centang siswa di tabel sebelah kanan untuk memproses."
+                  ? "Centang siswa di tabel sebelah kiri untuk memproses."
                   : `${selected.length} siswa siap diproses ke aksi "${action}".`}
               </p>
             </div>
@@ -515,7 +515,7 @@ export default function MutationsPage() {
                   {!selectedClass ? (
                     <tr>
                       <td colSpan={6} className="p-12 text-center text-sm text-slate-400">
-                        Silakan pilih kelas asal pada panel sebelah kiri untuk menampilkan daftar siswa.
+                        Silakan pilih kelas asal pada panel sebelah kanan untuk menampilkan daftar siswa.
                       </td>
                     </tr>
                   ) : loading ? (
