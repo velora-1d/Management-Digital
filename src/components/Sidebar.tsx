@@ -1,70 +1,156 @@
 "use client";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Image from "next/image";
+import Swal from "sweetalert2";
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  ArrowLeftRight,
+  Building2,
+  Calendar,
+  Coins,
+  BookOpen,
+  UserCheck,
+  Clock,
+  CheckSquare,
+  BookMarked,
+  FileSpreadsheet,
+  Award,
+  Sparkles,
+  HeartHandshake,
+  CalendarDays,
+  CreditCard,
+  Wallet,
+  PiggyBank,
+  Heart,
+  Receipt,
+  BarChart3,
+  Boxes,
+  ShoppingCart,
+  BadgePercent,
+  Briefcase,
+  UserCog,
+  Banknote,
+  Mail,
+  Megaphone,
+  School,
+  Globe,
+  ExternalLink,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Menu,
+  LogOut,
+  type LucideIcon,
+} from "lucide-react";
 import { SIDEBAR_PERMISSIONS, type Role } from "@/lib/rbac-permissions";
 import { ensureHttpsUrl } from "@/lib/url";
 
-const menuItems = [
-  { group: "UTAMA", items: [
-    { name: "Dashboard", short: "Dashboard", href: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-  ]},
-  { group: "PENERIMAAN", items: [
-    { name: "Penerimaan PPDB", short: "PPDB", href: "/ppdb", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
-    { name: "Daftar Ulang", short: "Daftar Ulang", href: "/re-registration", icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" },
-  ]},
-  { group: "DATA MASTER", items: [
-    { name: "Data Siswa", short: "Siswa", href: "/students", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" },
-    { name: "Mutasi & Kenaikan", short: "Mutasi", href: "/mutations", icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" },
-    { name: "Kelas", short: "Kelas", href: "/classrooms", icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
-    { name: "Tahun Ajaran", short: "Tahun", href: "/academic-years", icon: "M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 19v-7a2 2 0 012-2h14a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2z" },
-    { name: "Kategori Keuangan", short: "Kategori", href: "/transaction-categories", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" },
-  ]},
-  { group: "AKADEMIK", items: [
-    { name: "Mata Pelajaran", short: "Mapel", href: "/subjects", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-    { name: "Penugasan Guru", short: "Penugasan", href: "/teaching-assignments", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
-    { name: "Jadwal Pelajaran", short: "Jadwal", href: "/schedules", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-    { name: "Absensi Siswa", short: "Absensi", href: "/attendance", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { name: "Manajemen Kurikulum", short: "Kurikulum", href: "/curriculum", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-    { name: "Input Nilai Siswa", short: "Nilai", href: "/grades", icon: "M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" },
-    { name: "Rapor Digital", short: "Rapor", href: "/report-cards", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-    { name: "Ekstrakurikuler", short: "Ekskul", href: "/extracurricular", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
-    { name: "Bimbingan Konseling", short: "BK", href: "/counseling", icon: "M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" },
-    { name: "Kalender Akademik", short: "Kalender", href: "/calendar", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-  ]},
-  { group: "KEUANGAN", items: [
-    { name: "Infaq / SPP", short: "Infaq", href: "/infaq-bills", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { name: "Akun Kas", short: "Akun Kas", href: "/cash-accounts", icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
-    { name: "Tabungan Siswa", short: "Tabungan", href: "/tabungan", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
-    { name: "Wakaf & Donasi", short: "Wakaf", href: "/wakaf", icon: "M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" },
-    { name: "Jurnal Umum", short: "Jurnal", href: "/journal", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-    { name: "Laporan", short: "Laporan", href: "/reports", icon: "M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" },
-  ]},
-  { group: "KOPERASI", items: [
-    { name: "Produk Koperasi", short: "Produk", href: "/coop/products", icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
-    { name: "Transaksi / Kasir", short: "Kasir", href: "/coop/transactions", icon: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" },
-    { name: "Piutang Siswa", short: "Piutang", href: "/coop/credits", icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
-  ]},
-  { group: "SDM", items: [
-    { name: "Data Guru", short: "Guru", href: "/teachers", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
-    { name: "Data Staf", short: "Staf", href: "/staff", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { name: "Payroll", short: "Gaji", href: "/payroll", icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
-  ]},
-  { group: "TATA USAHA", items: [
-    { name: "Absensi Pegawai", short: "Absensi", href: "/employee-attendance", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { name: "Manajemen Surat", short: "Surat", href: "/letters", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-    { name: "Pengumuman", short: "Pengumuman", href: "/announcements", icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
-    { name: "Inventaris", short: "Inventaris", href: "/inventory", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
-    { name: "Profil Sekolah", short: "Profil", href: "/school-profile", icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
-  ]},
-  { group: "WEBSITE", items: [
-    { name: "Website Profil Madrasah", short: "CMS", href: "/admin/cms", icon: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9h18" },
-    { name: "Lihat Website", short: "Preview", href: "__external:https://profil.assaodah.santrix.my.id/", icon: "M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" },
-  ]},
-  { group: "SISTEM", items: [
-    { name: "Pengaturan", short: "Setting", href: "/settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
-  ]},
+interface MenuItem {
+  name: string;
+  short: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface MenuGroup {
+  group: string;
+  items: MenuItem[];
+}
+
+const menuItems: MenuGroup[] = [
+  {
+    group: "UTAMA",
+    items: [
+      { name: "Dashboard", short: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    group: "PENERIMAAN",
+    items: [
+      { name: "Penerimaan PPDB", short: "PPDB", href: "/ppdb", icon: Users },
+      { name: "Daftar Ulang", short: "Daftar Ulang", href: "/re-registration", icon: GraduationCap },
+    ],
+  },
+  {
+    group: "DATA MASTER",
+    items: [
+      { name: "Data Siswa", short: "Siswa", href: "/students", icon: Users },
+      { name: "Mutasi & Kenaikan", short: "Mutasi", href: "/mutations", icon: ArrowLeftRight },
+      { name: "Kelas", short: "Kelas", href: "/classrooms", icon: Building2 },
+      { name: "Tahun Ajaran", short: "Tahun", href: "/academic-years", icon: Calendar },
+      { name: "Kategori Keuangan", short: "Kategori", href: "/transaction-categories", icon: Coins },
+    ],
+  },
+  {
+    group: "AKADEMIK",
+    items: [
+      { name: "Mata Pelajaran", short: "Mapel", href: "/subjects", icon: BookOpen },
+      { name: "Penugasan Guru", short: "Penugasan", href: "/teaching-assignments", icon: UserCheck },
+      { name: "Jadwal Pelajaran", short: "Jadwal", href: "/schedules", icon: Clock },
+      { name: "Absensi Siswa", short: "Absensi", href: "/attendance", icon: CheckSquare },
+      { name: "Manajemen Kurikulum", short: "Kurikulum", href: "/curriculum", icon: BookMarked },
+      { name: "Input Nilai Siswa", short: "Nilai", href: "/grades", icon: FileSpreadsheet },
+      { name: "Rapor Digital", short: "Rapor", href: "/report-cards", icon: Award },
+      { name: "Ekstrakurikuler", short: "Ekskul", href: "/extracurricular", icon: Sparkles },
+      { name: "Bimbingan Konseling", short: "BK", href: "/counseling", icon: HeartHandshake },
+      { name: "Kalender Akademik", short: "Kalender", href: "/calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    group: "KEUANGAN",
+    items: [
+      { name: "Infaq / SPP", short: "Infaq", href: "/infaq-bills", icon: CreditCard },
+      { name: "Akun Kas", short: "Akun Kas", href: "/cash-accounts", icon: Wallet },
+      { name: "Tabungan Siswa", short: "Tabungan", href: "/tabungan", icon: PiggyBank },
+      { name: "Wakaf & Donasi", short: "Wakaf", href: "/wakaf", icon: Heart },
+      { name: "Jurnal Umum", short: "Jurnal", href: "/journal", icon: Receipt },
+      { name: "Laporan", short: "Laporan", href: "/reports", icon: BarChart3 },
+    ],
+  },
+  {
+    group: "KOPERASI",
+    items: [
+      { name: "Produk Koperasi", short: "Produk", href: "/coop/products", icon: Boxes },
+      { name: "Transaksi / Kasir", short: "Kasir", href: "/coop/transactions", icon: ShoppingCart },
+      { name: "Piutang Siswa", short: "Piutang", href: "/coop/credits", icon: BadgePercent },
+    ],
+  },
+  {
+    group: "SDM",
+    items: [
+      { name: "Data Guru", short: "Guru", href: "/teachers", icon: Briefcase },
+      { name: "Data Staf", short: "Staf", href: "/staff", icon: UserCog },
+      { name: "Payroll", short: "Gaji", href: "/payroll", icon: Banknote },
+    ],
+  },
+  {
+    group: "TATA USAHA",
+    items: [
+      { name: "Absensi Pegawai", short: "Absensi", href: "/employee-attendance", icon: Clock },
+      { name: "Manajemen Surat", short: "Surat", href: "/letters", icon: Mail },
+      { name: "Pengumuman", short: "Pengumuman", href: "/announcements", icon: Megaphone },
+      { name: "Inventaris", short: "Inventaris", href: "/inventory", icon: Boxes },
+      { name: "Profil Sekolah", short: "Profil", href: "/school-profile", icon: School },
+    ],
+  },
+  {
+    group: "WEBSITE",
+    items: [
+      { name: "Website Profil Madrasah", short: "CMS", href: "/admin/cms", icon: Globe },
+      { name: "Lihat Website", short: "Preview", href: "__external:https://profil.assaodah.santrix.my.id/", icon: ExternalLink },
+    ],
+  },
+  {
+    group: "SISTEM",
+    items: [
+      { name: "Pengaturan", short: "Setting", href: "/settings", icon: Settings },
+    ],
+  },
 ];
 
 function hasMenuAccess(href: string, role: string): boolean {
@@ -86,6 +172,7 @@ export default function Sidebar({
   onToggle: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<{ name: string; logo: string } | null>(null);
 
@@ -103,191 +190,320 @@ export default function Sidebar({
     setMobileOpen(false);
   }
 
-  const initial = (user.name || "A").charAt(0).toUpperCase();
+  const schoolName = profile?.name || "Madrasah Digital";
+  const schoolInitials = schoolName
+    .replace(/^(SMK|SMA|SMP|SD|MI|MTs|MA|Pondok Pesantren|Ponpes|PKBM)\s+/i, "")
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "MD";
+
+  const userInitials = (user.name || "A")
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "A";
+
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Konfirmasi Keluar",
+      text: "Apakah Anda yakin ingin keluar dari sistem?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, Keluar",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
+    });
+    if (!result.isConfirmed) return;
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
 
   const sidebarContent = (
-    <>
-      {/* Sidebar Header */}
+    <div className="flex h-full flex-col bg-[#1B3B4B] text-[#CBDCE6] select-none relative overflow-hidden">
+      {/* Mobile Close Button */}
+      <button
+        onClick={() => setMobileOpen(false)}
+        className="md:hidden absolute top-4 right-4 text-[#7E9BAA] hover:text-white p-1.5 rounded-lg transition-colors z-30 cursor-pointer"
+        aria-label="Tutup Menu"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Desktop Collapse Toggle Button (Top Right Header) */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`hidden md:flex items-center justify-center rounded-lg text-[#7E9BAA] hover:text-white hover:bg-white/10 transition-all z-30 cursor-pointer ${
+          collapsed
+            ? "mx-auto mt-3 w-8 h-8"
+            : "absolute top-3.5 right-3.5 w-7 h-7"
+        }`}
+        title={collapsed ? "Perluas Sidebar" : "Kecilkan Sidebar"}
+        aria-label={collapsed ? "Perluas Sidebar" : "Kecilkan Sidebar"}
+      >
+        {collapsed ? (
+          <ChevronRight className="w-4 h-4" />
+        ) : (
+          <ChevronLeft className="w-4 h-4" />
+        )}
+      </button>
+
+      {/* ─── School & Active Level Section (Top Avatar with Concentric Ring) ─── */}
       <div
-        className={`flex items-center shrink-0 border-b border-slate-200 bg-white ${
-          collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
+        className={`flex flex-col items-center transition-all duration-200 border-b border-white/[0.06] ${
+          collapsed ? "py-4 px-2" : "pt-7 pb-5 px-4"
         }`}
       >
-        {profile?.logo ? (
-          <div className="shrink-0 w-9 h-9 rounded-lg overflow-hidden bg-white border border-slate-200 flex items-center justify-center p-0.5 shadow-xs">
-            <Image
-              src={ensureHttpsUrl(profile.logo)}
-              alt="Logo"
-              width={36}
-              height={36}
-              className="w-full h-full object-contain rounded"
-            />
+        {/* School Avatar with concentric ring from Edu-sistem */}
+        <div className="relative shrink-0">
+          <div
+            className={`p-1 rounded-full border-2 border-teal-400/40 bg-[#16313E] flex items-center justify-center transition-all duration-200 ${
+              collapsed ? "w-11 h-11" : "w-20 h-20"
+            }`}
+            title={`${schoolName} - Management Digital`}
+          >
+            {profile?.logo ? (
+              <div
+                className={`rounded-full overflow-hidden bg-white flex items-center justify-center shadow-inner ${
+                  collapsed ? "w-8 h-8 p-0.5" : "w-16 h-16 p-1"
+                }`}
+              >
+                <Image
+                  src={ensureHttpsUrl(profile.logo)}
+                  alt="Logo"
+                  width={collapsed ? 32 : 64}
+                  height={collapsed ? 32 : 64}
+                  className="w-full h-full object-contain rounded-full"
+                />
+              </div>
+            ) : (
+              <div
+                className={`rounded-full bg-gradient-to-tr from-teal-500 to-sky-400 flex items-center justify-center font-bold text-white shadow-inner ${
+                  collapsed ? "w-8 h-8 text-xs" : "w-16 h-16 text-lg tracking-wider"
+                }`}
+              >
+                {schoolInitials}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="shrink-0 w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-            {profile?.name ? profile.name.charAt(0).toUpperCase() : "M"}
-          </div>
-        )}
+          {/* Active online status badge */}
+          <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full bg-emerald-400 border-2 border-[#1B3B4B]" />
+        </div>
+
+        {/* School Name & Active Level */}
         {!collapsed && (
-          <div className="ml-3 overflow-hidden">
-            <span className="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap block truncate">
-              {profile?.name || "Nama Madrasah"}
-            </span>
-            <p className="text-[10px] font-semibold text-blue-600 tracking-wider uppercase">
-              Management Digital
+          <div className="mt-3 text-center w-full px-2 overflow-hidden">
+            <p
+              className="text-[14px] font-bold text-white truncate leading-tight tracking-tight"
+              title={schoolName}
+            >
+              {schoolName}
             </p>
+            <div className="mt-1 flex items-center justify-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+              <span
+                className="text-[11.5px] text-[#8CB4C8] font-medium truncate max-w-[190px]"
+                title="Management Digital"
+              >
+                Management Digital
+              </span>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Desktop Toggle Button */}
-      <button
-        onClick={onToggle}
-        aria-label={collapsed ? "Perluas menu sidebar" : "Ciutkan menu sidebar"}
-        className="hidden md:flex absolute -right-3 top-5 z-40 w-6 h-6 bg-white border border-slate-200 rounded-full items-center justify-center shadow-xs text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
-      >
-        <svg
-          className={`w-3.5 h-3.5 transition-transform ${collapsed ? "" : "rotate-180"}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+      {/* ─── Navigation Items ─── */}
+      <div id="sidebar-nav" className="flex-1 overflow-y-auto overflow-x-hidden py-3 custom-scrollbar space-y-4">
+        {menuItems.map((group, gi) => {
+          const visibleItems = group.items.filter((item) => {
+            if (item.href === "/cash-accounts") return true;
+            return hasMenuAccess(item.href, user.role);
+          });
+          if (visibleItems.length === 0) return null;
 
-      {/* Navigation Menu */}
-      <div id="sidebar-nav" className="flex-1 overflow-y-auto py-3 custom-scrollbar">
-        <nav className={collapsed ? "px-2 space-y-0.5" : "px-3 space-y-0.5"}>
-          {menuItems.map((group, gi) => {
-            const visibleItems = group.items.filter((item) => {
-              if (item.href === "/cash-accounts") return true;
-              return hasMenuAccess(item.href, user.role);
-            });
-            if (visibleItems.length === 0) return null;
+          return (
+            <div key={gi} className="space-y-1">
+              {/* Section Label */}
+              {!collapsed && (
+                <p className="px-5 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#557B8F]">
+                  {group.group}
+                </p>
+              )}
 
-            return (
-              <div key={gi} className="mb-2">
-                {!collapsed && (
-                  <div className={`px-3 pb-1 ${gi > 0 ? "pt-3" : "pt-1"}`}>
-                    <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                      {group.group}
-                    </span>
-                  </div>
-                )}
-                {collapsed && gi > 0 && <div className="my-2 mx-2 border-t border-slate-200" />}
+              {collapsed && gi > 0 && (
+                <div className="mx-3 my-1.5 border-t border-white/[0.08]" />
+              )}
 
-                {visibleItems.map((item, ii) => {
+              {/* Nav items */}
+              <div className="space-y-1">
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
                   const isExternal = item.href.startsWith("__external:");
                   const externalUrl = isExternal ? item.href.replace("__external:", "") : null;
+                  const currentPath = pathname.replace(/\/+$/, "") || "/";
+                  const itemPath = item.href.replace(/\/+$/, "") || "/";
                   const isActive =
                     !isExternal &&
-                    (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/")));
+                    (currentPath === itemPath ||
+                      (itemPath !== "/" &&
+                        itemPath !== "/dashboard" &&
+                        currentPath.startsWith(itemPath)));
 
-                  const itemClassName = [
-                    "group flex items-center transition-all duration-150",
-                    collapsed
-                      ? isActive
-                        ? "justify-center p-2.5 my-0.5 rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-200"
-                        : "justify-center p-2.5 my-0.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                      : isActive
-                      ? "px-3 py-2 gap-3 rounded-r-lg border-l-4 border-blue-600 bg-blue-50 text-blue-700 font-medium"
-                      : "px-3 py-2 gap-3 rounded-r-lg border-l-4 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal",
-                  ].join(" ");
-
-                  const itemContent = (
-                    <>
-                      <svg
-                        className={[
-                          "shrink-0 transition-colors duration-150",
-                          collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
-                          isActive
-                            ? "text-blue-600"
-                            : isExternal
-                            ? "text-slate-500 group-hover:text-blue-600"
-                            : "text-slate-400 group-hover:text-slate-700",
-                        ].join(" ")}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                      </svg>
-                      {!collapsed && (
-                        <span className="text-[13px] truncate flex-1">
-                          {item.name}
-                        </span>
-                      )}
-                      {!collapsed && isExternal && (
-                        <svg
-                          className="w-3.5 h-3.5 ml-auto text-slate-400 group-hover:text-slate-600 shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                  // Collapsed mode item
+                  if (collapsed) {
+                    if (isExternal) {
+                      return (
+                        <a
+                          key={item.href}
+                          href={externalUrl!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={item.name}
+                          className="relative flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-150 text-[#BACED8] hover:text-white hover:bg-white/[0.08]"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                          />
-                        </svg>
-                      )}
-                      {isActive && !collapsed && !isExternal && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
-                      )}
-                    </>
-                  );
+                          <Icon className="w-5 h-5 shrink-0" />
+                        </a>
+                      );
+                    }
 
-                  if (isExternal) {
                     return (
-                      <a
-                        key={ii}
-                        href={externalUrl!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={collapsed ? item.name : undefined}
-                        className={itemClassName}
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        title={item.name}
+                        className={`relative flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-150 ${
+                          isActive
+                            ? "bg-slate-50 text-[#1B3B4B] shadow-md font-bold"
+                            : "text-[#BACED8] hover:text-white hover:bg-white/[0.08]"
+                        }`}
                       >
-                        {itemContent}
-                      </a>
+                        <Icon className="w-5 h-5 shrink-0" />
+                      </Link>
                     );
                   }
 
+                  // Expanded mode: Curved Tab Cutout (Inverted Border-Radius)
+                  if (isActive) {
+                    return (
+                      <div key={item.href} className="relative w-full">
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="group relative flex items-center gap-3.5 w-[calc(100%-12px)] ml-auto pl-4 pr-3 py-3 bg-slate-50 text-[#1B3B4B] font-bold text-[13.5px] rounded-l-full z-10"
+                        >
+                          {/* Top concave curve (scoop into sidebar above) */}
+                          <div className="absolute -top-6 right-0 w-6 h-6 pointer-events-none overflow-hidden z-20">
+                            <svg
+                              className="w-full h-full text-slate-50 fill-current"
+                              viewBox="0 0 24 24"
+                              preserveAspectRatio="none"
+                            >
+                              <path d="M0 24 C13.25 24 24 13.25 24 0 L24 25 L0 25 Z" />
+                            </svg>
+                          </div>
+
+                          {/* Bottom concave curve (scoop into sidebar below) */}
+                          <div className="absolute -bottom-6 right-0 w-6 h-6 pointer-events-none overflow-hidden z-20">
+                            <svg
+                              className="w-full h-full text-slate-50 fill-current"
+                              viewBox="0 0 24 24"
+                              preserveAspectRatio="none"
+                            >
+                              <path d="M0 0 C13.25 0 24 10.75 24 24 L24 -1 L0 -1 Z" />
+                            </svg>
+                          </div>
+
+                          {/* Active Icon */}
+                          <Icon className="w-4 h-4 shrink-0 text-[#1B3B4B] stroke-[2.3]" />
+
+                          {/* Active Label */}
+                          <span className="truncate flex-1 tracking-tight">
+                            {item.name}
+                          </span>
+                        </Link>
+                      </div>
+                    );
+                  }
+
+                  // Inactive item
                   return (
-                    <Link
-                      key={ii}
-                      href={item.href}
-                      title={collapsed ? item.name : undefined}
-                      className={itemClassName}
-                    >
-                      {itemContent}
-                    </Link>
+                    <div key={item.href} className="px-3">
+                      {isExternal ? (
+                        <a
+                          href={externalUrl!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-3.5 px-4 py-2 rounded-xl text-[13px] font-medium text-[#CBDCE6] hover:text-white hover:bg-white/[0.08] transition-all duration-150 ease-out hover:translate-x-0.5"
+                        >
+                          <Icon className="w-4 h-4 shrink-0 text-[#8EAFBF] group-hover:text-teal-300 transition-colors" />
+                          <span className="truncate flex-1">{item.name}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-[#7E9BAA] group-hover:text-white shrink-0 ml-auto" />
+                        </a>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="group flex items-center gap-3.5 px-4 py-2 rounded-xl text-[13px] font-medium text-[#CBDCE6] hover:text-white hover:bg-white/[0.08] transition-all duration-150 ease-out hover:translate-x-0.5"
+                        >
+                          <Icon className="w-4 h-4 shrink-0 text-[#8EAFBF] group-hover:text-teal-300 transition-colors" />
+                          <span className="truncate flex-1">{item.name}</span>
+                        </Link>
+                      )}
+                    </div>
                   );
                 })}
               </div>
-            );
-          })}
-        </nav>
+            </div>
+          );
+        })}
       </div>
 
-      {/* User Footer */}
-      <div className={`shrink-0 border-t border-slate-200 bg-slate-50/70 ${collapsed ? "p-3" : "p-3.5"}`}>
-        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs shrink-0">
-            {initial}
-          </div>
-          {!collapsed && (
+      {/* ─── Bottom Actions (User Info & Logout) ─── */}
+      <div className="border-t border-white/[0.06] p-3 space-y-1">
+        {/* User Mini Card */}
+        {!collapsed ? (
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.04]">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-sky-400 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-inner">
+              {userInitials}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-900 truncate">{user.name}</p>
-              <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide truncate">
+              <p className="text-xs font-semibold text-white truncate">{user.name}</p>
+              <p className="text-[10px] text-[#8CB4C8] uppercase tracking-wider truncate font-mono">
                 {user.role}
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div
+            className="w-8 h-8 mx-auto rounded-full bg-gradient-to-tr from-teal-500 to-sky-400 flex items-center justify-center text-white font-bold text-xs shadow-inner"
+            title={`${user.name} (${user.role})`}
+          >
+            {userInitials}
+          </div>
+        )}
+
+        {/* Logout Button */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={`group w-full flex items-center gap-3 rounded-xl text-[13px] font-medium text-[#8EAFBF] hover:text-red-300 hover:bg-red-500/10 transition-all duration-150 cursor-pointer ${
+            collapsed ? "justify-center w-10 h-10 mx-auto p-0" : "px-4 py-2.5"
+          }`}
+          title={collapsed ? "Logout" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0 transition-transform duration-150 group-hover:-translate-x-0.5" />
+          {!collapsed && <span>Logout</span>}
+        </button>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -296,21 +512,19 @@ export default function Sidebar({
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Buka menu navigasi"
-        className="md:hidden fixed top-3.5 left-4 z-40 w-9 h-9 bg-white border border-slate-200 rounded-lg shadow-xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
+        className="md:hidden fixed top-3.5 left-4 z-40 w-9 h-9 bg-[#1B3B4B] text-[#CBDCE6] border border-white/10 rounded-lg shadow-xs flex items-center justify-center hover:text-white hover:bg-white/10 cursor-pointer"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
+        <Menu className="w-5 h-5" />
       </button>
 
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative w-72 h-full flex flex-col bg-white border-r border-slate-200 shadow-xl animate-fade-in">
+          <aside className="relative w-72 max-w-[85vw] h-full flex flex-col shadow-2xl animate-fade-in">
             {sidebarContent}
           </aside>
         </div>
@@ -318,10 +532,9 @@ export default function Sidebar({
 
       {/* Desktop Sidebar */}
       <aside
-        className={[
-          "hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out bg-white border-r border-slate-200",
-          collapsed ? "w-[72px]" : "w-[264px]",
-        ].join(" ")}
+        className={`hidden md:flex flex-col h-full shrink-0 relative transition-all duration-300 ease-in-out ${
+          collapsed ? "w-[72px]" : "w-[240px]"
+        }`}
       >
         {sidebarContent}
       </aside>
