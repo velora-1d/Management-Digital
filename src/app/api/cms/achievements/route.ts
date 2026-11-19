@@ -22,10 +22,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { id, ...values } = body;
 
+    const imageUrl = values.imageUrl || values.image_url || '';
+    const payload = {
+      ...values,
+      imageUrl,
+    };
+    delete payload.image_url;
+
     if (id) {
-      await db.update(webAchievements).set({ ...values, updatedAt: new Date() }).where(eq(webAchievements.id, Number(id)));
+      await db.update(webAchievements).set({ ...payload, updatedAt: new Date() }).where(eq(webAchievements.id, Number(id)));
     } else {
-      await db.insert(webAchievements).values(values);
+      await db.insert(webAchievements).values(payload);
     }
 
     revalidatePath("/admin/cms/achievements");

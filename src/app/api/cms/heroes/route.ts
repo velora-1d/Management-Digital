@@ -20,10 +20,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { id, ...values } = body;
 
+    const mediaUrl = values.mediaUrl || values.image_url || '';
+    const payload = {
+      ...values,
+      mediaUrl,
+    };
+    delete payload.image_url;
+
     if (id) {
-      await db.update(webHeroes).set({ ...values, updatedAt: new Date() }).where(eq(webHeroes.id, Number(id)));
+      await db.update(webHeroes).set({ ...payload, updatedAt: new Date() }).where(eq(webHeroes.id, Number(id)));
     } else {
-      await db.insert(webHeroes).values(values);
+      await db.insert(webHeroes).values(payload);
     }
 
     revalidatePath("/admin/cms/heroes");

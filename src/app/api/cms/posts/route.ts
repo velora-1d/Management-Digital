@@ -22,10 +22,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { id, ...values } = body;
 
+    const payload: any = { ...values };
+    if (values.thumbnail_url !== undefined || values.thumbnailUrl !== undefined || values.image_url !== undefined) {
+      payload.thumbnailUrl = values.thumbnailUrl || values.thumbnail_url || values.image_url;
+      delete payload.thumbnail_url;
+      delete payload.image_url;
+    }
+
     if (id) {
-      await db.update(webPosts).set({ ...values, updatedAt: new Date() }).where(eq(webPosts.id, Number(id)));
+      await db.update(webPosts).set({ ...payload, updatedAt: new Date() }).where(eq(webPosts.id, Number(id)));
     } else {
-      await db.insert(webPosts).values({ ...values, status: values.status || 'published' });
+      await db.insert(webPosts).values({ ...payload, status: payload.status || 'published' });
     }
 
     revalidatePath("/admin/cms/posts");

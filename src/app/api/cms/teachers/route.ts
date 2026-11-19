@@ -25,13 +25,14 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { id, ...values } = body;
+    const resolvedPhotoUrl = values.photoUrl || values.photo_url || values.image_url;
 
     if (id) {
       await db.update(employees).set({ 
         name: values.name,
         position: values.position,
         status: values.status,
-        photoUrl: values.photoUrl,
+        photoUrl: resolvedPhotoUrl,
         bio: values.bio,
         order: values.order,
         updatedAt: new Date() 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
         name: values.name,
         position: values.position,
         status: values.status || 'aktif',
-        photoUrl: values.photoUrl,
+        photoUrl: resolvedPhotoUrl,
         bio: values.bio,
         order: values.order || 1,
         type: 'guru'

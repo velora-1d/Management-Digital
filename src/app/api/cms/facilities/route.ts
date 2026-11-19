@@ -22,10 +22,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { id, ...values } = body;
 
+    const imageUrl = values.imageUrl || values.image_url || '';
+    const payload = {
+      ...values,
+      imageUrl,
+    };
+    delete payload.image_url;
+
     if (id) {
-      await db.update(webFacilities).set({ ...values, updatedAt: new Date() }).where(eq(webFacilities.id, Number(id)));
+      await db.update(webFacilities).set({ ...payload, updatedAt: new Date() }).where(eq(webFacilities.id, Number(id)));
     } else {
-      await db.insert(webFacilities).values(values);
+      await db.insert(webFacilities).values(payload);
     }
 
     revalidatePath("/admin/cms/facilities");
