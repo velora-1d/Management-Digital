@@ -131,6 +131,7 @@ export default function FacilitiesCMS() {
                 src={ensureHttpsUrl((fac.imageUrl || fac.image_url) || 'https://via.placeholder.com/600x400')} 
                 alt={fac.name} 
                 fill
+                unoptimized
                 className="object-cover group-hover:scale-110 transition-transform duration-500" 
               />
               <div className="absolute top-4 left-4">

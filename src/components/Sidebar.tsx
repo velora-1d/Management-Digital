@@ -2,7 +2,6 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Swal from "sweetalert2";
 import {
   LayoutDashboard,
@@ -300,11 +299,9 @@ export default function Sidebar({
                   collapsed ? "w-8 h-8 p-0.5" : "w-16 h-16 p-1"
                 }`}
               >
-                <Image
+                                <img
                   src={ensureHttpsUrl(profile.logo)}
                   alt="Logo"
-                  width={collapsed ? 32 : 64}
-                  height={collapsed ? 32 : 64}
                   className="w-full h-full object-contain rounded-full"
                 />
               </div>

@@ -1,7 +1,13 @@
 export function ensureHttpsUrl(value?: string | null): string {
   if (!value) return "";
 
-  if (value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("/")) {
+  if (
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("/") ||
+    value.includes("localhost") ||
+    value.includes("127.0.0.1")
+  ) {
     return value;
   }
 

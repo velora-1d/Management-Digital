@@ -132,6 +132,7 @@ export default function HeroesCMS() {
                 src={ensureHttpsUrl((hero.mediaUrl || hero.image_url) || 'https://via.placeholder.com/1280x720')} 
                 alt={hero.title} 
                 fill
+                unoptimized
                 className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
               />
               <div className="absolute inset-0 bg-linear-to-t from-slate-900/90 via-slate-900/40 to-transparent flex flex-col justify-end p-8">

@@ -69,3 +69,7 @@ id_ed25519_vps.pub
 # Logs
 *.log
 
+
+# uploaded files
+/public/uploads/*
+!/public/uploads/.gitkeep

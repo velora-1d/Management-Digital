@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -52,20 +51,28 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (file.size > 2 * 1024 * 1024) {
-      Swal.fire("Gagal", "Ukuran file logo maksimal 2MB", "error");
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire("Gagal", "Ukuran file logo maksimal 5MB", "error");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfile(prev => ({ ...prev, logo: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setProfile(prev => ({ ...prev, logo: data.url }));
+      } else {
+        Swal.fire("Gagal", data.error || "Gagal mengunggah logo", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    }
   };
 
   const loadUsers = async () => {
@@ -507,11 +514,10 @@ export default function SettingsPage() {
               <div className="shrink-0 flex flex-col items-center gap-2">
                 <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center overflow-hidden relative">
                   {profile.logo ? (
-                    <Image 
+                                        <img 
                       src={ensureHttpsUrl(profile.logo)} 
                       alt="Logo Madrasah" 
-                      fill
-                      className="object-contain" 
+                      className="max-h-full max-w-full object-contain p-1" 
                     />
                   ) : (
                     <span className="text-slate-400 text-xs font-bold text-center px-2">Belum ada logo</span>

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3Client, R2_BUCKET, R2_PUBLIC_URL, R2_PREFIX } from "@/lib/s3";
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
@@ -50,40 +48,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fileExtension = file.name.split('.').pop() || 'jpg';
     const cleanExtension = fileExtension.replace(/[^a-zA-Z0-9]/g, '');
 
-    // 1. Coba upload ke Cloudflare R2 jika konfigurasi lengkap
-    const hasR2 = Boolean(
-      s3Client &&
-      R2_BUCKET && 
-      process.env.R2_ACCESS_KEY_ID && 
-      process.env.R2_SECRET_ACCESS_KEY
-    );
-
-    if (hasR2) {
-      try {
-        const fileName = `${R2_PREFIX}${uuidv4()}.${cleanExtension}`;
-        const command = new PutObjectCommand({
-          Bucket: R2_BUCKET,
-          Key: fileName,
-          Body: buffer,
-          ContentType: file.type,
-        });
-
-        await s3Client.send(command);
-
-        const baseUrl = R2_PUBLIC_URL.endsWith('/') ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
-        const publicUrl = `${baseUrl}/${fileName}`;
-
-        return NextResponse.json({
-          success: true,
-          url: publicUrl,
-          key: fileName,
-        }, { headers: corsHeaders });
-      } catch (r2Error) {
-        console.warn('Upload Cloudflare R2 gagal, beralih ke local storage fallback:', r2Error);
-      }
-    }
-
-    // 2. Local Storage Fallback (Simpan ke public/uploads)
+    // Simpan ke local storage (public/uploads)
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     await mkdir(uploadsDir, { recursive: true });
 

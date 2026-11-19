@@ -126,6 +126,7 @@ export default function TeachersCMS() {
                 src={ensureHttpsUrl((teacher.photoUrl || teacher.photo_url) || 'https://via.placeholder.com/400')} 
                 alt={teacher.name} 
                 fill
+                unoptimized
                 className="object-cover group-hover:scale-110 transition-transform duration-500" 
               />
               <div className="absolute top-4 right-4 flex gap-2">

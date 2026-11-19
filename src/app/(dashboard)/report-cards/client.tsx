@@ -466,21 +466,29 @@ export default function ReportCardsPage({
     return Math.round((locked / checks.length) * 100);
   };
 
-  const handleSignatureUpload = (target: "headmasterSignature" | "homeroomSignature" | "reportLogo", file?: File) => {
+  const handleSignatureUpload = async (target: "headmasterSignature" | "homeroomSignature" | "reportLogo", file?: File) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       Swal.fire("Format tidak valid", "File tanda tangan harus berupa gambar", "warning");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      Swal.fire("Terlalu besar", "Ukuran gambar maksimal 2MB", "warning");
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire("Terlalu besar", "Ukuran gambar maksimal 5MB", "warning");
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSignatureSettings((prev) => ({ ...prev, [target]: String(reader.result || "") }));
-    };
-    reader.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setSignatureSettings((prev) => ({ ...prev, [target]: data.url }));
+      } else {
+        Swal.fire("Gagal", data.error || "Gagal mengunggah gambar", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Gagal menghubungi server", "error");
+    }
   };
 
   const handleSaveSignatures = async () => {

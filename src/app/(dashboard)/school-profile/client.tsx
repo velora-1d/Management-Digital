@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import Swal from "sweetalert2";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -351,24 +350,33 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 2 * 1024 * 1024) return Swal.fire("Terlalu besar", "Ukuran maksimal 2MB", "warning");
-                            const r = new FileReader();
-                            r.onloadend = () => updateField("school_logo", String(r.result || ""));
-                            r.readAsDataURL(file);
+                            if (file.size > 5 * 1024 * 1024) return Swal.fire("Terlalu besar", "Ukuran maksimal 5MB", "warning");
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            try {
+                              const res = await fetch("/api/upload", { method: "POST", body: formData });
+                              const data = await res.json();
+                              if (data.url) {
+                                updateField("school_logo", data.url);
+                              } else {
+                                Swal.fire("Gagal", data.error || "Gagal mengunggah logo", "error");
+                              }
+                            } catch {
+                              Swal.fire("Error", "Gagal menghubungi server", "error");
+                            }
                           }
                         }}
                       />
                     </label>
                     {profile["school_logo"] && (
                       <div className="mt-3 relative h-20 w-36 bg-white border border-slate-200 rounded-xl p-2 flex items-center justify-center">
-                        <Image
+                                                <img
                           src={ensureHttpsUrl(profile["school_logo"])}
                           alt="Logo Madrasah"
-                          fill
-                          className="object-contain p-1"
+                          className="max-h-full max-w-full object-contain p-1"
                         />
                       </div>
                     )}
@@ -387,12 +395,11 @@ export default function SchoolProfileClient({ initialData }: { initialData: Reco
               </div>
               <div className="border border-slate-200 rounded-xl p-5 bg-white space-y-2 text-center shadow-2xs">
                 {profile["school_logo"] ? (
-                  <div className="relative w-16 h-16 mx-auto mb-2">
-                    <Image
+                  <div className="relative w-16 h-16 mx-auto mb-2 flex items-center justify-center">
+                                        <img
                       src={ensureHttpsUrl(profile["school_logo"])}
                       alt="Logo Sekolah"
-                      fill
-                      className="object-contain"
+                      className="max-h-full max-w-full object-contain"
                     />
                   </div>
                 ) : (
