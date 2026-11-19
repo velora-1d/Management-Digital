@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client, R2_BUCKET, R2_PUBLIC_URL, R2_PREFIX } from "@/lib/s3";
 import { v4 as uuidv4 } from 'uuid';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,15 +16,6 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Validasi konfigurasi R2
-  if (!R2_BUCKET || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
-    console.error('Upload error: Konfigurasi Cloudflare R2 tidak lengkap');
-    return NextResponse.json(
-      { error: 'Konfigurasi storage tidak lengkap di server' },
-      { status: 500, headers: corsHeaders }
-    );
-  }
-
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -54,36 +47,63 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    // Buat nama file unik
     const fileExtension = file.name.split('.').pop() || 'jpg';
-    const fileName = `${R2_PREFIX}${uuidv4()}.${fileExtension}`;
+    const cleanExtension = fileExtension.replace(/[^a-zA-Z0-9]/g, '');
 
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: fileName,
-      Body: buffer,
-      ContentType: file.type,
-    });
+    // 1. Coba upload ke Cloudflare R2 jika konfigurasi lengkap
+    const hasR2 = Boolean(
+      R2_BUCKET && 
+      process.env.R2_ACCESS_KEY_ID && 
+      process.env.R2_SECRET_ACCESS_KEY
+    );
 
-    await s3Client.send(command);
+    if (hasR2) {
+      try {
+        const fileName = `${R2_PREFIX}${uuidv4()}.${cleanExtension}`;
+        const command = new PutObjectCommand({
+          Bucket: R2_BUCKET,
+          Key: fileName,
+          Body: buffer,
+          ContentType: file.type,
+        });
 
-    // Bangun URL publik
-    // Jika R2_PUBLIC_URL diakhiri dengan slash, hapus
-    const baseUrl = R2_PUBLIC_URL.endsWith('/') ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
-    const publicUrl = `${baseUrl}/${fileName}`;
+        await s3Client.send(command);
+
+        const baseUrl = R2_PUBLIC_URL.endsWith('/') ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
+        const publicUrl = `${baseUrl}/${fileName}`;
+
+        return NextResponse.json({
+          success: true,
+          url: publicUrl,
+          key: fileName,
+        }, { headers: corsHeaders });
+      } catch (r2Error) {
+        console.warn('Upload Cloudflare R2 gagal, beralih ke local storage fallback:', r2Error);
+      }
+    }
+
+    // 2. Local Storage Fallback (Simpan ke public/uploads)
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    await mkdir(uploadsDir, { recursive: true });
+
+    const localFileName = `${Date.now()}-${uuidv4().substring(0, 8)}.${cleanExtension}`;
+    const localFilePath = path.join(uploadsDir, localFileName);
+
+    await writeFile(localFilePath, buffer);
+
+    const localPublicUrl = `/uploads/${localFileName}`;
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      key: fileName,
+      url: localPublicUrl,
+      key: localFileName,
     }, { headers: corsHeaders });
 
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Upload error:', errMsg);
     return NextResponse.json(
-      { error: `Gagal mengunggah file ke R2: ${errMsg}` },
+      { error: `Gagal mengunggah file: ${errMsg}` },
       { status: 500, headers: corsHeaders }
     );
   }
