@@ -52,6 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 1. Coba upload ke Cloudflare R2 jika konfigurasi lengkap
     const hasR2 = Boolean(
+      s3Client &&
       R2_BUCKET && 
       process.env.R2_ACCESS_KEY_ID && 
       process.env.R2_SECRET_ACCESS_KEY
