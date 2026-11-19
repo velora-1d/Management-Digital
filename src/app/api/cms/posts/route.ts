@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { id, ...values } = body;
 
-    const payload: any = { ...values };
+    const payload: Record<string, unknown> = { ...values };
     if (values.thumbnail_url !== undefined || values.thumbnailUrl !== undefined || values.image_url !== undefined) {
       payload.thumbnailUrl = values.thumbnailUrl || values.thumbnail_url || values.image_url;
       delete payload.thumbnail_url;
@@ -30,9 +30,9 @@ export async function POST(req: Request) {
     }
 
     if (id) {
-      await db.update(webPosts).set({ ...payload, updatedAt: new Date() }).where(eq(webPosts.id, Number(id)));
+      await db.update(webPosts).set({ ...payload, updatedAt: new Date() } as unknown as typeof webPosts.$inferInsert).where(eq(webPosts.id, Number(id)));
     } else {
-      await db.insert(webPosts).values({ ...payload, status: payload.status || 'published' });
+      await db.insert(webPosts).values({ ...payload, status: (payload.status as string) || 'published' } as unknown as typeof webPosts.$inferInsert);
     }
 
     revalidatePath("/admin/cms/posts");
